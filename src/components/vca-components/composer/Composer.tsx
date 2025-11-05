@@ -69,7 +69,6 @@ export const Composer = ({
                 value={value}
                 onChange={(e) => onChange?.(e.target.value)}
                 placeholder={placeholder}
-                disabled={state === 'disabled'}
                 className="flex-1 font-vca-text text-[14px] leading-[21px] text-vca-text resize-none outline-none bg-transparent max-h-[72px] overflow-auto"
                 rows={4}
               />

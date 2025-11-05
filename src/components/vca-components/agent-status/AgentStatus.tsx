@@ -89,9 +89,10 @@ export const AgentStatus = ({
         {/* Optional Action Link */}
         {showAction && (
           <ButtonLink 
-            label={actionLabel}
             onClick={onAction}
-          />
+          >
+            {actionLabel}
+          </ButtonLink>
         )}
       </div>
     </div>
