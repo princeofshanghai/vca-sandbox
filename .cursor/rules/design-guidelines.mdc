@@ -1,0 +1,77 @@
+---
+alwaysApply: true
+---
+
+# Design Guidelines
+
+## App Shell Design Principles
+
+### Use Default Styles
+- **Always use shadcn/ui and Tailwind defaults** for the app shell (navigation, sidebars, layout)
+- **Don't override** shadcn component styles unless absolutely necessary
+- Trust the defaults - they're well-designed and accessible
+
+### Aesthetic
+- **Minimalist** - Remove unnecessary visual elements
+- **Clean** - Simple, clear hierarchy
+- **Lots of whitespace** - Generous spacing, breathing room
+- **Modern** - Contemporary, professional look
+
+---
+
+## App Shell vs VCA Components
+
+### App Shell (Navigation, Sidebars, Layout)
+Use standard Tailwind and shadcn/ui:
+```tsx
+// Good - standard Tailwind colors
+<div className="bg-white text-gray-900 border-gray-200">
+
+// Good - default shadcn components
+<Tabs>
+  <TabsList>
+    <TabsTrigger>Tab Name</TabsTrigger>
+  </TabsList>
+</Tabs>
+```
+
+### VCA Components (Chat Bubbles, Messages)
+Use VCA design tokens with `vca-` prefix:
+```tsx
+// Good - VCA-specific styling
+<div className="bg-vca-background text-vca-text border-vca-border">
+```
+
+---
+
+## Spacing Guidelines
+
+- Use generous padding: `p-6`, `p-8` for containers
+- Add vertical space between sections: `space-y-6`, `space-y-8`
+- Sidebar width: `280px` (fixed)
+- Header height: `56px` (h-14)
+
+---
+
+## Typography
+
+- Use Tailwind's default font stack
+- Clear hierarchy: `text-xl` for titles, `text-sm` for body
+- Semibold for emphasis: `font-semibold`
+- Gray scale for text: `text-gray-900` (primary), `text-gray-600` (secondary)
+
+---
+
+## Colors (App Shell)
+
+**Avoid custom colors. Use Tailwind defaults:**
+- Backgrounds: `bg-white`, `bg-gray-50`, `bg-gray-100`
+- Text: `text-gray-900`, `text-gray-600`, `text-gray-500`
+- Borders: `border-gray-200`, `border-gray-300`
+- Interactive: `hover:bg-gray-100`, `hover:text-gray-900`
+
+---
+
+## Key Principle
+
+**When in doubt: less is more. Remove rather than add.**
