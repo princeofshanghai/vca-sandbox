@@ -104,4 +104,3 @@ The project uses design tokens from Figma, mapped to Tailwind CSS:
 
 **Owner:** Charles Hu, Staff Product Designer  
 **Timeline:** MVP in 2 weeks
-
