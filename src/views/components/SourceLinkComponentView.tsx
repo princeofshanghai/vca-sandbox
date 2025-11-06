@@ -3,13 +3,13 @@ import { SourceLink } from '@/components/vca-components/source-link';
 const SourceLinkComponentView = () => {
   return (
     <div className="pt-16">
-      <h1 className="text-4xl font-medium text-gray-900 mb-2 tracking-tight">Source Link</h1>
+      <h1 className="mb-2">Source Link</h1>
       <p className="text-md text-gray-500 mb-12">Small citation and source link component with multiple states for references and external links.</p>
       
       <div className="space-y-12">
         {/* Enabled State */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Enabled</h2>
+          <h2 className="mb-4">Enabled</h2>
           <p className="text-sm text-gray-500 mb-3">Default state with gray text and underline.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
@@ -24,7 +24,7 @@ const SourceLinkComponentView = () => {
 
         {/* Hover State */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Hover</h2>
+          <h2 className="mb-4">Hover</h2>
           <p className="text-sm text-gray-500 mb-3">Interactive state when user hovers over the link.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
@@ -38,7 +38,7 @@ const SourceLinkComponentView = () => {
 
         {/* Active State */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Active</h2>
+          <h2 className="mb-4">Active</h2>
           <p className="text-sm text-gray-500 mb-3">State when user clicks/presses the link.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
@@ -52,7 +52,7 @@ const SourceLinkComponentView = () => {
 
         {/* Visited State */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Visited</h2>
+          <h2 className="mb-4">Visited</h2>
           <p className="text-sm text-gray-500 mb-3">State for previously visited links (purple).</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
@@ -66,7 +66,7 @@ const SourceLinkComponentView = () => {
 
         {/* In Context Example */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">In Context</h2>
+          <h2 className="mb-4">In Context</h2>
           <p className="text-sm text-gray-500 mb-3">Example showing how source links appear within text content.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
@@ -84,7 +84,7 @@ const SourceLinkComponentView = () => {
 
         {/* Multiple Links Example */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Multiple Sources</h2>
+          <h2 className="mb-4">Multiple Sources</h2>
           <p className="text-sm text-gray-500 mb-3">Example with multiple source citations in a single paragraph.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
@@ -112,9 +112,9 @@ const SourceLinkComponentView = () => {
 
         {/* Usage Notes */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Usage Notes</h2>
+          <h2 className="mb-4">Usage Notes</h2>
           <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <div className="space-y-3 text-sm text-gray-700">
+            <div className="space-y-3">
               <p><span className="font-medium">Small Font:</span> Uses 12px font size (VCA xsmall) for compact citations.</p>
               <p><span className="font-medium">Always Underlined:</span> All states include underline for clear link affordance.</p>
               <p><span className="font-medium">Color States:</span> Gray (enabled), blue (hover/active), purple (visited).</p>

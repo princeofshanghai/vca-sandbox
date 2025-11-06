@@ -4,13 +4,13 @@ import { Message } from '@/components/vca-components/messages';
 const ContainerComponentView = () => {
   return (
     <div className="pt-16">
-      <h1 className="text-4xl font-medium text-gray-900 mb-2 tracking-tight">Container</h1>
+      <h1 className="mb-2">Container</h1>
       <p className="text-md text-gray-500 mb-12">Complete chatbot panel combining Header, scrollable content area, and Composer.</p>
       
       <div className="space-y-12">
         {/* Empty Container - Just the Shell */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Empty Container (Shell Only)</h2>
+          <h2 className="mb-4">Empty Container (Shell Only)</h2>
           <p className="text-sm text-gray-500 mb-3">The basic structure with no content - just Header + Content Area + Composer.</p>
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 flex justify-center">
             <Container 
@@ -26,7 +26,7 @@ const ContainerComponentView = () => {
 
         {/* With Simple Content */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">With Content</h2>
+          <h2 className="mb-4">With Content</h2>
           <p className="text-sm text-gray-500 mb-3">Container with some message content.</p>
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 flex justify-center">
             <Container 
@@ -56,7 +56,7 @@ const ContainerComponentView = () => {
 
         {/* With Premium Border */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Premium Border</h2>
+          <h2 className="mb-4">Premium Border</h2>
           <p className="text-sm text-gray-500 mb-3">Container with gold premium border for premium users.</p>
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 flex justify-center">
             <Container 
@@ -78,7 +78,7 @@ const ContainerComponentView = () => {
 
         {/* With Back Button */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">With Back Button</h2>
+          <h2 className="mb-4">With Back Button</h2>
           <p className="text-sm text-gray-500 mb-3">Container with navigation back button in header.</p>
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 flex justify-center">
             <Container 
@@ -94,7 +94,7 @@ const ContainerComponentView = () => {
 
         {/* Full Example */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Full Example</h2>
+          <h2 className="mb-4">Full Example</h2>
           <p className="text-sm text-gray-500 mb-3">Complete container with all features enabled and rich content.</p>
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 flex justify-center">
             <Container 
@@ -133,9 +133,9 @@ const ContainerComponentView = () => {
 
         {/* Usage Notes */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Usage Notes</h2>
+          <h2 className="mb-4">Usage Notes</h2>
           <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <div className="space-y-3 text-sm text-gray-700">
+            <div className="space-y-3">
               <p><span className="font-medium">Fixed Dimensions:</span> Container is 400px wide × 788px tall to match LinkedIn's VCA chatbot.</p>
               <p><span className="font-medium">Scrollable Content:</span> The middle content area scrolls when content exceeds available space.</p>
               <p><span className="font-medium">Fixed Header & Composer:</span> Header and Composer remain fixed at top and bottom.</p>

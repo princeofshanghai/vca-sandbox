@@ -31,26 +31,26 @@ export const Recommendation = ({
   
   return (
     <div className={cn('flex flex-col gap-vca-lg items-start', className)}>
-      <div className="bg-[#f6fbff] flex flex-col gap-vca-lg p-vca-lg rounded-tl-vca-md rounded-tr-vca-md rounded-br-vca-md rounded-bl-vca-sm w-full">
+      <div className="bg-vca-surface-tint flex flex-col gap-vca-lg p-vca-lg rounded-tl-vca-md rounded-tr-vca-md rounded-br-vca-md rounded-bl-vca-sm w-full">
         {/* Header */}
         <div className="flex flex-col gap-vca-s items-start w-full">
-          <div className="flex gap-2 items-center w-full">
-            <p className="font-vca-text text-[14px] leading-[18px] font-semibold text-vca-text flex-1">
+          <div className="flex gap-vca-s items-center w-full">
+            <p className="font-vca-text text-vca-small-bold text-vca-text flex-1">
               {title} + <span className="text-vca-text-positive">{impactText}</span>
             </p>
           </div>
         </div>
 
         {/* Description */}
-        <div className="flex flex-col gap-[10px] items-start w-full">
-          <p className="font-vca-text text-[14px] leading-[21px] text-vca-text w-full">
+        <div className="flex flex-col gap-vca-md items-start w-full">
+          <p className="font-vca-text text-vca-small-open text-vca-text w-full">
             {description}
           </p>
         </div>
 
         {/* Actions or Feedback */}
         {state === 'default' && (
-          <div className="flex items-start w-full gap-0">
+          <div className="flex items-start w-full gap-vca-none">
             <Button 
               variant="secondary" 
               emphasis={true}
@@ -71,8 +71,8 @@ export const Recommendation = ({
         {state === 'applied' && (
           <div className="flex gap-vca-xs items-center w-full">
             <div className="flex gap-vca-xs items-center flex-1">
-              <VcaIcon icon="signal-success" size="sm" />
-              <p className="font-vca-text text-[14px] leading-[18px] text-vca-text-positive">
+              <VcaIcon icon="signal-success" size="sm" className="text-vca-text-positive" />
+              <p className="font-vca-text text-vca-small text-vca-text-positive">
                 Applied
               </p>
             </div>
@@ -83,7 +83,7 @@ export const Recommendation = ({
           <div className="flex gap-vca-xs items-center w-full">
             <div className="flex gap-vca-xs items-center flex-1">
               <VcaIcon icon="close" size="sm" className="text-vca-text-neutral" />
-              <p className="font-vca-text text-[14px] leading-[18px] text-vca-text-neutral">
+              <p className="font-vca-text text-vca-small text-vca-text-neutral">
                 Dismissed
               </p>
             </div>

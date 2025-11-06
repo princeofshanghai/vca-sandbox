@@ -15,6 +15,7 @@ export type VcaIconProps = {
 
 /**
  * VCA Icon Component - LinkedIn custom icons as inline SVGs
+ * Icons use VCA design tokens for colors where appropriate
  */
 export const VcaIcon = ({ icon, size = 'md', className }: VcaIconProps) => {
   const sizeClasses = {
@@ -25,167 +26,168 @@ export const VcaIcon = ({ icon, size = 'md', className }: VcaIconProps) => {
 
   const iconClass = cn('shrink-0 inline-block', sizeClasses[size], className);
 
-  // Inline SVG definitions for commonly used icons
+  // Inline SVG definitions with real LinkedIn designs
+  // Icons are neutral by default - color comes from context/usage
   switch (icon) {
     case 'signal-error':
       return (
-        <svg className={iconClass} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M8 1.5C4.41 1.5 1.5 4.41 1.5 8C1.5 11.59 4.41 14.5 8 14.5C11.59 14.5 14.5 11.59 14.5 8C14.5 4.41 11.59 1.5 8 1.5ZM8.75 11.25H7.25V9.75H8.75V11.25ZM8.75 8.25H7.25V4.75H8.75V8.25Z" fill="#CC1016"/>
+        <svg className={iconClass} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M8 2L2 8V16L8 22H16L22 16V8L16 2H8ZM18 13H6V11H18V13Z" fill="currentColor"/>
         </svg>
       );
 
     case 'signal-success':
       return (
-        <svg className={iconClass} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M8 1.5C4.41 1.5 1.5 4.41 1.5 8C1.5 11.59 4.41 14.5 8 14.5C11.59 14.5 14.5 11.59 14.5 8C14.5 4.41 11.59 1.5 8 1.5ZM6.75 10.94L3.81 8L4.87 6.94L6.75 8.81L11.13 4.44L12.19 5.5L6.75 10.94Z" fill="#057642"/>
-        </svg>
-      );
-
-    case 'send':
-      return (
-        <svg className={iconClass} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M2 2L14 8L2 14V9.5L10 8L2 6.5V2Z" fill="currentColor"/>
-        </svg>
-      );
-
-    case 'check':
-      return (
-        <svg className={iconClass} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M13.5 4L6 11.5L2.5 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      );
-
-    case 'close':
-      return (
-        <svg className={iconClass} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      );
-
-    case 'arrow-left':
-      return (
-        <svg className={iconClass} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      );
-
-    case 'arrow-down':
-      return (
-        <svg className={iconClass} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      );
-
-    case 'arrow-up':
-      return (
-        <svg className={iconClass} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 10L8 6L4 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      );
-
-    case 'chevron-down':
-      return (
-        <svg className={iconClass} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      );
-
-    case 'thumbs-up-fill':
-      return (
-        <svg className={iconClass} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M4.5 6.5V14H2.5V6.5H4.5ZM14 7.5C14 6.67 13.33 6 12.5 6H9.5L10 3.5C10.04 3.33 10.02 3.16 9.95 3L9.87 2.78C9.58 2.11 8.83 1.82 8.16 2.11L7.91 2.21L4.91 5.21C4.66 5.46 4.5 5.81 4.5 6.19V13C4.5 13.83 5.17 14.5 6 14.5H11.5C12.15 14.5 12.7 14.06 12.87 13.44L14.43 8.44C14.47 8.3 14.5 8.15 14.5 8V7.5H14Z" fill="currentColor"/>
-        </svg>
-      );
-
-    case 'thumbs-up-outline':
-      return (
-        <svg className={iconClass} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M4.5 6.5V14M4.5 6.5H2.5V14H4.5M4.5 6.5C4.5 5.81 4.66 5.46 4.91 5.21L7.91 2.21L8.16 2.11C8.83 1.82 9.58 2.11 9.87 2.78L9.95 3C10.02 3.16 10.04 3.33 10 3.5L9.5 6H12.5C13.33 6 14 6.67 14 7.5V8C14 8.15 13.97 8.3 13.93 8.44L12.37 13.44C12.2 14.06 11.65 14.5 11 14.5H6C5.17 14.5 4.5 13.83 4.5 13V6.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      );
-
-    case 'thumbs-down-fill':
-      return (
-        <svg className={iconClass} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M11.5 9.5V2H13.5V9.5H11.5ZM2 8.5C2 9.33 2.67 10 3.5 10H6.5L6 12.5C5.96 12.67 5.98 12.84 6.05 13L6.13 13.22C6.42 13.89 7.17 14.18 7.84 13.89L8.09 13.79L11.09 10.79C11.34 10.54 11.5 10.19 11.5 9.81V3C11.5 2.17 10.83 1.5 10 1.5H4.5C3.85 1.5 3.3 1.94 3.13 2.56L1.57 7.56C1.53 7.7 1.5 7.85 1.5 8V8.5H2Z" fill="currentColor"/>
-        </svg>
-      );
-
-    case 'thumbs-down-outline':
-      return (
-        <svg className={iconClass} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M11.5 9.5V2M11.5 9.5H13.5V2H11.5M11.5 9.5C11.5 10.19 11.34 10.54 11.09 10.79L8.09 13.79L7.84 13.89C7.17 14.18 6.42 13.89 6.13 13.22L6.05 13C5.98 12.84 5.96 12.67 6 12.5L6.5 10H3.5C2.67 10 2 9.33 2 8.5V8C2 7.85 2.03 7.7 2.07 7.56L3.63 2.56C3.8 1.94 4.35 1.5 5 1.5H10C10.83 1.5 11.5 2.17 11.5 3V9.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      );
-
-    case 'attachment':
-      return (
-        <svg className={iconClass} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path fillRule="evenodd" clipRule="evenodd" d="M16.8333 8.33329V13.3333C16.8333 15.6345 14.9678 17.5 12.6666 17.5C10.3655 17.5 8.49996 15.6345 8.49996 13.3333V6.66663C8.49996 5.28591 9.61925 4.16663 11 4.16663C12.3807 4.16663 13.5 5.28591 13.5 6.66663V12.5C13.5 13.0523 13.0522 13.5 12.5 13.5C11.9477 13.5 11.5 13.0523 11.5 12.5V7.49996H9.99996V12.5C9.99996 13.8807 11.1192 15 12.5 15C13.8807 15 15 13.8807 15 12.5V6.66663C15 4.45749 13.2091 2.66663 11 2.66663C8.79082 2.66663 6.99996 4.45749 6.99996 6.66663V13.3333C6.99996 16.4629 9.53711 19 12.6666 19C15.7962 19 18.3333 16.4629 18.3333 13.3333V8.33329H16.8333Z" fill="currentColor"/>
-        </svg>
-      );
-
-    case 'document':
-      return (
-        <svg className={iconClass} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M9.5 1.5H4C3.45 1.5 3 1.95 3 2.5V13.5C3 14.05 3.45 14.5 4 14.5H12C12.55 14.5 13 14.05 13 13.5V5.5L9.5 1.5ZM9.5 5.5V2.5L12 5.5H9.5Z" fill="currentColor"/>
-        </svg>
-      );
-
-    case 'linkedin-bug':
-      return (
-        <svg className={iconClass} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M13.632 13.635h-2.37V9.922c0-.886-.018-2.025-1.234-2.025-1.235 0-1.424.964-1.424 1.96v3.778h-2.37V6H8.51v1.04h.03c.318-.6 1.092-1.233 2.247-1.233 2.4 0 2.845 1.58 2.845 3.637v4.188zM3.558 4.955c-.762 0-1.376-.617-1.376-1.377 0-.758.614-1.375 1.376-1.375.76 0 1.376.617 1.376 1.375 0 .76-.617 1.377-1.376 1.377zm1.188 8.68H2.37V6h2.376v7.635zM14.816 0H1.18C.528 0 0 .516 0 1.153v13.694C0 15.484.528 16 1.18 16h13.635c.652 0 1.185-.516 1.185-1.153V1.153C16 .516 15.467 0 14.815 0z" fill="#0A66C2"/>
-        </svg>
-      );
-
-    case 'signal-ai':
-      return (
-        <svg className={iconClass} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M8 2L9.5 6.5L14 8L9.5 9.5L8 14L6.5 9.5L2 8L6.5 6.5L8 2Z" fill="#0A66C2"/>
+        <svg className={iconClass} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2C6.5 2 2 6.5 2 12C2 17.5 6.5 22 12 22C17.5 22 22 17.5 22 12C22 6.5 17.5 2 12 2ZM10.8 17L7 13.2L8.4 11.8L10.6 14L15.4 8H18L10.8 17Z" fill="currentColor"/>
         </svg>
       );
 
     case 'signal-notice':
       return (
-        <svg className={iconClass} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M8 1.5C4.41 1.5 1.5 4.41 1.5 8C1.5 11.59 4.41 14.5 8 14.5C11.59 14.5 14.5 11.59 14.5 8C14.5 4.41 11.59 1.5 8 1.5ZM8.75 11.25H7.25V9.75H8.75V11.25ZM8.75 8.25H7.25V4.75H8.75V8.25Z" fill="#F5A623"/>
+        <svg className={iconClass} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 3H6C4.3 3 3 4.3 3 6V18C3 19.7 4.3 21 6 21H18C19.7 21 21 19.7 21 18V6C21 4.3 19.7 3 18 3ZM14 18H13C11.3 18 10 16.6 10 15C10 14.8 10 14.5 10.1 14.2L11.2 10H13.3L12 14.7C11.9 15.4 12.3 16 13 16H14V18ZM13 8.2C12.3 8.2 11.8 7.7 11.8 7C11.8 6.3 12.4 5.7 13 5.7C13.7 5.7 14.2 6.3 14.2 7C14.2 7.7 13.7 8.2 13 8.2Z" fill="currentColor"/>
+        </svg>
+      );
+
+    case 'signal-ai':
+      return (
+        <svg className={iconClass} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M21.5 12C21.5 11.5 21.1 11 20.6 11C16.6 10.6 13.4 7.4 13 3.4C12.9 2.9 12.5 2.5 12 2.5C11.5 2.5 11 2.9 11 3.4C10.6 7.4 7.4 10.6 3.4 11C2.9 11.1 2.5 11.5 2.5 12C2.5 12.5 2.9 12.9 3.4 13C7.4 13.4 10.6 16.6 11 20.6C11.1 21.1 11.5 21.5 12 21.5C12.5 21.5 13 21.1 13 20.6C13.4 16.6 16.6 13.4 20.6 13C21.1 12.9 21.5 12.5 21.5 12Z" fill="currentColor"/>
+        </svg>
+      );
+
+    case 'linkedin-bug':
+      return (
+        <svg className={iconClass} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20.5 2H3.5C2.7 2 2 2.7 2 3.5V20.5C2 21.3 2.7 22 3.5 22H20.5C21.3 22 22 21.3 22 20.5V3.5C22 2.7 21.3 2 20.5 2ZM8 19H5V10H8V19ZM6.5 8.2C5.5 8.2 4.7 7.4 4.7 6.4C4.7 5.4 5.5 4.6 6.5 4.6C7.5 4.6 8.3 5.4 8.3 6.4C8.3 7.5 7.5 8.2 6.5 8.2ZM19 19H16V14.3C16 12.9 15.4 12.4 14.6 12.4C13.8 12.4 13 13.1 13 14.4V19H10V10H12.9V11.3C13.3 10.7 14.2 9.9 15.6 9.9C17.1 9.9 19 10.8 19 13.6V19Z" fill="currentColor"/>
+        </svg>
+      );
+
+    case 'send':
+      return (
+        <svg className={iconClass} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 3L6.5 10.5L16 12L6.5 13.5L3 21L22 12L3 3Z" fill="currentColor"/>
+        </svg>
+      );
+
+    case 'check':
+      return (
+        <svg className={iconClass} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18.6 4L9.7 16.9L5.4 12.6L4 14L10 20L21 4H18.6Z" fill="currentColor"/>
+        </svg>
+      );
+
+    case 'close':
+      return (
+        <svg className={iconClass} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 5.4L18.6 4L12 10.6L5.4 4L4 5.4L10.6 12L4 18.6L5.4 20L12 13.4L18.6 20L20 18.6L13.4 12L20 5.4Z" fill="currentColor"/>
+        </svg>
+      );
+
+    case 'arrow-left':
+      return (
+        <svg className={iconClass} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6.6 4L1 12L6.6 20H9L4.1 13H22V11H4.1L9 4H6.6Z" fill="currentColor"/>
+        </svg>
+      );
+
+    case 'arrow-down':
+      return (
+        <svg className={iconClass} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 16.9L12 22.5L20 16.9V14.5L13 19.4V1.5H11V19.4L4 14.5V16.9Z" fill="currentColor"/>
+        </svg>
+      );
+
+    case 'arrow-up':
+      return (
+        <svg className={iconClass} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 6.6L12 1L4 6.6V9L11 4.1V22H13V4.1L20 9V6.6Z" fill="currentColor"/>
+        </svg>
+      );
+
+    case 'chevron-down':
+      return (
+        <svg className={iconClass} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2 10.5L12 18L22 10.5V8L12 15.5L2 8V10.5Z" fill="currentColor"/>
+        </svg>
+      );
+
+    case 'thumbs-up-fill':
+      return (
+        <svg className={iconClass} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18.5 11L14.2 6.7C13.3 5.8 12.6 4.7 12.2 3.4L11.8 2C11.6 1.4 11.1 1 10.4 1C9.6 1 9 1.6 9 2.4V3.7C9 4.5 9.1 5.4 9.4 6.2L10.3 9H4.1C3 9 2 10 2 11.1C2 11.8 2.4 12.5 2.9 12.9C2.3 13.3 2 13.9 2 14.6C2 15.5 2.5 16.2 3.3 16.6C3.1 16.9 3 17.3 3 17.6C3 18.7 3.9 19.7 5 19.7V19.8C5 21 6 22 7.1 22H14.6C15.8 22 17.1 21.7 18.2 21.2L18.5 21H21V11H18.5Z" fill="currentColor"/>
+        </svg>
+      );
+
+    case 'thumbs-up-outline':
+      return (
+        <svg className={iconClass} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M19.5 11L15.6 7.1C14.8 6.3 14.3 5.4 13.9 4.4L13.4 2.9C13 1.8 11.9 1 10.8 1C9.2 1 8 2.2 8 3.8V4.9C8 5.9 8.2 6.8 8.5 7.7L8.9 9H4.1C3 9 2 10 2 11.1C2 11.8 2.4 12.5 2.9 12.9C2.3 13.3 2 13.9 2 14.6C2 15.5 2.5 16.2 3.3 16.6C3.1 16.9 3 17.3 3 17.6C3 18.7 3.9 19.7 5 19.7V19.8C5 21 6 22 7.1 22H14.6C15.8 22 17.1 21.7 18.2 21.2L18.5 21H21V11H19.5ZM19 19H18L17.3 19.4C16.5 19.8 15.5 20 14.6 20H7.7C7.3 20 6.9 19.7 6.7 19.3L6.4 18.4L5.6 18C5.2 17.9 4.9 17.4 5 17L5.2 16L4.4 15.3C4.1 14.9 4 14.4 4.3 14L5 12.9L4.3 11.8C4 11.4 4.2 11 4.6 11H11.6L10.3 7.1C10.1 6.4 10 5.6 10 4.9V3.8C10 3.3 10.3 3 10.8 3C11.1 3 11.4 3.2 11.5 3.5L12 5C12.4 6.3 13.2 7.5 14.2 8.5L18.7 13H19V19Z" fill="currentColor"/>
+        </svg>
+      );
+
+    case 'thumbs-down-fill':
+      return (
+        <svg className={iconClass} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M21 13V3H18.5L18.2 2.8C17.1 2.3 15.9 2 14.6 2H7.1C6 2 5 3 5 4.1V4.2C3.9 4.3 3 5.2 3 6.3C3 6.7 3.1 7 3.3 7.3C2.5 7.7 2 8.5 2 9.4C2 10.1 2.4 10.8 2.9 11.1C2.3 11.5 2 12.1 2 12.9C2 14 3 15 4.1 15H10.3L9.4 17.8C9.1 18.6 9 19.4 9 20.3V21.6C9 22.4 9.6 23 10.4 23C11 23 11.6 22.6 11.8 22L12.3 20.5C12.7 19.3 13.4 18.2 14.3 17.2L18.6 12.9H21V13Z" fill="currentColor"/>
+        </svg>
+      );
+
+    case 'thumbs-down-outline':
+      return (
+        <svg className={iconClass} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M21 13V3H18.5L18.2 2.8C17.1 2.3 15.9 2 14.6 2H7.1C6 2 5 3 5 4.1V4.2C3.9 4.3 3 5.2 3 6.3C3 6.7 3.1 7 3.3 7.3C2.5 7.7 2 8.5 2 9.4C2 10.1 2.4 10.8 2.9 11.1C2.3 11.5 2 12.1 2 12.9C2 14 3 15 4.1 15H10.3L9.4 17.8C9.1 18.6 9 19.4 9 20.3V21.6C9 22.4 9.6 23 10.4 23C11 23 11.6 22.6 11.8 22L12.3 20.5C12.7 19.3 13.4 18.2 14.3 17.2L18.6 12.9H21V13Z" fill="currentColor"/>
+        </svg>
+      );
+
+    case 'attachment':
+      return (
+        <svg className={iconClass} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20.5 10.5L14.1 17C13.5 17.6 12.7 17.9 12 17.9C11.2 17.9 10.5 17.6 9.9 17C9.3 16.4 9 15.6 9 14.8C9 14 9.3 13.3 9.9 12.7L15.6 7L17 8.4L11.3 14.1C11.1 14.3 11 14.6 11 14.8C11 15.1 11.1 15.3 11.3 15.5C11.5 15.7 11.8 15.8 12 15.8C12.3 15.8 12.5 15.7 12.7 15.5L19.1 9.1C19.7 8.5 20 7.8 20 7C20 6.2 19.7 5.5 19.1 4.9C18.5 4.3 17.8 4 17 4C16.2 4 15.5 4.3 14.9 4.9L4.9 14.9C4.3 15.5 4 16.2 4 17C4 17.8 4.3 18.5 4.9 19.1C5.5 19.7 6.2 20 7 20C7.8 20 8.5 19.7 9.1 19.1L9.8 18.4L11.2 19.8L10.5 20.5C9.5 21.5 8.2 22 7 22C5.7 22 4.4 21.5 3.5 20.5C2.5 19.5 2 18.2 2 17C2 15.7 2.5 14.4 3.5 13.5L13.5 3.5C14.5 2.5 15.8 2 17 2C18.3 2 19.6 2.5 20.5 3.5C21.5 4.5 22 5.8 22 7C22 8.3 21.5 9.6 20.5 10.5Z" fill="currentColor"/>
         </svg>
       );
 
     case 'undo':
       return (
-        <svg className={iconClass} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M6 4L2 8L6 12M2 8H10C11.66 8 13 9.34 13 11V11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <svg className={iconClass} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 4L14 1H11.6L9 5L11.6 9H14L12 6C15.8 6 19 9.2 19 13C19 16.9 15.9 20 12 20C8.1 20 5 16.9 5 13C5 11.5 5.5 10.1 6.3 9H3.9C3.3 10.2 3 11.6 3 13C3 18 7 22 12 22C17 22 21 18 21 13C21 8 17 4 12 4Z" fill="currentColor"/>
+        </svg>
+      );
+
+    case 'document':
+      return (
+        <svg className={iconClass} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M15.5 1.5H4V21.5H20V6L15.5 1.5ZM6 19.5V3.5H14V7.5H18V19.5H6Z" fill="currentColor"/>
         </svg>
       );
 
     case 'trash':
       return (
-        <svg className={iconClass} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M3 4H13M12 4V13C12 13.55 11.55 14 11 14H5C4.45 14 4 13.55 4 13V4M6 4V3C6 2.45 6.45 2 7 2H9C9.55 2 10 2.45 10 3V4M6.5 7V11M9.5 7V11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <svg className={iconClass} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 4V5H4V4C4 3.4 4.4 3 5 3H9C9 2.4 9.4 2 10 2H14C14.6 2 15 2.4 15 3H19C19.6 3 20 3.4 20 4ZM5 6H19V19C19 20.7 17.7 22 16 22H8C6.3 22 5 20.7 5 19V6ZM14 18H15V8H14V18ZM9 18H10V8H9V18Z" fill="currentColor"/>
         </svg>
       );
 
     case 'download':
       return (
-        <svg className={iconClass} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M8 10.5L5 7.5M8 10.5L11 7.5M8 10.5V3M14 10.5V13C14 13.55 13.55 14 13 14H3C2.45 14 2 13.55 2 13V10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <svg className={iconClass} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M21 13.5V18.5C21 20.2 19.7 21.5 18 21.5H6C4.3 21.5 3 20.2 3 18.5V13.5H5V18.5C5 19.1 5.4 19.5 6 19.5H18C18.6 19.5 19 19.1 19 18.5V13.5H21ZM17 12.9V10.5L13 13.3V2.5H11V13.3L7 10.5V12.9L12 16.5L17 12.9Z" fill="currentColor"/>
         </svg>
       );
 
     case 'messages':
       return (
-        <svg className={iconClass} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M14 2H2C1.45 2 1 2.45 1 3V11C1 11.55 1.45 12 2 12H4V14.5L7.5 12H14C14.55 12 15 11.55 15 11V3C15 2.45 14.55 2 14 2Z" fill="currentColor"/>
+        <svg className={iconClass} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M16 3H8C4.134 3 1 6.134 1 10C1 13.866 4.134 17 8 17H12V21L20.16 15.605C22 14.308 23 12.228 23 10C23 6.134 19.866 3 16 3ZM8 11.25C7.31 11.25 6.75 10.69 6.75 10C6.75 9.31 7.31 8.75 8 8.75C8.69 8.75 9.25 9.31 9.25 10C9.25 10.69 8.69 11.25 8 11.25ZM12 11.25C11.31 11.25 10.75 10.69 10.75 10C10.75 9.31 11.31 8.75 12 8.75C12.69 8.75 13.25 9.31 13.25 10C13.25 10.69 12.69 11.25 12 11.25ZM16 11.25C15.31 11.25 14.75 10.69 14.75 10C14.75 9.31 15.31 8.75 16 8.75C16.69 8.75 17.25 9.31 17.25 10C17.25 10.69 16.69 11.25 16 11.25Z" fill="currentColor"/>
         </svg>
       );
 
     case 'placeholder':
     default:
       return (
-        <svg className={iconClass} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5" strokeDasharray="2 2"/>
+        <svg className={iconClass} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 3H6C4.3 3 3 4.3 3 6V18C3 19.7 4.3 21 6 21H18C19.7 21 21 19.7 21 18V6C21 4.3 19.7 3 18 3ZM6 5H18C18.1 5 18.2 5 18.2 5L12 11.3L5.8 5C5.8 5 5.9 5 6 5ZM5 18V6C5 5.9 5 5.8 5 5.8L11.2 12L5 18.2C5 18.2 5 18.1 5 18ZM18 19H6C5.9 19 5.8 19 5.8 19L12 12.8L18.2 19C18.2 19 18.1 19 18 19ZM19 18C19 18.1 19 18.2 19 18.2L12.7 12L19 5.8C19 5.9 19 6 19 6V18Z" fill="currentColor"/>
         </svg>
       );
   }

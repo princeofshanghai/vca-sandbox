@@ -1,5 +1,4 @@
 import { VcaIcon } from '../icons';
-import { ButtonIcon } from '../buttons';
 import { ButtonLink } from '../buttons';
 import { cn } from '@/utils';
 
@@ -10,10 +9,8 @@ export type AgentStatusProps = {
   statusLabel?: string;
   description?: string;
   actionLabel?: string;
-  showUndo?: boolean;
   showDescription?: boolean;
   showAction?: boolean;
-  onUndo?: () => void;
   onAction?: () => void;
   className?: string;
 };
@@ -28,20 +25,16 @@ export const AgentStatus = ({
   statusLabel = 'Connected to live chat',
   description = 'Our team is joining soon for live chat. AI will not be responding at this moment.',
   actionLabel = 'Cancel',
-  showUndo = true,
   showDescription = true,
   showAction = true,
-  onUndo,
   onAction,
   className,
 }: AgentStatusProps) => {
   
   return (
-    <div className={cn('flex flex-col gap-[10px] items-start', className)}>
-      <div className="bg-[#f6fbff] flex flex-col gap-vca-lg p-vca-lg rounded-tl-vca-md rounded-tr-vca-md rounded-br-vca-md rounded-bl-vca-sm w-full">
-        {/* Header - Status with icon/spinner and undo button */}
-        <div className="flex items-center justify-between w-full">
-          <div className="flex gap-vca-s items-start flex-1">
+    <div className={cn('bg-vca-surface-tint flex flex-col gap-vca-lg p-vca-lg rounded-tl-vca-md rounded-tr-vca-md rounded-br-vca-md rounded-bl-vca-sm', className)}>
+      {/* Header - Status with icon/spinner */}
+      <div className="flex gap-vca-s items-center">
             {/* Progress Indicator (connecting) or Success Icon */}
             {state === 'connecting' ? (
               <div className="relative w-5 h-5 shrink-0">
@@ -53,34 +46,21 @@ export const AgentStatus = ({
                 </div>
               </div>
             ) : (
-              <VcaIcon icon="check" size="md" className="text-vca-text shrink-0" />
+          <VcaIcon icon="signal-success" size="md" className="text-vca-text-positive shrink-0" />
             )}
             
             {/* Status Label */}
             <div className="flex flex-col justify-center flex-1">
-              <p className="font-vca-text text-[14px] leading-[18px] font-semibold text-vca-text">
+          <p className="font-vca-text text-vca-small-bold text-vca-text">
                 {statusLabel}
               </p>
             </div>
-          </div>
-          
-          {/* Optional Undo Button */}
-          {showUndo && (
-            <ButtonIcon 
-              type="tertiary"
-              size="md"
-              emphasis={false}
-              icon="undo"
-              onClick={onUndo}
-              ariaLabel="Undo"
-            />
-          )}
         </div>
 
         {/* Optional Description */}
         {showDescription && (
-          <div className="flex gap-[10px] items-start w-full">
-            <p className="font-vca-text text-[14px] leading-[21px] text-vca-text flex-1">
+        <div className="flex items-start w-full">
+          <p className="font-vca-text text-vca-small-open text-vca-text w-full">
               {description}
             </p>
           </div>
@@ -94,7 +74,6 @@ export const AgentStatus = ({
             {actionLabel}
           </ButtonLink>
         )}
-      </div>
     </div>
   );
 };

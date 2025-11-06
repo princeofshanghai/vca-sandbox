@@ -27,7 +27,7 @@ const FlowPreviewView = () => {
         {/* Chat panel will appear in bottom-right corner */}
         <div className="absolute bottom-4 right-4 w-[400px] h-[600px] bg-white rounded-t-lg shadow-vca-lg border border-gray-200">
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <h3 className="text-sm font-semibold text-gray-900">Help</h3>
+            <h3>Help</h3>
             <button className="text-gray-400 hover:text-gray-600">×</button>
           </div>
           <div className="p-4 text-center text-gray-500">

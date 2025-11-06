@@ -6,7 +6,7 @@ interface SidebarProps {
 
 const Sidebar = ({ children }: SidebarProps) => {
   return (
-    <aside className="w-[280px] h-full border-r border-gray-200 bg-white overflow-y-auto">
+    <aside className="w-[240px] h-full border-r border-gray-200 bg-white overflow-y-auto scrollbar-thin">
       <div className="px-4 pt-8 pb-4">
         {children}
       </div>

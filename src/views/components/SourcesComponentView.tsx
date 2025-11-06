@@ -3,13 +3,13 @@ import { Sources } from '@/components/vca-components/sources';
 const SourcesComponentView = () => {
   return (
     <div className="pt-16">
-      <h1 className="text-4xl font-medium text-gray-900 mb-2 tracking-tight">Sources</h1>
+      <h1 className="mb-2">Sources</h1>
       <p className="text-md text-gray-500 mb-12">List of source citations and references with heading for AI-generated content.</p>
       
       <div className="space-y-12">
         {/* Default - 3 Sources */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Default (3 Sources)</h2>
+          <h2 className="mb-4">Default (3 Sources)</h2>
           <p className="text-sm text-gray-500 mb-3">Standard sources list with three references.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
@@ -26,7 +26,7 @@ const SourcesComponentView = () => {
 
         {/* Single Source */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Single Source</h2>
+          <h2 className="mb-4">Single Source</h2>
           <p className="text-sm text-gray-500 mb-3">Sources list with one reference.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
@@ -41,7 +41,7 @@ const SourcesComponentView = () => {
 
         {/* Two Sources */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Two Sources</h2>
+          <h2 className="mb-4">Two Sources</h2>
           <p className="text-sm text-gray-500 mb-3">Sources list with two references.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
@@ -57,7 +57,7 @@ const SourcesComponentView = () => {
 
         {/* Mixed States */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Mixed Link States</h2>
+          <h2 className="mb-4">Mixed Link States</h2>
           <p className="text-sm text-gray-500 mb-3">Sources with different link states (enabled, visited).</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
@@ -74,7 +74,7 @@ const SourcesComponentView = () => {
 
         {/* In Context with AI Message */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">In Context</h2>
+          <h2 className="mb-4">In Context</h2>
           <p className="text-sm text-gray-500 mb-3">Example showing Sources component after an AI response.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl space-y-4">
@@ -93,9 +93,9 @@ const SourcesComponentView = () => {
 
         {/* Usage Notes */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Usage Notes</h2>
+          <h2 className="mb-4">Usage Notes</h2>
           <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <div className="space-y-3 text-sm text-gray-700">
+            <div className="space-y-3">
               <p><span className="font-medium">Purpose:</span> Display citations and references for AI-generated content to build trust and transparency.</p>
               <p><span className="font-medium">Heading:</span> "Sources" label in 12px semibold gray text.</p>
               <p><span className="font-medium">Link List:</span> Uses SourceLink components with 8px vertical spacing.</p>

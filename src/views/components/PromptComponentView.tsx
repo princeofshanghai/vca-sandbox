@@ -3,13 +3,13 @@ import { Prompt } from '@/components/vca-components/prompt';
 const PromptComponentView = () => {
   return (
     <div className="pt-16">
-      <h1 className="text-4xl font-medium text-gray-900 mb-2 tracking-tight">Prompt</h1>
+      <h1 className="mb-2">Prompt</h1>
       <p className="text-md text-gray-500 mb-12">Clickable suggestion chips for AI-powered prompts and quick actions.</p>
       
       <div className="space-y-12">
         {/* Without AI Icon */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Default</h2>
+          <h2 className="mb-4">Default</h2>
           <p className="text-sm text-gray-500 mb-3">Basic prompt without AI icon.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
@@ -23,7 +23,7 @@ const PromptComponentView = () => {
 
         {/* With AI Icon */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">With AI Icon</h2>
+          <h2 className="mb-4">With AI Icon</h2>
           <p className="text-sm text-gray-500 mb-3">Prompt with sparkle AI icon to indicate AI-generated suggestion.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
@@ -37,7 +37,7 @@ const PromptComponentView = () => {
 
         {/* Multiple Prompts Example */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Multiple Prompts</h2>
+          <h2 className="mb-4">Multiple Prompts</h2>
           <p className="text-sm text-gray-500 mb-3">Example showing multiple prompt suggestions in a grid layout.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
@@ -65,7 +65,7 @@ const PromptComponentView = () => {
 
         {/* In Context Example */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">In Context</h2>
+          <h2 className="mb-4">In Context</h2>
           <p className="text-sm text-gray-500 mb-3">Example showing prompts after an AI message as suggested follow-ups.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl space-y-4">
@@ -92,7 +92,7 @@ const PromptComponentView = () => {
 
         {/* Long Text Example */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Long Text</h2>
+          <h2 className="mb-4">Long Text</h2>
           <p className="text-sm text-gray-500 mb-3">Prompt with longer text that wraps to multiple lines.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
@@ -106,9 +106,9 @@ const PromptComponentView = () => {
 
         {/* Usage Notes */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Usage Notes</h2>
+          <h2 className="mb-4">Usage Notes</h2>
           <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <div className="space-y-3 text-sm text-gray-700">
+            <div className="space-y-3">
               <p><span className="font-medium">Purpose:</span> Suggest follow-up questions, quick actions, or common queries to guide users.</p>
               <p><span className="font-medium">AI Icon:</span> Optional sparkle icon indicates AI-generated suggestions.</p>
               <p><span className="font-medium">Interactive:</span> Clickable button with hover state (lighter blue background).</p>

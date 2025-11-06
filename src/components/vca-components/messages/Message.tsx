@@ -70,13 +70,14 @@ const InlineFeedback = ({ className, action = true, type = 'positive' }: InlineF
         <VcaIcon 
           icon={isNegative ? 'signal-error' : 'signal-success'} 
           size="sm"
+          className={textColor}
         />
-        <p className={cn('font-vca-text text-vca-xsmall-open whitespace-nowrap', textColor)}>
+        <p className={`font-vca-text text-vca-xsmall-open whitespace-nowrap ${textColor}`}>
           {message}
         </p>
       </div>
       {action && isNegative && (
-        <p className={cn('font-vca-text text-vca-xsmall-bold-open underline whitespace-nowrap', textColor)}>
+        <p className={`font-vca-text text-vca-xsmall-bold-open underline whitespace-nowrap ${textColor}`}>
           {actionText}
         </p>
       )}
@@ -112,7 +113,7 @@ export const Message = ({
   if (type === 'disclaimer') {
     return (
       <div className={cn('flex flex-col gap-vca-lg items-start', className)}>
-        <div className="flex flex-col gap-2 items-start w-full">
+        <div className="flex flex-col gap-vca-s items-start w-full">
           <p className="font-vca-text text-vca-small-open text-vca-text">
             {disclaimerText}
             <span className="font-vca-text text-vca-small-bold-open text-vca-link">Learn more</span>
@@ -142,7 +143,7 @@ export const Message = ({
   if (type === 'agent') {
     return (
       <div className={cn('flex gap-vca-s items-end', className)}>
-        <div className="flex flex-col gap-2 items-start grow pb-1">
+        <div className="flex flex-col gap-vca-s items-start grow pb-1">
           <div className="bg-vca-background-tint-soft flex flex-col gap-vca-lg items-start max-w-[320px] p-vca-lg rounded-br-vca-md rounded-tl-vca-md rounded-tr-vca-md">
             <p className="font-vca-text text-vca-small-open text-vca-text w-full">
               {agentText}
@@ -157,7 +158,7 @@ export const Message = ({
   // AI type - Plain message (no bubble)
   return (
     <div className={cn('flex flex-col gap-vca-lg items-start', className)}>
-      <div className="flex flex-col gap-2 items-start w-full">
+      <div className="flex flex-col gap-vca-s items-start w-full">
         <p className="font-vca-text text-vca-small-open text-vca-text w-full">
           {defaultText}
         </p>

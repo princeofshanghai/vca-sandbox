@@ -35,7 +35,7 @@ export const Header = ({
 }: HeaderProps) => {
   
   const borderClass = showPremiumBorder 
-    ? 'border-b-2 border-[#c37d16]' 
+    ? 'border-b-2 border-vca-premium-text-brand' 
     : 'border-b border-vca-border-faint';
   
   // Center-aligned layout
@@ -65,9 +65,9 @@ export const Header = ({
         {/* Title - center */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-vca-s">
           {showPremiumIcon && (
-            <VcaIcon icon="linkedin-bug" size="md" className="text-[#c37d16]" />
+            <VcaIcon icon="linkedin-bug" size="md" className="text-vca-premium" />
           )}
-          <h1 className="text-vca-large font-vca-display text-vca-text">
+          <h1 className="font-vca-display text-vca-heading-large text-vca-text">
             {title}
           </h1>
         </div>
@@ -120,9 +120,9 @@ export const Header = ({
         )}
         <div className="flex items-center gap-vca-s">
           {showPremiumIcon && (
-            <VcaIcon icon="linkedin-bug" size="md" className="text-[#c37d16]" />
+            <VcaIcon icon="linkedin-bug" size="md" className="text-vca-premium" />
           )}
-          <h1 className="text-vca-large font-vca-display text-vca-text">
+          <h1 className="font-vca-display text-vca-heading-large text-vca-text">
             {title}
           </h1>
         </div>

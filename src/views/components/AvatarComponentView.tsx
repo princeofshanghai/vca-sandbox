@@ -3,13 +3,13 @@ import { Avatar } from '@/components/vca-components/avatar';
 const AvatarComponentView = () => {
   return (
     <div className="pt-16">
-      <h1 className="text-4xl font-medium text-gray-900 mb-2 tracking-tight">Avatar</h1>
+      <h1 className="mb-2">Avatar</h1>
       <p className="text-md text-gray-500 mb-12">Circular profile images with optional status badges for showing user availability.</p>
       
       <div className="space-y-12">
         {/* Sizes */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Sizes</h2>
+          <h2 className="mb-4">Sizes</h2>
           <p className="text-sm text-gray-500 mb-3">Three sizes for different contexts.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <div className="flex items-end gap-4">
@@ -31,7 +31,7 @@ const AvatarComponentView = () => {
 
         {/* With Badge */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">With Status Badge</h2>
+          <h2 className="mb-4">With Status Badge</h2>
           <p className="text-sm text-gray-500 mb-3">Avatars with availability status indicators.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <div className="space-y-4">
@@ -58,7 +58,7 @@ const AvatarComponentView = () => {
 
         {/* Usage in Context */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Usage Examples</h2>
+          <h2 className="mb-4">Usage Examples</h2>
           <p className="text-sm text-gray-500 mb-3">Avatars used in different chat contexts.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <div className="space-y-4">

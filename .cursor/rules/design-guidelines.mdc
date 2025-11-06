@@ -1,7 +1,6 @@
 ---
-alwaysApply: true
+alwaysApply: false
 ---
-
 # Design Guidelines
 
 ## App Shell Design Principles

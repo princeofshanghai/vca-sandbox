@@ -1,6 +1,10 @@
 import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import Sidebar from '@/components/layout/Sidebar';
 import MainContent from '@/components/layout/MainContent';
+import TypographyView from './TypographyView';
+import ColorsView from './ColorsView';
+import SpacingView from './SpacingView';
+import RadiusView from './RadiusView';
 import MessageComponentView from './components/MessageComponentView';
 import InformationMessageComponentView from './components/InformationMessageComponentView';
 import RecommendationComponentView from './components/RecommendationComponentView';
@@ -28,6 +32,55 @@ const ComponentLibraryView = () => {
   return (
     <div className="flex h-full">
       <Sidebar>
+        {/* Foundations */}
+        <h2 className="text-sm font-medium text-gray-900 mb-4">Foundations</h2>
+        <div className="space-y-1 mb-6">
+          <Link 
+            to="/foundations/typography"
+            className={cn(
+              "block text-left px-3 py-2 text-2xs rounded transition-colors",
+              isActive('/foundations/typography')
+                ? "bg-gray-100 text-gray-900"
+                : "text-gray-700 hover:bg-gray-50"
+            )}
+          >
+            Typography
+          </Link>
+          <Link 
+            to="/foundations/colors"
+            className={cn(
+              "block text-left px-3 py-2 text-2xs rounded transition-colors",
+              isActive('/foundations/colors')
+                ? "bg-gray-100 text-gray-900"
+                : "text-gray-700 hover:bg-gray-50"
+            )}
+          >
+            Colors
+          </Link>
+          <Link 
+            to="/foundations/spacing"
+            className={cn(
+              "block text-left px-3 py-2 text-2xs rounded transition-colors",
+              isActive('/foundations/spacing')
+                ? "bg-gray-100 text-gray-900"
+                : "text-gray-700 hover:bg-gray-50"
+            )}
+          >
+            Spacing
+          </Link>
+          <Link 
+            to="/foundations/radius"
+            className={cn(
+              "block text-left px-3 py-2 text-2xs rounded transition-colors",
+              isActive('/foundations/radius')
+                ? "bg-gray-100 text-gray-900"
+                : "text-gray-700 hover:bg-gray-50"
+            )}
+          >
+            Border Radius
+          </Link>
+        </div>
+
         <h2 className="text-sm font-medium text-gray-900 mb-4">Components</h2>
         
         {/* Actions */}
@@ -245,6 +298,13 @@ const ComponentLibraryView = () => {
 
       <MainContent>
         <Routes>
+          {/* Foundation Routes */}
+          <Route path="typography" element={<TypographyView />} />
+          <Route path="colors" element={<ColorsView />} />
+          <Route path="spacing" element={<SpacingView />} />
+          <Route path="radius" element={<RadiusView />} />
+          
+          {/* Component Routes */}
           <Route index element={<Navigate to="/components/message" replace />} />
           <Route path="message" element={<MessageComponentView />} />
           <Route path="information-message" element={<InformationMessageComponentView />} />

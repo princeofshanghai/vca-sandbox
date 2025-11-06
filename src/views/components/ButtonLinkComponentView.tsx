@@ -3,13 +3,13 @@ import { ButtonLink } from '@/components/vca-components/buttons';
 const ButtonLinkComponentView = () => {
   return (
     <div className="pt-16">
-      <h1 className="text-4xl font-medium text-gray-900 mb-2 tracking-tight">Button Link</h1>
+      <h1 className="mb-2">Button Link</h1>
       <p className="text-md text-gray-500 mb-12">Text-only link buttons for inline actions without visual weight.</p>
       
       <div className="space-y-12">
         {/* All States */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">States</h2>
+          <h2 className="mb-4">States</h2>
           <p className="text-sm text-gray-500 mb-3">Link buttons with different interaction states.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <div className="space-y-4">
@@ -38,7 +38,7 @@ const ButtonLinkComponentView = () => {
 
         {/* Usage Examples */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Usage Examples</h2>
+          <h2 className="mb-4">Usage Examples</h2>
           <p className="text-sm text-gray-500 mb-3">Common use cases for link buttons in chat interfaces.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <div className="space-y-4">

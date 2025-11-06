@@ -3,13 +3,13 @@ import { ButtonIcon } from '@/components/vca-components/buttons';
 const ButtonIconComponentView = () => {
   return (
     <div className="pt-16">
-      <h1 className="text-4xl font-medium text-gray-900 mb-2 tracking-tight">Button Icon</h1>
+      <h1 className="mb-2">Button Icon</h1>
       <p className="text-md text-gray-500 mb-12">Circular icon-only buttons for compact actions without text labels.</p>
       
       <div className="space-y-12">
         {/* Small Size */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Small (32px)</h2>
+          <h2 className="mb-4">Small (32px)</h2>
           <p className="text-sm text-gray-500 mb-3">Compact icon buttons for tight spaces like input fields.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <div className="space-y-4">
@@ -78,7 +78,7 @@ const ButtonIconComponentView = () => {
 
         {/* Medium Size */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Medium (48px)</h2>
+          <h2 className="mb-4">Medium (48px)</h2>
           <p className="text-sm text-gray-500 mb-3">Larger icon buttons for more prominent actions.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <div className="space-y-4">

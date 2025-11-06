@@ -46,12 +46,12 @@ export const InformationMessage = ({
   if (type === 'response-stopped') {
     return (
       <div className={cn('flex flex-col gap-[10px] items-start', className)}>
-        <div className="bg-[#f6fbff] flex flex-col gap-vca-lg p-vca-lg rounded-tl-vca-md rounded-tr-vca-md rounded-br-vca-md rounded-bl-vca-sm w-full">
+        <div className="bg-vca-surface-tint flex flex-col gap-vca-lg p-vca-lg rounded-tl-vca-md rounded-tr-vca-md rounded-br-vca-md rounded-bl-vca-sm w-full">
           {/* Response Stopped Feedback */}
           <div className="flex gap-vca-xs items-center w-full">
             <div className="flex gap-vca-xs items-center flex-1">
               <VcaIcon icon="close" size="sm" className="text-vca-text-neutral" />
-              <p className="font-vca-text text-[14px] leading-[18px] text-vca-text-neutral">
+              <p className="font-vca-text text-vca-small text-vca-text-neutral">
                 Response stopped
               </p>
             </div>
@@ -64,24 +64,24 @@ export const InformationMessage = ({
   // Default variant - full featured
   return (
     <div className={cn('flex flex-col gap-[10px] items-start', className)}>
-      <div className="bg-[#f6fbff] flex flex-col gap-vca-lg p-vca-lg rounded-tl-vca-md rounded-tr-vca-md rounded-br-vca-md rounded-bl-vca-sm w-full">
+      <div className="bg-vca-surface-tint flex flex-col gap-vca-lg p-vca-lg rounded-tl-vca-md rounded-tr-vca-md rounded-br-vca-md rounded-bl-vca-sm w-full">
         {/* Optional Title */}
         {showTitle && (
           <div className="flex flex-col justify-center min-w-full">
-            <p className="font-vca-text text-[14px] leading-[18px] font-semibold text-vca-text">
+            <p className="font-vca-text text-vca-small-bold text-vca-text">
               {title}
             </p>
           </div>
         )}
 
         {/* Message Text */}
-        <p className="font-vca-text text-[14px] leading-[21px] text-vca-text">
+        <p className="font-vca-text text-vca-small-open text-vca-text">
           {message}
         </p>
 
         {/* Optional Divider */}
         {showDivider && (
-          <div className="h-0 w-full border-t border-[#8c8c8c]" />
+          <div className="h-0 w-full border-t border-vca-border-faint" />
         )}
 
         {/* Optional Response Stopped Feedback */}
@@ -89,7 +89,7 @@ export const InformationMessage = ({
           <div className="flex gap-vca-xs items-center w-full">
             <div className="flex gap-vca-xs items-center flex-1">
               <VcaIcon icon="close" size="sm" className="text-vca-text-neutral" />
-              <p className="font-vca-text text-[14px] leading-[18px] text-vca-text-neutral">
+              <p className="font-vca-text text-vca-small text-vca-text-neutral">
                 Response stopped
               </p>
             </div>

@@ -23,14 +23,18 @@ export const SourceLink = ({
   className,
 }: SourceLinkProps) => {
   
-  const linkClasses = cn(
-    'font-vca-text text-[12px] leading-[15px] underline inline-block',
-    'decoration-solid [text-decoration-skip-ink:none] [text-underline-position:from-font]',
-    state === 'enabled' && 'text-vca-text-meta',
-    (state === 'hover' || state === 'active') && 'text-[#004182]',
-    state === 'visited' && 'text-[#8443ce]',
-    className
-  );
+  // Split typography and color to avoid cn() conflicts
+  const baseTypography = 'font-vca-text text-vca-xsmall underline inline-block decoration-solid [text-decoration-skip-ink:none] [text-underline-position:from-font]';
+  
+  const colorClass = state === 'enabled' 
+    ? 'text-vca-text-meta'
+    : (state === 'hover' || state === 'active') 
+      ? 'text-vca-link-hover'
+      : 'text-vca-link-visited';
+  
+  const linkClasses = className 
+    ? `${baseTypography} ${colorClass} ${className}`
+    : `${baseTypography} ${colorClass}`;
 
   if (href) {
     return (

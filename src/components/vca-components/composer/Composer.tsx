@@ -42,11 +42,11 @@ export const Composer = ({
               onClick={onStop}
               className="flex gap-vca-xs items-center group"
             >
-              <p className="font-vca-text text-vca-small leading-[18px] text-vca-text-meta text-right">
+              <p className="font-vca-text text-vca-small text-vca-text-meta text-right">
                 Stop answering
               </p>
               <div className="w-[42px] h-[42px] flex items-center justify-center">
-                <div className="w-4 h-4 bg-vca-text-meta rounded-sm opacity-60 group-hover:opacity-80 transition-opacity" />
+                <div className="w-4 h-4 bg-vca-text-meta rounded-vca-sm opacity-60 group-hover:opacity-80 transition-opacity" />
               </div>
             </button>
           </div>
@@ -69,7 +69,7 @@ export const Composer = ({
                 value={value}
                 onChange={(e) => onChange?.(e.target.value)}
                 placeholder={placeholder}
-                className="flex-1 font-vca-text text-[14px] leading-[21px] text-vca-text resize-none outline-none bg-transparent max-h-[72px] overflow-auto"
+                className="flex-1 font-vca-text text-vca-small-open text-vca-text resize-none outline-none bg-transparent max-h-[72px] overflow-auto"
                 rows={4}
               />
               {/* Cursor blinker */}
@@ -121,14 +121,11 @@ export const Composer = ({
               
               {/* Input text or placeholder */}
               {state === 'typing' && value ? (
-                <p className="font-vca-text text-[14px] leading-[21px] text-vca-text whitespace-nowrap">
+                <p className="font-vca-text text-vca-small-open text-vca-text whitespace-nowrap">
                   {value}
                 </p>
               ) : (
-                <p className={cn(
-                  'font-vca-text text-[14px] leading-[21px] flex-1',
-                  isDisabled ? 'text-vca-text-disabled' : 'text-vca-text-meta'
-                )}>
+                <p className={`font-vca-text text-vca-small-open flex-1 ${isDisabled ? 'text-vca-text-disabled' : 'text-vca-text-meta'}`}>
                   {placeholder}
                 </p>
               )}

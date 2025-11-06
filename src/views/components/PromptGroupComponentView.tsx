@@ -3,13 +3,13 @@ import { PromptGroup } from '@/components/vca-components/prompt-group';
 const PromptGroupComponentView = () => {
   return (
     <div className="pt-16">
-      <h1 className="text-4xl font-medium text-gray-900 mb-2 tracking-tight">Prompt Group</h1>
+      <h1 className="mb-2">Prompt Group</h1>
       <p className="text-md text-gray-500 mb-12">Vertical list of prompt suggestions for guided AI interactions.</p>
       
       <div className="space-y-12">
         {/* Three Prompts */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Three Prompts</h2>
+          <h2 className="mb-4">Three Prompts</h2>
           <p className="text-sm text-gray-500 mb-3">Standard group with three suggested prompts.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
@@ -26,7 +26,7 @@ const PromptGroupComponentView = () => {
 
         {/* Two Prompts */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Two Prompts</h2>
+          <h2 className="mb-4">Two Prompts</h2>
           <p className="text-sm text-gray-500 mb-3">Group with two suggested prompts.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
@@ -42,7 +42,7 @@ const PromptGroupComponentView = () => {
 
         {/* Single Prompt */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Single Prompt</h2>
+          <h2 className="mb-4">Single Prompt</h2>
           <p className="text-sm text-gray-500 mb-3">Group with just one prompt.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
@@ -57,7 +57,7 @@ const PromptGroupComponentView = () => {
 
         {/* With AI Icons */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">With AI Icons</h2>
+          <h2 className="mb-4">With AI Icons</h2>
           <p className="text-sm text-gray-500 mb-3">Prompts with AI sparkle icons to indicate AI-generated suggestions.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
@@ -74,7 +74,7 @@ const PromptGroupComponentView = () => {
 
         {/* Mixed - Some with AI Icons */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Mixed Icons</h2>
+          <h2 className="mb-4">Mixed Icons</h2>
           <p className="text-sm text-gray-500 mb-3">Group with mixed AI icon states.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
@@ -91,7 +91,7 @@ const PromptGroupComponentView = () => {
 
         {/* In Context - After AI Message */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">In Context</h2>
+          <h2 className="mb-4">In Context</h2>
           <p className="text-sm text-gray-500 mb-3">Example showing prompt group after an AI message.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl space-y-4">
@@ -114,7 +114,7 @@ const PromptGroupComponentView = () => {
 
         {/* Longer Text Examples */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Longer Text</h2>
+          <h2 className="mb-4">Longer Text</h2>
           <p className="text-sm text-gray-500 mb-3">Prompts with longer text that wrap to multiple lines.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
@@ -130,9 +130,9 @@ const PromptGroupComponentView = () => {
 
         {/* Usage Notes */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Usage Notes</h2>
+          <h2 className="mb-4">Usage Notes</h2>
           <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <div className="space-y-3 text-sm text-gray-700">
+            <div className="space-y-3">
               <p><span className="font-medium">Purpose:</span> Group multiple prompt suggestions into a vertical stack for easier scanning and selection.</p>
               <p><span className="font-medium">Flexible Length:</span> Supports 1-N prompts (typically 2-4 for best UX).</p>
               <p><span className="font-medium">8px Spacing:</span> Consistent gap-vca-s (8px) between prompts.</p>

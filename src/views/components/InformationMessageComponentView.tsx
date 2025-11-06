@@ -3,13 +3,13 @@ import { InformationMessage } from '@/components/vca-components/information-mess
 const InformationMessageComponentView = () => {
   return (
     <div className="pt-16">
-      <h1 className="text-4xl font-medium text-gray-900 mb-2 tracking-tight">Information Message</h1>
+      <h1 className="mb-2">Information Message</h1>
       <p className="text-md text-gray-500 mb-12">Informational message card with optional title, divider, sources, and rating for additional context.</p>
       
       <div className="space-y-12">
         {/* Full Example */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Full Example</h2>
+          <h2 className="mb-4">Full Example</h2>
           <p className="text-sm text-gray-500 mb-3">Complete information message with all features enabled.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
@@ -33,7 +33,7 @@ const InformationMessageComponentView = () => {
 
         {/* Without Title */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Without Title</h2>
+          <h2 className="mb-4">Without Title</h2>
           <p className="text-sm text-gray-500 mb-3">Information message without optional title.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
@@ -54,7 +54,7 @@ const InformationMessageComponentView = () => {
 
         {/* Without Divider */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Without Divider</h2>
+          <h2 className="mb-4">Without Divider</h2>
           <p className="text-sm text-gray-500 mb-3">Information message without divider line.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
@@ -73,7 +73,7 @@ const InformationMessageComponentView = () => {
 
         {/* Response Stopped State */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Response Stopped</h2>
+          <h2 className="mb-4">Response Stopped</h2>
           <p className="text-sm text-gray-500 mb-3">Simplified variant showing that response generation was stopped.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
@@ -86,7 +86,7 @@ const InformationMessageComponentView = () => {
 
         {/* With Response Stopped Feedback (Default Type) */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">With Response Stopped Feedback</h2>
+          <h2 className="mb-4">With Response Stopped Feedback</h2>
           <p className="text-sm text-gray-500 mb-3">Default type with response stopped feedback included.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
@@ -106,7 +106,7 @@ const InformationMessageComponentView = () => {
 
         {/* Without Rating */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Without Rating</h2>
+          <h2 className="mb-4">Without Rating</h2>
           <p className="text-sm text-gray-500 mb-3">Information message without thumbs up/down rating buttons.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
@@ -125,7 +125,7 @@ const InformationMessageComponentView = () => {
 
         {/* Without Sources */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Without Sources</h2>
+          <h2 className="mb-4">Without Sources</h2>
           <p className="text-sm text-gray-500 mb-3">Information message without source citations.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
@@ -144,9 +144,9 @@ const InformationMessageComponentView = () => {
 
         {/* Usage Notes */}
         <div>
-          <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Usage Notes</h2>
+          <h2 className="mb-4">Usage Notes</h2>
           <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <div className="space-y-3 text-sm text-gray-700">
+            <div className="space-y-3">
               <p><span className="font-medium">Purpose:</span> Display supplementary information, tips, notifications, or context in chat conversations.</p>
               <p><span className="font-medium">Light Blue Background:</span> Uses #f6fbff to distinguish from regular messages.</p>
               <p><span className="font-medium">Two Types:</span> "default" (full-featured) and "response-stopped" (simplified).</p>

@@ -32,19 +32,21 @@ const Button = ({
   className
 }: ButtonProps) => {
   
-  // Base styles - always applied
+  // Base styles - always applied (typography removed to avoid cn() conflicts)
   const baseStyles = cn(
     'inline-flex items-center justify-center',
     'gap-vca-s',
     'h-[32px]',
     'px-vca-lg py-vca-xs',
     'rounded-vca-lg',
-    'font-vca-text text-[length:14px] leading-[18px] font-semibold tracking-[-0.15px]',
     'whitespace-nowrap',
     'transition-colors duration-150',
     'cursor-pointer',
     disabled && 'cursor-not-allowed'
   );
+  
+  // Typography classes applied separately to avoid cn() removing them
+  const textClasses = 'font-vca-text text-vca-small-bold tracking-[-0.15px]';
 
   // Variant styles based on type, emphasis, and disabled state
   const getVariantStyles = () => {
@@ -141,7 +143,7 @@ const Button = ({
       {icon && iconPosition === 'start' && (
         <VcaIcon icon={icon} size="sm" />
       )}
-      <span>{children}</span>
+      <span className={textClasses}>{children}</span>
       {icon && iconPosition === 'end' && (
         <VcaIcon icon={icon} size="sm" />
       )}

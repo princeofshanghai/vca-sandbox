@@ -25,7 +25,7 @@ export const Prompt = ({
       type="button"
       onClick={onClick}
       className={cn(
-        'bg-[#f6fbff] hover:bg-[#e8f3ff] flex gap-vca-xs items-center max-w-[320px] p-vca-md rounded-vca-md transition-colors cursor-pointer',
+        'bg-vca-surface-tint hover:bg-vca-surface-tint-hover flex gap-vca-xs items-center max-w-[320px] p-vca-md rounded-vca-md transition-colors cursor-pointer',
         className
       )}
     >
@@ -33,10 +33,10 @@ export const Prompt = ({
         <VcaIcon 
           icon="signal-ai" 
           size="md" 
-          className="text-vca-link hover:text-[#004182] shrink-0" 
+          className="text-vca-action shrink-0" 
         />
       )}
-      <p className="font-vca-text text-[14px] leading-[18px] font-semibold text-vca-link hover:text-[#004182] flex-1 text-left">
+      <p className="font-vca-text text-vca-small-bold text-vca-link hover:text-vca-link-hover flex-1 text-left">
         {text}
       </p>
     </button>
