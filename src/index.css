@@ -16,42 +16,42 @@
   
   /* Headings H1-H6 */
   h1 {
-    @apply text-4xl font-medium text-gray-900;
+    @apply text-4xl font-medium tracking-tight text-gray-900; /* 36px / 2.25rem, weight: 500 */
   }
   
   h2 {
-    @apply text-xl font-medium text-gray-900;
+    @apply text-xl font-medium tracking-tight text-gray-900; /* 20px / 1.25rem, weight: 500 */
   }
   
   h3 {
-    @apply text-base font-medium text-gray-900;
+    @apply text-lg font-medium tracking-tight text-gray-900; /* 16px / 1rem, weight: 500 */
   }
   
   h4 {
-    @apply text-sm font-semibold text-gray-900;
+    @apply text-base font-medium tracking-tight text-gray-900; /* 14px / 0.875rem, weight: 600 */
   }
   
   h5 {
-    @apply text-sm font-medium text-gray-700;
+    @apply text-sm font-medium text-gray-700; /* 14px / 0.875rem, weight: 500 */
   }
   
   h6 {
-    @apply text-xs font-semibold text-gray-700 uppercase tracking-wider;
+    @apply text-sm font-medium text-gray-700; /* 12px / 0.75rem, weight: 600 */
   }
   
   /* Body Text & Paragraphs */
   p {
-    @apply text-15 text-gray-900;
+    @apply text-15 text-gray-900 leading-relaxed; /* 15px / 0.9375rem (custom size) */
   }
   
   /* Links */
   a {
-    @apply text-blue-600 hover:text-blue-800 underline-offset-2 transition-colors;
+    @apply text-blue-600 hover:text-blue-800 underline-offset-2 transition-colors; /* 2px underline offset */
   }
   
   /* Inline Text Styles */
   strong, b {
-    @apply font-semibold text-gray-900;
+    @apply font-semibold text-gray-900; /* weight: 600 */
   }
   
   em, i {
@@ -59,73 +59,73 @@
   }
   
   small {
-    @apply text-sm text-gray-500;
+    @apply text-sm text-gray-500; /* 14px / 0.875rem */
   }
   
   /* Code & Preformatted Text */
   code {
-    @apply text-sm font-mono bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded;
+    @apply text-sm font-mono bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded; /* 14px, padding: 6px 4px, border-radius: 4px */
   }
   
   pre {
-    @apply bg-gray-100 text-gray-800 p-4 rounded-lg overflow-x-auto;
+    @apply bg-gray-100 text-gray-800 p-4 rounded-lg overflow-x-auto; /* padding: 16px, border-radius: 8px */
   }
   
   pre code {
-    @apply bg-transparent p-0;
+    @apply bg-transparent p-0; /* removes padding/background from code inside pre */
   }
   
   /* Blockquotes */
   blockquote {
-    @apply border-l-4 border-gray-300 pl-4 py-2 italic text-gray-700;
+    @apply border-l-4 border-gray-300 pl-4 py-2 italic text-gray-700; /* left border: 4px, padding-left: 16px, padding-y: 8px */
   }
   
   /* Lists */
   ul, ol {
-    @apply text-base text-gray-700 leading-relaxed;
+    @apply text-base text-gray-700 leading-relaxed; /* 16px / 1rem, line-height: 1.625 */
   }
   
   ul {
-    @apply list-disc list-inside;
+    @apply list-disc list-inside; /* bullet points */
   }
   
   ol {
-    @apply list-decimal list-inside;
+    @apply list-decimal list-inside; /* numbered list */
   }
   
   li {
-    @apply mb-1;
+    @apply mb-1; /* margin-bottom: 4px */
   }
   
   /* Horizontal Rule */
   hr {
-    @apply border-gray-200 my-8;
+    @apply border-gray-200 my-8; /* margin-top & bottom: 32px */
   }
 }
 
 @layer utilities {
   /* Modern slim scrollbar */
   .scrollbar-thin::-webkit-scrollbar {
-    width: 8px;
+    width: 8px; /* scrollbar width */
   }
   
   .scrollbar-thin::-webkit-scrollbar-track {
-    background: transparent;
+    background: transparent; /* transparent track background */
   }
   
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: theme('colors.gray.300');
-    border-radius: 4px;
+    background: theme('colors.gray.300'); /* gray-300: #D1D5DB */
+    border-radius: 4px; /* rounded scrollbar thumb */
   }
   
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: theme('colors.gray.400');
+    background: theme('colors.gray.400'); /* gray-400: #9CA3AF on hover */
   }
   
   /* Firefox */
   .scrollbar-thin {
-    scrollbar-width: thin;
-    scrollbar-color: theme('colors.gray.300') transparent;
+    scrollbar-width: thin; /* thin scrollbar for Firefox */
+    scrollbar-color: theme('colors.gray.300') transparent; /* thumb color, track color */
   }
 }
 

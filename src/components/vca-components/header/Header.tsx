@@ -67,7 +67,7 @@ export const Header = ({
           {showPremiumIcon && (
             <VcaIcon icon="linkedin-bug" size="md" className="text-vca-premium" />
           )}
-          <h1 className="font-vca-display text-vca-heading-large text-vca-text">
+          <h1 className="font-vca-display text-vca-heading-large text-vca-text tracking-normal">
             {title}
           </h1>
         </div>
@@ -122,7 +122,7 @@ export const Header = ({
           {showPremiumIcon && (
             <VcaIcon icon="linkedin-bug" size="md" className="text-vca-premium" />
           )}
-          <h1 className="font-vca-display text-vca-heading-large text-vca-text">
+          <h1 className="font-vca-display text-vca-heading-large text-vca-text tracking-normal">
             {title}
           </h1>
         </div>

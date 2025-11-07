@@ -204,16 +204,38 @@ const buildVcaColors = (semanticTokens, resolvedTokens) => {
     for (const [tokenName, tokenData] of Object.entries(categoryTokens)) {
       if (tokenData && typeof tokenData === 'object' && 'value' in tokenData) {
         // Extract the suffix from color-action-hover -> hover
-        const suffix = tokenName.replace(`color-${category}-`, '').replace(`color-${category}`, '');
+        // Handle different token naming patterns:
+        // 1. Standard: color-action-hover -> hover
+        // 2. Special: color-logo-brand (brand category) -> logo-brand
+        // 3. Special: color-premium-text-brand (premium category) -> text-brand
+        
+        let suffix = tokenName
+          .replace(`color-${category}-`, '')  // Try standard pattern first
+          .replace(`color-${category}`, '');   // Handle exact match (default token)
+        
+        // If token still starts with "color-", remove it (for special cases like brand)
+        if (suffix.startsWith('color-')) {
+          suffix = suffix.replace('color-', '');
+        }
         
         // Get resolved value and original reference
         const resolvedValue = resolvedCategoryTokens[tokenName]?.value;
         const originalReference = tokenData.value; // Keep original {color.blue.blue-70} format
         
-        if (!suffix) {
-          // This is the default value (e.g., color-action)
-          colorObj.DEFAULT = resolvedValue;
-          metaObj.DEFAULT = { value: resolvedValue, ref: originalReference };
+        if (!suffix || suffix === tokenName) {
+          // This is the default value (e.g., color-action) or couldn't parse
+          // Skip if we couldn't extract a meaningful suffix
+          if (suffix === tokenName) {
+            // Use a cleaned version as the suffix
+            suffix = tokenName.replace(/^color-/, '').replace(new RegExp(`^${category}-?`), '');
+          }
+          if (!suffix) {
+            colorObj.DEFAULT = resolvedValue;
+            metaObj.DEFAULT = { value: resolvedValue, ref: originalReference };
+          } else {
+            colorObj[suffix] = resolvedValue;
+            metaObj[suffix] = { value: resolvedValue, ref: originalReference };
+          }
         } else {
           // This is a variant (e.g., hover, active)
           colorObj[suffix] = resolvedValue;
@@ -230,39 +252,62 @@ const buildVcaColors = (semanticTokens, resolvedTokens) => {
   }
 
   // Add special handling for action transparent colors (nested structure)
-  if (semanticTokens.action) {
+  if (resolvedTokens.action) {
     // Add action-transparent variants
     if (!vcaColors['vca-action-transparent']) {
       vcaColors['vca-action-transparent'] = {};
+      vcaColorsMeta['vca-action-transparent'] = {};
     }
     
-    const actionTokens = semanticTokens.action;
+    const actionTokens = resolvedTokens.action;
+    const actionSemanticTokens = semanticTokens.action;
+    
     if (actionTokens['color-background-action-transparent-hover']) {
-      vcaColors['vca-action-transparent'].hover = actionTokens['color-background-action-transparent-hover'].value;
+      const resolvedValue = actionTokens['color-background-action-transparent-hover'].value;
+      const originalRef = actionSemanticTokens['color-background-action-transparent-hover']?.value || '';
+      
+      vcaColors['vca-action-transparent'].hover = resolvedValue;
+      vcaColorsMeta['vca-action-transparent'].hover = { value: resolvedValue, ref: originalRef };
+      
       // Also add aliases for different naming conventions
-      vcaColors['vca-action-background-transparent'] = {
-        hover: actionTokens['color-background-action-transparent-hover'].value,
-      };
-      vcaColors['vca-background-action-transparent'] = {
-        hover: actionTokens['color-background-action-transparent-hover'].value,
-      };
+      vcaColors['vca-action-background-transparent'] = { hover: resolvedValue };
+      vcaColors['vca-background-action-transparent'] = { hover: resolvedValue };
+      vcaColorsMeta['vca-action-background-transparent'] = { hover: { value: resolvedValue, ref: originalRef } };
+      vcaColorsMeta['vca-background-action-transparent'] = { hover: { value: resolvedValue, ref: originalRef } };
     }
     
     if (actionTokens['color-background-action-transparent-active']) {
-      vcaColors['vca-action-transparent'].active = actionTokens['color-background-action-transparent-active'].value;
-      vcaColors['vca-action-background-transparent'].active = actionTokens['color-background-action-transparent-active'].value;
-      vcaColors['vca-background-action-transparent'].active = actionTokens['color-background-action-transparent-active'].value;
+      const resolvedValue = actionTokens['color-background-action-transparent-active'].value;
+      const originalRef = actionSemanticTokens['color-background-action-transparent-active']?.value || '';
+      
+      vcaColors['vca-action-transparent'].active = resolvedValue;
+      vcaColorsMeta['vca-action-transparent'].active = { value: resolvedValue, ref: originalRef };
+      
+      vcaColors['vca-action-background-transparent'].active = resolvedValue;
+      vcaColors['vca-background-action-transparent'].active = resolvedValue;
+      vcaColorsMeta['vca-action-background-transparent'].active = { value: resolvedValue, ref: originalRef };
+      vcaColorsMeta['vca-background-action-transparent'].active = { value: resolvedValue, ref: originalRef };
     }
   }
 
   // Handle special single-value tokens
-  if (semanticTokens.track && semanticTokens.track['color-track']) {
-    vcaColors['vca-track'] = semanticTokens.track['color-track'].value;
+  if (resolvedTokens.track && resolvedTokens.track['color-track']) {
+    const resolvedValue = resolvedTokens.track['color-track'].value;
+    const originalRef = semanticTokens.track?.['color-track']?.value || '';
+    vcaColors['vca-track'] = resolvedValue;
+    vcaColorsMeta['vca-track'] = { value: resolvedValue, ref: originalRef };
   }
 
-  if (semanticTokens.shadow) {
-    vcaColors['vca-shadow'] = semanticTokens.shadow['color-shadow']?.value || '#0000004c';
-    vcaColors['vca-shadow-supplemental'] = semanticTokens.shadow['color-shadow-supplemental']?.value || '#8c8c8c33';
+  if (resolvedTokens.shadow) {
+    const shadowResolved = resolvedTokens.shadow['color-shadow']?.value || '#0000004c';
+    const shadowSupplementalResolved = resolvedTokens.shadow['color-shadow-supplemental']?.value || '#8c8c8c33';
+    const shadowRef = semanticTokens.shadow?.['color-shadow']?.value || '';
+    const shadowSupplementalRef = semanticTokens.shadow?.['color-shadow-supplemental']?.value || '';
+    
+    vcaColors['vca-shadow'] = shadowResolved;
+    vcaColors['vca-shadow-supplemental'] = shadowSupplementalResolved;
+    vcaColorsMeta['vca-shadow'] = { value: shadowResolved, ref: shadowRef };
+    vcaColorsMeta['vca-shadow-supplemental'] = { value: shadowSupplementalResolved, ref: shadowSupplementalRef };
   }
 
   // Add white and spec-orange (if they exist in primitives)

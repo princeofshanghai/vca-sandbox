@@ -5,8 +5,6 @@ alwaysApply: false
 
 **Project:** Virtual Chat Assistant (VCA) Sandbox  
 **Owner:** Charles Hu, Staff Product Designer  
-**Timeline:** MVP in 2 weeks
-
 ---
 
 ## What We're Building
@@ -49,7 +47,7 @@ Every designer recreates the VCA chat UI manually in Figma for each new flow (*R
 
 ## Users
 
-**Primary:** Chatbot Designers (Design Pod Alpha)  
+**Primary:** Chatbot Designers  
 **Secondary:** Engineers, PMs (reviewers)
 
 ---

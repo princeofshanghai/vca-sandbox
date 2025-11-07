@@ -6,12 +6,12 @@ alwaysApply: false
 ## App Shell Design Principles
 
 ### Use Default Styles
-- **Always use shadcn/ui and Tailwind defaults** for the app shell (navigation, sidebars, layout)
+- **Always use shadcn/ui and Tailwind defaults** for the app shell (navigation, sidebars, layout, components)
 - **Don't override** shadcn component styles unless absolutely necessary
 - Trust the defaults - they're well-designed and accessible
 
 ### Aesthetic
-- **Minimalist** - Remove unnecessary visual elements
+- **Minimalist** - Remove unnecessary visual elements. Lean towards no color
 - **Clean** - Simple, clear hierarchy
 - **Lots of whitespace** - Generous spacing, breathing room
 - **Modern** - Contemporary, professional look
@@ -47,7 +47,7 @@ Use VCA design tokens with `vca-` prefix:
 
 - Use generous padding: `p-6`, `p-8` for containers
 - Add vertical space between sections: `space-y-6`, `space-y-8`
-- Sidebar width: `280px` (fixed)
+- Sidebar width: `240px` (fixed)
 - Header height: `56px` (h-14)
 
 ---

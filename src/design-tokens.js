@@ -13,8 +13,8 @@ export const vcaColors = {
     "hover": "#004182",
     "active": "#004182",
     "disabled": "#0000004d",
-    "color-background-action-transparent-hover": "#378fe91a",
-    "color-background-action-transparent-active": "#378fe933"
+    "background-action-transparent-hover": "#378fe91a",
+    "background-action-transparent-active": "#378fe933"
   },
   "vca-text": {
     "DEFAULT": "#000000e5",
@@ -42,7 +42,7 @@ export const vcaColors = {
     "neutral-soft": "#f4f2ee",
     "neutral-strong": "#eae6df",
     "offset": "#f4f2ee",
-    "color-mobile-background-offset": "#eae6df",
+    "mobile-background-offset": "#eae6df",
     "knockout": "#ffffff",
     "knockout-hover": "#ffffff",
     "knockout-active": "#ffffff99",
@@ -129,29 +129,29 @@ export const vcaColors = {
     "button-background-active": "#c37d16"
   },
   "vca-brand": {
-    "color-logo-brand": "#0a66c2",
-    "color-logo-mono": "#000000"
+    "logo-brand": "#0a66c2",
+    "logo-mono": "#000000"
   },
   "vca-accent": {
     "4": "#56687a",
     "4-hover": "#38434f",
     "4-active": "#38434f"
   },
-  "vca-shadow": "{color.black.black-a30}",
-  "vca-track": "{color.black.black-a60}",
+  "vca-shadow": "#0000004d",
+  "vca-track": "#00000099",
   "vca-action-transparent": {
-    "hover": "{color.blue.blue-60-a10}",
-    "active": "{color.blue.blue-60-a20}"
+    "hover": "#378fe91a",
+    "active": "#378fe933"
   },
   "vca-action-background-transparent": {
-    "hover": "{color.blue.blue-60-a10}",
-    "active": "{color.blue.blue-60-a20}"
+    "hover": "#378fe91a",
+    "active": "#378fe933"
   },
   "vca-background-action-transparent": {
-    "hover": "{color.blue.blue-60-a10}",
-    "active": "{color.blue.blue-60-a20}"
+    "hover": "#378fe91a",
+    "active": "#378fe933"
   },
-  "vca-shadow-supplemental": "{color.system-gray.system-gray-60-a20}",
+  "vca-shadow-supplemental": "#8c8c8c33",
   "vca-white": "#ffffff",
   "vca-spec-orange": "#ED4400"
 };
@@ -174,11 +174,11 @@ export const vcaColorsMeta = {
       "value": "#0000004d",
       "ref": "{color.black.black-a30}"
     },
-    "color-background-action-transparent-hover": {
+    "background-action-transparent-hover": {
       "value": "#378fe91a",
       "ref": "{color.blue.blue-60-a10}"
     },
-    "color-background-action-transparent-active": {
+    "background-action-transparent-active": {
       "value": "#378fe933",
       "ref": "{color.blue.blue-60-a20}"
     }
@@ -278,7 +278,7 @@ export const vcaColorsMeta = {
       "value": "#f4f2ee",
       "ref": "{color.warm-gray.warm-gray-20}"
     },
-    "color-mobile-background-offset": {
+    "mobile-background-offset": {
       "value": "#eae6df",
       "ref": "{color.warm-gray.warm-gray-30}"
     },
@@ -566,11 +566,11 @@ export const vcaColorsMeta = {
     }
   },
   "vca-brand": {
-    "color-logo-brand": {
+    "logo-brand": {
       "value": "#0a66c2",
       "ref": "{color.blue.blue-70}"
     },
-    "color-logo-mono": {
+    "logo-mono": {
       "value": "#000000",
       "ref": "{color.black.black-a100}"
     }
@@ -590,20 +590,46 @@ export const vcaColorsMeta = {
     }
   },
   "vca-shadow": {
-    "DEFAULT": {
-      "value": "#0000004d",
-      "ref": "{color.black.black-a30}"
-    },
-    "supplemental": {
-      "value": "#8c8c8c33",
-      "ref": "{color.system-gray.system-gray-60-a20}"
-    }
+    "value": "#0000004d",
+    "ref": "{color.black.black-a30}"
   },
   "vca-track": {
-    "DEFAULT": {
-      "value": "#00000099",
-      "ref": "{color.black.black-a60}"
+    "value": "#00000099",
+    "ref": "{color.black.black-a60}"
+  },
+  "vca-action-transparent": {
+    "hover": {
+      "value": "#378fe91a",
+      "ref": "{color.blue.blue-60-a10}"
+    },
+    "active": {
+      "value": "#378fe933",
+      "ref": "{color.blue.blue-60-a20}"
     }
+  },
+  "vca-action-background-transparent": {
+    "hover": {
+      "value": "#378fe91a",
+      "ref": "{color.blue.blue-60-a10}"
+    },
+    "active": {
+      "value": "#378fe933",
+      "ref": "{color.blue.blue-60-a20}"
+    }
+  },
+  "vca-background-action-transparent": {
+    "hover": {
+      "value": "#378fe91a",
+      "ref": "{color.blue.blue-60-a10}"
+    },
+    "active": {
+      "value": "#378fe933",
+      "ref": "{color.blue.blue-60-a20}"
+    }
+  },
+  "vca-shadow-supplemental": {
+    "value": "#8c8c8c33",
+    "ref": "{color.system-gray.system-gray-60-a20}"
   },
   "vca-white": {
     "value": "#ffffff",
