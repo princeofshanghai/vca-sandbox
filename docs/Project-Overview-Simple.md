@@ -40,6 +40,25 @@ This is an internal tool built for LinkedIn employees working on the Virtual Cha
 
 ---
 
+## Jobs To Be Done (JTBD)
+
+**When I'm designing a new chatbot flow:**  
+I want to quickly prototype conversation sequences using existing UI components so I can focus on the conversation logic instead of redrawing the same interface over and over.
+
+**When I'm testing a conversation design:**  
+I want to click through the flow in a realistic chat environment so I can experience how the dialogue actually feels and catch UX issues before engineering handoff.
+
+**When I'm handing off designs to engineering:**  
+I want to provide structured flow documentation (not just static mockups) so engineers understand the exact conversation logic and can implement it accurately.
+
+**When I'm iterating on a flow:**  
+I want to quickly edit conversation steps and see changes immediately so I can experiment with different approaches and refine the experience faster.
+
+**When I'm exploring edge cases:**  
+I want to test different conversation paths and states so I can identify gaps in the flow early and ensure we handle all user scenarios gracefully.
+
+---
+
 ## Core Features (Phased Approach)
 
 ### **Phase 1: Component Library** 
