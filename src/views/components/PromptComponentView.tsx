@@ -1,11 +1,49 @@
+import { useState } from 'react';
 import { Prompt } from '@/components/vca-components/prompt';
+import { DemoSection } from '@/components/component-library/DemoSection';
+import { FormInput, FormCheckbox } from '@/components/component-library/DemoControls';
 
 const PromptComponentView = () => {
+  // Interactive demo state
+  const [text, setText] = useState('How can I assign a seat to a user?');
+  const [showAiIcon, setShowAiIcon] = useState(false);
+
   return (
     <div className="pt-16">
       <h1 className="mb-2">Prompt</h1>
       <p className="text-md text-gray-500 mb-12">Clickable suggestion chips for AI-powered prompts and quick actions.</p>
       
+      {/* Demo Section */}
+      <DemoSection
+        controls={
+          <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+            <FormInput
+              id="text"
+              label="Prompt Text"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="Enter prompt text..."
+              className="col-span-2"
+            />
+
+            <FormCheckbox
+              id="showAiIcon"
+              label="Show AI Icon"
+              checked={showAiIcon}
+              onCheckedChange={setShowAiIcon}
+            />
+          </div>
+        }
+      >
+        <div className="px-vca-xxl">
+          <Prompt 
+            text={text}
+            showAiIcon={showAiIcon}
+            onClick={() => alert('Prompt clicked!')}
+          />
+        </div>
+      </DemoSection>
+
       <div className="space-y-12">
         {/* Without AI Icon */}
         <div>

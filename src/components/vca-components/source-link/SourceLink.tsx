@@ -1,5 +1,3 @@
-import { cn } from '@/utils';
-
 export type SourceLinkState = 'enabled' | 'hover' | 'active' | 'visited';
 
 export type SourceLinkProps = {

@@ -2,10 +2,10 @@ import { VcaIcon } from '../icons';
 import { ButtonLink } from '../buttons';
 import { cn } from '@/utils';
 
-export type AgentStatusState = 'connecting' | 'success';
+export type HumanAgentStatusState = 'connecting' | 'success';
 
-export type AgentStatusProps = {
-  state?: AgentStatusState;
+export type HumanAgentStatusProps = {
+  state?: HumanAgentStatusState;
   statusLabel?: string;
   description?: string;
   actionLabel?: string;
@@ -16,11 +16,11 @@ export type AgentStatusProps = {
 };
 
 /**
- * AgentStatus - Shows connection status when transferring to live agent
+ * HumanAgentStatus - Shows connection status when transferring to live human agent
  * Two states: connecting (with spinner) and success (with checkmark)
  * Note: No built-in horizontal padding or width - parent container controls spacing
  */
-export const AgentStatus = ({
+export const HumanAgentStatus = ({
   state = 'success',
   statusLabel = 'Connected to live chat',
   description = 'Our team is joining soon for live chat. AI will not be responding at this moment.',
@@ -29,7 +29,7 @@ export const AgentStatus = ({
   showAction = true,
   onAction,
   className,
-}: AgentStatusProps) => {
+}: HumanAgentStatusProps) => {
   
   return (
     <div className={cn('bg-vca-surface-tint flex flex-col gap-vca-lg p-vca-lg rounded-tl-vca-md rounded-tr-vca-md rounded-br-vca-md rounded-bl-vca-sm', className)}>
@@ -68,11 +68,13 @@ export const AgentStatus = ({
 
         {/* Optional Action Link */}
         {showAction && (
-          <ButtonLink 
-            onClick={onAction}
-          >
-            {actionLabel}
-          </ButtonLink>
+          <div className="flex items-start w-full">
+            <ButtonLink 
+              onClick={onAction}
+            >
+              {actionLabel}
+            </ButtonLink>
+          </div>
         )}
     </div>
   );

@@ -1,5 +1,6 @@
-import { VcaIcon } from '../icons';
 import { cn } from '@/utils';
+import TextareaAutosize from 'react-textarea-autosize';
+import { ButtonIcon } from '../buttons/ButtonIcon';
 
 export type ComposerState = 'default' | 'active' | 'typing' | 'multiline' | 'disabled' | 'stop';
 
@@ -10,6 +11,7 @@ export type ComposerProps = {
   attachment?: boolean;
   onSend?: () => void;
   onStop?: () => void;
+  onAttachment?: () => void;
   onChange?: (value: string) => void;
   className?: string;
 };
@@ -25,11 +27,12 @@ export const Composer = ({
   attachment = true,
   onSend,
   onStop,
+  onAttachment,
   onChange,
   className,
 }: ComposerProps) => {
   
-  // Stop state - shows "Stop answering" button when AI is generating
+  // Stop state - shows loading spinner with stop button when AI is generating
   if (state === 'stop') {
     return (
       <div className={cn(
@@ -40,53 +43,28 @@ export const Composer = ({
           <div className="flex gap-vca-xs items-center justify-end w-full">
             <button
               onClick={onStop}
-              className="flex gap-vca-xs items-center group"
+              className="relative w-8 h-8 flex items-center justify-center group"
             >
-              <p className="font-vca-text text-vca-small text-vca-text-meta text-right">
-                Stop answering
-              </p>
-              <div className="w-[42px] h-[42px] flex items-center justify-center">
-                <div className="w-4 h-4 bg-vca-text-meta rounded-vca-sm opacity-60 group-hover:opacity-80 transition-opacity" />
-              </div>
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Multiline state - expands for longer text (max 4 lines)
-  if (state === 'multiline') {
-    return (
-      <div className={cn(
-        'bg-vca-background border-t border-vca-border-faint w-full',
-        className
-      )}>
-        <div className="flex flex-col gap-vca-sm items-start justify-center pl-vca-lg pr-vca-md py-[10px]">
-          <div className="flex gap-vca-xs items-end pl-0 pr-vca-md py-0 w-full">
-            <div className="relative border border-vca-border-active flex items-end max-h-[88px] px-vca-lg py-vca-s rounded-vca-md w-full">
-              <textarea
-                value={value}
-                onChange={(e) => onChange?.(e.target.value)}
-                placeholder={placeholder}
-                className="flex-1 font-vca-text text-vca-small-open text-vca-text resize-none outline-none bg-transparent max-h-[72px] overflow-auto"
-                rows={4}
-              />
-              {/* Cursor blinker */}
-              <div className="absolute bottom-[10px] right-[48px] w-[2px] h-[18px] bg-vca-action rounded-full animate-pulse" />
+              {/* Loading spinner */}
+              <svg 
+                className="absolute inset-0 w-8 h-8 animate-spin" 
+                viewBox="0 0 32 32"
+              >
+                <circle
+                  cx="16"
+                  cy="16"
+                  r="14"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeDasharray="70 20"
+                  strokeLinecap="round"
+                  className="text-vca-text-meta opacity-60"
+                />
+              </svg>
               
-              {attachment && (
-                <div className="ml-[10px] shrink-0">
-                  <VcaIcon icon="attachment" size="sm" className="text-vca-text" />
-                </div>
-              )}
-            </div>
-            
-            <button
-              onClick={onSend}
-              className="flex items-center justify-center p-vca-s rounded-full shrink-0 w-8 h-8 hover:bg-gray-100 transition-colors"
-            >
-              <VcaIcon icon="send" size="sm" className="text-vca-text" />
+              {/* Stop square icon */}
+              <div className="w-3 h-3 bg-vca-text-meta rounded-vca-xs opacity-60 group-hover:opacity-80 transition-opacity" />
             </button>
           </div>
         </div>
@@ -94,59 +72,68 @@ export const Composer = ({
     );
   }
 
-  // All other states (default, active, typing, disabled)
-  const isActive = state === 'active' || state === 'typing';
+  // Determine if we should show multiline layout (based on content length or newlines)
+  const hasMultipleLines = value.length > 35 || value.includes('\n');
+  const isActive = state === 'active' || state === 'typing' || state === 'multiline' || hasMultipleLines;
   const isDisabled = state === 'disabled';
+  const isSendDisabled = isDisabled || !value || value.trim().length === 0;
   
   return (
     <div className={cn(
-      'bg-vca-background border-t border-vca-border-faint',
-      isDisabled ? 'h-[60px]' : 'h-[60px]',
-      'w-full',
+      'bg-vca-background border-t border-vca-border-faint w-full',
       className
     )}>
-      <div className="flex flex-col gap-vca-sm h-full items-start justify-center pl-vca-lg pr-vca-md py-[10px]">
-        <div className="flex gap-vca-xs items-center pl-0 pr-vca-md py-0 w-full">
+      <div className="flex flex-col gap-vca-sm items-start justify-end pl-vca-lg pr-vca-md py-[10px]">
+        <div className={cn(
+          'flex gap-vca-xs w-full pl-0 pr-vca-md py-0',
+          hasMultipleLines ? 'items-end' : 'items-center'
+        )}>
           <div className={cn(
-            'relative border flex gap-vca-s h-10 items-center px-vca-lg py-vca-xs rounded-full flex-1',
+            'relative border flex pl-vca-lg pr-vca-s flex-1',
+            hasMultipleLines ? 'py-vca-s rounded-vca-md items-end' : 'py-vca-xs rounded-full min-h-[40px] items-center',
             isActive && 'border-vca-border-active',
             !isActive && !isDisabled && 'border-vca-border-subtle',
             isDisabled && 'border-vca-border-subtle bg-vca-background-disabled'
           )}>
-            <div className="flex items-center flex-1 min-h-[21px]">
-              {/* Show cursor blinker in active/typing states */}
-              {isActive && (
-                <div className="w-[2px] h-[18px] bg-vca-action rounded-full animate-pulse shrink-0" />
-              )}
-              
-              {/* Input text or placeholder */}
-              {state === 'typing' && value ? (
-                <p className="font-vca-text text-vca-small-open text-vca-text whitespace-nowrap">
-                  {value}
-                </p>
-              ) : (
-                <p className={`font-vca-text text-vca-small-open flex-1 ${isDisabled ? 'text-vca-text-disabled' : 'text-vca-text-meta'}`}>
-                  {placeholder}
-                </p>
-              )}
+            <div className="flex items-end flex-1 min-h-[21px]">
+              {/* Auto-resizing textarea using battle-tested library */}
+              <TextareaAutosize
+                value={value}
+                onChange={(e) => onChange?.(e.target.value)}
+                placeholder={placeholder}
+                disabled={isDisabled}
+                minRows={1}
+                maxRows={5}
+                className={`flex-1 font-vca-text text-vca-small-open bg-transparent outline-none border-none w-full caret-vca-action placeholder:text-vca-small-open placeholder:text-vca-text-meta resize-none leading-[21px] ${
+                  isDisabled ? 'text-vca-text-disabled cursor-not-allowed' : 'text-vca-text'
+                }`}
+              />
             </div>
             
             {attachment && (
-              <VcaIcon 
-                icon="attachment" 
-                size="sm" 
-                className={isDisabled ? 'text-vca-text-disabled' : 'text-vca-text'} 
-              />
+              <div className={cn('shrink-0', hasMultipleLines ? 'ml-[10px]' : 'ml-vca-s')}>
+                <ButtonIcon
+                  icon="attachment"
+                  type="tertiary"
+                  emphasis={false}
+                  size="sm"
+                  disabled={isDisabled}
+                  onClick={onAttachment}
+                  ariaLabel="Attach file"
+                />
+              </div>
             )}
           </div>
           
-          <button
+          <ButtonIcon
+            icon="send"
+            type="tertiary"
+            emphasis={false}
+            size="sm"
+            disabled={isSendDisabled}
             onClick={onSend}
-            disabled={isDisabled}
-            className="flex items-center justify-center p-vca-s rounded-full shrink-0 w-8 h-8 hover:bg-gray-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            <VcaIcon icon="send" size="sm" className="text-vca-text" />
-          </button>
+            ariaLabel="Send message"
+          />
         </div>
       </div>
     </div>

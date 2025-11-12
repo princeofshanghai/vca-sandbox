@@ -37,7 +37,7 @@ type AgentTimestampProps = {
   text?: string;
 };
 
-const AgentTimestamp = ({ className, text = 'John, LinkedIn Support  1:32 PM' }: AgentTimestampProps) => {
+const AgentTimestamp = ({ className, text = 'Agent, LinkedIn Support  1:32 PM' }: AgentTimestampProps) => {
   return (
     <div className={cn('flex gap-vca-s items-center', className)}>
       <Avatar size="24" />
@@ -91,21 +91,23 @@ const InlineFeedback = ({ className, action = true, type = 'positive' }: InlineF
 export type MessageProps = {
   errorFeedback?: boolean;
   showTimestamp?: boolean;
-  memberText?: string;
-  agentText?: string;
+  userText?: string;
+  humanAgentText?: string;
   disclaimerText?: string;
   defaultText?: string;
-  type?: 'agent' | 'ai' | 'disclaimer' | 'member';
+  agentTimestampText?: string;
+  type?: 'human-agent' | 'ai' | 'disclaimer' | 'user';
   className?: string;
 };
 
 export const Message = ({
   errorFeedback = false,
   showTimestamp = true,
-  memberText = 'This is a member message ',
-  agentText = 'This is an agent message',
+  userText = 'This is a user message ',
+  humanAgentText = 'This is a human agent message',
   disclaimerText = 'This experience is powered by AI. Mistakes may be possible. ',
   defaultText = 'This is a message',
+  agentTimestampText,
   type = 'ai',
   className,
 }: MessageProps) => {
@@ -123,14 +125,14 @@ export const Message = ({
     );
   }
 
-  // Member type - User message bubble (right-aligned, beige)
-  if (type === 'member') {
+  // User type - User message bubble (right-aligned, beige)
+  if (type === 'user') {
     return (
       <div className={cn('flex items-center justify-end', className)}>
         <div className="flex flex-col gap-vca-s items-end">
           <div className="bg-vca-background-neutral-soft flex flex-col items-start max-w-[320px] px-vca-md py-3 rounded-tl-vca-md rounded-bl-vca-md rounded-tr-vca-md">
             <p className="font-vca-text text-vca-small-open text-vca-text w-full">
-              {memberText}
+              {userText}
             </p>
           </div>
           {errorFeedback && <InlineFeedback type="negative" />}
@@ -139,17 +141,17 @@ export const Message = ({
     );
   }
 
-  // Agent type - Agent message bubble (left-aligned, light blue)
-  if (type === 'agent') {
+  // Human Agent type - Agent message bubble (left-aligned, light blue)
+  if (type === 'human-agent') {
     return (
       <div className={cn('flex gap-vca-s items-end', className)}>
         <div className="flex flex-col gap-vca-s items-start grow pb-1">
           <div className="bg-vca-background-tint-soft flex flex-col gap-vca-lg items-start max-w-[320px] p-vca-lg rounded-br-vca-md rounded-tl-vca-md rounded-tr-vca-md">
             <p className="font-vca-text text-vca-small-open text-vca-text w-full">
-              {agentText}
+              {humanAgentText}
             </p>
           </div>
-          {showTimestamp && <AgentTimestamp />}
+          {showTimestamp && <AgentTimestamp text={agentTimestampText} />}
         </div>
       </div>
     );

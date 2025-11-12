@@ -1,11 +1,52 @@
+import { useState } from 'react';
 import { PromptGroup } from '@/components/vca-components/prompt-group';
+import { DemoSection } from '@/components/component-library/DemoSection';
+import { ToggleButtons, FormCheckbox } from '@/components/component-library/DemoControls';
 
 const PromptGroupComponentView = () => {
+  // Interactive demo state
+  const [promptCount, setPromptCount] = useState<'1' | '2' | '3'>('3');
+  const [showAiIcons, setShowAiIcons] = useState(false);
+
+  const getPrompts = () => {
+    const allPrompts = [
+      { text: 'How can I assign a seat to a user?', showAiIcon: showAiIcons },
+      { text: 'What are the different user roles?', showAiIcon: showAiIcons },
+      { text: 'How do I manage licenses?', showAiIcon: showAiIcons },
+    ];
+    return allPrompts.slice(0, Number(promptCount));
+  };
+
   return (
     <div className="pt-16">
       <h1 className="mb-2">Prompt Group</h1>
       <p className="text-md text-gray-500 mb-12">Vertical list of prompt suggestions for guided AI interactions.</p>
       
+      {/* Demo Section */}
+      <DemoSection
+        controls={
+          <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+            <ToggleButtons
+              label="Number of Prompts"
+              options={['1', '2', '3'] as const}
+              value={promptCount}
+              onChange={setPromptCount}
+            />
+
+            <FormCheckbox
+              id="showAiIcons"
+              label="Show AI Icons"
+              checked={showAiIcons}
+              onCheckedChange={setShowAiIcons}
+            />
+          </div>
+        }
+      >
+        <div className="px-vca-xxl">
+          <PromptGroup prompts={getPrompts()} />
+        </div>
+      </DemoSection>
+
       <div className="space-y-12">
         {/* Three Prompts */}
         <div>

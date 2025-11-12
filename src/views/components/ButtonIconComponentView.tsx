@@ -1,146 +1,99 @@
+import { useState } from 'react';
 import { ButtonIcon } from '@/components/vca-components/buttons';
+import { Header } from '@/components/vca-components/header';
+import { Composer } from '@/components/vca-components/composer';
+import { DemoSection } from '@/components/component-library/DemoSection';
+import { ToggleButtons, FormCheckbox } from '@/components/component-library/DemoControls';
 
 const ButtonIconComponentView = () => {
+  // Interactive demo state
+  const [type, setType] = useState<'primary' | 'secondary' | 'tertiary'>('primary');
+  const [size, setSize] = useState<'sm' | 'md'>('md');
+  const [emphasis, setEmphasis] = useState(true);
+  const [disabled, setDisabled] = useState(false);
+
   return (
     <div className="pt-16">
       <h1 className="mb-2">Button Icon</h1>
       <p className="text-md text-gray-500 mb-12">Circular icon-only buttons for compact actions without text labels.</p>
       
+      {/* Demo Section */}
+      <DemoSection
+        controls={
+          <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+            <ToggleButtons
+              label="Type"
+              options={['primary', 'secondary', 'tertiary'] as const}
+              value={type}
+              onChange={setType}
+            />
+
+            <ToggleButtons
+              label="Size"
+              options={['sm', 'md'] as const}
+              value={size}
+              onChange={setSize}
+            />
+
+            <FormCheckbox
+              id="emphasis"
+              label="High Emphasis"
+              checked={emphasis}
+              onCheckedChange={setEmphasis}
+            />
+
+            <FormCheckbox
+              id="disabled"
+              label="Disabled"
+              checked={disabled}
+              onCheckedChange={setDisabled}
+            />
+          </div>
+        }
+      >
+        <ButtonIcon
+          type={type}
+          size={size}
+          emphasis={emphasis}
+          disabled={disabled}
+          icon="placeholder"
+          onClick={() => alert('Button icon clicked!')}
+        />
+      </DemoSection>
+
+      {/* Usage */}
+      <div className="mb-8">
+        <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Usage</h2>
+      </div>
+
       <div className="space-y-12">
-        {/* Small Size */}
+        {/* In Header */}
         <div>
-          <h2 className="mb-4">Small (32px)</h2>
-          <p className="text-sm text-gray-500 mb-3">Compact icon buttons for tight spaces like input fields.</p>
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <div className="space-y-4">
-              <div>
-                <p className="text-xs font-medium text-gray-700 mb-2">Primary Emphasis</p>
-                <div className="flex gap-3 items-center">
-                  <ButtonIcon type="primary" size="sm" emphasis={true} icon="send" />
-                  <ButtonIcon type="primary" size="sm" emphasis={true} icon="close" />
-                  <ButtonIcon type="primary" size="sm" emphasis={true} icon="check" />
-                  <ButtonIcon type="primary" size="sm" emphasis={true} icon="send" disabled />
-                </div>
-              </div>
-              
-              <div>
-                <p className="text-xs font-medium text-gray-700 mb-2">Primary Low Emphasis</p>
-                <div className="flex gap-3 items-center">
-                  <ButtonIcon type="primary" size="sm" emphasis={false} icon="send" />
-                  <ButtonIcon type="primary" size="sm" emphasis={false} icon="close" />
-                  <ButtonIcon type="primary" size="sm" emphasis={false} icon="check" />
-                  <ButtonIcon type="primary" size="sm" emphasis={false} icon="send" disabled />
-                </div>
-              </div>
-              
-              <div>
-                <p className="text-xs font-medium text-gray-700 mb-2">Secondary Emphasis</p>
-                <div className="flex gap-3 items-center">
-                  <ButtonIcon type="secondary" size="sm" emphasis={true} icon="send" />
-                  <ButtonIcon type="secondary" size="sm" emphasis={true} icon="close" />
-                  <ButtonIcon type="secondary" size="sm" emphasis={true} icon="check" />
-                  <ButtonIcon type="secondary" size="sm" emphasis={true} icon="send" disabled />
-                </div>
-              </div>
-              
-              <div>
-                <p className="text-xs font-medium text-gray-700 mb-2">Secondary Low Emphasis</p>
-                <div className="flex gap-3 items-center">
-                  <ButtonIcon type="secondary" size="sm" emphasis={false} icon="send" />
-                  <ButtonIcon type="secondary" size="sm" emphasis={false} icon="close" />
-                  <ButtonIcon type="secondary" size="sm" emphasis={false} icon="check" />
-                  <ButtonIcon type="secondary" size="sm" emphasis={false} icon="send" disabled />
-                </div>
-              </div>
-              
-              <div>
-                <p className="text-xs font-medium text-gray-700 mb-2">Tertiary Emphasis</p>
-                <div className="flex gap-3 items-center">
-                  <ButtonIcon type="tertiary" size="sm" emphasis={true} icon="send" />
-                  <ButtonIcon type="tertiary" size="sm" emphasis={true} icon="close" />
-                  <ButtonIcon type="tertiary" size="sm" emphasis={true} icon="check" />
-                  <ButtonIcon type="tertiary" size="sm" emphasis={true} icon="send" disabled />
-                </div>
-              </div>
-              
-              <div>
-                <p className="text-xs font-medium text-gray-700 mb-2">Tertiary Low Emphasis</p>
-                <div className="flex gap-3 items-center">
-                  <ButtonIcon type="tertiary" size="sm" emphasis={false} icon="send" />
-                  <ButtonIcon type="tertiary" size="sm" emphasis={false} icon="close" />
-                  <ButtonIcon type="tertiary" size="sm" emphasis={false} icon="check" />
-                  <ButtonIcon type="tertiary" size="sm" emphasis={false} icon="send" disabled />
-                </div>
-              </div>
+          <h3 className="text-base font-medium mb-2">In header</h3>
+          <p className="text-sm text-gray-500 mb-4">Tertiary low-emphasis icon buttons are used for navigation and actions like back, minimize, and close in the header.</p>
+          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+            <div className="w-[400px] mx-auto my-4 border border-gray-200 rounded-lg overflow-hidden">
+              <Header 
+                title="Help"
+                showBack={true}
+                showPremiumIcon={true}
+                showAction={true}
+              />
             </div>
           </div>
         </div>
 
-        {/* Medium Size */}
+        {/* In Composer */}
         <div>
-          <h2 className="mb-4">Medium (48px)</h2>
-          <p className="text-sm text-gray-500 mb-3">Larger icon buttons for more prominent actions.</p>
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <div className="space-y-4">
-              <div>
-                <p className="text-xs font-medium text-gray-700 mb-2">Primary Emphasis</p>
-                <div className="flex gap-3 items-center">
-                  <ButtonIcon type="primary" size="md" emphasis={true} icon="send" />
-                  <ButtonIcon type="primary" size="md" emphasis={true} icon="close" />
-                  <ButtonIcon type="primary" size="md" emphasis={true} icon="check" />
-                  <ButtonIcon type="primary" size="md" emphasis={true} icon="send" disabled />
-                </div>
-              </div>
-              
-              <div>
-                <p className="text-xs font-medium text-gray-700 mb-2">Primary Low Emphasis</p>
-                <div className="flex gap-3 items-center">
-                  <ButtonIcon type="primary" size="md" emphasis={false} icon="send" />
-                  <ButtonIcon type="primary" size="md" emphasis={false} icon="close" />
-                  <ButtonIcon type="primary" size="md" emphasis={false} icon="check" />
-                  <ButtonIcon type="primary" size="md" emphasis={false} icon="send" disabled />
-                </div>
-              </div>
-              
-              <div>
-                <p className="text-xs font-medium text-gray-700 mb-2">Secondary Emphasis</p>
-                <div className="flex gap-3 items-center">
-                  <ButtonIcon type="secondary" size="md" emphasis={true} icon="send" />
-                  <ButtonIcon type="secondary" size="md" emphasis={true} icon="close" />
-                  <ButtonIcon type="secondary" size="md" emphasis={true} icon="check" />
-                  <ButtonIcon type="secondary" size="md" emphasis={true} icon="send" disabled />
-                </div>
-              </div>
-              
-              <div>
-                <p className="text-xs font-medium text-gray-700 mb-2">Secondary Low Emphasis</p>
-                <div className="flex gap-3 items-center">
-                  <ButtonIcon type="secondary" size="md" emphasis={false} icon="send" />
-                  <ButtonIcon type="secondary" size="md" emphasis={false} icon="close" />
-                  <ButtonIcon type="secondary" size="md" emphasis={false} icon="check" />
-                  <ButtonIcon type="secondary" size="md" emphasis={false} icon="send" disabled />
-                </div>
-              </div>
-              
-              <div>
-                <p className="text-xs font-medium text-gray-700 mb-2">Tertiary Emphasis</p>
-                <div className="flex gap-3 items-center">
-                  <ButtonIcon type="tertiary" size="md" emphasis={true} icon="send" />
-                  <ButtonIcon type="tertiary" size="md" emphasis={true} icon="close" />
-                  <ButtonIcon type="tertiary" size="md" emphasis={true} icon="check" />
-                  <ButtonIcon type="tertiary" size="md" emphasis={true} icon="send" disabled />
-                </div>
-              </div>
-              
-              <div>
-                <p className="text-xs font-medium text-gray-700 mb-2">Tertiary Low Emphasis</p>
-                <div className="flex gap-3 items-center">
-                  <ButtonIcon type="tertiary" size="md" emphasis={false} icon="send" />
-                  <ButtonIcon type="tertiary" size="md" emphasis={false} icon="close" />
-                  <ButtonIcon type="tertiary" size="md" emphasis={false} icon="check" />
-                  <ButtonIcon type="tertiary" size="md" emphasis={false} icon="send" disabled />
-                </div>
-              </div>
+          <h3 className="text-base font-medium mb-2">In composer</h3>
+          <p className="text-sm text-gray-500 mb-4">Icon buttons are used for attachment and send actions within the message composer input.</p>
+          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+            <div className="w-[400px] mx-auto my-4 border border-gray-200 rounded-lg overflow-hidden">
+              <Composer 
+                state="active"
+                value="How can I help you today?"
+                attachment={true}
+              />
             </div>
           </div>
         </div>

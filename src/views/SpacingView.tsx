@@ -53,12 +53,13 @@ const generateSpacingTokens = (): SpacingToken[] => {
 
   for (const [vcaKey, tokenData] of Object.entries(vcaSpacingMeta)) {
     if (tokenData && typeof tokenData === 'object' && 'value' in tokenData) {
+      const meta = tokenData as { value: number; unit: string; ref: string | number };
       tokens.push({
         name: nameMap[vcaKey] || vcaKey,
         class: vcaKey,
-        value: tokenData.value as number,
-        unit: tokenData.unit as string,
-        reference: tokenData.ref as string,
+        value: meta.value,
+        unit: meta.unit,
+        reference: String(meta.ref),
       });
     }
   }

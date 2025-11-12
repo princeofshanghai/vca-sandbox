@@ -26,13 +26,14 @@ const RadiusSwatch = ({ name, class: tailwindClass, value, reference }: RadiusTo
 };
 
 const RadiusView = () => {
-  const radiusTokens: RadiusTokenDisplay[] = Object.entries(vcaRadiusMeta).map(([tokenName, tokenData]: [string, any]) => {
+  const radiusTokens: RadiusTokenDisplay[] = Object.entries(vcaRadiusMeta).map(([tokenName, tokenData]) => {
+    const meta = tokenData as { value: number; unit: string; ref: string | number };
     const name = tokenName.replace('vca-', '').split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     return {
       name: name === 'None' ? 'None' : name,
       class: `rounded-${tokenName}`,
-      value: `${tokenData.value}${tokenData.unit}`,
-      reference: tokenData.ref !== undefined && tokenData.ref !== null && tokenData.ref !== 0 ? String(tokenData.ref) : undefined,
+      value: `${meta.value}${meta.unit}`,
+      reference: meta.ref !== undefined && meta.ref !== null && meta.ref !== 0 ? String(meta.ref) : undefined,
     };
   });
 

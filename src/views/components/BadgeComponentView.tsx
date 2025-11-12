@@ -1,11 +1,34 @@
+import { useState } from 'react';
 import { Badge } from '@/components/vca-components/badge';
+import type { BadgeState } from '@/components/vca-components/badge/Badge';
+import { DemoSection } from '@/components/component-library/DemoSection';
+import { ToggleButtons } from '@/components/component-library/DemoControls';
 
 const BadgeComponentView = () => {
+  // Interactive demo state
+  const [state, setState] = useState<BadgeState>('online');
+
   return (
     <div className="pt-16">
       <h1 className="mb-2">Badge</h1>
       <p className="text-md text-gray-500 mb-12">Small circular status indicators for showing availability on avatars.</p>
       
+      {/* Demo Section */}
+      <DemoSection
+        controls={
+          <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+            <ToggleButtons
+              label="State"
+              options={['online', 'offline'] as const}
+              value={state}
+              onChange={setState}
+            />
+          </div>
+        }
+      >
+        <Badge state={state} />
+      </DemoSection>
+
       <div className="space-y-12">
         {/* States */}
         <div>

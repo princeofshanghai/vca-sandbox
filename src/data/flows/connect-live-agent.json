@@ -1,0 +1,54 @@
+{
+  "flowId": "connect-to-live-agent",
+  "title": "Connect to Live Agent",
+  "steps": [
+    {
+      "id": "step-1",
+      "type": "ai-message",
+      "text": "I can connect you with a live agent. What do you need help with?",
+      "buttons": [
+        { "label": "Account issue", "nextStep": "step-2a" },
+        { "label": "Billing question", "nextStep": "step-2b" },
+        { "label": "Technical problem", "nextStep": "step-2c" }
+      ]
+    },
+    {
+      "id": "step-2a",
+      "type": "user-message",
+      "text": "Account issue",
+      "nextStep": "step-3"
+    },
+    {
+      "id": "step-2b",
+      "type": "user-message",
+      "text": "Billing question",
+      "nextStep": "step-3"
+    },
+    {
+      "id": "step-2c",
+      "type": "user-message",
+      "text": "Technical problem",
+      "nextStep": "step-3"
+    },
+    {
+      "id": "step-3",
+      "type": "ai-message",
+      "text": "Got it! Connecting you to a specialist now. They'll be with you in just a moment.",
+      "nextStep": "step-4"
+    },
+    {
+      "id": "step-4",
+      "type": "agent-status",
+      "text": "Agent joined the chat",
+      "nextStep": "step-5"
+    },
+    {
+      "id": "step-5",
+      "type": "human-agent-message",
+      "text": "Hi! I'm Sarah, how can I help you today?",
+      "agentName": "Sarah, LinkedIn Support",
+      "timestamp": "2:34 PM"
+    }
+  ]
+}
+

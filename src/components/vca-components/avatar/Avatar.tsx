@@ -34,9 +34,9 @@ export const Avatar = ({
   
   // Badge positioning based on avatar size
   const badgePositionClasses = {
-    20: 'bottom-0 right-0',
-    24: 'bottom-0 right-0',
-    32: 'bottom-0 right-0',
+    20: '-bottom-0.5 -right-1.5',
+    24: '-bottom-0.5 -right-1.5',
+    32: '-bottom-0.5 -right-1.5',
   };
   
   return (

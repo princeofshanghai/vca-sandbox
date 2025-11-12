@@ -1,11 +1,58 @@
+import { useState } from 'react';
 import { SourceLink } from '@/components/vca-components/source-link';
+import type { SourceLinkState } from '@/components/vca-components/source-link/SourceLink';
+import { DemoSection } from '@/components/component-library/DemoSection';
+import { ToggleButtons, FormInput, FormCheckbox } from '@/components/component-library/DemoControls';
 
 const SourceLinkComponentView = () => {
+  // Interactive demo state
+  const [state, setState] = useState<SourceLinkState>('enabled');
+  const [text, setText] = useState('This is title of link');
+  const [hasHref, setHasHref] = useState(true);
+
   return (
     <div className="pt-16">
       <h1 className="mb-2">Source Link</h1>
       <p className="text-md text-gray-500 mb-12">Small citation and source link component with multiple states for references and external links.</p>
       
+      {/* Demo Section */}
+      <DemoSection
+        controls={
+          <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+            <ToggleButtons
+              label="State"
+              options={['enabled', 'hover', 'active', 'visited'] as const}
+              value={state}
+              onChange={setState}
+            />
+
+            <FormCheckbox
+              id="hasHref"
+              label="External Link"
+              checked={hasHref}
+              onCheckedChange={setHasHref}
+            />
+
+            <FormInput
+              id="text"
+              label="Link Text"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="Enter link text..."
+              className="col-span-2"
+            />
+          </div>
+        }
+      >
+        <div className="px-vca-xxl">
+          <SourceLink 
+            state={state}
+            text={text}
+            href={hasHref ? 'https://example.com' : undefined}
+          />
+        </div>
+      </DemoSection>
+
       <div className="space-y-12">
         {/* Enabled State */}
         <div>

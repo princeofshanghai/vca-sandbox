@@ -24,7 +24,7 @@ export const Badge = ({
   return (
     <div
       className={cn(
-        'rounded-full w-2 h-2', // 8px
+        'rounded-full w-3 h-3 border-2 border-white', // 12px total (8px circle + 2px border each side)
         stateClasses[state],
         className
       )}

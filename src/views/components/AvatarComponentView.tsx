@@ -1,88 +1,74 @@
+import { useState } from 'react';
 import { Avatar } from '@/components/vca-components/avatar';
+import { Message } from '@/components/vca-components/messages';
+import type { AvatarSize } from '@/components/vca-components/avatar/Avatar';
+import type { BadgeState } from '@/components/vca-components/badge/Badge';
+import { DemoSection } from '@/components/component-library/DemoSection';
+import { ToggleButtons, FormCheckbox } from '@/components/component-library/DemoControls';
 
 const AvatarComponentView = () => {
+  // Interactive demo state
+  const [size, setSize] = useState<AvatarSize>(24);
+  const [showBadge, setShowBadge] = useState(true);
+  const [badgeState, setBadgeState] = useState<BadgeState>('online');
+
   return (
     <div className="pt-16">
       <h1 className="mb-2">Avatar</h1>
       <p className="text-md text-gray-500 mb-12">Circular profile images with optional status badges for showing user availability.</p>
       
+      {/* Demo Section */}
+      <DemoSection
+        controls={
+          <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+            <ToggleButtons
+              label="Size"
+              options={['20', '24', '32'] as const}
+              value={String(size)}
+              onChange={(val) => setSize(Number(val) as AvatarSize)}
+            />
+
+            <ToggleButtons
+              label="Badge State"
+              options={['online', 'offline'] as const}
+              value={badgeState}
+              onChange={setBadgeState}
+              disabled={!showBadge}
+            />
+
+            <FormCheckbox
+              id="showBadge"
+              label="Show Badge"
+              checked={showBadge}
+              onCheckedChange={setShowBadge}
+            />
+          </div>
+        }
+      >
+        <Avatar
+          size={size}
+          showBadge={showBadge}
+          badgeState={badgeState}
+        />
+      </DemoSection>
+
+      {/* Usage */}
+      <div className="mb-8">
+        <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Usage</h2>
+      </div>
+
       <div className="space-y-12">
-        {/* Sizes */}
+        {/* Agent Message */}
         <div>
-          <h2 className="mb-4">Sizes</h2>
-          <p className="text-sm text-gray-500 mb-3">Three sizes for different contexts.</p>
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <div className="flex items-end gap-4">
-              <div>
-                <p className="text-xs text-gray-500 mb-2">20px</p>
-                <Avatar size={20} />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 mb-2">24px</p>
-                <Avatar size={24} />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 mb-2">32px</p>
-                <Avatar size={32} />
-              </div>
+          <h3 className="text-base font-medium mb-2">Agent message</h3>
+          <p className="text-sm text-gray-500 mb-4">Used to show that message is written by a human agent.</p>
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <div className="w-[352px] mx-auto">
+              <Message type="human-agent" humanAgentText="Hi there! I'm here to help you with any questions you have about your account." />
             </div>
           </div>
         </div>
 
-        {/* With Badge */}
-        <div>
-          <h2 className="mb-4">With Status Badge</h2>
-          <p className="text-sm text-gray-500 mb-3">Avatars with availability status indicators.</p>
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <div className="space-y-4">
-              <div>
-                <p className="text-xs font-medium text-gray-700 mb-2">Online (Available)</p>
-                <div className="flex items-end gap-4">
-                  <Avatar size={20} showBadge badgeState="online" />
-                  <Avatar size={24} showBadge badgeState="online" />
-                  <Avatar size={32} showBadge badgeState="online" />
-                </div>
-              </div>
-              
-              <div>
-                <p className="text-xs font-medium text-gray-700 mb-2">Offline (Unavailable)</p>
-                <div className="flex items-end gap-4">
-                  <Avatar size={20} showBadge badgeState="offline" />
-                  <Avatar size={24} showBadge badgeState="offline" />
-                  <Avatar size={32} showBadge badgeState="offline" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Usage in Context */}
-        <div>
-          <h2 className="mb-4">Usage Examples</h2>
-          <p className="text-sm text-gray-500 mb-3">Avatars used in different chat contexts.</p>
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <div className="space-y-4">
-              <div>
-                <p className="text-xs font-medium text-gray-700 mb-2">Agent Message Header</p>
-                <div className="flex items-center gap-2">
-                  <Avatar size={24} showBadge badgeState="online" />
-                  <span className="text-sm font-medium text-gray-900">Support Agent</span>
-                </div>
-              </div>
-              
-              <div>
-                <p className="text-xs font-medium text-gray-700 mb-2">Member Profile</p>
-                <div className="flex items-center gap-3">
-                  <Avatar size={32} showBadge badgeState="online" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">John Doe</p>
-                    <p className="text-xs text-gray-500">Available to chat</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

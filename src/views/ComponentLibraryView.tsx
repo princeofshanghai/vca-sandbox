@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import Sidebar from '@/components/layout/Sidebar';
 import MainContent from '@/components/layout/MainContent';
@@ -6,9 +7,10 @@ import ColorsView from './ColorsView';
 import SpacingView from './SpacingView';
 import RadiusView from './RadiusView';
 import MessageComponentView from './components/MessageComponentView';
-import InformationMessageComponentView from './components/InformationMessageComponentView';
-import RecommendationComponentView from './components/RecommendationComponentView';
-import AgentStatusComponentView from './components/AgentStatusComponentView';
+import AIInformationMessageComponentView from './components/AIInformationMessageComponentView';
+import AIRecommendationComponentView from './components/AIRecommendationComponentView';
+import HumanAgentStatusComponentView from './components/HumanAgentStatusComponentView';
+import ThinkingIndicatorComponentView from './components/ThinkingIndicatorComponentView';
 import SourceLinkComponentView from './components/SourceLinkComponentView';
 import SourcesComponentView from './components/SourcesComponentView';
 import ButtonComponentView from './components/ButtonComponentView';
@@ -22,10 +24,13 @@ import BadgeComponentView from './components/BadgeComponentView';
 import HeaderComponentView from './components/HeaderComponentView';
 import ContainerComponentView from './components/ContainerComponentView';
 import IconsComponentView from './components/IconsComponentView';
+import HumanAgentBannerComponentView from './components/HumanAgentBannerComponentView';
 import { cn } from '@/utils';
 
 const ComponentLibraryView = () => {
   const location = useLocation();
+  const [foundationsExpanded, setFoundationsExpanded] = useState(true);
+  const [componentsExpanded, setComponentsExpanded] = useState(true);
   
   const isActive = (path: string) => location.pathname === path;
   
@@ -33,8 +38,22 @@ const ComponentLibraryView = () => {
     <div className="flex h-full">
       <Sidebar>
         {/* Foundations */}
-        <h2 className="text-sm font-medium text-gray-900 mb-4">Foundations</h2>
-        <div className="space-y-1 mb-6">
+        <button
+          onClick={() => setFoundationsExpanded(!foundationsExpanded)}
+          className="flex items-center gap-2 text-sm font-medium text-gray-900 mb-4 cursor-pointer hover:text-gray-700 transition-colors w-full"
+        >
+          <span>Foundations</span>
+          <svg
+            className={cn("w-3 h-3 transition-transform", foundationsExpanded ? "rotate-0" : "-rotate-90")}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        {foundationsExpanded && (
+        <div className="space-y-0.5 mb-6">
           <Link 
             to="/foundations/typography"
             className={cn(
@@ -56,6 +75,17 @@ const ComponentLibraryView = () => {
             )}
           >
             Colors
+          </Link>
+          <Link 
+            to="/foundations/icons"
+            className={cn(
+              "block text-left px-3 py-2 text-2xs rounded transition-colors",
+              isActive('/foundations/icons')
+                ? "bg-gray-100 text-gray-900"
+                : "text-gray-700 hover:bg-gray-50"
+            )}
+          >
+            Icons
           </Link>
           <Link 
             to="/foundations/spacing"
@@ -80,11 +110,27 @@ const ComponentLibraryView = () => {
             Border Radius
           </Link>
         </div>
+        )}
 
-        <h2 className="text-sm font-medium text-gray-900 mb-4">Components</h2>
+        <button
+          onClick={() => setComponentsExpanded(!componentsExpanded)}
+          className="flex items-center gap-2 text-sm font-medium text-gray-900 mb-4 cursor-pointer hover:text-gray-700 transition-colors w-full"
+        >
+          <span>Components</span>
+          <svg
+            className={cn("w-3 h-3 transition-transform", componentsExpanded ? "rotate-0" : "-rotate-90")}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        {componentsExpanded && (
+        <>
         
         {/* Actions */}
-        <div className="space-y-1">
+        <div className="space-y-0.5">
           <div className="text-xs font-normal text-gray-500 mb-2">Actions</div>
           <Link 
             to="/components/button"
@@ -144,8 +190,19 @@ const ComponentLibraryView = () => {
         </div>
         
         {/* Display */}
-        <div className="space-y-1 mt-6">
+        <div className="space-y-0.5 mt-6">
           <div className="text-xs font-normal text-gray-500 mb-2">Display</div>
+          <Link 
+            to="/components/human-agent-banner"
+            className={cn(
+              "block text-left px-3 py-2 text-2xs rounded transition-colors",
+              isActive('/components/human-agent-banner')
+                ? "bg-gray-100 text-gray-900"
+                : "text-gray-700 hover:bg-gray-50"
+            )}
+          >
+            Human Agent Banner
+          </Link>
           <Link 
             to="/components/avatar"
             className={cn(
@@ -168,21 +225,10 @@ const ComponentLibraryView = () => {
           >
             Badge
           </Link>
-          <Link 
-            to="/components/icons"
-            className={cn(
-              "block text-left px-3 py-2 text-2xs rounded transition-colors",
-              isActive('/components/icons')
-                ? "bg-gray-100 text-gray-900"
-                : "text-gray-700 hover:bg-gray-50"
-            )}
-          >
-            Icons
-          </Link>
         </div>
         
         {/* Input */}
-        <div className="space-y-1 mt-6">
+        <div className="space-y-0.5 mt-6">
           <div className="text-xs font-normal text-gray-500 mb-2">Input</div>
           <Link 
             to="/components/composer"
@@ -198,7 +244,7 @@ const ComponentLibraryView = () => {
         </div>
         
         {/* Layout */}
-        <div className="space-y-1 mt-6">
+        <div className="space-y-0.5 mt-6">
           <div className="text-xs font-normal text-gray-500 mb-2">Layout</div>
           <Link 
             to="/components/container"
@@ -225,29 +271,29 @@ const ComponentLibraryView = () => {
         </div>
         
         {/* Messages */}
-        <div className="space-y-1 mt-6">
+        <div className="space-y-0.5 mt-6">
           <div className="text-xs font-normal text-gray-500 mb-2">Messages</div>
           <Link 
-            to="/components/agent-status"
+            to="/components/human-agent-status"
             className={cn(
               "block text-left px-3 py-2 text-2xs rounded transition-colors",
-              isActive('/components/agent-status')
+              isActive('/components/human-agent-status')
                 ? "bg-gray-100 text-gray-900"
                 : "text-gray-700 hover:bg-gray-50"
             )}
           >
-            Agent Status
+            Human Agent Status
           </Link>
           <Link 
-            to="/components/information-message"
+            to="/components/ai-information-message"
             className={cn(
               "block text-left px-3 py-2 text-2xs rounded transition-colors",
-              isActive('/components/information-message')
+              isActive('/components/ai-information-message')
                 ? "bg-gray-100 text-gray-900"
                 : "text-gray-700 hover:bg-gray-50"
             )}
           >
-            Information Message
+            AI Information Message
           </Link>
           <Link 
             to="/components/message"
@@ -261,15 +307,15 @@ const ComponentLibraryView = () => {
             Message
           </Link>
           <Link 
-            to="/components/recommendation"
+            to="/components/ai-recommendation"
             className={cn(
               "block text-left px-3 py-2 text-2xs rounded transition-colors",
-              isActive('/components/recommendation')
+              isActive('/components/ai-recommendation')
                 ? "bg-gray-100 text-gray-900"
                 : "text-gray-700 hover:bg-gray-50"
             )}
           >
-            Recommendation
+            AI Recommendation
           </Link>
           <Link 
             to="/components/source-link"
@@ -293,7 +339,20 @@ const ComponentLibraryView = () => {
           >
             Sources
           </Link>
+          <Link 
+            to="/components/thinking-indicator"
+            className={cn(
+              "block text-left px-3 py-2 text-2xs rounded transition-colors",
+              isActive('/components/thinking-indicator')
+                ? "bg-gray-100 text-gray-900"
+                : "text-gray-700 hover:bg-gray-50"
+            )}
+          >
+            Thinking Indicator
+          </Link>
         </div>
+        </>
+        )}
       </Sidebar>
 
       <MainContent>
@@ -301,23 +360,25 @@ const ComponentLibraryView = () => {
           {/* Foundation Routes */}
           <Route path="typography" element={<TypographyView />} />
           <Route path="colors" element={<ColorsView />} />
+          <Route path="icons" element={<IconsComponentView />} />
           <Route path="spacing" element={<SpacingView />} />
           <Route path="radius" element={<RadiusView />} />
           
           {/* Component Routes */}
           <Route index element={<Navigate to="/components/message" replace />} />
           <Route path="message" element={<MessageComponentView />} />
-          <Route path="information-message" element={<InformationMessageComponentView />} />
-          <Route path="recommendation" element={<RecommendationComponentView />} />
-          <Route path="agent-status" element={<AgentStatusComponentView />} />
+          <Route path="ai-information-message" element={<AIInformationMessageComponentView />} />
+          <Route path="ai-recommendation" element={<AIRecommendationComponentView />} />
+          <Route path="human-agent-status" element={<HumanAgentStatusComponentView />} />
+          <Route path="thinking-indicator" element={<ThinkingIndicatorComponentView />} />
           <Route path="source-link" element={<SourceLinkComponentView />} />
           <Route path="sources" element={<SourcesComponentView />} />
           <Route path="composer" element={<ComposerComponentView />} />
           <Route path="container" element={<ContainerComponentView />} />
           <Route path="header" element={<HeaderComponentView />} />
+          <Route path="human-agent-banner" element={<HumanAgentBannerComponentView />} />
           <Route path="avatar" element={<AvatarComponentView />} />
           <Route path="badge" element={<BadgeComponentView />} />
-          <Route path="icons" element={<IconsComponentView />} />
           <Route path="button" element={<ButtonComponentView />} />
           <Route path="button-icon" element={<ButtonIconComponentView />} />
           <Route path="button-link" element={<ButtonLinkComponentView />} />

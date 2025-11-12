@@ -1,11 +1,58 @@
+import { useState } from 'react';
 import { ButtonLink } from '@/components/vca-components/buttons';
+import { DemoSection } from '@/components/component-library/DemoSection';
+import { FormInput, FormCheckbox } from '@/components/component-library/DemoControls';
 
 const ButtonLinkComponentView = () => {
+  // Interactive demo state
+  const [text, setText] = useState('View details');
+  const [disabled, setDisabled] = useState(false);
+  const [hasHref, setHasHref] = useState(false);
+
   return (
     <div className="pt-16">
       <h1 className="mb-2">Button Link</h1>
       <p className="text-md text-gray-500 mb-12">Text-only link buttons for inline actions without visual weight.</p>
       
+      {/* Demo Section */}
+      <DemoSection
+        controls={
+          <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+            <FormInput
+              id="text"
+              label="Link Text"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="Enter text..."
+            />
+
+            <div></div>
+
+            <FormCheckbox
+              id="disabled"
+              label="Disabled"
+              checked={disabled}
+              onCheckedChange={setDisabled}
+            />
+
+            <FormCheckbox
+              id="hasHref"
+              label="External Link (href)"
+              checked={hasHref}
+              onCheckedChange={setHasHref}
+            />
+          </div>
+        }
+      >
+        <ButtonLink 
+          disabled={disabled}
+          href={hasHref ? 'https://linkedin.com' : undefined}
+          onClick={() => !hasHref && alert('Link clicked!')}
+        >
+          {text}
+        </ButtonLink>
+      </DemoSection>
+
       <div className="space-y-12">
         {/* All States */}
         <div>

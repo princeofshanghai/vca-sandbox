@@ -2,10 +2,10 @@ import { VcaIcon } from '../icons';
 import { Button } from '../buttons';
 import { cn } from '@/utils';
 
-export type RecommendationState = 'default' | 'applied' | 'dismissed';
+export type AIRecommendationState = 'default' | 'applied' | 'dismissed';
 
-export type RecommendationProps = {
-  state?: RecommendationState;
+export type AIRecommendationProps = {
+  state?: AIRecommendationState;
   title?: string;
   impactText?: string;
   description?: string;
@@ -15,11 +15,11 @@ export type RecommendationProps = {
 };
 
 /**
- * Recommendation - AI-powered action suggestion component
+ * AIRecommendation - AI-powered action suggestion component
  * Shows recommended actions with impact, supporting default/applied/dismissed states
  * Note: No built-in horizontal padding or width - parent container controls spacing
  */
-export const Recommendation = ({
+export const AIRecommendation = ({
   state = 'default',
   title = 'Recommended action',
   impactText = 'impact',
@@ -27,7 +27,7 @@ export const Recommendation = ({
   onApply,
   onDismiss,
   className,
-}: RecommendationProps) => {
+}: AIRecommendationProps) => {
   
   return (
     <div className={cn('flex flex-col gap-vca-lg items-start', className)}>
@@ -36,7 +36,7 @@ export const Recommendation = ({
         <div className="flex flex-col gap-vca-s items-start w-full">
           <div className="flex gap-vca-s items-center w-full">
             <p className="font-vca-text text-vca-small-bold text-vca-text flex-1">
-              {title} + <span className="text-vca-text-positive">{impactText}</span>
+              {title} <span className="text-vca-text-positive">{impactText}</span>
             </p>
           </div>
         </div>

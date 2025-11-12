@@ -3,10 +3,12 @@ import { VcaIcon } from '../icons';
 import { cn } from '@/utils';
 
 export type HeaderPosition = 'left' | 'center';
+export type HeaderViewport = 'desktop' | 'mobile';
 
 export type HeaderProps = {
   title?: string;
   position?: HeaderPosition;
+  viewport?: HeaderViewport;
   showBack?: boolean;
   showPremiumIcon?: boolean;
   showAction?: boolean;
@@ -20,10 +22,12 @@ export type HeaderProps = {
 /**
  * Header - Chat panel header with title and actions
  * Displays title with optional back button, premium icon, minimize, and close buttons
+ * In mobile viewport, shows only a centered drag handle bar
  */
 export const Header = ({
   title = 'Help',
   position = 'left',
+  viewport = 'desktop',
   showBack = true,
   showPremiumIcon = true,
   showAction = true,
@@ -37,6 +41,34 @@ export const Header = ({
   const borderClass = showPremiumBorder 
     ? 'border-b-2 border-vca-premium-text-brand' 
     : 'border-b border-vca-border-faint';
+  
+  // Mobile viewport - show only handle bar and close button
+  if (viewport === 'mobile') {
+    return (
+      <div 
+        className={cn(
+          'relative bg-vca-background h-[64px] w-full flex items-center justify-center',
+          borderClass,
+          className
+        )}
+      >
+        {/* Centered handle bar */}
+        <div className="w-12 h-1 bg-gray-400 rounded-full" />
+        
+        {/* Close button - right side */}
+        <div className="absolute right-5 top-1/2 -translate-y-1/2">
+          <ButtonIcon 
+            type="tertiary" 
+            size="md" 
+            emphasis={false} 
+            icon="close"
+            onClick={onClose}
+            ariaLabel="Close"
+          />
+        </div>
+      </div>
+    );
+  }
   
   // Center-aligned layout
   if (position === 'center') {
@@ -65,7 +97,7 @@ export const Header = ({
         {/* Title - center */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-vca-s">
           {showPremiumIcon && (
-            <VcaIcon icon="linkedin-bug" size="md" className="text-vca-premium" />
+            <VcaIcon icon="linkedin-bug" size="md" className="text-vca-premium-inbug" />
           )}
           <h1 className="font-vca-display text-vca-heading-large text-vca-text tracking-normal">
             {title}
@@ -120,7 +152,7 @@ export const Header = ({
         )}
         <div className="flex items-center gap-vca-s">
           {showPremiumIcon && (
-            <VcaIcon icon="linkedin-bug" size="md" className="text-vca-premium" />
+            <VcaIcon icon="linkedin-bug" size="md" className="text-vca-premium-inbug" />
           )}
           <h1 className="font-vca-display text-vca-heading-large text-vca-text tracking-normal">
             {title}

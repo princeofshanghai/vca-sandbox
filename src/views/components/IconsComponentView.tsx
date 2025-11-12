@@ -1,6 +1,13 @@
+import { useState } from 'react';
 import { VcaIcon, VcaIconName } from '@/components/vca-components/icons';
+import { DemoSection } from '@/components/component-library/DemoSection';
+import { ToggleButtons } from '@/components/component-library/DemoControls';
 
 const IconsComponentView = () => {
+  // Interactive demo state
+  const [selectedIcon, setSelectedIcon] = useState<VcaIconName>('send');
+  const [size, setSize] = useState<'sm' | 'md' | 'lg'>('md');
+
   // All available icons
   const icons: VcaIconName[] = [
     'arrow-left',
@@ -33,6 +40,39 @@ const IconsComponentView = () => {
       <h1 className="mb-2">Icons</h1>
       <p className="text-md text-gray-500 mb-12">Custom LinkedIn SVG icons used throughout the VCA chatbot interface.</p>
       
+      {/* Demo Section */}
+      <DemoSection
+        controls={
+          <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+            <ToggleButtons
+              label="Size"
+              options={['sm', 'md', 'lg'] as const}
+              value={size}
+              onChange={setSize}
+            />
+
+            <div></div>
+
+            <div className="col-span-2">
+              <label className="block text-xs font-medium text-gray-700 mb-2">
+                Select Icon
+              </label>
+              <select 
+                value={selectedIcon}
+                onChange={(e) => setSelectedIcon(e.target.value as VcaIconName)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {icons.map((icon) => (
+                  <option key={icon} value={icon}>{icon}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        }
+      >
+        <VcaIcon icon={selectedIcon} size={size} className="text-vca-icon" />
+      </DemoSection>
+
       <div className="space-y-12">
         {/* All Icons Grid */}
         <div>

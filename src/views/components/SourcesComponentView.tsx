@@ -1,11 +1,44 @@
+import { useState } from 'react';
 import { Sources } from '@/components/vca-components/sources';
+import { DemoSection } from '@/components/component-library/DemoSection';
+import { ToggleButtons } from '@/components/component-library/DemoControls';
 
 const SourcesComponentView = () => {
+  // Interactive demo state
+  const [sourceCount, setSourceCount] = useState<'1' | '2' | '3'>('3');
+
+  const getSources = () => {
+    const allSources = [
+      { text: 'LinkedIn Research Study 2024', href: 'https://example.com/study1', state: 'enabled' as const },
+      { text: 'User Engagement Metrics Report', href: 'https://example.com/report', state: 'enabled' as const },
+      { text: 'Industry Benchmark Analysis', href: 'https://example.com/analysis', state: 'visited' as const },
+    ];
+    return allSources.slice(0, Number(sourceCount));
+  };
+
   return (
     <div className="pt-16">
       <h1 className="mb-2">Sources</h1>
       <p className="text-md text-gray-500 mb-12">List of source citations and references with heading for AI-generated content.</p>
       
+      {/* Demo Section */}
+      <DemoSection
+        controls={
+          <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+            <ToggleButtons
+              label="Number of Sources"
+              options={['1', '2', '3'] as const}
+              value={sourceCount}
+              onChange={setSourceCount}
+            />
+          </div>
+        }
+      >
+        <div className="px-vca-xxl">
+          <Sources sources={getSources()} />
+        </div>
+      </DemoSection>
+
       <div className="space-y-12">
         {/* Default - 3 Sources */}
         <div>
