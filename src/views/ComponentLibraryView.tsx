@@ -372,7 +372,7 @@ const ComponentLibraryView = () => {
           <Route path="radius" element={<RadiusView />} />
           
           {/* Component Routes */}
-          <Route index element={<Navigate to="/components/message" replace />} />
+          <Route index element={<Navigate to="/foundations/typography" replace />} />
           <Route path="message" element={<MessageComponentView />} />
           <Route path="info-message" element={<InfoMessageComponentView />} />
           <Route path="action-message" element={<ActionMessageComponentView />} />

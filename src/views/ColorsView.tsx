@@ -200,7 +200,7 @@ const ColorsView = () => {
     <div className="pt-16">
       <h1 className="mb-4">Colors</h1>
       <p className="text-base text-gray-500 mb-12">
-        VCA design system color palette and tokens. Each token shows its Tailwind class, hex value, and the primitive it references from Figma.
+        Colors in VCA used the standard Mercado color palette.
       </p>
       
       <div className="space-y-16">

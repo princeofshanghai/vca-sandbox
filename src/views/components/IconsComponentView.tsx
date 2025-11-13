@@ -38,7 +38,7 @@ const IconsComponentView = () => {
   return (
     <div className="pt-16">
       <h1 className="mb-4">Icons</h1>
-      <p className="text-base text-gray-500 mb-12">Custom LinkedIn SVG icons used throughout the VCA chatbot interface.</p>
+      <p className="text-base text-gray-500 mb-12">Collection of Mercado icons used in VCA.</p>
       
       {/* Demo Section */}
       <DemoSection
@@ -75,14 +75,12 @@ const IconsComponentView = () => {
 
       {/* Usage */}
       <div className="mb-8">
-        <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Usage</h2>
+        <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">All icons</h2>
       </div>
 
       <div className="space-y-12">
         {/* All icons Grid */}
         <div>
-          <h3 className="text-lg font-medium mb-2">All icons</h3>
-          <p className="text-md text-gray-900 mb-3">Complete set of 23 VCA icons.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <div className="grid grid-cols-4 gap-6">
               {icons.map((iconName) => (
@@ -97,8 +95,8 @@ const IconsComponentView = () => {
 
         {/* Sizes */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Sizes</h3>
-          <p className="text-md text-gray-900 mb-3">Icons available in three sizes.</p>
+        <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Sizes</h2>
+          <p className="text-md text-gray-900 mb-3">Icons in VCA are used in three sizes.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <div className="flex items-end gap-8">
               <div className="flex flex-col items-center gap-2">
@@ -117,135 +115,7 @@ const IconsComponentView = () => {
           </div>
         </div>
 
-        {/* Categories */}
-        <div>
-          <h3 className="text-lg font-medium mb-2">By category</h3>
-          <p className="text-md text-gray-900 mb-3">Icons organized by usage type.</p>
-          <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-6">
-            {/* Navigation */}
-            <div>
-              <p className="text-sm font-semibold mb-2">Navigation</p>
-              <div className="flex gap-4">
-                <div className="flex flex-col items-center gap-1">
-                  <VcaIcon icon="arrow-left" size="md" className="text-vca-icon" />
-                  <span className="text-xs text-gray-500">arrow-left</span>
-                </div>
-                <div className="flex flex-col items-center gap-1">
-                  <VcaIcon icon="arrow-up" size="md" className="text-vca-icon" />
-                  <span className="text-xs text-gray-500">arrow-up</span>
-                </div>
-                <div className="flex flex-col items-center gap-1">
-                  <VcaIcon icon="arrow-down" size="md" className="text-vca-icon" />
-                  <span className="text-xs text-gray-500">arrow-down</span>
-                </div>
-                <div className="flex flex-col items-center gap-1">
-                  <VcaIcon icon="chevron-down" size="md" className="text-vca-icon" />
-                  <span className="text-xs text-gray-500">chevron-down</span>
-                </div>
-                <div className="flex flex-col items-center gap-1">
-                  <VcaIcon icon="close" size="md" className="text-vca-icon" />
-                  <span className="text-xs text-gray-500">close</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div>
-              <p className="text-sm font-semibold mb-2">Actions</p>
-              <div className="flex gap-4">
-                <div className="flex flex-col items-center gap-1">
-                  <VcaIcon icon="send" size="md" className="text-vca-icon" />
-                  <span className="text-xs text-gray-500">send</span>
-                </div>
-                <div className="flex flex-col items-center gap-1">
-                  <VcaIcon icon="attachment" size="md" className="text-vca-icon" />
-                  <span className="text-xs text-gray-500">attachment</span>
-                </div>
-                <div className="flex flex-col items-center gap-1">
-                  <VcaIcon icon="check" size="md" className="text-vca-icon" />
-                  <span className="text-xs text-gray-500">check</span>
-                </div>
-                <div className="flex flex-col items-center gap-1">
-                  <VcaIcon icon="undo" size="md" className="text-vca-icon" />
-                  <span className="text-xs text-gray-500">undo</span>
-                </div>
-                <div className="flex flex-col items-center gap-1">
-                  <VcaIcon icon="trash" size="md" className="text-vca-icon" />
-                  <span className="text-xs text-gray-500">trash</span>
-                </div>
-                <div className="flex flex-col items-center gap-1">
-                  <VcaIcon icon="download" size="md" className="text-vca-icon" />
-                  <span className="text-xs text-gray-500">download</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Signals */}
-            <div>
-              <p className="text-sm font-semibold mb-2">Signals & Status</p>
-              <div className="flex gap-4">
-                <div className="flex flex-col items-center gap-1">
-                  <VcaIcon icon="signal-ai" size="md" className="text-vca-icon" />
-                  <span className="text-xs text-gray-500">signal-ai</span>
-                </div>
-                <div className="flex flex-col items-center gap-1">
-                  <VcaIcon icon="signal-success" size="md" className="text-vca-icon" />
-                  <span className="text-xs text-gray-500">signal-success</span>
-                </div>
-                <div className="flex flex-col items-center gap-1">
-                  <VcaIcon icon="signal-error" size="md" className="text-vca-icon" />
-                  <span className="text-xs text-gray-500">signal-error</span>
-                </div>
-                <div className="flex flex-col items-center gap-1">
-                  <VcaIcon icon="signal-notice" size="md" className="text-vca-icon" />
-                  <span className="text-xs text-gray-500">signal-notice</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Feedback */}
-            <div>
-              <p className="text-sm font-semibold mb-2">Feedback</p>
-              <div className="flex gap-4">
-                <div className="flex flex-col items-center gap-1">
-                  <VcaIcon icon="thumbs-up-outline" size="md" className="text-vca-icon" />
-                  <span className="text-xs text-gray-500">thumbs-up-outline</span>
-                </div>
-                <div className="flex flex-col items-center gap-1">
-                  <VcaIcon icon="thumbs-up-fill" size="md" className="text-vca-icon" />
-                  <span className="text-xs text-gray-500">thumbs-up-fill</span>
-                </div>
-                <div className="flex flex-col items-center gap-1">
-                  <VcaIcon icon="thumbs-down-outline" size="md" className="text-vca-icon" />
-                  <span className="text-xs text-gray-500">thumbs-down-outline</span>
-                </div>
-                <div className="flex flex-col items-center gap-1">
-                  <VcaIcon icon="thumbs-down-fill" size="md" className="text-vca-icon" />
-                  <span className="text-xs text-gray-500">thumbs-down-fill</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Other */}
-            <div>
-              <p className="text-sm font-semibold mb-2">Other</p>
-              <div className="flex gap-4">
-                <div className="flex flex-col items-center gap-1">
-                  <VcaIcon icon="linkedin-bug" size="md" className="text-vca-icon" />
-                  <span className="text-xs text-gray-500">linkedin-bug</span>
-                </div>
-                <div className="flex flex-col items-center gap-1">
-                  <VcaIcon icon="document" size="md" className="text-vca-icon" />
-                  <span className="text-xs text-gray-500">document</span>
-                </div>
-                <div className="flex flex-col items-center gap-1">
-                  <VcaIcon icon="messages" size="md" className="text-vca-icon" />
-                  <span className="text-xs text-gray-500">messages</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        
       </div>
     </div>
   );

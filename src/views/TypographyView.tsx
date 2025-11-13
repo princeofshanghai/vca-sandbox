@@ -35,7 +35,7 @@ const TypographyView = () => {
   return (
     <div className="pt-16">
       <h1 className="mb-4">Typography</h1>
-      <p className="text-base text-gray-500 mb-12">VCA design system typography styles matching Figma tokens. Each style includes font-size, line-height, and font-weight.</p>
+      <p className="text-base text-gray-500 mb-12">Typography in VCA uses standard Mercado styles.</p>
       
       <div className="space-y-12">
         {/* Font Families */}
@@ -47,13 +47,12 @@ const TypographyView = () => {
                 <h3 className="mb-2">SF Pro Text</h3>
                 <p className="text-sm text-gray-600 mb-2">Used for body text and small headings</p>
                 <code className="text-xs text-gray-500 font-mono">font-vca-text</code>
-                <p className="font-vca-text text-2xl text-gray-900 mt-3">The quick brown fox jumps over the lazy dog</p>
               </div>
               <div className="pt-4 border-t border-gray-100">
                 <h3 className="mb-2">SF Pro Display</h3>
                 <p className="text-sm text-gray-600 mb-2">Used for headings and large display text</p>
                 <code className="text-xs text-gray-500 font-mono">font-vca-display</code>
-                <p className="font-vca-display text-2xl text-gray-900 mt-3">The quick brown fox jumps over the lazy dog</p>
+
               </div>
             </div>
           </div>
@@ -295,56 +294,7 @@ const TypographyView = () => {
           </div>
         </div>
 
-        {/* Usage Guidelines */}
-        <div>
-          <h2 className="mb-4">Usage guidelines</h2>
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <div className="space-y-4 text-sm text-gray-700">
-              <div>
-                <p className="font-semibold text-gray-900 mb-2">⚠️ Critical: Always Include Font Family Classes</p>
-                <p className="mb-2">Typography size tokens (e.g., <code className="bg-gray-100 px-1 py-0.5 rounded text-xs font-mono">text-vca-small-bold</code>) do NOT include font-family. You must always add <code className="bg-gray-100 px-1 py-0.5 rounded text-xs font-mono">font-vca-text</code> or <code className="bg-gray-100 px-1 py-0.5 rounded text-xs font-mono">font-vca-display</code> alongside them.</p>
-                <div className="bg-gray-50 border border-gray-200 rounded p-3 mt-2">
-                  <p className="text-xs font-medium text-gray-600 mb-1">✅ Correct:</p>
-                  <code className="text-xs font-mono text-green-700">className="font-vca-text text-vca-small-bold text-vca-link"</code>
-                  <p className="text-xs font-medium text-gray-600 mb-1 mt-2">❌ Wrong (missing font-family):</p>
-                  <code className="text-xs font-mono text-red-700">className="text-vca-small-bold text-vca-link"</code>
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-gray-100">
-                <p className="font-semibold text-gray-900 mb-2">⚠️ Avoid cn() Conflicts with Typography + Color</p>
-                <p className="mb-2">When using <code className="bg-gray-100 px-1 py-0.5 rounded text-xs font-mono">cn()</code> (tailwind-merge), typography tokens can be removed if merged with color tokens because both start with <code className="bg-gray-100 px-1 py-0.5 rounded text-xs font-mono">text-</code>.</p>
-                <div className="bg-gray-50 border border-gray-200 rounded p-3 mt-2">
-                  <p className="text-xs font-medium text-gray-600 mb-1">✅ Solution: Use template literals to separate them:</p>
-                  <code className="text-xs font-mono text-green-700 block mb-2">{`className={\`font-vca-text text-vca-small-bold \${colorClass}\`}`}</code>
-                  <p className="text-xs font-medium text-gray-600 mb-1 mt-2">❌ Problem: cn() removes typography token:</p>
-                  <code className="text-xs font-mono text-red-700 block">className={`{cn('font-vca-text text-vca-small-bold', colorClass)}`}</code>
-                </div>
-                <p className="text-xs text-gray-600 mt-2">See <code className="bg-gray-100 px-1 py-0.5 rounded font-mono">docs/Tailwind-Merge-Typography-Fix.md</code> for details.</p>
-              </div>
-
-              <div className="pt-3 border-t border-gray-100">
-                <p><span className="font-medium">Complete Tokens:</span> Each typography size token includes font-size, line-height, and font-weight together. Use the single token class instead of combining multiple properties.</p>
-              </div>
-
-              <div>
-                <p><span className="font-medium">Font Families:</span> Body text (12-16px) uses SF Pro Text. Large text and headings (20px+) use SF Pro Display.</p>
-              </div>
-
-              <div>
-                <p><span className="font-medium">"Open" Variants:</span> Styles with "-open" suffix have increased line-height (1.5 ratio) for better readability in longer text blocks. Standard variants use 1.25 line-height.</p>
-              </div>
-
-              <div>
-                <p><span className="font-medium">Bold Variants:</span> Use "-bold" suffix for semibold weight (600). Regular variants are 400 weight.</p>
-              </div>
-
-              <div>
-                <p><span className="font-medium">Line-Heights:</span> All line-heights use unitless ratios (1.25 or 1.5) for better scalability. The pixel values shown are computed results.</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        
       </div>
     </div>
   );
