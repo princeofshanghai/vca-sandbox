@@ -4,6 +4,7 @@ import { Message } from '@/components/vca-components/messages';
 import { Composer } from '@/components/vca-components/composer';
 import { ThinkingIndicator } from '@/components/vca-components/thinking-indicator';
 import { DemoSection } from '@/components/component-library/DemoSection';
+import { ComponentViewLayout } from '@/components/component-library/ComponentViewLayout';
 import { ToggleButtons, FormCheckbox } from '@/components/component-library/DemoControls';
 
 const PromptGroupComponentView = () => {
@@ -51,9 +52,10 @@ const PromptGroupComponentView = () => {
   };
 
   return (
-    <div className="pt-16">
-      <h1 className="mb-4">Prompt Group</h1>
-      <p className="text-base text-gray-500 mb-12">Group multiple prompts together.</p>
+    <ComponentViewLayout
+      title="Prompt Group"
+      description="Collection of related prompt suggestions."
+    >
       
       {/* Demo Section */}
       <DemoSection
@@ -209,9 +211,8 @@ const PromptGroupComponentView = () => {
             )}
           </div>
         </div>
-
-        </div>
       </div>
+    </ComponentViewLayout>
   );
 };
 

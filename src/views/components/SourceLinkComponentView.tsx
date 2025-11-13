@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { SourceLink } from '@/components/vca-components/source-link';
 import type { SourceLinkState } from '@/components/vca-components/source-link/SourceLink';
 import { DemoSection } from '@/components/component-library/DemoSection';
+import { ComponentViewLayout } from '@/components/component-library/ComponentViewLayout';
 import { ToggleButtons, FormInput, FormCheckbox } from '@/components/component-library/DemoControls';
 
 const SourceLinkComponentView = () => {
@@ -11,9 +12,10 @@ const SourceLinkComponentView = () => {
   const [hasHref, setHasHref] = useState(true);
 
   return (
-    <div className="pt-16">
-      <h1 className="mb-4">Source Link</h1>
-      <p className="text-base text-gray-500 mb-12">Small citation and source link component with multiple states for references and external links.</p>
+    <ComponentViewLayout
+      title="Source Link"
+      description="Clickable source citation link."
+    >
       
       {/* Demo Section */}
       <DemoSection
@@ -164,7 +166,7 @@ const SourceLinkComponentView = () => {
 
         
       </div>
-    </div>
+    </ComponentViewLayout>
   );
 };
 

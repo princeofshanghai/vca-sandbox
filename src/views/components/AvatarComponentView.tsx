@@ -4,6 +4,7 @@ import { Message } from '@/components/vca-components/messages';
 import type { AvatarSize } from '@/components/vca-components/avatar/Avatar';
 import type { BadgeState } from '@/components/vca-components/badge/Badge';
 import { DemoSection } from '@/components/component-library/DemoSection';
+import { ComponentViewLayout } from '@/components/component-library/ComponentViewLayout';
 import { ToggleButtons, FormCheckbox } from '@/components/component-library/DemoControls';
 
 const AvatarComponentView = () => {
@@ -13,9 +14,10 @@ const AvatarComponentView = () => {
   const [badgeState, setBadgeState] = useState<BadgeState>('online');
 
   return (
-    <div className="pt-16">
-      <h1 className="mb-4">Avatar</h1>
-      <p className="text-base text-gray-500 mb-12">Used to represent a live human agent.</p>
+    <ComponentViewLayout
+      title="Avatar"
+      description="Circular profile image with optional status badge."
+    >
       
       {/* Demo Section */}
       <DemoSection
@@ -70,7 +72,7 @@ const AvatarComponentView = () => {
         </div>
 
       </div>
-    </div>
+    </ComponentViewLayout>
   );
 };
 

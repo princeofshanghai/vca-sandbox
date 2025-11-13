@@ -1,89 +1,6 @@
 import { cn } from '@/utils';
-import { VcaIcon } from '@/components/vca-components/icons';
-
-// ============================================================
-// Avatar Component
-// ============================================================
-type AvatarProps = {
-  className?: string;
-  badge?: boolean;
-  size?: '32' | '20' | '24';
-};
-
-const Avatar = ({ className, badge = false, size = '20' }: AvatarProps) => {
-  // Placeholder avatar - will be replaced with real images later
-  const sizeMap = {
-    '20': 'w-5 h-5',
-    '24': 'w-6 h-6',
-    '32': 'w-8 h-8',
-  };
-
-  return (
-    <div className={cn('relative shrink-0', sizeMap[size], className)}>
-      {/* Placeholder avatar circle */}
-      <div className="absolute inset-0 bg-gray-300 rounded-full" />
-      {badge && (
-        <div className="absolute bottom-0 right-0 w-2 h-2 bg-green-500 rounded-full border-2 border-white" />
-      )}
-    </div>
-  );
-};
-
-// ============================================================
-// Agent Timestamp Component
-// ============================================================
-type AgentTimestampProps = {
-  className?: string;
-  text?: string;
-};
-
-const AgentTimestamp = ({ className, text = 'Agent, LinkedIn Support  1:32 PM' }: AgentTimestampProps) => {
-  return (
-    <div className={cn('flex gap-vca-s items-center', className)}>
-      <Avatar size="24" />
-      <p className="font-vca-text text-vca-xsmall text-vca-text-meta whitespace-pre-wrap">
-        {text}
-      </p>
-    </div>
-  );
-};
-
-// ============================================================
-// Inline Feedback Component
-// ============================================================
-type InlineFeedbackProps = {
-  className?: string;
-  action?: boolean;
-  type?: 'negative' | 'neutral' | 'positive';
-  size?: 'sm' | 'md';
-};
-
-const InlineFeedback = ({ className, action = true, type = 'positive' }: InlineFeedbackProps) => {
-  const isNegative = type === 'negative';
-  const textColor = isNegative ? 'text-vca-text-negative' : 'text-vca-text-positive';
-  const message = isNegative ? 'Not delivered.' : 'Success';
-  const actionText = 'Try again';
-
-  return (
-    <div className={cn('flex gap-vca-xs items-center', className)}>
-      <div className="flex gap-vca-s items-center">
-        <VcaIcon 
-          icon={isNegative ? 'signal-error' : 'signal-success'} 
-          size="sm"
-          className={textColor}
-        />
-        <p className={`font-vca-text text-vca-xsmall-open whitespace-nowrap ${textColor}`}>
-          {message}
-        </p>
-      </div>
-      {action && isNegative && (
-        <p className={`font-vca-text text-vca-xsmall-bold-open underline whitespace-nowrap ${textColor}`}>
-          {actionText}
-        </p>
-      )}
-    </div>
-  );
-};
+import { AgentTimestamp } from '../agent-timestamp';
+import { InlineFeedback } from '../inline-feedback';
 
 // ============================================================
 // Main Message Component
@@ -135,7 +52,7 @@ export const Message = ({
               {userText}
             </p>
           </div>
-          {errorFeedback && <InlineFeedback type="negative" />}
+          {errorFeedback && <InlineFeedback type="negative" showAction={true} />}
         </div>
       </div>
     );
@@ -151,7 +68,12 @@ export const Message = ({
               {humanAgentText}
             </p>
           </div>
-          {showTimestamp && <AgentTimestamp text={agentTimestampText} />}
+          {showTimestamp && (
+            <AgentTimestamp 
+              text={agentTimestampText}
+              showBadge={true}
+            />
+          )}
         </div>
       </div>
     );

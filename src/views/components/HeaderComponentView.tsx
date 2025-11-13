@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Header } from '@/components/vca-components/header';
 import { DemoSection } from '@/components/component-library/DemoSection';
+import { ComponentViewLayout } from '@/components/component-library/ComponentViewLayout';
 import type { HeaderPosition } from '@/components/vca-components/header/Header';
 import { ToggleButtons, FormInput, FormCheckbox } from '@/components/component-library/DemoControls';
 
@@ -14,9 +15,10 @@ const HeaderComponentView = () => {
   const [showAction, setShowAction] = useState(false);
 
   return (
-    <div className="pt-16">
-      <h1 className="mb-4">Header</h1>
-      <p className="text-base text-gray-500 mb-12">Header in VCA container. Differs across desktop and mobile.</p>
+    <ComponentViewLayout
+      title="Header"
+      description="Chat header with title and optional close button."
+    >
       
       {/* Demo Section */}
       <DemoSection
@@ -161,7 +163,7 @@ const HeaderComponentView = () => {
           </div>
         </div>
       </div>
-    </div>
+    </ComponentViewLayout>
   );
 };
 

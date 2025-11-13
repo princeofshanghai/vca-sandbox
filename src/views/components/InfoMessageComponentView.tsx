@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { InfoMessage } from '@/components/vca-components/info-message';
+import { FeedbackValue } from '@/components/vca-components/feedback';
+import { ComponentViewLayout } from '@/components/component-library/ComponentViewLayout';
 import { DemoSection } from '@/components/component-library/DemoSection';
 import { ToggleButtons, FormInput, FormTextarea, FormCheckbox } from '@/components/component-library/DemoControls';
 
@@ -9,15 +11,16 @@ const InfoMessageComponentView = () => {
   const [title, setTitle] = useState("Here's what you need to know");
   const [message, setMessage] = useState('Based on your organization\'s usage patterns, we recommend enabling seat auto-assignment for new users.');
   const [showTitle, setShowTitle] = useState(true);
-  const [showDivider, setShowDivider] = useState(true);
   const [showResponseStopped, setShowResponseStopped] = useState(false);
   const [showSources, setShowSources] = useState(true);
   const [showRating, setShowRating] = useState(true);
+  const [feedbackValue, setFeedbackValue] = useState<FeedbackValue>(null);
 
   return (
-    <div className="pt-16">
-      <h1 className="mb-4">Info Message</h1>
-      <p className="text-base text-gray-500 mb-12">Display rich message with context and link to sources.</p>
+    <ComponentViewLayout
+      title="Info Message"
+      description="Display rich message with context and link to sources."
+    >
       
       {/* Demo Section */}
       <DemoSection
@@ -61,13 +64,6 @@ const InfoMessageComponentView = () => {
                 />
 
                 <FormCheckbox
-                  id="showDivider"
-                  label="Show divider"
-                  checked={showDivider}
-                  onCheckedChange={setShowDivider}
-                />
-
-                <FormCheckbox
                   id="showResponseStopped"
                   label="Show response stopped"
                   checked={showResponseStopped}
@@ -87,6 +83,13 @@ const InfoMessageComponentView = () => {
                   checked={showRating}
                   onCheckedChange={setShowRating}
                 />
+
+                <ToggleButtons
+                  label="Feedback value"
+                  options={['none', 'up', 'down'] as const}
+                  value={feedbackValue === null ? 'none' : feedbackValue}
+                  onChange={(val) => setFeedbackValue(val === 'none' ? null : val as 'up' | 'down')}
+                />
               </>
             )}
           </div>
@@ -98,7 +101,6 @@ const InfoMessageComponentView = () => {
             title={title}
             message={message}
             showTitle={showTitle}
-            showDivider={showDivider}
             showResponseStopped={showResponseStopped}
             showSources={showSources}
             showRating={showRating}
@@ -106,8 +108,8 @@ const InfoMessageComponentView = () => {
               { text: 'Onboarding Best Practices Guide', href: 'https://example.com/guide', state: 'enabled' },
               { text: 'License Management Documentation', href: 'https://example.com/docs', state: 'enabled' },
             ] : undefined}
-            onThumbsUp={() => alert('Thumbs up!')}
-            onThumbsDown={() => alert('Thumbs down!')}
+            feedbackValue={feedbackValue}
+            onFeedbackChange={setFeedbackValue}
           />
         </div>
       </DemoSection>
@@ -128,7 +130,6 @@ const InfoMessageComponentView = () => {
                   title="Here's what you need to know"
                   message="Based on your organization's usage patterns, we recommend enabling seat auto-assignment for new users. This will streamline onboarding and ensure consistent access to premium features."
                   showTitle={true}
-                  showDivider={true}
                   showResponseStopped={false}
                   showSources={true}
                   showRating={true}
@@ -136,13 +137,15 @@ const InfoMessageComponentView = () => {
                     { text: 'Onboarding Best Practices Guide', href: 'https://example.com/guide', state: 'enabled' },
                     { text: 'License Management Documentation', href: 'https://example.com/docs', state: 'enabled' },
                   ]}
+                  feedbackValue={null}
+                  onFeedbackChange={(value) => console.log('Feedback:', value)}
                 />
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </ComponentViewLayout>
   );
 };
 

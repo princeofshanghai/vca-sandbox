@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Divider } from '@/components/vca-components/divider';
 import { DemoSection } from '@/components/component-library/DemoSection';
+import { ComponentViewLayout } from '@/components/component-library/ComponentViewLayout';
 import { FormInput } from '@/components/component-library/DemoControls';
 
 const DividerComponentView = () => {
@@ -8,9 +9,10 @@ const DividerComponentView = () => {
   const [text, setText] = useState('LIVE CHAT');
 
   return (
-    <div className="pt-16">
-      <h1 className="mb-4">Divider</h1>
-      <p className="text-base text-gray-500 mb-12">Indicator whether user is now in a live chat with a human agent.</p>
+    <ComponentViewLayout
+      title="Divider"
+      description="Horizontal divider with optional label text."
+    >
       
       {/* Demo Section */}
       <DemoSection
@@ -49,7 +51,7 @@ const DividerComponentView = () => {
          
         </div>
       </div>
-    </div>
+    </ComponentViewLayout>
   );
 };
 

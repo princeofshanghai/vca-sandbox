@@ -1,3 +1,5 @@
+import { VcaIcon } from '../icons';
+
 export type SourceLinkState = 'enabled' | 'hover' | 'active' | 'visited';
 
 export type SourceLinkProps = {
@@ -21,8 +23,9 @@ export const SourceLink = ({
   className,
 }: SourceLinkProps) => {
   
-  // Split typography and color to avoid cn() conflicts
-  const baseTypography = 'font-vca-text text-vca-xsmall underline inline-block decoration-solid [text-decoration-skip-ink:none] [text-underline-position:from-font]';
+  // Split typography and color to avoid cn() conflicts with tailwind-merge
+  const baseTypography = 'font-vca-text text-vca-xsmall-bold';
+  const layoutClasses = 'underline inline-flex items-center decoration-solid [text-decoration-skip-ink:none] [text-underline-position:from-font] gap-vca-xs';
   
   const colorClass = state === 'enabled' 
     ? 'text-vca-text-meta'
@@ -30,9 +33,17 @@ export const SourceLink = ({
       ? 'text-vca-link-hover'
       : 'text-vca-link-visited';
   
+  // Use string concatenation for text classes, cn() only for layout classes
   const linkClasses = className 
-    ? `${baseTypography} ${colorClass} ${className}`
-    : `${baseTypography} ${colorClass}`;
+    ? `${baseTypography} ${colorClass} ${layoutClasses} ${className}`
+    : `${baseTypography} ${colorClass} ${layoutClasses}`;
+
+  const content = (
+    <>
+      {text}
+      <VcaIcon icon="external-link" size="sm" className="shrink-0" />
+    </>
+  );
 
   if (href) {
     return (
@@ -43,7 +54,7 @@ export const SourceLink = ({
         target="_blank"
         rel="noopener noreferrer"
       >
-        {text}
+        {content}
       </a>
     );
   }
@@ -54,7 +65,7 @@ export const SourceLink = ({
       onClick={onClick}
       className={linkClasses}
     >
-      {text}
+      {content}
     </button>
   );
 };

@@ -1,8 +1,8 @@
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 /**
  * Reusable Demo Control Components
@@ -18,7 +18,7 @@ const toSentenceCase = (str: string): string => {
 };
 
 // ============================================================
-// Toggle Buttons - For selecting between options
+// Toggle Tabs - For selecting between options using shadcn Tabs
 // ============================================================
 type ToggleButtonsProps<T extends string> = {
   label: string;
@@ -40,19 +40,23 @@ export function ToggleButtons<T extends string>({
   return (
     <div className={`space-y-2 ${disabled ? 'opacity-50' : ''} ${className}`}>
       {label && <Label className="text-xs">{toSentenceCase(label)}</Label>}
-      <div className="flex gap-2 flex-wrap">
+      <Tabs 
+        value={value} 
+        onValueChange={(val) => onChange(val as T)}
+      >
+        <TabsList className="bg-gray-50">
         {options.map((option) => (
-          <Button
+            <TabsTrigger
             key={option}
-            onClick={() => onChange(option)}
+              value={option}
             disabled={disabled}
-            variant={value === option ? 'default' : 'outline'}
-            size="sm"
+              className="text-xs data-[state=active]:bg-white"
           >
             {option}
-          </Button>
+            </TabsTrigger>
         ))}
-      </div>
+        </TabsList>
+      </Tabs>
     </div>
   );
 }

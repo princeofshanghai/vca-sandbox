@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Composer } from '@/components/vca-components/composer';
 import { DemoSection } from '@/components/component-library/DemoSection';
+import { ComponentViewLayout } from '@/components/component-library/ComponentViewLayout';
 import type { ComposerState } from '@/components/vca-components/composer/Composer';
 import { ToggleButtons, FormCheckbox } from '@/components/component-library/DemoControls';
 import { Label } from '@/components/ui/label';
@@ -39,9 +40,10 @@ const ComposerComponentView = () => {
   };
 
   return (
-    <div className="pt-16">
-      <h1 className="mb-4">Composer</h1>
-      <p className="text-base text-gray-500 mb-12">Text input component for composing messages in VCA.</p>
+    <ComponentViewLayout
+      title="Composer"
+      description="Text input area for composing messages."
+    >
       
       {/* Demo Section */}
       <DemoSection
@@ -178,7 +180,7 @@ const ComposerComponentView = () => {
           </div>
         </div>
       </div>
-    </div>
+    </ComponentViewLayout>
   );
 };
 

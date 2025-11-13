@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/vca-components/buttons';
 import { ActionMessage } from '@/components/vca-components/action-message';
+import { ComponentViewLayout } from '@/components/component-library/ComponentViewLayout';
 import { DemoSection } from '@/components/component-library/DemoSection';
 import { ToggleButtons, FormCheckbox } from '@/components/component-library/DemoControls';
 
@@ -13,10 +14,10 @@ const ButtonComponentView = () => {
   const [iconPosition, setIconPosition] = useState<'start' | 'end'>('end');
 
   return (
-    <div className="pt-16">
-      <h1 className="mb-4">Button</h1>
-      <p className="text-base text-gray-500 mb-12">Buttons are used for primary, secondary, and tertiary actions throughout VCA.</p>
-      
+    <ComponentViewLayout
+      title="Button"
+      description="Buttons are used for primary, secondary, and tertiary actions throughout VCA."
+    >
       {/* Demo Section */}
       <DemoSection
         controls={
@@ -94,7 +95,7 @@ const ButtonComponentView = () => {
           </div>
         </div>
       </div>
-    </div>
+    </ComponentViewLayout>
   );
 };
 

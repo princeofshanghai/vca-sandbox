@@ -1,5 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
+import CollapsibleSection from '@/components/layout/CollapsibleSection';
+import NavLink from '@/components/layout/NavLink';
+import NavigationGroup from '@/components/layout/NavigationGroup';
+import { AppIcon } from '@/components/app-shell/AppIcon';
 import { Container, ContainerViewport } from '@/components/vca-components/container';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -9,7 +13,6 @@ import { PromptGroup } from '@/components/vca-components/prompt-group';
 import { AgentStatus } from '@/components/vca-components/agent-status';
 import { Divider } from '@/components/vca-components/divider';
 import { ThinkingIndicator } from '@/components/vca-components/thinking-indicator';
-import { cn } from '@/utils';
 import { FlowEngine, type FlowMessage } from '@/utils/flowEngine';
 
 const FlowPreviewView = () => {
@@ -389,193 +392,83 @@ const FlowPreviewView = () => {
     <div className="flex h-full">
       <Sidebar>
         {/* General - First section */}
-        <button
-          onClick={() => setGeneralExpanded(!generalExpanded)}
-          className="flex items-center gap-2 text-sm font-medium text-gray-900 mb-4 cursor-pointer hover:text-gray-700 transition-colors w-full"
+        <CollapsibleSection
+          title="General"
+          expanded={generalExpanded}
+          onToggle={() => setGeneralExpanded(!generalExpanded)}
         >
-          <span>General</span>
-          <svg
-            className={cn("w-3 h-3 transition-transform", generalExpanded ? "rotate-0" : "-rotate-90")}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-        {generalExpanded && (
-          <div className="space-y-0.5 mb-6">
-            <button
-              onClick={() => setSelectedFlow('connect-to-live-agent')}
-              className={cn(
-                "block text-left px-3 py-2 text-2xs rounded transition-colors w-full",
-                isActive('connect-to-live-agent')
-                  ? "bg-gray-100 text-gray-900"
-                  : "text-gray-700 hover:bg-gray-50"
-              )}
-            >
+          <NavigationGroup className="mb-6">
+            <NavLink onClick={() => setSelectedFlow('connect-to-live-agent')} isActive={isActive('connect-to-live-agent')}>
               Connect to live agent
-            </button>
-          </div>
-        )}
+            </NavLink>
+          </NavigationGroup>
+        </CollapsibleSection>
 
         {/* Admin Center */}
-        <button
-          onClick={() => setAdminCenterExpanded(!adminCenterExpanded)}
-          className="flex items-center gap-2 text-sm font-medium text-gray-900 mb-4 cursor-pointer hover:text-gray-700 transition-colors w-full"
+        <CollapsibleSection
+          title="Admin Center"
+          expanded={adminCenterExpanded}
+          onToggle={() => setAdminCenterExpanded(!adminCenterExpanded)}
         >
-          <span>Admin Center</span>
-          <svg
-            className={cn("w-3 h-3 transition-transform", adminCenterExpanded ? "rotate-0" : "-rotate-90")}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-        {adminCenterExpanded && (
-          <>
-            {/* Account Management */}
-            <div className="space-y-0.5 mb-6">
-              <div className="text-xs font-normal text-gray-500 mb-2">Account Management</div>
-              <button
-                onClick={() => setSelectedFlow('add-user')}
-                className={cn(
-                  "block text-left px-3 py-2 text-2xs rounded transition-colors w-full",
-                  isActive('add-user')
-                    ? "bg-gray-100 text-gray-900"
-                    : "text-gray-700 hover:bg-gray-50"
-                )}
-              >
-                Add User
-              </button>
-              <button
-                onClick={() => setSelectedFlow('remove-user')}
-                className={cn(
-                  "block text-left px-3 py-2 text-2xs rounded transition-colors w-full",
-                  isActive('remove-user')
-                    ? "bg-gray-100 text-gray-900"
-                    : "text-gray-700 hover:bg-gray-50"
-                )}
-              >
-                Remove User
-              </button>
-              <button
-                onClick={() => setSelectedFlow('update-user-role')}
-                className={cn(
-                  "block text-left px-3 py-2 text-2xs rounded transition-colors w-full",
-                  isActive('update-user-role')
-                    ? "bg-gray-100 text-gray-900"
-                    : "text-gray-700 hover:bg-gray-50"
-                )}
-              >
-                Update User Role
-              </button>
-            </div>
+          {/* Account Management */}
+          <NavigationGroup label="Account Management" className="mb-6">
+            <NavLink onClick={() => setSelectedFlow('add-user')} isActive={isActive('add-user')}>
+              Add User
+            </NavLink>
+            <NavLink onClick={() => setSelectedFlow('remove-user')} isActive={isActive('remove-user')}>
+              Remove User
+            </NavLink>
+            <NavLink onClick={() => setSelectedFlow('update-user-role')} isActive={isActive('update-user-role')}>
+              Update User Role
+            </NavLink>
+          </NavigationGroup>
 
-            {/* Subscription & Billing */}
-            <div className="space-y-0.5 mb-6">
-              <div className="text-xs font-normal text-gray-500 mb-2">Subscription & Billing</div>
-              <button
-                onClick={() => setSelectedFlow('cancel-subscription')}
-                className={cn(
-                  "block text-left px-3 py-2 text-2xs rounded transition-colors w-full",
-                  isActive('cancel-subscription')
-                    ? "bg-gray-100 text-gray-900"
-                    : "text-gray-700 hover:bg-gray-50"
-                )}
-              >
-                Cancel Subscription
-              </button>
-              <button
-                onClick={() => setSelectedFlow('check-subscription')}
-                className={cn(
-                  "block text-left px-3 py-2 text-2xs rounded transition-colors w-full",
-                  isActive('check-subscription')
-                    ? "bg-gray-100 text-gray-900"
-                    : "text-gray-700 hover:bg-gray-50"
-                )}
-              >
-                Check Subscription
-              </button>
-              <button
-                onClick={() => setSelectedFlow('upgrade-plan')}
-                className={cn(
-                  "block text-left px-3 py-2 text-2xs rounded transition-colors w-full",
-                  isActive('upgrade-plan')
-                    ? "bg-gray-100 text-gray-900"
-                    : "text-gray-700 hover:bg-gray-50"
-                )}
-              >
-                Upgrade Plan
-              </button>
-            </div>
-          </>
-        )}
+          {/* Subscription & Billing */}
+          <NavigationGroup label="Subscription & Billing" className="mb-6">
+            <NavLink onClick={() => setSelectedFlow('cancel-subscription')} isActive={isActive('cancel-subscription')}>
+              Cancel Subscription
+            </NavLink>
+            <NavLink onClick={() => setSelectedFlow('check-subscription')} isActive={isActive('check-subscription')}>
+              Check Subscription
+            </NavLink>
+            <NavLink onClick={() => setSelectedFlow('upgrade-plan')} isActive={isActive('upgrade-plan')}>
+              Upgrade Plan
+            </NavLink>
+          </NavigationGroup>
+        </CollapsibleSection>
 
         {/* Premium */}
-        <button
-          onClick={() => setPremiumExpanded(!premiumExpanded)}
-          className="flex items-center gap-2 text-sm font-medium text-gray-900 mb-4 cursor-pointer hover:text-gray-700 transition-colors w-full"
+        <CollapsibleSection
+          title="Premium"
+          expanded={premiumExpanded}
+          onToggle={() => setPremiumExpanded(!premiumExpanded)}
         >
-          <span>Premium</span>
-          <svg
-            className={cn("w-3 h-3 transition-transform", premiumExpanded ? "rotate-0" : "-rotate-90")}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-        {premiumExpanded && (
-          <div className="space-y-0.5 mb-6">
+          <NavigationGroup className="mb-6">
             <div className="text-xs font-normal text-gray-500 italic">No flows yet</div>
-          </div>
-        )}
+          </NavigationGroup>
+        </CollapsibleSection>
 
         {/* Recruiter */}
-        <button
-          onClick={() => setRecruiterExpanded(!recruiterExpanded)}
-          className="flex items-center gap-2 text-sm font-medium text-gray-900 mb-4 cursor-pointer hover:text-gray-700 transition-colors w-full"
+        <CollapsibleSection
+          title="Recruiter"
+          expanded={recruiterExpanded}
+          onToggle={() => setRecruiterExpanded(!recruiterExpanded)}
         >
-          <span>Recruiter</span>
-          <svg
-            className={cn("w-3 h-3 transition-transform", recruiterExpanded ? "rotate-0" : "-rotate-90")}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-        {recruiterExpanded && (
-          <div className="space-y-0.5 mb-6">
+          <NavigationGroup className="mb-6">
             <div className="text-xs font-normal text-gray-500 italic">No flows yet</div>
-          </div>
-        )}
+          </NavigationGroup>
+        </CollapsibleSection>
 
         {/* Sales Navigator */}
-        <button
-          onClick={() => setSalesNavigatorExpanded(!salesNavigatorExpanded)}
-          className="flex items-center gap-2 text-sm font-medium text-gray-900 mb-4 cursor-pointer hover:text-gray-700 transition-colors w-full"
+        <CollapsibleSection
+          title="Sales Navigator"
+          expanded={salesNavigatorExpanded}
+          onToggle={() => setSalesNavigatorExpanded(!salesNavigatorExpanded)}
         >
-          <span>Sales Navigator</span>
-          <svg
-            className={cn("w-3 h-3 transition-transform", salesNavigatorExpanded ? "rotate-0" : "-rotate-90")}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-        {salesNavigatorExpanded && (
-          <div className="space-y-0.5 mb-6">
+          <NavigationGroup className="mb-6">
             <div className="text-xs font-normal text-gray-500 italic">No flows yet</div>
-          </div>
-        )}
+          </NavigationGroup>
+        </CollapsibleSection>
       </Sidebar>
 
       <div 
@@ -590,19 +483,10 @@ const FlowPreviewView = () => {
           <Tabs value={viewport} onValueChange={(value) => setViewport(value as ContainerViewport)}>
             <TabsList>
               <TabsTrigger value="desktop" className="px-3">
-                {/* Desktop Icon */}
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <rect x="2" y="3" width="20" height="14" rx="2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <line x1="8" y1="21" x2="16" y2="21" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <line x1="12" y1="17" x2="12" y2="21" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+                <AppIcon icon="desktop" size="md" />
               </TabsTrigger>
               <TabsTrigger value="mobile" className="px-3">
-                {/* Mobile Icon */}
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <rect x="5" y="2" width="14" height="20" rx="2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <line x1="12" y1="18" x2="12" y2="18" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+                <AppIcon icon="mobile" size="md" />
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -616,9 +500,7 @@ const FlowPreviewView = () => {
               {/* Restart button - only show after first interaction (full size) */}
               {hasInteracted && selectedFlow === 'connect-to-live-agent' && (
                 <Button onClick={handleRestart} variant="outline" size="sm">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
+                  <AppIcon icon="restart" size="sm" />
                   Restart
                 </Button>
               )}
@@ -646,9 +528,7 @@ const FlowPreviewView = () => {
             {/* Restart button - only show after first interaction */}
             {hasInteracted && selectedFlow === 'connect-to-live-agent' && (
               <Button onClick={handleRestart} variant="outline" size="sm">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
+                <AppIcon icon="restart" size="sm" />
                 Restart
               </Button>
             )}

@@ -1,19 +1,18 @@
 import { DemoSection } from '@/components/component-library/DemoSection';
+import { ComponentViewLayout } from '@/components/component-library/ComponentViewLayout';
 import { ThinkingIndicator } from '@/components/vca-components/thinking-indicator';
 
 const ThinkingIndicatorComponentView = () => {
   return (
-    <div className="pt-16">
-      <h1 className="mb-4">Thinking Indicator</h1>
-      <p className="text-base text-gray-500 mb-12">
-        Animated dots that indicate the AI is processing or thinking. Displays 3 dots that pulse in sequence.
-      </p>
-      
+    <ComponentViewLayout
+      title="Thinking Indicator"
+      description="Animated indicator showing AI is processing. Displays 3 dots that pulse in sequence."
+    >
       {/* Demo Section */}
       <DemoSection controls={null}>
         <ThinkingIndicator />
       </DemoSection>
-    </div>
+    </ComponentViewLayout>
   );
 };
 

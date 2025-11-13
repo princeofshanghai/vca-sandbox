@@ -1,5 +1,5 @@
 import { VcaIcon } from '../icons';
-import { ButtonIcon } from '../buttons';
+import { Feedback, FeedbackValue } from '../feedback';
 import { Sources } from '../sources';
 import { cn } from '@/utils';
 
@@ -8,7 +8,6 @@ export type InfoMessageProps = {
   title?: string;
   message?: string;
   showTitle?: boolean;
-  showDivider?: boolean;
   showResponseStopped?: boolean;
   showSources?: boolean;
   showRating?: boolean;
@@ -17,14 +16,14 @@ export type InfoMessageProps = {
     href?: string;
     state?: 'enabled' | 'hover' | 'active' | 'visited';
   }>;
-  onThumbsUp?: () => void;
-  onThumbsDown?: () => void;
+  feedbackValue?: FeedbackValue;
+  onFeedbackChange?: (value: FeedbackValue) => void;
   className?: string;
 };
 
 /**
  * InfoMessage - AI-generated informational message with optional title, divider, sources, and rating
- * Light blue background card for additional context and information
+ * Plain layout without background container, similar to AI message type
  * Note: No built-in horizontal padding or width - parent container controls spacing
  */
 export const InfoMessage = ({
@@ -32,21 +31,19 @@ export const InfoMessage = ({
   title = 'Optional title',
   message = 'This is the message this is the message this is the message this is the message this is the message.',
   showTitle = true,
-  showDivider = true,
   showResponseStopped = false,
   showSources = true,
   showRating = true,
   sources,
-  onThumbsUp,
-  onThumbsDown,
+  feedbackValue,
+  onFeedbackChange,
   className,
 }: InfoMessageProps) => {
   
   // Response stopped variant - simplified
   if (type === 'response-stopped') {
     return (
-      <div className={cn('flex flex-col gap-[10px] items-start', className)}>
-        <div className="bg-vca-surface-tint flex flex-col gap-vca-lg p-vca-lg rounded-tl-vca-md rounded-tr-vca-md rounded-br-vca-md rounded-bl-vca-sm w-full">
+      <div className={cn('flex flex-col gap-vca-xl items-start w-full', className)}>
           {/* Response Stopped Feedback */}
           <div className="flex gap-vca-xs items-center w-full">
             <div className="flex gap-vca-xs items-center flex-1">
@@ -54,7 +51,6 @@ export const InfoMessage = ({
               <p className="font-vca-text text-vca-small text-vca-text-neutral">
                 Response stopped
               </p>
-            </div>
           </div>
         </div>
       </div>
@@ -63,8 +59,9 @@ export const InfoMessage = ({
   
   // Default variant - full featured
   return (
-    <div className={cn('flex flex-col gap-[10px] items-start', className)}>
-      <div className="bg-vca-surface-tint flex flex-col gap-vca-lg p-vca-lg rounded-tl-vca-md rounded-tr-vca-md rounded-br-vca-md rounded-bl-vca-sm w-full">
+    <div className={cn('flex flex-col items-start w-full', className)}>
+      {/* Title and Message with 16px gap */}
+      <div className="flex flex-col gap-vca-lg items-start w-full">
         {/* Optional Title */}
         {showTitle && (
           <div className="flex flex-col justify-center min-w-full">
@@ -78,15 +75,11 @@ export const InfoMessage = ({
         <p className="font-vca-text text-vca-small-open text-vca-text">
           {message}
         </p>
-
-        {/* Optional Divider */}
-        {showDivider && (
-          <div className="h-0 w-full border-t border-vca-border-faint" />
-        )}
+      </div>
 
         {/* Optional Response Stopped Feedback */}
         {showResponseStopped && (
-          <div className="flex gap-vca-xs items-center w-full">
+        <div className="flex gap-vca-xs items-center w-full mt-vca-xl">
             <div className="flex gap-vca-xs items-center flex-1">
               <VcaIcon icon="close" size="sm" className="text-vca-text-neutral" />
               <p className="font-vca-text text-vca-small text-vca-text-neutral">
@@ -96,33 +89,22 @@ export const InfoMessage = ({
           </div>
         )}
 
-        {/* Optional Sources */}
+      {/* Optional Sources - 20px gap from message */}
         {showSources && sources && (
+        <div className="mt-vca-xl w-full">
           <Sources sources={sources} />
+        </div>
         )}
 
-        {/* Optional Rating */}
+      {/* Optional Rating - 20px gap from sources */}
         {showRating && (
-          <div className="flex gap-vca-s items-center justify-end w-full">
-            <ButtonIcon 
-              type="tertiary"
-              size="md"
-              emphasis={false}
-              icon="thumbs-up-outline"
-              onClick={onThumbsUp}
-              ariaLabel="Good response"
-            />
-            <ButtonIcon 
-              type="tertiary"
-              size="md"
-              emphasis={false}
-              icon="thumbs-down-outline"
-              onClick={onThumbsDown}
-              ariaLabel="Bad response"
+        <div className="flex items-center justify-start w-full mt-vca-xl">
+          <Feedback 
+            value={feedbackValue}
+            onChange={onFeedbackChange}
             />
           </div>
         )}
-      </div>
     </div>
   );
 };

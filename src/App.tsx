@@ -3,6 +3,7 @@ import { AppProvider } from '@/contexts/AppContext';
 import TopNavigation from '@/components/layout/TopNavigation';
 import ComponentLibraryView from '@/views/ComponentLibraryView';
 import FlowPreviewView from '@/views/FlowPreviewView';
+import HomeView from '@/views/HomeView';
 
 const App = () => {
   return (
@@ -12,12 +13,12 @@ const App = () => {
           <TopNavigation />
           <div className="flex-1 overflow-hidden">
             <Routes>
-              <Route path="/" element={<Navigate to="/flows" replace />} />
+              <Route path="/" element={<HomeView />} />
               <Route path="/foundations/*" element={<ComponentLibraryView />} />
               <Route path="/components/*" element={<ComponentLibraryView />} />
               <Route path="/flows" element={<FlowPreviewView />} />
               <Route path="/builder" element={<Navigate to="/flows" replace />} />
-              <Route path="*" element={<Navigate to="/flows" replace />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Sources } from '@/components/vca-components/sources';
 import { DemoSection } from '@/components/component-library/DemoSection';
+import { ComponentViewLayout } from '@/components/component-library/ComponentViewLayout';
 import { ToggleButtons } from '@/components/component-library/DemoControls';
 
 const SourcesComponentView = () => {
@@ -17,9 +18,10 @@ const SourcesComponentView = () => {
   };
 
   return (
-    <div className="pt-16">
-      <h1 className="mb-4">Sources</h1>
-      <p className="text-base text-gray-500 mb-12">List of source citations and references with heading for AI-generated content.</p>
+    <ComponentViewLayout
+      title="Sources"
+      description="List of source citations and references."
+    >
       
       {/* Demo Section */}
       <DemoSection
@@ -131,7 +133,7 @@ const SourcesComponentView = () => {
 
       
       </div>
-    </div>
+    </ComponentViewLayout>
   );
 };
 

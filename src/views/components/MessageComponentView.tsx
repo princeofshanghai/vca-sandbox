@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Message } from '@/components/vca-components/messages/Message';
+import { ComponentViewLayout } from '@/components/component-library/ComponentViewLayout';
 import { DemoSection } from '@/components/component-library/DemoSection';
 import { ToggleButtons, FormTextarea, FormCheckbox } from '@/components/component-library/DemoControls';
 
@@ -26,9 +27,10 @@ const MessageComponentView = () => {
   };
 
   return (
-    <div className="pt-16">
-      <h1 className="mb-4">Message</h1>
-      <p className="text-base text-gray-500 mb-12">Used to display messages with distinct styling across AI, human agent, and user messages.</p>
+    <ComponentViewLayout
+      title="Message"
+      description="Used to display messages with distinct styling across AI, human agent, and user messages."
+    >
       
       {/* Demo Section */}
       <DemoSection
@@ -118,7 +120,7 @@ const MessageComponentView = () => {
           </div>
         </div>
       </div>
-    </div>
+    </ComponentViewLayout>
   );
 };
 

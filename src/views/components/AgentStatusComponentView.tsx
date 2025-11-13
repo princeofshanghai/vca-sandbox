@@ -4,6 +4,7 @@ import { Message } from '@/components/vca-components/messages';
 import { Composer } from '@/components/vca-components/composer';
 import { Divider } from '@/components/vca-components/divider';
 import { DemoSection } from '@/components/component-library/DemoSection';
+import { ComponentViewLayout } from '@/components/component-library/ComponentViewLayout';
 import type { AgentStatusState } from '@/components/vca-components/agent-status/AgentStatus';
 import { ToggleButtons, FormInput, FormTextarea, FormCheckbox } from '@/components/component-library/DemoControls';
 
@@ -51,9 +52,10 @@ const AgentStatusComponentView = () => {
   };
 
   return (
-    <div className="pt-16">
-      <h1 className="mb-4">Agent Status</h1>
-      <p className="text-base text-gray-500 mb-12">Displays transferring to live agent status.</p>
+    <ComponentViewLayout
+      title="Agent Status"
+      description="Display agent connection status (connecting, connected, disconnected)."
+    >
       
       {/* Demo Section */}
       <DemoSection
@@ -267,7 +269,7 @@ const AgentStatusComponentView = () => {
 
         
       </div>
-    </div>
+    </ComponentViewLayout>
   );
 };
 

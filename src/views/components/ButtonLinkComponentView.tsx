@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ButtonLink } from '@/components/vca-components/buttons';
 import { AgentStatus } from '@/components/vca-components/agent-status';
 import { DemoSection } from '@/components/component-library/DemoSection';
+import { ComponentViewLayout } from '@/components/component-library/ComponentViewLayout';
 import { FormInput, FormCheckbox } from '@/components/component-library/DemoControls';
 
 const ButtonLinkComponentView = () => {
@@ -11,9 +12,10 @@ const ButtonLinkComponentView = () => {
   const [hasHref, setHasHref] = useState(false);
 
   return (
-    <div className="pt-16">
-      <h1 className="mb-4">Button Link</h1>
-      <p className="text-base text-gray-500 mb-12">Text-only buttons for inline actions without extra padding.</p>
+    <ComponentViewLayout
+      title="Button Link"
+      description="Text link styled as button for inline actions."
+    >
       
       {/* Demo Section */}
       <DemoSection
@@ -68,9 +70,6 @@ const ButtonLinkComponentView = () => {
             <div className="w-[352px] mx-auto">
               <AgentStatus 
                 state="connecting"
-                statusLabel="Connecting with a member of our team"
-                description="Our team is joining soon for live chat. AI will not be responding at this moment."
-                actionLabel="Cancel"
                 showDescription={true}
                 showAction={true}
                 onAction={() => alert('Cancel clicked!')}
@@ -79,7 +78,7 @@ const ButtonLinkComponentView = () => {
           </div>
         </div>
       </div>
-    </div>
+    </ComponentViewLayout>
   );
 };
 

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Container } from '@/components/vca-components/container';
 import { Message } from '@/components/vca-components/messages';
 import { DemoSection } from '@/components/component-library/DemoSection';
+import { ComponentViewLayout } from '@/components/component-library/ComponentViewLayout';
 import { FormInput, FormCheckbox, ToggleButtons } from '@/components/component-library/DemoControls';
 import { PhoneFrame } from '@/components/component-library/PhoneFrame';
 
@@ -54,9 +55,10 @@ const ContainerComponentView = () => {
   };
 
   return (
-    <div className="pt-16">
-      <h1 className="mb-4">Container</h1>
-      <p className="text-base text-gray-500 mb-12">Complete VCA container combining Header, content area, and Composer.</p>
+    <ComponentViewLayout
+      title="Container"
+      description="Main chat container with header, content area, and composer."
+    >
       
       {/* Demo Section */}
       <DemoSection
@@ -272,7 +274,7 @@ const ContainerComponentView = () => {
 
        
       </div>
-    </div>
+    </ComponentViewLayout>
   );
 };
 

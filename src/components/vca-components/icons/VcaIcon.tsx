@@ -5,7 +5,7 @@ export type VcaIconName =
   | 'send' | 'signal-ai' | 'signal-error' | 'signal-notice' | 'signal-success'
   | 'thumbs-down-fill' | 'thumbs-down-outline' | 'thumbs-up-fill' | 'thumbs-up-outline'
   | 'attachment' | 'arrow-down' | 'arrow-up' | 'undo' | 'document' 
-  | 'trash' | 'download' | 'messages' | 'placeholder';
+  | 'trash' | 'download' | 'messages' | 'placeholder' | 'external-link';
 
 export type VcaIconProps = {
   icon: VcaIconName;
@@ -137,7 +137,7 @@ export const VcaIcon = ({ icon, size = 'md', className }: VcaIconProps) => {
     case 'thumbs-down-outline':
       return (
         <svg className={iconClass} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M21 13V3H18.5L18.2 2.8C17.1 2.3 15.9 2 14.6 2H7.1C6 2 5 3 5 4.1V4.2C3.9 4.3 3 5.2 3 6.3C3 6.7 3.1 7 3.3 7.3C2.5 7.7 2 8.5 2 9.4C2 10.1 2.4 10.8 2.9 11.1C2.3 11.5 2 12.1 2 12.9C2 14 3 15 4.1 15H10.3L9.4 17.8C9.1 18.6 9 19.4 9 20.3V21.6C9 22.4 9.6 23 10.4 23C11 23 11.6 22.6 11.8 22L12.3 20.5C12.7 19.3 13.4 18.2 14.3 17.2L18.6 12.9H21V13Z" fill="currentColor"/>
+          <path d="M19.5 13L15.6 16.9C14.8 17.7 14.3 18.6 13.9 19.6L13.4 21.1C13 22.2 11.9 23 10.8 23C9.2 23 8 21.8 8 20.2V19.1C8 18.1 8.2 17.2 8.5 16.3L8.9 15H4.1C3 15 2 14 2 12.9C2 12.2 2.4 11.5 2.9 11.1C2.3 10.7 2 10.1 2 9.4C2 8.5 2.5 7.8 3.3 7.4C3.1 7.1 3 6.7 3 6.4C3 5.3 3.9 4.3 5 4.3V4.2C5 3 6 2 7.1 2H14.6C15.8 2 17.1 2.3 18.2 2.8L18.5 3H21V13H19.5ZM19 5H18L17.3 4.6C16.5 4.2 15.5 4 14.6 4H7.7C7.3 4 6.9 4.3 6.7 4.7L6.4 5.6L5.6 6C5.2 6.1 4.9 6.6 5 7L5.2 8L4.4 8.7C4.1 9.1 4 9.6 4.3 10L5 11.1L4.3 12.2C4 12.6 4.2 13 4.6 13H11.6L10.3 16.9C10.1 17.6 10 18.4 10 19.1V20.2C10 20.7 10.3 21 10.8 21C11.1 21 11.4 20.8 11.5 20.5L12 19C12.4 17.7 13.2 16.5 14.2 15.5L18.7 11H19V5Z" fill="currentColor"/>
         </svg>
       );
 
@@ -180,6 +180,13 @@ export const VcaIcon = ({ icon, size = 'md', className }: VcaIconProps) => {
       return (
         <svg className={iconClass} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M16 3H8C4.134 3 1 6.134 1 10C1 13.866 4.134 17 8 17H12V21L20.16 15.605C22 14.308 23 12.228 23 10C23 6.134 19.866 3 16 3ZM8 11.25C7.31 11.25 6.75 10.69 6.75 10C6.75 9.31 7.31 8.75 8 8.75C8.69 8.75 9.25 9.31 9.25 10C9.25 10.69 8.69 11.25 8 11.25ZM12 11.25C11.31 11.25 10.75 10.69 10.75 10C10.75 9.31 11.31 8.75 12 8.75C12.69 8.75 13.25 9.31 13.25 10C13.25 10.69 12.69 11.25 12 11.25ZM16 11.25C15.31 11.25 14.75 10.69 14.75 10C14.75 9.31 15.31 8.75 16 8.75C16.69 8.75 17.25 9.31 17.25 10C17.25 10.69 16.69 11.25 16 11.25Z" fill="currentColor"/>
+        </svg>
+      );
+
+    case 'external-link':
+      return (
+        <svg className={iconClass} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 13V19C18 20.1 17.1 21 16 21H5C3.9 21 3 20.1 3 19V8C3 6.9 3.9 6 5 6H11M15 3H21M21 3V9M21 3L10 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       );
 

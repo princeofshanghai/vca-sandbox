@@ -1,7 +1,15 @@
 import { useState } from 'react';
 import { VcaIcon, VcaIconName } from '@/components/vca-components/icons';
 import { DemoSection } from '@/components/component-library/DemoSection';
+import { ComponentViewLayout } from '@/components/component-library/ComponentViewLayout';
 import { ToggleButtons } from '@/components/component-library/DemoControls';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const IconsComponentView = () => {
   // Interactive demo state
@@ -33,12 +41,14 @@ const IconsComponentView = () => {
     'download',
     'messages',
     'placeholder',
+    'external-link',
   ];
 
   return (
-    <div className="pt-16">
-      <h1 className="mb-4">Icons</h1>
-      <p className="text-base text-gray-500 mb-12">Collection of Mercado icons used in VCA.</p>
+    <ComponentViewLayout
+      title="Icons"
+      description="VCA icon system with LinkedIn design language."
+    >
       
       {/* Demo Section */}
       <DemoSection
@@ -57,15 +67,18 @@ const IconsComponentView = () => {
               <label className="block text-xs font-medium text-gray-700 mb-2">
                 Select Icon
               </label>
-              <select 
-                value={selectedIcon}
-                onChange={(e) => setSelectedIcon(e.target.value as VcaIconName)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
+              <Select value={selectedIcon} onValueChange={(value) => setSelectedIcon(value as VcaIconName)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
                 {icons.map((icon) => (
-                  <option key={icon} value={icon}>{icon}</option>
+                    <SelectItem key={icon} value={icon}>
+                      {icon}
+                    </SelectItem>
                 ))}
-              </select>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         }
@@ -117,7 +130,7 @@ const IconsComponentView = () => {
 
         
       </div>
-    </div>
+    </ComponentViewLayout>
   );
 };
 

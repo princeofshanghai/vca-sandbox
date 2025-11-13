@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ActionMessage } from '@/components/vca-components/action-message';
 import type { ActionMessageState } from '@/components/vca-components/action-message/ActionMessage';
+import { ComponentViewLayout } from '@/components/component-library/ComponentViewLayout';
 import { DemoSection } from '@/components/component-library/DemoSection';
 import { ToggleButtons, FormInput, FormTextarea, FormCheckbox } from '@/components/component-library/DemoControls';
 
@@ -13,10 +14,10 @@ const ActionMessageComponentView = () => {
   const [description, setDescription] = useState('Assign seats to all pending users in your organization. This will improve team collaboration and product adoption.');
 
   return (
-    <div className="pt-16">
-      <h1 className="mb-4">Action Message</h1>
-      <p className="text-base text-gray-500 mb-12">Suggest recommended actions for the user to take.</p>
-      
+    <ComponentViewLayout
+      title="Action Message"
+      description="Suggest recommended actions for the user to take."
+    >
       {/* Demo Section */}
       <DemoSection
         controls={
@@ -102,9 +103,7 @@ const ActionMessageComponentView = () => {
             </div>
           </div>
         </div>
-
-     
-      </div>
+    </ComponentViewLayout>
   );
 };
 

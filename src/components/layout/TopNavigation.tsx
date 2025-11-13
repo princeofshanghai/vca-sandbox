@@ -16,7 +16,7 @@ const TopNavigation = () => {
     if (currentPath.startsWith('/foundations')) return 'components';
     if (currentPath.startsWith('/flows')) return 'flows';
     if (currentPath.startsWith('/builder')) return 'builder';
-    return 'flows';
+    return ''; // No tab selected on home page
   };
 
   const handleTabChange = (value: string) => {
@@ -29,7 +29,7 @@ const TopNavigation = () => {
     
     // Navigate to appropriate default page for each tab
     if (value === 'components') {
-      navigate('/components/message');
+      navigate('/foundations/typography');
     } else {
       navigate(`/${value}`);
     }
@@ -43,16 +43,16 @@ const TopNavigation = () => {
         <Tabs value={getActiveTab()} onValueChange={handleTabChange}>
           <TabsList className="gap-2">
             <TabsTrigger 
-              value="flows" 
-              className="shadow-none data-[state=active]:shadow-none data-[state=active]:bg-gray-100 text-sm"
-            >
-              Playground
-            </TabsTrigger>
-            <TabsTrigger 
               value="components" 
               className="shadow-none data-[state=active]:shadow-none data-[state=active]:bg-gray-100 text-sm"
             >
               Components
+            </TabsTrigger>
+            <TabsTrigger 
+              value="flows" 
+              className="shadow-none data-[state=active]:shadow-none data-[state=active]:bg-gray-100 text-sm"
+            >
+              Playground
             </TabsTrigger>
             <TabsTrigger 
               value="builder"

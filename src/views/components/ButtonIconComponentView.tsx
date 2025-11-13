@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ButtonIcon } from '@/components/vca-components/buttons';
 import { Composer } from '@/components/vca-components/composer';
 import { DemoSection } from '@/components/component-library/DemoSection';
+import { ComponentViewLayout } from '@/components/component-library/ComponentViewLayout';
 import { ToggleButtons, FormCheckbox } from '@/components/component-library/DemoControls';
 
 const ButtonIconComponentView = () => {
@@ -12,9 +13,10 @@ const ButtonIconComponentView = () => {
   const [disabled, setDisabled] = useState(false);
 
   return (
-    <div className="pt-16">
-      <h1 className="mb-4">Button Icon</h1>
-      <p className="text-base text-gray-500 mb-12">Icon-only buttons for actions in chat container.</p>
+    <ComponentViewLayout
+      title="Button Icon"
+      description="Icon-only button for secondary actions."
+    >
       
       {/* Demo Section */}
       <DemoSection
@@ -84,7 +86,7 @@ const ButtonIconComponentView = () => {
           </div>
         </div>
       </div>
-    </div>
+    </ComponentViewLayout>
   );
 };
 

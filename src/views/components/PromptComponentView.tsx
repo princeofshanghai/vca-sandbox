@@ -4,6 +4,7 @@ import { Message } from '@/components/vca-components/messages';
 import { Composer } from '@/components/vca-components/composer';
 import { ThinkingIndicator } from '@/components/vca-components/thinking-indicator';
 import { DemoSection } from '@/components/component-library/DemoSection';
+import { ComponentViewLayout } from '@/components/component-library/ComponentViewLayout';
 import { FormInput, FormCheckbox } from '@/components/component-library/DemoControls';
 
 const PromptComponentView = () => {
@@ -41,9 +42,10 @@ const PromptComponentView = () => {
   };
 
   return (
-    <div className="pt-16">
-      <h1 className="mb-4">Prompt</h1>
-      <p className="text-base text-gray-500 mb-12">Give users quick, guided options they can click to continue the conversation.</p>
+    <ComponentViewLayout
+      title="Prompt"
+      description="Suggested prompt button for quick actions."
+    >
       
       {/* Demo Section */}
       <DemoSection
@@ -230,7 +232,7 @@ const PromptComponentView = () => {
         {/* Usage notes */}
 
       </div>
-    </div>
+    </ComponentViewLayout>
   );
 };
 

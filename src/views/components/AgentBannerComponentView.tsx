@@ -3,6 +3,7 @@ import { AgentBanner } from '@/components/vca-components/agent-banner';
 import { Header } from '@/components/vca-components/header';
 import { Composer } from '@/components/vca-components/composer';
 import { DemoSection } from '@/components/component-library/DemoSection';
+import { ComponentViewLayout } from '@/components/component-library/ComponentViewLayout';
 import { FormInput } from '@/components/component-library/DemoControls';
 
 const AgentBannerComponentView = () => {
@@ -10,9 +11,10 @@ const AgentBannerComponentView = () => {
   const [agentName, setAgentName] = useState('John');
 
   return (
-    <div className="pt-16">
-      <h1 className="mb-4">Agent Banner</h1>
-      <p className="text-base text-gray-500 mb-12">Banner displayed when user is in an active live chat session with a human agent.</p>
+    <ComponentViewLayout
+      title="Agent Banner"
+      description="Banner displayed when user is in an active live chat session with a human agent."
+    >
       
       {/* Demo Section */}
       <DemoSection
@@ -82,7 +84,7 @@ const AgentBannerComponentView = () => {
           </div>
         </div>
       </div>
-    </div>
+    </ComponentViewLayout>
   );
 };
 

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Badge } from '@/components/vca-components/badge';
 import type { BadgeState } from '@/components/vca-components/badge/Badge';
 import { DemoSection } from '@/components/component-library/DemoSection';
+import { ComponentViewLayout } from '@/components/component-library/ComponentViewLayout';
 import { ToggleButtons } from '@/components/component-library/DemoControls';
 
 const BadgeComponentView = () => {
@@ -9,9 +10,10 @@ const BadgeComponentView = () => {
   const [state, setState] = useState<BadgeState>('online');
 
   return (
-    <div className="pt-16">
-      <h1 className="mb-4">Badge</h1>
-      <p className="text-base text-gray-500 mb-12">Used to show active status of a human agent.</p>
+    <ComponentViewLayout
+      title="Badge"
+      description="Small status indicator badge."
+    >
       
       {/* Demo Section */}
       <DemoSection
@@ -77,7 +79,7 @@ const BadgeComponentView = () => {
           </div>
         </div>
       </div>
-    </div>
+    </ComponentViewLayout>
   );
 };
 
