@@ -73,15 +73,15 @@ const SpacingView = () => {
   
   return (
     <div className="pt-16">
-      <h1 className="mb-2">Spacing</h1>
-      <p className="text-md text-gray-500 mb-12">
+      <h1 className="mb-4">Spacing</h1>
+      <p className="text-base text-gray-500 mb-12">
         VCA design system spacing scale. Each token shows its visual size, Tailwind class, pixel value, and the primitive it references from Figma.
       </p>
       
       <div className="space-y-12">
         {/* Spacing Scale */}
         <div>
-          <h2 className="mb-4">Spacing Scale</h2>
+          <h2 className="mb-4">Spacing scale</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {spacingTokens.map((token) => (
               <SpacingItem
@@ -98,7 +98,7 @@ const SpacingView = () => {
 
         {/* Usage Examples */}
         <div>
-          <h2 className="mb-4">Usage Examples</h2>
+          <h2 className="mb-4">Usage examples</h2>
           <div className="bg-white border border-gray-200 rounded-lg p-8 space-y-8">
             
             {/* Padding Example */}
@@ -172,7 +172,7 @@ const SpacingView = () => {
 
             {/* Space Between Example */}
             <div>
-              <h3 className="mb-2">Space Between</h3>
+              <h3 className="mb-2">Space between</h3>
               <div className="space-y-4">
                 <div>
                   <code className="text-xs text-gray-500 font-mono mb-2 block">space-y-vca-s</code>
@@ -198,7 +198,7 @@ const SpacingView = () => {
 
         {/* Guidelines */}
         <div>
-          <h2 className="mb-4">Usage Guidelines</h2>
+          <h2 className="mb-4">Usage guidelines</h2>
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <div className="space-y-4 text-sm text-gray-700">
               <div>

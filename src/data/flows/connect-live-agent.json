@@ -3,6 +3,12 @@
   "title": "Connect to Live Agent",
   "steps": [
     {
+      "id": "step-0",
+      "type": "disclaimer",
+      "text": "",
+      "nextStep": "step-1"
+    },
+    {
       "id": "step-1",
       "type": "ai-message",
       "text": "I can connect you with a live agent. What do you need help with?",
@@ -34,12 +40,20 @@
       "id": "step-3",
       "type": "ai-message",
       "text": "Got it! Connecting you to a specialist now. They'll be with you in just a moment.",
-      "nextStep": "step-4"
+      "nextStep": "step-4a"
     },
     {
-      "id": "step-4",
-      "type": "agent-status",
-      "text": "Agent joined the chat",
+      "id": "step-4a",
+      "type": "agent-status-connecting",
+      "text": "You're next in line",
+      "description": "A member of our team will join the chat soon.",
+      "nextStep": "step-4b"
+    },
+    {
+      "id": "step-4b",
+      "type": "agent-status-connected",
+      "text": "Sarah has joined the chat",
+      "agentName": "Sarah, LinkedIn Support",
       "nextStep": "step-5"
     },
     {

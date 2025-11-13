@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/vca-components/buttons';
-import { AIRecommendation } from '@/components/vca-components/ai-recommendation';
+import { ActionMessage } from '@/components/vca-components/action-message';
 import { DemoSection } from '@/components/component-library/DemoSection';
 import { ToggleButtons, FormCheckbox } from '@/components/component-library/DemoControls';
 
@@ -14,8 +14,8 @@ const ButtonComponentView = () => {
 
   return (
     <div className="pt-16">
-      <h1 className="mb-2">Button</h1>
-      <p className="text-md text-gray-500 mb-12">Buttons are used for primary, secondary, and tertiary actions throughout VCA.</p>
+      <h1 className="mb-4">Button</h1>
+      <p className="text-base text-gray-500 mb-12">Buttons are used for primary, secondary, and tertiary actions throughout VCA.</p>
       
       {/* Demo Section */}
       <DemoSection
@@ -29,7 +29,7 @@ const ButtonComponentView = () => {
             />
 
             <ToggleButtons
-              label="Icon Position"
+              label="Icon position"
               options={['start', 'end'] as const}
               value={iconPosition}
               onChange={setIconPosition}
@@ -38,7 +38,7 @@ const ButtonComponentView = () => {
 
             <FormCheckbox
               id="emphasis"
-              label="High Emphasis"
+              label="High emphasis"
               checked={emphasis}
               onCheckedChange={setEmphasis}
             />
@@ -52,7 +52,7 @@ const ButtonComponentView = () => {
 
             <FormCheckbox
               id="showIcon"
-              label="Show Icon"
+              label="Show icon"
               checked={showIcon}
               onCheckedChange={setShowIcon}
             />
@@ -79,14 +79,15 @@ const ButtonComponentView = () => {
       <div className="space-y-12">
         {/* Recommendations */}
         <div>
-          <h3 className="text-base font-medium mb-2">In recommendations</h3>
-          <p className="text-sm text-gray-500 mb-4">Primary and secondary buttons are used within recommendation cards to apply or dismiss AI suggestions.</p>
+          <h3 className="text-lg font-medium mb-2">In recommendations</h3>
+          <p className="text-md text-gray-900 mb-4">Used in recommendation cards to apply or dismiss AI suggestions.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="w-[352px] mx-auto">
-              <AIRecommendation 
+              <ActionMessage 
                 state="default"
                 title="Add seat assignments"
                 impactText="+25% engagement"
+                showImpact={true}
                 description="Assign seats to all pending users in your organization. This will improve team collaboration and product adoption."
               />
             </div>

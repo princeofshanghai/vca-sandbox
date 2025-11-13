@@ -11,12 +11,13 @@ export type FlowButton = {
 
 export type FlowStep = {
   id: string;
-  type: 'ai-message' | 'user-message' | 'human-agent-message' | 'agent-status' | 'disclaimer';
+  type: 'ai-message' | 'user-message' | 'human-agent-message' | 'agent-status' | 'agent-status-connecting' | 'agent-status-connected' | 'disclaimer';
   text: string;
   buttons?: FlowButton[];
   nextStep?: string;
   agentName?: string;
   timestamp?: string;
+  description?: string;
 };
 
 export type Flow = {
@@ -32,6 +33,7 @@ export type FlowMessage = {
   buttons?: FlowButton[];
   agentName?: string;
   timestamp?: string;
+  description?: string;
 };
 
 /**
@@ -81,6 +83,7 @@ export class FlowEngine {
       buttons: step.buttons,
       agentName: step.agentName,
       timestamp: step.timestamp,
+      description: step.description,
     });
 
     // If this step has an automatic nextStep (no buttons), show it too

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ButtonLink } from '@/components/vca-components/buttons';
+import { AgentStatus } from '@/components/vca-components/agent-status';
 import { DemoSection } from '@/components/component-library/DemoSection';
 import { FormInput, FormCheckbox } from '@/components/component-library/DemoControls';
 
@@ -11,8 +12,8 @@ const ButtonLinkComponentView = () => {
 
   return (
     <div className="pt-16">
-      <h1 className="mb-2">Button Link</h1>
-      <p className="text-md text-gray-500 mb-12">Text-only link buttons for inline actions without visual weight.</p>
+      <h1 className="mb-4">Button Link</h1>
+      <p className="text-base text-gray-500 mb-12">Text-only buttons for inline actions without extra padding.</p>
       
       {/* Demo Section */}
       <DemoSection
@@ -20,7 +21,7 @@ const ButtonLinkComponentView = () => {
           <div className="grid grid-cols-2 gap-x-8 gap-y-4">
             <FormInput
               id="text"
-              label="Link Text"
+              label="Link text"
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="Enter text..."
@@ -37,7 +38,7 @@ const ButtonLinkComponentView = () => {
 
             <FormCheckbox
               id="hasHref"
-              label="External Link (href)"
+              label="External link (href)"
               checked={hasHref}
               onCheckedChange={setHasHref}
             />
@@ -53,64 +54,27 @@ const ButtonLinkComponentView = () => {
         </ButtonLink>
       </DemoSection>
 
-      <div className="space-y-12">
-        {/* All States */}
-        <div>
-          <h2 className="mb-4">States</h2>
-          <p className="text-sm text-gray-500 mb-3">Link buttons with different interaction states.</p>
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <div className="space-y-4">
-              <div>
-                <p className="text-xs font-medium text-gray-700 mb-2">Enabled</p>
-                <ButtonLink>View details</ButtonLink>
-              </div>
-              
-              <div>
-                <p className="text-xs font-medium text-gray-700 mb-2">Hover (hover over the link)</p>
-                <ButtonLink>Learn more</ButtonLink>
-              </div>
-              
-              <div>
-                <p className="text-xs font-medium text-gray-700 mb-2">Active (click the link)</p>
-                <ButtonLink>Continue</ButtonLink>
-              </div>
-              
-              <div>
-                <p className="text-xs font-medium text-gray-700 mb-2">Disabled</p>
-                <ButtonLink disabled>Not available</ButtonLink>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Usage */}
+      <div className="mb-8">
+        <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Usage</h2>
+      </div>
 
-        {/* Usage Examples */}
+      <div className="space-y-12">
+        {/* In Human Agent Status */}
         <div>
-          <h2 className="mb-4">Usage Examples</h2>
-          <p className="text-sm text-gray-500 mb-3">Common use cases for link buttons in chat interfaces.</p>
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <div className="space-y-4">
-              <div>
-                <p className="text-xs font-medium text-gray-700 mb-2">Inline in text</p>
-                <p className="text-sm text-gray-700">
-                  To learn more about our policies, <ButtonLink>click here</ButtonLink> or contact support.
-                </p>
-              </div>
-              
-              <div>
-                <p className="text-xs font-medium text-gray-700 mb-2">As standalone action</p>
-                <div className="space-y-2">
-                  <ButtonLink>View full conversation</ButtonLink>
-                  <br />
-                  <ButtonLink>Download transcript</ButtonLink>
-                  <br />
-                  <ButtonLink>Share feedback</ButtonLink>
-                </div>
-              </div>
-              
-              <div>
-                <p className="text-xs font-medium text-gray-700 mb-2">With href (external link)</p>
-                <ButtonLink href="https://linkedin.com">Visit LinkedIn</ButtonLink>
-              </div>
+          <h3 className="text-lg font-medium mb-2">Agent status</h3>
+          <p className="text-md text-gray-900 mb-3">Used for secondary actions where button needs to be aligned with text, like ending a live chat session.</p>
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <div className="w-[352px] mx-auto">
+              <AgentStatus 
+                state="connecting"
+                statusLabel="Connecting with a member of our team"
+                description="Our team is joining soon for live chat. AI will not be responding at this moment."
+                actionLabel="Cancel"
+                showDescription={true}
+                showAction={true}
+                onAction={() => alert('Cancel clicked!')}
+              />
             </div>
           </div>
         </div>

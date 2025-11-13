@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { PromptGroup } from '@/components/vca-components/prompt-group';
+import { Message } from '@/components/vca-components/messages';
+import { Composer } from '@/components/vca-components/composer';
+import { ThinkingIndicator } from '@/components/vca-components/thinking-indicator';
 import { DemoSection } from '@/components/component-library/DemoSection';
 import { ToggleButtons, FormCheckbox } from '@/components/component-library/DemoControls';
 
@@ -17,10 +20,40 @@ const PromptGroupComponentView = () => {
     return allPrompts.slice(0, Number(promptCount));
   };
 
+  // State for the "Behavior" interactive example
+  const [selectedPrompt, setSelectedPrompt] = useState<string | null>(null);
+  const [isThinking, setIsThinking] = useState(false);
+  const [aiResponse, setAiResponse] = useState<string | null>(null);
+
+  // AI responses for each prompt
+  const promptResponses: Record<string, string> = {
+    "How can I assign a seat to a user?": "To assign a seat to a user, go to Admin Settings > Seat Management. Click 'Assign Seat', select the user from the dropdown, and choose the seat type. The user will receive an email notification once the seat is assigned.",
+    "What are the different user roles?": "Our platform has three main user roles: Admin (full access to all settings), Member (standard user access), and Guest (limited, view-only access). Each role has specific permissions that can be customized in the Role Management section.",
+    "How do I manage licenses?": "To manage licenses, navigate to Settings > License Management. Here you can view active licenses, assign or revoke seats, purchase additional licenses, and track usage across your organization."
+  };
+
+  const handlePromptClick = (promptText: string) => {
+    setSelectedPrompt(promptText);
+    setIsThinking(true);
+    setAiResponse(null);
+    
+    // Simulate AI thinking delay
+    setTimeout(() => {
+      setIsThinking(false);
+      setAiResponse(promptResponses[promptText]);
+    }, 1500);
+  };
+
+  const resetDemo = () => {
+    setSelectedPrompt(null);
+    setIsThinking(false);
+    setAiResponse(null);
+  };
+
   return (
     <div className="pt-16">
-      <h1 className="mb-2">Prompt Group</h1>
-      <p className="text-md text-gray-500 mb-12">Vertical list of prompt suggestions for guided AI interactions.</p>
+      <h1 className="mb-4">Prompt Group</h1>
+      <p className="text-base text-gray-500 mb-12">Group multiple prompts together.</p>
       
       {/* Demo Section */}
       <DemoSection
@@ -35,7 +68,7 @@ const PromptGroupComponentView = () => {
 
             <FormCheckbox
               id="showAiIcons"
-              label="Show AI Icons"
+              label="Show AI icons"
               checked={showAiIcons}
               onCheckedChange={setShowAiIcons}
             />
@@ -47,11 +80,16 @@ const PromptGroupComponentView = () => {
         </div>
       </DemoSection>
 
+      {/* Usage */}
+      <div className="mb-8">
+        <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Usage</h2>
+      </div>
+
       <div className="space-y-12">
         {/* Three Prompts */}
         <div>
-          <h2 className="mb-4">Three Prompts</h2>
-          <p className="text-sm text-gray-500 mb-3">Standard group with three suggested prompts.</p>
+          <h3 className="text-lg font-medium mb-2">Group prompts</h3>
+          <p className="text-md text-gray-900 mb-3">Show multiple prompts at once.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
               <PromptGroup 
@@ -65,75 +103,10 @@ const PromptGroupComponentView = () => {
           </div>
         </div>
 
-        {/* Two Prompts */}
+        {/* In context - After AI Message */}
         <div>
-          <h2 className="mb-4">Two Prompts</h2>
-          <p className="text-sm text-gray-500 mb-3">Group with two suggested prompts.</p>
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="px-vca-xxl">
-              <PromptGroup 
-                prompts={[
-                  { text: 'Tell me about premium features', showAiIcon: false },
-                  { text: 'How do I upgrade my account?', showAiIcon: false },
-                ]}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Single Prompt */}
-        <div>
-          <h2 className="mb-4">Single Prompt</h2>
-          <p className="text-sm text-gray-500 mb-3">Group with just one prompt.</p>
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="px-vca-xxl">
-              <PromptGroup 
-                prompts={[
-                  { text: 'Show me getting started guide', showAiIcon: false },
-                ]}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* With AI Icons */}
-        <div>
-          <h2 className="mb-4">With AI Icons</h2>
-          <p className="text-sm text-gray-500 mb-3">Prompts with AI sparkle icons to indicate AI-generated suggestions.</p>
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="px-vca-xxl">
-              <PromptGroup 
-                prompts={[
-                  { text: 'What are best practices for seat management?', showAiIcon: true },
-                  { text: 'How can I improve team productivity?', showAiIcon: true },
-                  { text: 'What features should I enable first?', showAiIcon: true },
-                ]}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Mixed - Some with AI Icons */}
-        <div>
-          <h2 className="mb-4">Mixed Icons</h2>
-          <p className="text-sm text-gray-500 mb-3">Group with mixed AI icon states.</p>
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="px-vca-xxl">
-              <PromptGroup 
-                prompts={[
-                  { text: 'How do I add a new user?', showAiIcon: false },
-                  { text: 'What automated workflows are recommended?', showAiIcon: true },
-                  { text: 'Tell me about admin permissions', showAiIcon: false },
-                ]}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* In Context - After AI Message */}
-        <div>
-          <h2 className="mb-4">In Context</h2>
-          <p className="text-sm text-gray-500 mb-3">Example showing prompt group after an AI message.</p>
+          <h3 className="text-lg font-medium mb-2">In context</h3>
+          <p className="text-md text-gray-900 mb-3">Example showing prompt group after an AI message.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl space-y-4">
               <p className="font-vca-text text-[14px] leading-[21px] text-vca-text">
@@ -153,40 +126,92 @@ const PromptGroupComponentView = () => {
           </div>
         </div>
 
-        {/* Longer Text Examples */}
+        {/* Interaction Behavior */}
         <div>
-          <h2 className="mb-4">Longer Text</h2>
-          <p className="text-sm text-gray-500 mb-3">Prompts with longer text that wrap to multiple lines.</p>
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="px-vca-xxl">
-              <PromptGroup 
-                prompts={[
-                  { text: 'Can you explain how to set up automated seat assignments for new team members joining our organization?', showAiIcon: true },
-                  { text: 'What are the step-by-step instructions for creating custom user roles?', showAiIcon: true },
-                ]}
-              />
+          <h3 className="text-lg font-medium mb-2">Behavior</h3>
+          <p className="text-md text-gray-900 mb-3">Clicking any prompt in the group instantly sends that text as a user message to the AI. Try clicking a prompt below.</p>
+          <div className="bg-gray-50 border border-gray-200 rounded-lg pt-0 pb-6 px-4 overflow-hidden">
+            <div className="w-[400px] mx-auto">
+              {/* Mini conversation view - focused and compact */}
+              <div className="bg-vca-background border border-vca-border-faint rounded-b-vca-md overflow-hidden flex flex-col h-[480px] -mt-1">
+                {/* Scrollable content area */}
+                <div className="flex-1 overflow-y-auto flex flex-col justify-end">
+                  <div className="px-vca-xxl space-y-vca-lg pb-vca-lg">
+                    {/* AI Message with prompt group */}
+                    <Message 
+                      type="ai" 
+                      defaultText="Not sure where to start? You can try:"
+                    />
+                    
+                    {/* Prompt group - only show if none selected */}
+                    {!selectedPrompt && (
+                      <PromptGroup 
+                        prompts={[
+                          { text: 'How can I assign a seat to a user?', showAiIcon: false, onClick: () => handlePromptClick("How can I assign a seat to a user?") },
+                          { text: 'What are the different user roles?', showAiIcon: false, onClick: () => handlePromptClick("What are the different user roles?") },
+                          { text: 'How do I manage licenses?', showAiIcon: false, onClick: () => handlePromptClick("How do I manage licenses?") },
+                        ]}
+                      />
+                    )}
+                    
+                    {/* Show user message when prompt is clicked */}
+                    {selectedPrompt && (
+                      <div className="flex justify-end">
+                        <Message 
+                          type="user" 
+                          userText={selectedPrompt}
+                          errorFeedback={false}
+                        />
+                      </div>
+                    )}
+                    
+                    {/* Show thinking indicator while AI is processing */}
+                    {isThinking && (
+                      <div className="flex items-center gap-vca-s">
+                        <ThinkingIndicator />
+                      </div>
+                    )}
+                    
+                    {/* Show AI response after thinking */}
+                    {aiResponse && (
+                      <Message 
+                        type="ai" 
+                        defaultText={aiResponse}
+                      />
+                    )}
+                  </div>
+                </div>
+                
+                {/* Composer at bottom */}
+                <Composer 
+                  state="default"
+                  placeholder="Ask a question..."
+                />
+              </div>
             </div>
+          </div>
+          <div className="mt-3 flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-900">
+              <span className="font-semibold">💡 Interactive demo:</span> {
+                !selectedPrompt ? "Click any prompt above to see the full conversation flow." :
+                isThinking ? "AI is thinking..." :
+                aiResponse ? "Complete! The prompt became a user message and the AI responded." :
+                "Loading..."
+              }
+            </p>
+            {aiResponse && (
+              <button
+                onClick={resetDemo}
+                className="text-sm font-medium text-blue-700 hover:text-blue-800 underline"
+              >
+                Try again
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Usage Notes */}
-        <div>
-          <h2 className="mb-4">Usage Notes</h2>
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <div className="space-y-3">
-              <p><span className="font-medium">Purpose:</span> Group multiple prompt suggestions into a vertical stack for easier scanning and selection.</p>
-              <p><span className="font-medium">Flexible Length:</span> Supports 1-N prompts (typically 2-4 for best UX).</p>
-              <p><span className="font-medium">8px Spacing:</span> Consistent gap-vca-s (8px) between prompts.</p>
-              <p><span className="font-medium">No Fixed Width:</span> Adapts to parent container (no double padding issue).</p>
-              <p><span className="font-medium">Uses Prompt Component:</span> Each item is a Prompt component with full interactivity.</p>
-              <p><span className="font-medium">Common Pattern:</span> Display after "Not sure where to start?" or "You can try:" text.</p>
-              <p><span className="font-medium">AI Icons:</span> Each prompt can independently show or hide the AI sparkle icon.</p>
-              <p><span className="font-medium">Clickable:</span> Each prompt in the group is individually clickable with its own onClick handler.</p>
-            </div>
-          </div>
         </div>
       </div>
-    </div>
   );
 };
 

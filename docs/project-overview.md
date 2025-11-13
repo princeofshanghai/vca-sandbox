@@ -7,13 +7,13 @@
 
 ## What is VCA sandbox?
 
-A workspace where chatbot designers can quickly prototype conversation flows using standardized, reusable UI components.
+A web app where designers can easily prototype conversation flows using standardized components.
 
 ---
 
 ## Background: What is VCA?
 
-VCA (Virtual Chat Assistant) is LinkedIn's AI-powered customer support chat feature. Across LinkedIn products like Sales Navigator, Recruiter, and Admin Center, users can access help through a chat interface where an AI agent answers their questions. If the AI can't help, users can escalate to a human support agent.
+VCA (Virtual Chat Assistant) is LinkedIn's AI-powered customer support chat feature. Across LinkedIn products (Ex. Admin Center, Sales Navigator, Recruiter, etc.) users can access help through a chat interface where an AI agent answers their questions. If the AI can't help, users can escalate to a human support agent.
 
 This sandbox helps designers create better conversation flows for VCA.
 
@@ -21,12 +21,11 @@ This sandbox helps designers create better conversation flows for VCA.
 
 ## The Problem We're Solving
 
-Designers currently recreate the same chat interface from scratch in Figma for every new conversation flow they design (like "Remove User," "Cancel Subscription," etc.). This creates a few major issues:
+Designers currently recreate the same chat UI in Figma for every new conversation flow they design (like "Remove User," "Cancel Subscription," etc.). This creates a few major issues:
 
 1. **Wasted time** — Designers waste time redrawing screens instead of focusing on the conversation itself
-2. **Inconsistency** — Each designer uses slightly different versions of components, leading to confusion and quality issues
+2. **Inconsistency** — Designers sometimes use slightly different versions of components and interaction patterns, leading to confusion and quality issues
 3. **Hard to test** — Static Figma mockups make it difficult to experience how a conversation actually flows and identify problems before engineering handoff
-4. **Hard to ideate** — Static Figma mockups make it difficult to try and share new interaction patterns
 
 ---
 
@@ -67,7 +66,7 @@ Browse all VCA chat components (buttons, message bubbles, inputs, etc.) in one o
 **Status:** Single source of truth established. Designers no longer need to recreate components from scratch.
 
 ### **Phase 2: Flow Preview** 
-Test conversation flows in a realistic chat interface. Click through dialogues to see how conversations actually play out before handing off to engineering.
+Test conversation flows in a realistic chat interface. Click through dialogues to see how conversations actually play out before eng hand-off.
 
 **What's working:**
 - Plays pre-built conversation flows

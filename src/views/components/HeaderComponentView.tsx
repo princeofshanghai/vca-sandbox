@@ -15,8 +15,8 @@ const HeaderComponentView = () => {
 
   return (
     <div className="pt-16">
-      <h1 className="mb-2">Header</h1>
-      <p className="text-md text-gray-500 mb-12">Chat panel header with title, navigation, and action buttons.</p>
+      <h1 className="mb-4">Header</h1>
+      <p className="text-base text-gray-500 mb-12">Header in VCA container. Differs across desktop and mobile.</p>
       
       {/* Demo Section */}
       <DemoSection
@@ -43,7 +43,7 @@ const HeaderComponentView = () => {
 
             <FormInput
               id="title"
-              label="Title Text"
+              label="Title text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Enter title..."
@@ -51,7 +51,7 @@ const HeaderComponentView = () => {
 
             <FormCheckbox
               id="showBack"
-              label="Show Back Button"
+              label="Show back button"
               checked={showBack}
               onCheckedChange={setShowBack}
             />
@@ -65,7 +65,7 @@ const HeaderComponentView = () => {
 
             <FormCheckbox
               id="showAction"
-              label="Show Action Button"
+              label="Show action button"
               checked={showAction}
               onCheckedChange={setShowAction}
             />
@@ -74,7 +74,7 @@ const HeaderComponentView = () => {
         }
       >
         <div 
-          className="mx-auto my-4 border border-gray-200 rounded-lg overflow-hidden"
+          className="mx-auto my-4 border-t border-x border-gray-200 rounded-lg overflow-hidden"
           style={{ width: viewport === 'mobile' ? '393px' : '400px' }}
         >
           <Header
@@ -92,106 +92,71 @@ const HeaderComponentView = () => {
         </div>
       </DemoSection>
 
+      {/* Usage */}
+      <div className="mb-8">
+        <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Usage</h2>
+      </div>
+
       <div className="space-y-12">
-        {/* Left Aligned */}
+        {/* Desktop */}
         <div>
-          <h2 className="mb-4">Left Aligned</h2>
-          <p className="text-sm text-gray-500 mb-3">Title aligned to the left with back button.</p>
+          <h3 className="text-lg font-medium mb-2">Desktop</h3>
+          <p className="text-md text-gray-900 mb-3">Desktop shows Help title and close button.</p>
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <div className="w-[400px] mx-auto my-4 border border-gray-200 rounded-lg overflow-hidden">
+            <div className="w-[400px] mx-auto my-4 border-t border-x border-gray-200 rounded-lg overflow-hidden">
               <Header 
                 title="Help"
                 position="left"
-                showBack={true}
-                showPremiumIcon={true}
-                showAction={true}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Center Aligned */}
-        <div>
-          <h2 className="mb-4">Center Aligned</h2>
-          <p className="text-sm text-gray-500 mb-3">Title centered in the header.</p>
-          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <div className="w-[400px] mx-auto my-4 border border-gray-200 rounded-lg overflow-hidden">
-              <Header 
-                title="Help"
-                position="center"
-                showBack={true}
-                showPremiumIcon={true}
-                showAction={true}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Without Premium Icon */}
-        <div>
-          <h2 className="mb-4">Without Premium Icon</h2>
-          <p className="text-sm text-gray-500 mb-3">Standard header without the LinkedIn premium bug icon.</p>
-          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <div className="w-[400px] mx-auto my-4 border border-gray-200 rounded-lg overflow-hidden">
-              <Header 
-                title="Help"
-                position="left"
-                showBack={true}
-                showPremiumIcon={false}
-                showAction={true}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Without Back Button */}
-        <div>
-          <h2 className="mb-4">Without Back Button</h2>
-          <p className="text-sm text-gray-500 mb-3">Header without navigation back button.</p>
-          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <div className="w-[400px] mx-auto my-4 border border-gray-200 rounded-lg overflow-hidden">
-              <Header 
-                title="Help"
-                position="left"
+                viewport="desktop"
                 showBack={false}
-                showPremiumIcon={true}
-                showAction={true}
+                showPremiumIcon={false}
+                showAction={false}
               />
             </div>
           </div>
         </div>
 
-        {/* Premium Border */}
+        {/* Mobile */}
         <div>
-          <h2 className="mb-4">Premium Border</h2>
-          <p className="text-sm text-gray-500 mb-3">Header with gold bottom border for premium users.</p>
+          <h3 className="text-lg font-medium mb-2">Mobile</h3>
+          <p className="text-md text-gray-900 mb-3">Mobile includes a centered handle bar and close button.</p>
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <div className="w-[400px] mx-auto my-4 border border-gray-200 rounded-lg overflow-hidden">
+            <div className="w-[393px] mx-auto my-4 border-t border-x border-gray-200 rounded-lg overflow-hidden">
               <Header 
                 title="Help"
-                position="left"
-                showBack={true}
-                showPremiumIcon={true}
-                showAction={true}
-                showPremiumBorder={true}
+                viewport="mobile"
               />
             </div>
           </div>
         </div>
 
-        {/* Custom Title */}
+        {/* Premium */}
         <div>
-          <h2 className="mb-4">Custom Title</h2>
-          <p className="text-sm text-gray-500 mb-3">Header with custom title text.</p>
-          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <div className="w-[400px] mx-auto my-4 border border-gray-200 rounded-lg overflow-hidden">
-              <Header 
-                title="Live chat with John"
-                position="left"
-                showBack={true}
-                showPremiumIcon={false}
-                showAction={true}
-              />
+          <h3 className="text-lg font-medium mb-2">Premium (WIP)</h3>
+          <p className="text-md text-gray-900 mb-3">Premium users have unique Premium styling.</p>
+          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden p-4">
+            <div className="space-y-4">
+              {/* Desktop Premium */}
+              <div className="w-[400px] mx-auto border-t border-x border-gray-200 rounded-lg overflow-hidden">
+                <Header 
+                  title="Help"
+                  position="left"
+                  viewport="desktop"
+                  showBack={false}
+                  showPremiumIcon={true}
+                  showAction={false}
+                  showPremiumBorder={true}
+                />
+              </div>
+              
+              {/* Mobile Premium */}
+              <div className="w-[393px] mx-auto border-t border-x border-gray-200 rounded-lg overflow-hidden">
+                <Header 
+                  title="Help"
+                  viewport="mobile"
+                  showPremiumBorder={true}
+                />
+              </div>
             </div>
           </div>
         </div>

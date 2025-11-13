@@ -19,6 +19,9 @@ export type ContainerProps = {
   onAttachment?: () => void;
   className?: string;
   contentRef?: RefObject<HTMLDivElement>;
+  composerValue?: string;
+  onComposerChange?: (value: string) => void;
+  onComposerSend?: () => void;
 };
 
 /**
@@ -40,14 +43,25 @@ export const Container = ({
   onAttachment,
   className,
   contentRef,
+  composerValue: externalComposerValue,
+  onComposerChange: externalOnComposerChange,
+  onComposerSend: externalOnComposerSend,
 }: ContainerProps) => {
   // Interactive composer state (simplified - library handles auto-resize)
-  const [composerValue, setComposerValue] = useState('');
+  const [internalComposerValue, setInternalComposerValue] = useState('');
+  
+  // Use external value if provided, otherwise use internal state
+  const composerValue = externalComposerValue !== undefined ? externalComposerValue : internalComposerValue;
+  const setComposerValue = externalOnComposerChange || setInternalComposerValue;
   
   const handleSend = () => {
     if (composerValue.trim()) {
-      // Clear the input after sending
-      setComposerValue('');
+      if (externalOnComposerSend) {
+        externalOnComposerSend();
+      } else {
+        // Clear the input after sending
+        setComposerValue('');
+      }
     }
   };
   

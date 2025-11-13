@@ -25,7 +25,7 @@ export const Prompt = ({
       type="button"
       onClick={onClick}
       className={cn(
-        'bg-vca-surface-tint hover:bg-vca-surface-tint-hover flex gap-vca-xs items-center max-w-[320px] p-vca-md rounded-vca-md transition-colors cursor-pointer',
+        'bg-vca-surface-tint hover:bg-vca-surface-tint-hover flex gap-vca-xs items-center max-w-[320px] w-fit p-vca-md rounded-vca-md transition-colors cursor-pointer',
         className
       )}
     >

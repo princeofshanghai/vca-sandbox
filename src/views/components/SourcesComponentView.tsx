@@ -18,8 +18,8 @@ const SourcesComponentView = () => {
 
   return (
     <div className="pt-16">
-      <h1 className="mb-2">Sources</h1>
-      <p className="text-md text-gray-500 mb-12">List of source citations and references with heading for AI-generated content.</p>
+      <h1 className="mb-4">Sources</h1>
+      <p className="text-base text-gray-500 mb-12">List of source citations and references with heading for AI-generated content.</p>
       
       {/* Demo Section */}
       <DemoSection
@@ -39,11 +39,16 @@ const SourcesComponentView = () => {
         </div>
       </DemoSection>
 
+      {/* Usage */}
+      <div className="mb-8">
+        <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Usage</h2>
+      </div>
+
       <div className="space-y-12">
         {/* Default - 3 Sources */}
         <div>
-          <h2 className="mb-4">Default (3 Sources)</h2>
-          <p className="text-sm text-gray-500 mb-3">Standard sources list with three references.</p>
+          <h3 className="text-lg font-medium mb-2">Default (3 sources)</h3>
+          <p className="text-md text-gray-900 mb-3">Standard sources list with three references.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
               <Sources 
@@ -57,10 +62,10 @@ const SourcesComponentView = () => {
           </div>
         </div>
 
-        {/* Single Source */}
+        {/* Single source */}
         <div>
-          <h2 className="mb-4">Single Source</h2>
-          <p className="text-sm text-gray-500 mb-3">Sources list with one reference.</p>
+          <h3 className="text-lg font-medium mb-2">Single source</h3>
+          <p className="text-md text-gray-900 mb-3">Sources list with one reference.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
               <Sources 
@@ -72,10 +77,10 @@ const SourcesComponentView = () => {
           </div>
         </div>
 
-        {/* Two Sources */}
+        {/* Two sources */}
         <div>
-          <h2 className="mb-4">Two Sources</h2>
-          <p className="text-sm text-gray-500 mb-3">Sources list with two references.</p>
+          <h3 className="text-lg font-medium mb-2">Two sources</h3>
+          <p className="text-md text-gray-900 mb-3">Sources list with two references.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
               <Sources 
@@ -90,8 +95,8 @@ const SourcesComponentView = () => {
 
         {/* Mixed States */}
         <div>
-          <h2 className="mb-4">Mixed Link States</h2>
-          <p className="text-sm text-gray-500 mb-3">Sources with different link states (enabled, visited).</p>
+          <h3 className="text-lg font-medium mb-2">Mixed link states</h3>
+          <p className="text-md text-gray-900 mb-3">Sources with different link states (enabled, visited).</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
               <Sources 
@@ -105,10 +110,10 @@ const SourcesComponentView = () => {
           </div>
         </div>
 
-        {/* In Context with AI Message */}
+        {/* In context with AI Message */}
         <div>
-          <h2 className="mb-4">In Context</h2>
-          <p className="text-sm text-gray-500 mb-3">Example showing Sources component after an AI response.</p>
+          <h3 className="text-lg font-medium mb-2">In context</h3>
+          <p className="text-md text-gray-900 mb-3">Example showing Sources component after an AI response.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl space-y-4">
               <p className="font-vca-text text-[14px] leading-[21px] text-vca-text">
@@ -124,21 +129,7 @@ const SourcesComponentView = () => {
           </div>
         </div>
 
-        {/* Usage Notes */}
-        <div>
-          <h2 className="mb-4">Usage Notes</h2>
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <div className="space-y-3">
-              <p><span className="font-medium">Purpose:</span> Display citations and references for AI-generated content to build trust and transparency.</p>
-              <p><span className="font-medium">Heading:</span> "Sources" label in 12px semibold gray text.</p>
-              <p><span className="font-medium">Link List:</span> Uses SourceLink components with 8px vertical spacing.</p>
-              <p><span className="font-medium">Flexible Length:</span> Supports 1-N sources (typically 1-3 for readability).</p>
-              <p><span className="font-medium">No Fixed Width:</span> Adapts to parent container width.</p>
-              <p><span className="font-medium">Link States:</span> Each source can have its own state (enabled, visited, etc.).</p>
-              <p><span className="font-medium">Use Case:</span> Append to AI messages, recommendations, or any generated content requiring citations.</p>
-            </div>
-          </div>
-        </div>
+      
       </div>
     </div>
   );

@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { Prompt } from '@/components/vca-components/prompt';
+import { Message } from '@/components/vca-components/messages';
+import { Composer } from '@/components/vca-components/composer';
+import { ThinkingIndicator } from '@/components/vca-components/thinking-indicator';
 import { DemoSection } from '@/components/component-library/DemoSection';
 import { FormInput, FormCheckbox } from '@/components/component-library/DemoControls';
 
@@ -7,11 +10,40 @@ const PromptComponentView = () => {
   // Interactive demo state
   const [text, setText] = useState('How can I assign a seat to a user?');
   const [showAiIcon, setShowAiIcon] = useState(false);
+  
+  // State for the "How it works" interactive example
+  const [selectedPrompt, setSelectedPrompt] = useState<string | null>(null);
+  const [isThinking, setIsThinking] = useState(false);
+  const [aiResponse, setAiResponse] = useState<string | null>(null);
+
+  // AI responses for each prompt
+  const promptResponses: Record<string, string> = {
+    "How can I assign a seat to a user?": "To assign a seat to a user, go to Admin Settings > Seat Management. Click 'Assign Seat', select the user from the dropdown, and choose the seat type. The user will receive an email notification once the seat is assigned.",
+    "What are seat allocation best practices?": "Best practices for seat allocation include: assigning seats based on role priority, maintaining a buffer for new hires, regularly auditing unused seats, and setting up automated assignment rules for common user types."
+  };
+
+  const handlePromptClick = (promptText: string) => {
+    setSelectedPrompt(promptText);
+    setIsThinking(true);
+    setAiResponse(null);
+    
+    // Simulate AI thinking delay
+    setTimeout(() => {
+      setIsThinking(false);
+      setAiResponse(promptResponses[promptText]);
+    }, 1500);
+  };
+
+  const resetDemo = () => {
+    setSelectedPrompt(null);
+    setIsThinking(false);
+    setAiResponse(null);
+  };
 
   return (
     <div className="pt-16">
-      <h1 className="mb-2">Prompt</h1>
-      <p className="text-md text-gray-500 mb-12">Clickable suggestion chips for AI-powered prompts and quick actions.</p>
+      <h1 className="mb-4">Prompt</h1>
+      <p className="text-base text-gray-500 mb-12">Give users quick, guided options they can click to continue the conversation.</p>
       
       {/* Demo Section */}
       <DemoSection
@@ -19,7 +51,7 @@ const PromptComponentView = () => {
           <div className="grid grid-cols-2 gap-x-8 gap-y-4">
             <FormInput
               id="text"
-              label="Prompt Text"
+              label="Prompt text"
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="Enter prompt text..."
@@ -28,7 +60,7 @@ const PromptComponentView = () => {
 
             <FormCheckbox
               id="showAiIcon"
-              label="Show AI Icon"
+              label="Show AI icon"
               checked={showAiIcon}
               onCheckedChange={setShowAiIcon}
             />
@@ -44,120 +76,159 @@ const PromptComponentView = () => {
         </div>
       </DemoSection>
 
+      {/* Usage */}
+      <div className="mb-8">
+        <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Usage</h2>
+      </div>
+
       <div className="space-y-12">
-        {/* Without AI Icon */}
-        <div>
-          <h2 className="mb-4">Default</h2>
-          <p className="text-sm text-gray-500 mb-3">Basic prompt without AI icon.</p>
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="px-vca-xxl">
-              <Prompt 
-                text="How can I assign a seat to a user?"
-                showAiIcon={false}
-              />
-            </div>
-          </div>
-        </div>
+       
 
-        {/* With AI Icon */}
-        <div>
-          <h2 className="mb-4">With AI Icon</h2>
-          <p className="text-sm text-gray-500 mb-3">Prompt with sparkle AI icon to indicate AI-generated suggestion.</p>
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="px-vca-xxl">
-              <Prompt 
-                text="What are the benefits of premium features?"
-                showAiIcon={true}
-              />
-            </div>
-          </div>
-        </div>
+       
 
-        {/* Multiple Prompts Example */}
+
+        {/* In context Example */}
         <div>
-          <h2 className="mb-4">Multiple Prompts</h2>
-          <p className="text-sm text-gray-500 mb-3">Example showing multiple prompt suggestions in a grid layout.</p>
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="px-vca-xxl">
-              <div className="flex flex-wrap gap-2">
-                <Prompt 
-                  text="How do I add a new team member?"
-                  showAiIcon={true}
-                />
-                <Prompt 
-                  text="What's the difference between admin and user roles?"
-                  showAiIcon={true}
-                />
-                <Prompt 
-                  text="How can I export usage data?"
-                  showAiIcon={true}
-                />
-                <Prompt 
-                  text="Tell me about seat allocation"
-                  showAiIcon={true}
+          <h3 className="text-lg font-medium mb-2">Intro message</h3>
+          <p className="text-md text-gray-900 mb-3">Use prompts in intro message to the user to help them get started quickly.</p>
+          <div className="bg-gray-50 border border-gray-200 rounded-lg pt-0 pb-6 px-4 overflow-hidden">
+            <div className="w-[400px] mx-auto">
+              {/* Mini conversation view - focused and compact */}
+              <div className="bg-vca-background border border-vca-border-faint rounded-b-vca-md overflow-hidden flex flex-col h-[480px] -mt-1">
+                {/* Scrollable content area */}
+                <div className="flex-1 overflow-y-auto flex flex-col justify-end">
+                  <div className="px-vca-xxl space-y-vca-lg pb-vca-lg">
+                    {/* AI Message with intro text */}
+                    <Message 
+                      type="ai" 
+                      defaultText="Hi there! I see you may need help with seat management. Ask me a question and I'll help you find the right answer."
+                    />
+                    
+                    {/* AI Message with prompt intro */}
+                    <Message 
+                      type="ai" 
+                      defaultText="You can try asking me something like:"
+                    />
+                    
+                    {/* Prompt suggestions */}
+                    <div className="flex flex-col gap-vca-s">
+                      <Prompt 
+                        text="How can I assign a seat to a user?"
+                        showAiIcon={false}
+                      />
+                      <Prompt 
+                        text="What are seat allocation best practices?"
+                        showAiIcon={false}
+                      />
+                      <Prompt 
+                        text="Show me user management options"
+                        showAiIcon={false}
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Composer at bottom */}
+                <Composer 
+                  state="default"
+                  placeholder="Ask a question..."
                 />
               </div>
             </div>
           </div>
         </div>
 
-        {/* In Context Example */}
+        {/* Interaction Behavior */}
         <div>
-          <h2 className="mb-4">In Context</h2>
-          <p className="text-sm text-gray-500 mb-3">Example showing prompts after an AI message as suggested follow-ups.</p>
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="px-vca-xxl space-y-4">
-              <p className="font-vca-text text-[14px] leading-[21px] text-vca-text">
-                Not sure where to start? You can try:
-              </p>
-              <div className="flex flex-col gap-2">
-                <Prompt 
-                  text="How can I assign a seat to a user?"
-                  showAiIcon={false}
-                />
-                <Prompt 
-                  text="What are seat allocation best practices?"
-                  showAiIcon={false}
-                />
-                <Prompt 
-                  text="Show me user management options"
-                  showAiIcon={false}
+          <h3 className="text-lg font-medium mb-2">Behavior</h3>
+          <p className="text-md text-gray-900 mb-3">Clicking a prompt instantly sends that text as a user message to the AI. Try clicking a prompt below.</p>
+          <div className="bg-gray-50 border border-gray-200 rounded-lg pt-0 pb-6 px-4 overflow-hidden">
+            <div className="w-[400px] mx-auto">
+              {/* Mini conversation view - focused and compact */}
+              <div className="bg-vca-background border border-vca-border-faint rounded-b-vca-md overflow-hidden flex flex-col h-[480px] -mt-1">
+                {/* Scrollable content area */}
+                <div className="flex-1 overflow-y-auto flex flex-col justify-end">
+                  <div className="px-vca-xxl space-y-vca-lg pb-vca-lg">
+                    {/* AI Message with prompts */}
+                    <Message 
+                      type="ai" 
+                      defaultText="Not sure where to start? You can try:"
+                    />
+                    
+                    {/* Prompt suggestions - only show if none selected */}
+                    {!selectedPrompt && (
+                      <div className="flex flex-col gap-vca-s">
+                        <Prompt 
+                          text="How can I assign a seat to a user?"
+                          showAiIcon={false}
+                          onClick={() => handlePromptClick("How can I assign a seat to a user?")}
+                        />
+                        <Prompt 
+                          text="What are seat allocation best practices?"
+                          showAiIcon={false}
+                          onClick={() => handlePromptClick("What are seat allocation best practices?")}
+                        />
+                      </div>
+                    )}
+                    
+                    {/* Show user message when prompt is clicked */}
+                    {selectedPrompt && (
+                      <div className="flex justify-end">
+                        <Message 
+                          type="user" 
+                          userText={selectedPrompt}
+                          errorFeedback={false}
+                        />
+                      </div>
+                    )}
+                    
+                    {/* Show thinking indicator while AI is processing */}
+                    {isThinking && (
+                      <div className="flex items-center gap-vca-s">
+                        <ThinkingIndicator />
+                      </div>
+                    )}
+                    
+                    {/* Show AI response after thinking */}
+                    {aiResponse && (
+                      <Message 
+                        type="ai" 
+                        defaultText={aiResponse}
+                      />
+                    )}
+                  </div>
+                </div>
+                
+                {/* Composer at bottom */}
+                <Composer 
+                  state="default"
+                  placeholder="Ask a question..."
                 />
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Long Text Example */}
-        <div>
-          <h2 className="mb-4">Long Text</h2>
-          <p className="text-sm text-gray-500 mb-3">Prompt with longer text that wraps to multiple lines.</p>
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="px-vca-xxl">
-              <Prompt 
-                text="Can you explain the entire process of setting up and managing seat licenses for a large organization?"
-                showAiIcon={true}
-              />
-            </div>
+          <div className="mt-3 flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-900">
+              <span className="font-semibold">💡 Interactive demo:</span> {
+                !selectedPrompt ? "Click a prompt above to see the full conversation flow." :
+                isThinking ? "AI is thinking..." :
+                aiResponse ? "Complete! The prompt became a user message and the AI responded." :
+                "Loading..."
+              }
+            </p>
+            {aiResponse && (
+              <button
+                onClick={resetDemo}
+                className="text-sm font-medium text-blue-700 hover:text-blue-800 underline"
+              >
+                Try again
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Usage Notes */}
-        <div>
-          <h2 className="mb-4">Usage Notes</h2>
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <div className="space-y-3">
-              <p><span className="font-medium">Purpose:</span> Suggest follow-up questions, quick actions, or common queries to guide users.</p>
-              <p><span className="font-medium">AI Icon:</span> Optional sparkle icon indicates AI-generated suggestions.</p>
-              <p><span className="font-medium">Interactive:</span> Clickable button with hover state (lighter blue background).</p>
-              <p><span className="font-medium">Max Width:</span> Constrained to 320px max width for optimal readability.</p>
-              <p><span className="font-medium">Text Wrapping:</span> Text wraps to multiple lines if needed.</p>
-              <p><span className="font-medium">Light Blue Background:</span> Uses #f6fbff (default) and #e8f3ff (hover).</p>
-              <p><span className="font-medium">Blue Text:</span> Link color to indicate interactivity.</p>
-              <p><span className="font-medium">Common Patterns:</span> Display 2-4 prompts after AI messages, or in a "Not sure where to start?" section.</p>
-            </div>
-          </div>
-        </div>
+        {/* Usage notes */}
+
       </div>
     </div>
   );

@@ -32,7 +32,7 @@ export const Composer = ({
   className,
 }: ComposerProps) => {
   
-  // Stop state - shows loading spinner with stop button when AI is generating
+  // Stop state - shows "Stop answering" with loading spinner
   if (state === 'stop') {
     return (
       <div className={cn(
@@ -43,28 +43,19 @@ export const Composer = ({
           <div className="flex gap-vca-xs items-center justify-end w-full">
             <button
               onClick={onStop}
-              className="relative w-8 h-8 flex items-center justify-center group"
+              className="flex gap-vca-s items-center group cursor-pointer"
             >
-              {/* Loading spinner */}
-              <svg 
-                className="absolute inset-0 w-8 h-8 animate-spin" 
-                viewBox="0 0 32 32"
-              >
-                <circle
-                  cx="16"
-                  cy="16"
-                  r="14"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeDasharray="70 20"
-                  strokeLinecap="round"
-                  className="text-vca-text-meta opacity-60"
-                />
-              </svg>
+              {/* Stop answering text */}
+              <span className="font-vca-text text-vca-small text-vca-text-meta">
+                Stop answering
+              </span>
               
-              {/* Stop square icon */}
-              <div className="w-3 h-3 bg-vca-text-meta rounded-vca-xs opacity-60 group-hover:opacity-80 transition-opacity" />
+              {/* Loading spinner GIF */}
+              <img 
+                src="/answer-loading.gif" 
+                alt="Loading" 
+                className="w-8 h-8"
+              />
             </button>
           </div>
         </div>
@@ -100,6 +91,16 @@ export const Composer = ({
               <TextareaAutosize
                 value={value}
                 onChange={(e) => onChange?.(e.target.value)}
+                onKeyDown={(e) => {
+                  // Enter without Shift = send message
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (!isSendDisabled && onSend) {
+                      onSend();
+                    }
+                  }
+                  // Shift + Enter = allow new line (default behavior)
+                }}
                 placeholder={placeholder}
                 disabled={isDisabled}
                 minRows={1}
@@ -125,6 +126,7 @@ export const Composer = ({
             )}
           </div>
           
+          <div className={cn('shrink-0', hasMultipleLines && 'pb-vca-s')}>
           <ButtonIcon
             icon="send"
             type="tertiary"
@@ -134,6 +136,7 @@ export const Composer = ({
             onClick={onSend}
             ariaLabel="Send message"
           />
+          </div>
         </div>
       </div>
     </div>

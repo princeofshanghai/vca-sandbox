@@ -2,11 +2,12 @@ import { VcaIcon } from '../icons';
 import { ButtonLink } from '../buttons';
 import { cn } from '@/utils';
 
-export type HumanAgentStatusState = 'connecting' | 'success';
+export type AgentStatusState = 'connecting' | 'success';
 
-export type HumanAgentStatusProps = {
-  state?: HumanAgentStatusState;
+export type AgentStatusProps = {
+  state?: AgentStatusState;
   statusLabel?: string;
+  agentName?: string;
   description?: string;
   actionLabel?: string;
   showDescription?: boolean;
@@ -16,20 +17,26 @@ export type HumanAgentStatusProps = {
 };
 
 /**
- * HumanAgentStatus - Shows connection status when transferring to live human agent
+ * AgentStatus - Shows connection status when transferring to live human agent
  * Two states: connecting (with spinner) and success (with checkmark)
  * Note: No built-in horizontal padding or width - parent container controls spacing
  */
-export const HumanAgentStatus = ({
+export const AgentStatus = ({
   state = 'success',
-  statusLabel = 'Connected to live chat',
-  description = 'Our team is joining soon for live chat. AI will not be responding at this moment.',
+  statusLabel = "You're next in line",
+  agentName = 'Agent',
+  description = 'A member of our team will join the chat soon.',
   actionLabel = 'Cancel',
   showDescription = true,
   showAction = true,
   onAction,
   className,
-}: HumanAgentStatusProps) => {
+}: AgentStatusProps) => {
+  
+  // For success state, use agent name format and ignore description/action
+  const displayLabel = state === 'success' ? `${agentName} has joined the chat` : statusLabel;
+  const shouldShowDescription = state === 'connecting' && showDescription;
+  const shouldShowAction = state === 'connecting' && showAction;
   
   return (
     <div className={cn('bg-vca-surface-tint flex flex-col gap-vca-lg p-vca-lg rounded-tl-vca-md rounded-tr-vca-md rounded-br-vca-md rounded-bl-vca-sm', className)}>
@@ -52,13 +59,13 @@ export const HumanAgentStatus = ({
             {/* Status Label */}
             <div className="flex flex-col justify-center flex-1">
           <p className="font-vca-text text-vca-small-bold text-vca-text">
-                {statusLabel}
+                {displayLabel}
               </p>
             </div>
         </div>
 
-        {/* Optional Description */}
-        {showDescription && (
+        {/* Optional Description (connecting state only) */}
+        {shouldShowDescription && (
         <div className="flex items-start w-full">
           <p className="font-vca-text text-vca-small-open text-vca-text w-full">
               {description}
@@ -66,8 +73,8 @@ export const HumanAgentStatus = ({
           </div>
         )}
 
-        {/* Optional Action Link */}
-        {showAction && (
+        {/* Optional Action Link (connecting state only) */}
+        {shouldShowAction && (
           <div className="flex items-start w-full">
             <ButtonLink 
               onClick={onAction}

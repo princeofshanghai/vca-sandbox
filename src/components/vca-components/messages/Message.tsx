@@ -105,7 +105,7 @@ export const Message = ({
   showTimestamp = true,
   userText = 'This is a user message ',
   humanAgentText = 'This is a human agent message',
-  disclaimerText = 'This experience is powered by AI. Mistakes may be possible. ',
+  disclaimerText = 'This AI-powered chat may make mistakes. ',
   defaultText = 'This is a message',
   agentTimestampText,
   type = 'ai',
@@ -116,9 +116,9 @@ export const Message = ({
     return (
       <div className={cn('flex flex-col gap-vca-lg items-start', className)}>
         <div className="flex flex-col gap-vca-s items-start w-full">
-          <p className="font-vca-text text-vca-small-open text-vca-text">
+          <p className="font-vca-text text-vca-xsmall-open text-vca-text">
             {disclaimerText}
-            <span className="font-vca-text text-vca-small-bold-open text-vca-link">Learn more</span>
+            <span className="font-vca-text text-vca-xsmall-bold-open text-vca-link">Learn more</span>
           </p>
         </div>
       </div>

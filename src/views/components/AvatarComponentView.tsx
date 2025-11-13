@@ -14,8 +14,8 @@ const AvatarComponentView = () => {
 
   return (
     <div className="pt-16">
-      <h1 className="mb-2">Avatar</h1>
-      <p className="text-md text-gray-500 mb-12">Circular profile images with optional status badges for showing user availability.</p>
+      <h1 className="mb-4">Avatar</h1>
+      <p className="text-base text-gray-500 mb-12">Used to represent a live human agent.</p>
       
       {/* Demo Section */}
       <DemoSection
@@ -29,7 +29,7 @@ const AvatarComponentView = () => {
             />
 
             <ToggleButtons
-              label="Badge State"
+              label="Badge state"
               options={['online', 'offline'] as const}
               value={badgeState}
               onChange={setBadgeState}
@@ -38,7 +38,7 @@ const AvatarComponentView = () => {
 
             <FormCheckbox
               id="showBadge"
-              label="Show Badge"
+              label="Show badge"
               checked={showBadge}
               onCheckedChange={setShowBadge}
             />
@@ -60,8 +60,8 @@ const AvatarComponentView = () => {
       <div className="space-y-12">
         {/* Agent Message */}
         <div>
-          <h3 className="text-base font-medium mb-2">Agent message</h3>
-          <p className="text-sm text-gray-500 mb-4">Used to show that message is written by a human agent.</p>
+          <h3 className="text-lg font-medium mb-2">Agent message</h3>
+          <p className="text-md text-gray-900 mb-4">Used to show that message is written by a human agent.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="w-[352px] mx-auto">
               <Message type="human-agent" humanAgentText="Hi there! I'm here to help you with any questions you have about your account." />

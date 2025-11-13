@@ -39,13 +39,13 @@ const RadiusView = () => {
 
   return (
     <div className="pt-16">
-      <h1 className="mb-2">Border Radius</h1>
-      <p className="text-md text-gray-500 mb-12">VCA design system border radius tokens and specifications.</p>
+      <h1 className="mb-4">Border Radius</h1>
+      <p className="text-base text-gray-500 mb-12">VCA design system border radius tokens and specifications.</p>
       
       <div className="space-y-12">
         {/* Radius Scale */}
         <div>
-          <h2 className="mb-4">Radius Scale</h2>
+          <h2 className="mb-4">Radius scale</h2>
           <div className="bg-white border border-gray-200 rounded-lg p-6 grid grid-cols-1 gap-8">
             {radiusTokens.map((token) => (
               <RadiusSwatch key={token.class} {...token} />
@@ -55,12 +55,12 @@ const RadiusView = () => {
 
         {/* Usage Examples */}
         <div>
-          <h2 className="mb-4">Usage Examples</h2>
+          <h2 className="mb-4">Usage examples</h2>
           <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-8">
             {/* Buttons */}
             <div>
               <h3 className="mb-2">Buttons</h3>
-              <p className="text-sm text-gray-500 mb-4">Primary buttons use `rounded-vca-lg` for a friendly, approachable appearance.</p>
+              <p className="text-md text-gray-900 mb-4">Primary buttons use `rounded-vca-lg` for a friendly, approachable appearance.</p>
               <div className="flex flex-wrap items-center gap-4">
                 <button className="bg-blue-600 text-white px-6 py-2 rounded-vca-lg font-medium hover:bg-blue-700 transition-colors">
                   Primary Button
@@ -74,7 +74,7 @@ const RadiusView = () => {
             {/* Cards */}
             <div>
               <h3 className="mb-2">Cards & Containers</h3>
-              <p className="text-sm text-gray-500 mb-4">Cards typically use `rounded-vca-md` for moderate softness.</p>
+              <p className="text-md text-gray-900 mb-4">Cards typically use `rounded-vca-md` for moderate softness.</p>
               <div className="flex flex-wrap items-start gap-4">
                 <div className="bg-white border border-gray-200 rounded-vca-md p-4 w-48">
                   <h4 className="text-sm font-semibold text-gray-800 mb-1">Card Title</h4>
@@ -90,7 +90,7 @@ const RadiusView = () => {
             {/* Inputs */}
             <div>
               <h3 className="mb-2">Inputs & Forms</h3>
-              <p className="text-sm text-gray-500 mb-4">Text inputs use `rounded-vca-md` to match the overall design system.</p>
+              <p className="text-md text-gray-900 mb-4">Text inputs use `rounded-vca-md` to match the overall design system.</p>
               <div className="space-y-3 max-w-md">
                 <input 
                   type="text" 
@@ -107,8 +107,8 @@ const RadiusView = () => {
 
             {/* Circular Elements */}
             <div>
-              <h3 className="mb-2">Circular Elements</h3>
-              <p className="text-sm text-gray-500 mb-4">Use `rounded-full` (standard Tailwind) for avatars, icons, and perfect circles. Use `rounded-vca-round` for very large radius corners.</p>
+              <h3 className="mb-2">Circular elements</h3>
+              <p className="text-md text-gray-900 mb-4">Use `rounded-full` (standard Tailwind) for avatars, icons, and perfect circles. Use `rounded-vca-round` for very large radius corners.</p>
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-blue-500 rounded-full flex items-center justify-center text-white font-bold">
                   JD
@@ -125,7 +125,7 @@ const RadiusView = () => {
             {/* Badges & Tags */}
             <div>
               <h3 className="mb-2">Badges & Tags</h3>
-              <p className="text-sm text-gray-500 mb-4">Small labels use `rounded-vca-sm` for subtle corners.</p>
+              <p className="text-md text-gray-900 mb-4">Small labels use `rounded-vca-sm` for subtle corners.</p>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-vca-sm font-medium">New</span>
                 <span className="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-vca-sm font-medium">Active</span>
@@ -138,7 +138,7 @@ const RadiusView = () => {
 
         {/* Usage Guidelines */}
         <div>
-          <h2 className="mb-4">Usage Guidelines</h2>
+          <h2 className="mb-4">Usage guidelines</h2>
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <div className="space-y-3 text-sm text-gray-700">
               <p><span className="font-medium">Consistency:</span> Always use VCA radius tokens for consistent corner treatment across the design system.</p>

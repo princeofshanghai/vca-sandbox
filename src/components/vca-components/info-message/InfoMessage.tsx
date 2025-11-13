@@ -3,7 +3,7 @@ import { ButtonIcon } from '../buttons';
 import { Sources } from '../sources';
 import { cn } from '@/utils';
 
-export type AIInformationMessageProps = {
+export type InfoMessageProps = {
   type?: 'default' | 'response-stopped';
   title?: string;
   message?: string;
@@ -23,11 +23,11 @@ export type AIInformationMessageProps = {
 };
 
 /**
- * AIInformationMessage - AI-generated informational message with optional title, divider, sources, and rating
+ * InfoMessage - AI-generated informational message with optional title, divider, sources, and rating
  * Light blue background card for additional context and information
  * Note: No built-in horizontal padding or width - parent container controls spacing
  */
-export const AIInformationMessage = ({
+export const InfoMessage = ({
   type = 'default',
   title = 'Optional title',
   message = 'This is the message this is the message this is the message this is the message this is the message.',
@@ -40,7 +40,7 @@ export const AIInformationMessage = ({
   onThumbsUp,
   onThumbsDown,
   className,
-}: AIInformationMessageProps) => {
+}: InfoMessageProps) => {
   
   // Response stopped variant - simplified
   if (type === 'response-stopped') {

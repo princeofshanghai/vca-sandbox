@@ -34,7 +34,7 @@ const ColorCategory = ({ title, description, colors }: { title: string; descript
     <div>
       <div className="mb-6">
         <h2 className="mb-4">{title}</h2>
-        {description && <p className="text-sm text-gray-500">{description}</p>}
+        {description && <p className="text-md text-gray-900">{description}</p>}
       </div>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {colors.map((color) => (
@@ -198,8 +198,8 @@ const ColorsView = () => {
   
   return (
     <div className="pt-16">
-      <h1 className="mb-2">Colors</h1>
-      <p className="text-md text-gray-500 mb-12">
+      <h1 className="mb-4">Colors</h1>
+      <p className="text-base text-gray-500 mb-12">
         VCA design system color palette and tokens. Each token shows its Tailwind class, hex value, and the primitive it references from Figma.
       </p>
       

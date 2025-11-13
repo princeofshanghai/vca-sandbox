@@ -2,12 +2,13 @@ import { VcaIcon } from '../icons';
 import { Button } from '../buttons';
 import { cn } from '@/utils';
 
-export type AIRecommendationState = 'default' | 'applied' | 'dismissed';
+export type ActionMessageState = 'default' | 'applied' | 'dismissed';
 
-export type AIRecommendationProps = {
-  state?: AIRecommendationState;
+export type ActionMessageProps = {
+  state?: ActionMessageState;
   title?: string;
   impactText?: string;
+  showImpact?: boolean;
   description?: string;
   onApply?: () => void;
   onDismiss?: () => void;
@@ -15,19 +16,20 @@ export type AIRecommendationProps = {
 };
 
 /**
- * AIRecommendation - AI-powered action suggestion component
+ * ActionMessage - AI-powered action suggestion component
  * Shows recommended actions with impact, supporting default/applied/dismissed states
  * Note: No built-in horizontal padding or width - parent container controls spacing
  */
-export const AIRecommendation = ({
+export const ActionMessage = ({
   state = 'default',
   title = 'Recommended action',
   impactText = 'impact',
+  showImpact = false,
   description = 'Description',
   onApply,
   onDismiss,
   className,
-}: AIRecommendationProps) => {
+}: ActionMessageProps) => {
   
   return (
     <div className={cn('flex flex-col gap-vca-lg items-start', className)}>
@@ -36,7 +38,7 @@ export const AIRecommendation = ({
         <div className="flex flex-col gap-vca-s items-start w-full">
           <div className="flex gap-vca-s items-center w-full">
             <p className="font-vca-text text-vca-small-bold text-vca-text flex-1">
-              {title} <span className="text-vca-text-positive">{impactText}</span>
+              {title}{showImpact && impactText && <> <span className="text-vca-text-positive">{impactText}</span></>}
             </p>
           </div>
         </div>
@@ -52,7 +54,7 @@ export const AIRecommendation = ({
         {state === 'default' && (
           <div className="flex items-start w-full gap-vca-none">
             <Button 
-              variant="secondary" 
+              variant="primary" 
               emphasis={true}
               onClick={onApply}
             >
@@ -82,7 +84,7 @@ export const AIRecommendation = ({
         {state === 'dismissed' && (
           <div className="flex gap-vca-xs items-center w-full">
             <div className="flex gap-vca-xs items-center flex-1">
-              <VcaIcon icon="close" size="sm" className="text-vca-text-neutral" />
+              <VcaIcon icon="signal-notice" size="sm" className="text-vca-text-neutral" />
               <p className="font-vca-text text-vca-small text-vca-text-neutral">
                 Dismissed
               </p>

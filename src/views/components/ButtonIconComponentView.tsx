@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { ButtonIcon } from '@/components/vca-components/buttons';
-import { Header } from '@/components/vca-components/header';
 import { Composer } from '@/components/vca-components/composer';
 import { DemoSection } from '@/components/component-library/DemoSection';
 import { ToggleButtons, FormCheckbox } from '@/components/component-library/DemoControls';
@@ -14,8 +13,8 @@ const ButtonIconComponentView = () => {
 
   return (
     <div className="pt-16">
-      <h1 className="mb-2">Button Icon</h1>
-      <p className="text-md text-gray-500 mb-12">Circular icon-only buttons for compact actions without text labels.</p>
+      <h1 className="mb-4">Button Icon</h1>
+      <p className="text-base text-gray-500 mb-12">Icon-only buttons for actions in chat container.</p>
       
       {/* Demo Section */}
       <DemoSection
@@ -37,7 +36,7 @@ const ButtonIconComponentView = () => {
 
             <FormCheckbox
               id="emphasis"
-              label="High Emphasis"
+              label="High emphasis"
               checked={emphasis}
               onCheckedChange={setEmphasis}
             />
@@ -67,26 +66,13 @@ const ButtonIconComponentView = () => {
       </div>
 
       <div className="space-y-12">
-        {/* In Header */}
-        <div>
-          <h3 className="text-base font-medium mb-2">In header</h3>
-          <p className="text-sm text-gray-500 mb-4">Tertiary low-emphasis icon buttons are used for navigation and actions like back, minimize, and close in the header.</p>
-          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <div className="w-[400px] mx-auto my-4 border border-gray-200 rounded-lg overflow-hidden">
-              <Header 
-                title="Help"
-                showBack={true}
-                showPremiumIcon={true}
-                showAction={true}
-              />
-            </div>
-          </div>
-        </div>
+      
+     
 
         {/* In Composer */}
         <div>
-          <h3 className="text-base font-medium mb-2">In composer</h3>
-          <p className="text-sm text-gray-500 mb-4">Icon buttons are used for attachment and send actions within the message composer input.</p>
+          <h3 className="text-lg font-medium mb-2">Composer</h3>
+          <p className="text-md text-gray-900 mb-4">Used for attachment and send actions in the composer.</p>
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
             <div className="w-[400px] mx-auto my-4 border border-gray-200 rounded-lg overflow-hidden">
               <Composer 

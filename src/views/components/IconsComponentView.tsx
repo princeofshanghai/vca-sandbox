@@ -37,8 +37,8 @@ const IconsComponentView = () => {
 
   return (
     <div className="pt-16">
-      <h1 className="mb-2">Icons</h1>
-      <p className="text-md text-gray-500 mb-12">Custom LinkedIn SVG icons used throughout the VCA chatbot interface.</p>
+      <h1 className="mb-4">Icons</h1>
+      <p className="text-base text-gray-500 mb-12">Custom LinkedIn SVG icons used throughout the VCA chatbot interface.</p>
       
       {/* Demo Section */}
       <DemoSection
@@ -73,11 +73,16 @@ const IconsComponentView = () => {
         <VcaIcon icon={selectedIcon} size={size} className="text-vca-icon" />
       </DemoSection>
 
+      {/* Usage */}
+      <div className="mb-8">
+        <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Usage</h2>
+      </div>
+
       <div className="space-y-12">
-        {/* All Icons Grid */}
+        {/* All icons Grid */}
         <div>
-          <h2 className="mb-4">All Icons</h2>
-          <p className="text-sm text-gray-500 mb-3">Complete set of 23 VCA icons.</p>
+          <h3 className="text-lg font-medium mb-2">All icons</h3>
+          <p className="text-md text-gray-900 mb-3">Complete set of 23 VCA icons.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <div className="grid grid-cols-4 gap-6">
               {icons.map((iconName) => (
@@ -92,8 +97,8 @@ const IconsComponentView = () => {
 
         {/* Sizes */}
         <div>
-          <h2 className="mb-4">Sizes</h2>
-          <p className="text-sm text-gray-500 mb-3">Icons available in three sizes.</p>
+          <h3 className="text-lg font-medium mb-2">Sizes</h3>
+          <p className="text-md text-gray-900 mb-3">Icons available in three sizes.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <div className="flex items-end gap-8">
               <div className="flex flex-col items-center gap-2">
@@ -114,12 +119,12 @@ const IconsComponentView = () => {
 
         {/* Categories */}
         <div>
-          <h2 className="mb-4">By Category</h2>
-          <p className="text-sm text-gray-500 mb-3">Icons organized by usage type.</p>
+          <h3 className="text-lg font-medium mb-2">By category</h3>
+          <p className="text-md text-gray-900 mb-3">Icons organized by usage type.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-6">
             {/* Navigation */}
             <div>
-              <h3 className="mb-2">Navigation</h3>
+              <p className="text-sm font-semibold mb-2">Navigation</p>
               <div className="flex gap-4">
                 <div className="flex flex-col items-center gap-1">
                   <VcaIcon icon="arrow-left" size="md" className="text-vca-icon" />
@@ -146,7 +151,7 @@ const IconsComponentView = () => {
 
             {/* Actions */}
             <div>
-              <h3 className="mb-2">Actions</h3>
+              <p className="text-sm font-semibold mb-2">Actions</p>
               <div className="flex gap-4">
                 <div className="flex flex-col items-center gap-1">
                   <VcaIcon icon="send" size="md" className="text-vca-icon" />
@@ -177,7 +182,7 @@ const IconsComponentView = () => {
 
             {/* Signals */}
             <div>
-              <h3 className="mb-2">Signals & Status</h3>
+              <p className="text-sm font-semibold mb-2">Signals & Status</p>
               <div className="flex gap-4">
                 <div className="flex flex-col items-center gap-1">
                   <VcaIcon icon="signal-ai" size="md" className="text-vca-icon" />
@@ -200,7 +205,7 @@ const IconsComponentView = () => {
 
             {/* Feedback */}
             <div>
-              <h3 className="mb-2">Feedback</h3>
+              <p className="text-sm font-semibold mb-2">Feedback</p>
               <div className="flex gap-4">
                 <div className="flex flex-col items-center gap-1">
                   <VcaIcon icon="thumbs-up-outline" size="md" className="text-vca-icon" />
@@ -223,7 +228,7 @@ const IconsComponentView = () => {
 
             {/* Other */}
             <div>
-              <h3 className="mb-2">Other</h3>
+              <p className="text-sm font-semibold mb-2">Other</p>
               <div className="flex gap-4">
                 <div className="flex flex-col items-center gap-1">
                   <VcaIcon icon="linkedin-bug" size="md" className="text-vca-icon" />

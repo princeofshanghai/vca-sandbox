@@ -34,12 +34,10 @@ const ContainerComponentView = () => {
     // full
     return (
       <div className="px-vca-xxl space-y-vca-lg">
+        <Message type="disclaimer" />
         <Message 
           type="ai" 
           defaultText="Hi there. With the help of AI, I can answer questions about administration or connect you to someone who can."
-        />
-        <Message 
-          type="disclaimer"
         />
         <Message 
           type="user"
@@ -57,8 +55,8 @@ const ContainerComponentView = () => {
 
   return (
     <div className="pt-16">
-      <h1 className="mb-2">Container</h1>
-      <p className="text-md text-gray-500 mb-12">Complete chatbot panel combining Header, scrollable content area, and Composer.</p>
+      <h1 className="mb-4">Container</h1>
+      <p className="text-base text-gray-500 mb-12">Complete VCA container combining Header, content area, and Composer.</p>
       
       {/* Demo Section */}
       <DemoSection
@@ -76,7 +74,7 @@ const ContainerComponentView = () => {
                 <div className="mt-3">
                   <FormCheckbox
                     id="showPhoneFrame"
-                    label="Show Phone Frame"
+                    label="Show phone frame"
                     checked={showPhoneFrame}
                     onCheckedChange={setShowPhoneFrame}
                   />
@@ -88,7 +86,7 @@ const ContainerComponentView = () => {
             <div className="grid grid-cols-2 gap-x-8 gap-y-4">
               <FormInput
                 id="title"
-                label="Title Text"
+                label="Title text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Enter title..."
@@ -103,7 +101,7 @@ const ContainerComponentView = () => {
 
               <FormCheckbox
                 id="showBack"
-                label="Show Back Button"
+                label="Show back button"
                 checked={showBack}
                 onCheckedChange={setShowBack}
               />
@@ -117,7 +115,7 @@ const ContainerComponentView = () => {
 
               <FormCheckbox
                 id="showAction"
-                label="Show Action Button"
+                label="Show action button"
                 checked={showAction}
                 onCheckedChange={setShowAction}
               />
@@ -155,12 +153,17 @@ const ContainerComponentView = () => {
           )}
         </div>
       </DemoSection>
+
+      {/* Usage */}
+      <div className="mb-8">
+        <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Usage</h2>
+      </div>
       
       <div className="space-y-12">
         {/* Empty Container - Just the Shell */}
         <div>
-          <h2 className="mb-4">Empty Container (Shell Only)</h2>
-          <p className="text-sm text-gray-500 mb-3">The basic structure with no content - just Header + Content Area + Composer.</p>
+          <h3 className="text-lg font-medium mb-2">Desktop</h3>
+          <p className="text-md text-gray-900 mb-3">Header contains Help title and close button.</p>
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 flex justify-center">
             <Container 
               headerTitle="Help"
@@ -173,40 +176,29 @@ const ContainerComponentView = () => {
           </div>
         </div>
 
-        {/* With Simple Content */}
+        {/* Mobile Container */}
         <div>
-          <h2 className="mb-4">With Content</h2>
-          <p className="text-sm text-gray-500 mb-3">Container with some message content.</p>
+          <h3 className="text-lg font-medium mb-2">Mobile</h3>
+          <p className="text-md text-gray-900 mb-3">Mobile container appears as a sheet overlay with handle bar and close button.</p>
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 flex justify-center">
             <Container 
               headerTitle="Help"
+              viewport="mobile"
               showHeaderBack={false}
               showHeaderPremiumIcon={false}
               showHeaderAction={false}
             >
-              <div className="px-vca-xxl space-y-vca-lg">
-                <Message 
-                  type="ai" 
-                  defaultText="Hi there. With the help of AI, I can answer questions about administration or connect you to someone who can."
-                />
-                <Message 
-                  type="disclaimer"
-                />
-                <Message 
-                  type="user"
-                  userText="How can I remove a user?"
-                  errorFeedback={false}
-                  className="flex justify-end"
-                />
-              </div>
+              {/* Empty - no content */}
             </Container>
           </div>
         </div>
 
-        {/* With Premium Border */}
+        {/* With Simple Content */}
+
+        {/* With Premium border */}
         <div>
-          <h2 className="mb-4">Premium Border</h2>
-          <p className="text-sm text-gray-500 mb-3">Container with gold premium border for premium users.</p>
+          <h3 className="text-lg font-medium mb-2">Premium (WIP)</h3>
+          <p className="text-md text-gray-900 mb-3">LinkedIn premium bug and gold bottom border for premium users.</p>
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 flex justify-center">
             <Container 
               headerTitle="Help"
@@ -225,10 +217,10 @@ const ContainerComponentView = () => {
           </div>
         </div>
 
-        {/* With Back Button */}
+        {/* With back button */}
         <div>
-          <h2 className="mb-4">With Back Button</h2>
-          <p className="text-sm text-gray-500 mb-3">Container with navigation back button in header.</p>
+          <h3 className="text-lg font-medium mb-2">From IPH</h3>
+          <p className="text-md text-gray-900 mb-3">Header contains additional back button to go back to IPH.</p>
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 flex justify-center">
             <Container 
               headerTitle="Help"
@@ -241,10 +233,10 @@ const ContainerComponentView = () => {
           </div>
         </div>
 
-        {/* Full Example */}
+        {/* Full example */}
         <div>
-          <h2 className="mb-4">Full Example</h2>
-          <p className="text-sm text-gray-500 mb-3">Complete container with all features enabled and rich content.</p>
+          <h3 className="text-lg font-medium mb-2">Full example</h3>
+          <p className="text-md text-gray-900 mb-3">Complete container with all features enabled and rich content.</p>
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 flex justify-center">
             <Container 
               headerTitle="Help"
@@ -254,12 +246,10 @@ const ContainerComponentView = () => {
               showPremiumBorder={true}
             >
               <div className="px-vca-xxl space-y-vca-xxl">
+                <Message type="disclaimer" />
                 <Message 
                   type="ai" 
                   defaultText="Hi there. With the help of AI, I can answer questions about administration or connect you to someone who can."
-                />
-                <Message 
-                  type="disclaimer"
                 />
                 <Message 
                   type="ai" 
@@ -280,19 +270,7 @@ const ContainerComponentView = () => {
           </div>
         </div>
 
-        {/* Usage Notes */}
-        <div>
-          <h2 className="mb-4">Usage Notes</h2>
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <div className="space-y-3">
-              <p><span className="font-medium">Fixed Dimensions:</span> Container is 400px wide × 788px tall to match LinkedIn's VCA chatbot.</p>
-              <p><span className="font-medium">Scrollable Content:</span> The middle content area scrolls when content exceeds available space.</p>
-              <p><span className="font-medium">Fixed Header & Composer:</span> Header and Composer remain fixed at top and bottom.</p>
-              <p><span className="font-medium">Content Alignment:</span> Content aligns to the bottom by default (justify-end) for chat-like behavior.</p>
-              <p><span className="font-medium">Padding:</span> Add `px-vca-xxl` (24px) to content for proper side spacing.</p>
-            </div>
-          </div>
-        </div>
+       
       </div>
     </div>
   );

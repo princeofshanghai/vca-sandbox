@@ -12,12 +12,12 @@ const App = () => {
           <TopNavigation />
           <div className="flex-1 overflow-hidden">
             <Routes>
-              <Route path="/" element={<Navigate to="/foundations/typography" replace />} />
+              <Route path="/" element={<Navigate to="/flows" replace />} />
               <Route path="/foundations/*" element={<ComponentLibraryView />} />
               <Route path="/components/*" element={<ComponentLibraryView />} />
               <Route path="/flows" element={<FlowPreviewView />} />
-              <Route path="/builder" element={<Navigate to="/foundations/typography" replace />} />
-              <Route path="*" element={<Navigate to="/foundations/typography" replace />} />
+              <Route path="/builder" element={<Navigate to="/flows" replace />} />
+              <Route path="*" element={<Navigate to="/flows" replace />} />
             </Routes>
           </div>
         </div>

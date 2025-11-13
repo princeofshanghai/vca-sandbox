@@ -99,9 +99,9 @@ export const Header = ({
           {showPremiumIcon && (
             <VcaIcon icon="linkedin-bug" size="md" className="text-vca-premium-inbug" />
           )}
-          <h1 className="font-vca-display text-vca-heading-large text-vca-text tracking-normal">
+          <span className="font-vca-display text-vca-heading-large text-vca-text tracking-normal">
             {title}
-          </h1>
+          </span>
         </div>
         
         {/* Actions - right side */}
@@ -154,9 +154,9 @@ export const Header = ({
           {showPremiumIcon && (
             <VcaIcon icon="linkedin-bug" size="md" className="text-vca-premium-inbug" />
           )}
-          <h1 className="font-vca-display text-vca-heading-large text-vca-text tracking-normal">
+          <span className="font-vca-display text-vca-heading-large text-vca-text tracking-normal">
             {title}
-          </h1>
+          </span>
         </div>
       </div>
       

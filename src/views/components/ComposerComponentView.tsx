@@ -40,8 +40,8 @@ const ComposerComponentView = () => {
 
   return (
     <div className="pt-16">
-      <h1 className="mb-2">Composer</h1>
-      <p className="text-md text-gray-500 mb-12">Text input component for composing messages with multiple states and attachments.</p>
+      <h1 className="mb-4">Composer</h1>
+      <p className="text-base text-gray-500 mb-12">Text input component for composing messages in VCA.</p>
       
       {/* Demo Section */}
       <DemoSection
@@ -66,14 +66,14 @@ const ComposerComponentView = () => {
 
             <FormCheckbox
               id="attachment"
-              label="Show Attachment Icon"
+              label="Show attachment icon"
               checked={attachment}
               onCheckedChange={setAttachment}
             />
           </div>
         }
       >
-        <div className="w-[400px] mx-auto my-4 border border-gray-200 rounded-lg overflow-hidden">
+        <div className="w-[400px] mx-auto my-4 border-b border-x border-gray-200 rounded-lg overflow-hidden">
           <Composer
             state={activeState}
             value={value}
@@ -92,13 +92,18 @@ const ComposerComponentView = () => {
         </div>
       </DemoSection>
 
+      {/* Usage */}
+      <div className="mb-8">
+        <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Usage</h2>
+      </div>
+
       <div className="space-y-12">
         {/* Default State */}
         <div>
-          <h2 className="mb-4">Default</h2>
-          <p className="text-sm text-gray-500 mb-3">Empty input field ready for user input.</p>
+          <h3 className="text-lg font-medium mb-2">Default</h3>
+          <p className="text-md text-gray-900 mb-3">Empty input field ready for user input.</p>
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <div className="w-[400px] mx-auto my-4 border border-gray-200 rounded-lg overflow-hidden">
+            <div className="w-[400px] mx-auto my-4 border-b border-x border-gray-200 rounded-lg overflow-hidden">
               <Composer state="default" />
             </div>
           </div>
@@ -106,10 +111,10 @@ const ComposerComponentView = () => {
 
         {/* Active State */}
         <div>
-          <h2 className="mb-4">Active (Focused)</h2>
-          <p className="text-sm text-gray-500 mb-3">Input field in focused state with cursor blinker.</p>
+          <h3 className="text-lg font-medium mb-2">Active (focused)</h3>
+          <p className="text-md text-gray-900 mb-3">Input field in focused state with cursor blinker.</p>
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <div className="w-[400px] mx-auto my-4 border border-gray-200 rounded-lg overflow-hidden">
+            <div className="w-[400px] mx-auto my-4 border-b border-x border-gray-200 rounded-lg overflow-hidden">
               <Composer state="active" />
             </div>
           </div>
@@ -117,10 +122,10 @@ const ComposerComponentView = () => {
 
         {/* Typing State */}
         <div>
-          <h2 className="mb-4">Typing</h2>
-          <p className="text-sm text-gray-500 mb-3">Input field with text being entered.</p>
+          <h3 className="text-lg font-medium mb-2">Typing</h3>
+          <p className="text-md text-gray-900 mb-3">Input field with text being entered.</p>
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <div className="w-[400px] mx-auto my-4 border border-gray-200 rounded-lg overflow-hidden">
+            <div className="w-[400px] mx-auto my-4 border-b border-x border-gray-200 rounded-lg overflow-hidden">
               <Composer state="typing" value="How to" />
             </div>
           </div>
@@ -128,10 +133,10 @@ const ComposerComponentView = () => {
 
         {/* Multiline State */}
         <div>
-          <h2 className="mb-4">Multiline</h2>
-          <p className="text-sm text-gray-500 mb-3">Expanded input for longer messages (max 4 lines).</p>
+          <h3 className="text-lg font-medium mb-2">Multiline</h3>
+          <p className="text-md text-gray-900 mb-3">Expanded input for longer messages (max 4 lines).</p>
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <div className="w-[400px] mx-auto my-4 border border-gray-200 rounded-lg overflow-hidden">
+            <div className="w-[400px] mx-auto my-4 border-b border-x border-gray-200 rounded-lg overflow-hidden">
               <Composer 
                 state="multiline" 
                 value="Use this component when the content is more than two lines. The input box reaches its maximum height at 4 lines."
@@ -142,10 +147,10 @@ const ComposerComponentView = () => {
 
         {/* Disabled State */}
         <div>
-          <h2 className="mb-4">Disabled</h2>
-          <p className="text-sm text-gray-500 mb-3">Non-interactive disabled state.</p>
+          <h3 className="text-lg font-medium mb-2">Disabled</h3>
+          <p className="text-md text-gray-900 mb-3">Non-interactive disabled state.</p>
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <div className="w-[400px] mx-auto my-4 border border-gray-200 rounded-lg overflow-hidden">
+            <div className="w-[400px] mx-auto my-4 border-b border-x border-gray-200 rounded-lg overflow-hidden">
               <Composer state="disabled" />
             </div>
           </div>
@@ -153,21 +158,21 @@ const ComposerComponentView = () => {
 
         {/* Stop State */}
         <div>
-          <h2 className="mb-4">Stop Answering</h2>
-          <p className="text-sm text-gray-500 mb-3">Special state shown when AI is generating a response.</p>
+          <h3 className="text-lg font-medium mb-2">Stop answering</h3>
+          <p className="text-md text-gray-900 mb-3">Special state shown when AI is generating a response.</p>
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <div className="w-[400px] mx-auto my-4 border border-gray-200 rounded-lg overflow-hidden">
+            <div className="w-[400px] mx-auto my-4 border-b border-x border-gray-200 rounded-lg overflow-hidden">
               <Composer state="stop" />
             </div>
           </div>
         </div>
 
-        {/* Without Attachment */}
+        {/* Without attachment */}
         <div>
-          <h2 className="mb-4">Without Attachment</h2>
-          <p className="text-sm text-gray-500 mb-3">Composer without the attachment icon.</p>
+          <h3 className="text-lg font-medium mb-2">Without attachment</h3>
+          <p className="text-md text-gray-900 mb-3">Composer without the attachment icon.</p>
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <div className="w-[400px] mx-auto my-4 border border-gray-200 rounded-lg overflow-hidden">
+            <div className="w-[400px] mx-auto my-4 border-b border-x border-gray-200 rounded-lg overflow-hidden">
               <Composer state="default" attachment={false} />
             </div>
           </div>

@@ -6,27 +6,24 @@ import { Button } from '@/components/ui/button';
 import { PhoneFrame } from '@/components/component-library/PhoneFrame';
 import { Message } from '@/components/vca-components/messages';
 import { PromptGroup } from '@/components/vca-components/prompt-group';
-import { HumanAgentStatus } from '@/components/vca-components/human-agent-status';
-import { HumanAgentBanner } from '@/components/vca-components/human-agent-banner';
+import { AgentStatus } from '@/components/vca-components/agent-status';
+import { Divider } from '@/components/vca-components/divider';
 import { ThinkingIndicator } from '@/components/vca-components/thinking-indicator';
 import { cn } from '@/utils';
 import { FlowEngine, type FlowMessage } from '@/utils/flowEngine';
-import connectLiveAgentFlow from '@/data/flows/connect-live-agent.json';
 
 const FlowPreviewView = () => {
   const [viewport, setViewport] = useState<ContainerViewport>('desktop');
-  const [selectedFlow, setSelectedFlow] = useState<string>('freeform');
+  const [selectedFlow, setSelectedFlow] = useState<string>('connect-to-live-agent');
   const [flowMessages, setFlowMessages] = useState<FlowMessage[]>([]);
   const [displayedMessages, setDisplayedMessages] = useState<FlowMessage[]>([]);
   const [isThinking, setIsThinking] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [composerValue, setComposerValue] = useState('');
+  const [isFlowActive, setIsFlowActive] = useState(false);
   const flowEngineRef = useRef<FlowEngine>(new FlowEngine());
   const contentRef = useRef<HTMLDivElement>(null);
   const isRevealingRef = useRef(false);
-  
-  // Track if human agent is active and their name
-  const isHumanAgentActive = displayedMessages.some(msg => msg.type === 'human-agent-message');
-  const humanAgentName = displayedMessages.find(msg => msg.type === 'human-agent-message')?.agentName?.split(',')[0] || 'Agent';
   
   // Expandable section states
   const [adminCenterExpanded, setAdminCenterExpanded] = useState(true);
@@ -34,14 +31,6 @@ const FlowPreviewView = () => {
   const [recruiterExpanded, setRecruiterExpanded] = useState(true);
   const [salesNavigatorExpanded, setSalesNavigatorExpanded] = useState(true);
   const [generalExpanded, setGeneralExpanded] = useState(true);
-  
-  // Welcome message content
-  const welcomePrompts = [
-    { text: 'Is LinkedIn Premium right for me?', showAiIcon: false },
-    { text: 'How can LinkedIn Premium help me reach my goals?', showAiIcon: false },
-    { text: 'I need help with something on LinkedIn Premium', showAiIcon: false },
-  ];
-  
   const isActive = (flowId: string) => selectedFlow === flowId;
   
   // Progressive reveal: Show messages one at a time with delays
@@ -64,8 +53,11 @@ const FlowPreviewView = () => {
       // Add this message to displayed messages
       setDisplayedMessages(allMessages.slice(0, i + 1));
       
-      // Small pause before next message (except for last message)
-      if (i < allMessages.length - 1) {
+      // Special timing for agent-status-connecting: wait 2-3 seconds before next message
+      if (message.type === 'agent-status-connecting') {
+        await new Promise(resolve => setTimeout(resolve, 2500));
+      } else if (i < allMessages.length - 1) {
+        // Small pause before next message (except for last message)
         await new Promise(resolve => setTimeout(resolve, 300));
       }
     }
@@ -75,26 +67,34 @@ const FlowPreviewView = () => {
   
   // Load flow when selected flow changes
   useEffect(() => {
-    // Reset thinking state and interaction tracking when switching flows
+    // Reset all state when switching flows
     setIsThinking(false);
     setHasInteracted(false);
+    setComposerValue('');
+    setIsFlowActive(false);
     isRevealingRef.current = false;
     
-    if (selectedFlow === 'connect-to-live-agent') {
-      // Load the flow (cast to Flow type to ensure type safety)
-      flowEngineRef.current.loadFlow(connectLiveAgentFlow as import('@/utils/flowEngine').Flow);
-      // Get initial messages
-      const initialMessages = flowEngineRef.current.getMessages();
-      setFlowMessages(initialMessages);
-      // Reset displayed messages
-      setDisplayedMessages([]);
-      // Reveal them progressively
-      revealMessagesProgressively(initialMessages);
-    } else {
-      // Reset to empty for other flows
-      setFlowMessages([]);
-      setDisplayedMessages([]);
-    }
+    // Initialize with welcome messages
+    const initialMessages: FlowMessage[] = [
+      {
+        stepId: 'welcome-1',
+        type: 'ai-message',
+        text: 'Hi there. With the help of AI, I can answer questions about Premium products or connect you to our team.',
+      },
+      {
+        stepId: 'welcome-2',
+        type: 'ai-message',
+        text: 'Not sure where to start? You can try:',
+        buttons: [
+          { label: 'Is LinkedIn Premium right for me?', nextStep: '' },
+          { label: 'How can LinkedIn Premium help me reach my goals?', nextStep: '' },
+          { label: 'I need help with something on LinkedIn Premium', nextStep: '' },
+        ],
+      },
+    ];
+    
+    setFlowMessages([]);
+    setDisplayedMessages(initialMessages);
   }, [selectedFlow]);
   
   // Reveal new messages when flowMessages changes
@@ -126,30 +126,184 @@ const FlowPreviewView = () => {
   const handleRestart = () => {
     setHasInteracted(false);
     setIsThinking(false);
+    setComposerValue('');
+    setIsFlowActive(false);
     isRevealingRef.current = false;
-    flowEngineRef.current.restart();
-    const restartMessages = flowEngineRef.current.getMessages();
-    setFlowMessages(restartMessages);
-    setDisplayedMessages([]);
-    // Reveal from beginning
-    revealMessagesProgressively(restartMessages);
+    setFlowMessages([]);
+    
+    // Reset to welcome messages
+    const initialMessages: FlowMessage[] = [
+      {
+        stepId: 'welcome-1',
+        type: 'ai-message',
+        text: 'Hi there. With the help of AI, I can answer questions about Premium products or connect you to our team.',
+      },
+      {
+        stepId: 'welcome-2',
+        type: 'ai-message',
+        text: 'Not sure where to start? You can try:',
+        buttons: [
+          { label: 'Is LinkedIn Premium right for me?', nextStep: '' },
+          { label: 'How can LinkedIn Premium help me reach my goals?', nextStep: '' },
+          { label: 'I need help with something on LinkedIn Premium', nextStep: '' },
+        ],
+      },
+    ];
+    setDisplayedMessages(initialMessages);
   };
   
-  // Render flow messages or welcome message
+  // Detect if message is asking for human agent
+  const detectAgentIntent = (message: string): boolean => {
+    const lowerMessage = message.toLowerCase();
+    const agentKeywords = ['agent', 'human', 'person', 'someone', 'live chat', 'live agent', 'speak to', 'talk to', 'connect me', 'representative', 'support person', 'real person'];
+    return agentKeywords.some(keyword => lowerMessage.includes(keyword));
+  };
+  
+  // Handle sending a message
+  const handleSendMessage = async () => {
+    if (!composerValue.trim() || isRevealingRef.current) return;
+    
+    const userMessage = composerValue.trim();
+    setComposerValue('');
+    setHasInteracted(true);
+    
+    // Add user message to chat
+    const newUserMessage: FlowMessage = {
+      stepId: `user-${Date.now()}`,
+      type: 'user-message',
+      text: userMessage,
+    };
+    
+    setDisplayedMessages(prev => [...prev, newUserMessage]);
+    
+    // Auto-scroll after user message
+    setTimeout(() => {
+      if (contentRef.current) {
+        contentRef.current.scrollTop = contentRef.current.scrollHeight;
+      }
+    }, 100);
+    
+    // Check if asking for agent
+    if (detectAgentIntent(userMessage) && !isFlowActive) {
+      setIsFlowActive(true);
+      
+      // Wait a moment, then start showing connecting status
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Show disclaimer first
+      const disclaimerMsg: FlowMessage = {
+        stepId: 'disclaimer',
+        type: 'disclaimer',
+        text: '',
+      };
+      setDisplayedMessages(prev => [...prev, disclaimerMsg]);
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Auto-scroll
+      setTimeout(() => {
+        if (contentRef.current) {
+          contentRef.current.scrollTop = contentRef.current.scrollHeight;
+        }
+      }, 100);
+      
+      // Show connecting status
+      const connectingMsg: FlowMessage = {
+        stepId: 'connecting',
+        type: 'agent-status-connecting',
+        text: "You're next in line",
+        description: "A member of our team will join the chat soon.",
+      };
+      setDisplayedMessages(prev => [...prev, connectingMsg]);
+      
+      // Auto-scroll
+      setTimeout(() => {
+        if (contentRef.current) {
+          contentRef.current.scrollTop = contentRef.current.scrollHeight;
+        }
+      }, 100);
+      
+      // Wait for connection (2.5 seconds)
+      await new Promise(resolve => setTimeout(resolve, 2500));
+      
+      // Show connected status
+      const connectedMsg: FlowMessage = {
+        stepId: 'connected',
+        type: 'agent-status-connected',
+        text: "Sarah has joined the chat",
+        agentName: "Sarah, LinkedIn Support",
+      };
+      setDisplayedMessages(prev => [...prev, connectedMsg]);
+      
+      // Auto-scroll
+      setTimeout(() => {
+        if (contentRef.current) {
+          contentRef.current.scrollTop = contentRef.current.scrollHeight;
+        }
+      }, 100);
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Show agent's first message
+      const agentMsg: FlowMessage = {
+        stepId: 'agent-message',
+        type: 'human-agent-message',
+        text: "Hi! I'm Sarah, how can I help you today?",
+        agentName: "Sarah, LinkedIn Support",
+        timestamp: "2:34 PM",
+      };
+      setDisplayedMessages(prev => [...prev, agentMsg]);
+      
+      // Auto-scroll
+      setTimeout(() => {
+        if (contentRef.current) {
+          contentRef.current.scrollTop = contentRef.current.scrollHeight;
+        }
+      }, 100);
+    } else if (!isFlowActive) {
+      // Generic AI response for non-agent queries
+      setIsThinking(true);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setIsThinking(false);
+      
+      const aiResponse: FlowMessage = {
+        stepId: `ai-${Date.now()}`,
+        type: 'ai-message',
+        text: "I understand you have a question. I'm here to help with Premium products. If you'd like to speak with a live agent, just let me know!",
+      };
+      
+      setDisplayedMessages(prev => [...prev, aiResponse]);
+    }
+    
+    // Auto-scroll after AI response
+    setTimeout(() => {
+      if (contentRef.current) {
+        contentRef.current.scrollTop = contentRef.current.scrollHeight;
+      }
+    }, 100);
+  };
+  
+  // Render flow messages
   const renderChatContent = () => {
-    // If we have displayed messages, show them
-    if (displayedMessages.length > 0) {
-      return (
-        <>
-          {/* Show banner when human agent is active - sticky at top, flush with header */}
-          {isHumanAgentActive && (
-            <div className="sticky top-0 z-10 -mt-vca-lg">
-              <HumanAgentBanner agentName={humanAgentName} />
-            </div>
-          )}
+    // Separate disclaimers from other messages - disclaimers go first
+    const disclaimers = displayedMessages.filter(msg => msg.type === 'disclaimer');
+    let otherMessages = displayedMessages.filter(msg => msg.type !== 'disclaimer');
+    
+    // If agent is connected, hide the connecting message (only show minimal connected state)
+    const hasConnectedMessage = otherMessages.some(msg => msg.type === 'agent-status-connected');
+    if (hasConnectedMessage) {
+      otherMessages = otherMessages.filter(msg => msg.type !== 'agent-status-connecting');
+    }
+    
+    return (
+      <>
+        <div className="flex flex-col gap-vca-lg px-vca-lg">
+          {/* Render disclaimers first (above all other messages) */}
+          {disclaimers.map((_msg, index) => (
+            <Message key={`disclaimer-${index}`} type="disclaimer" />
+          ))}
           
-          <div className={cn("flex flex-col gap-vca-lg px-vca-lg", isHumanAgentActive ? "pt-vca-lg" : "")}>
-            {displayedMessages.map((msg, index) => {
+          {/* Then render all other messages */}
+          {otherMessages.map((msg, index) => {
             // Render different message types
             if (msg.type === 'ai-message') {
               return (
@@ -184,12 +338,37 @@ const FlowPreviewView = () => {
               );
             }
             
-            if (msg.type === 'agent-status') {
-              return <HumanAgentStatus key={index} statusLabel={msg.text} />;
+            if (msg.type === 'agent-status-connecting') {
+              return (
+                <AgentStatus 
+                  key={index} 
+                  state="connecting"
+                  statusLabel={msg.text}
+                  description={msg.description}
+                  showDescription={true}
+                  showAction={true}
+                  actionLabel="Cancel"
+                />
+              );
             }
             
-            if (msg.type === 'disclaimer') {
-              return <Message key={index} type="disclaimer" />;
+            if (msg.type === 'agent-status-connected') {
+              // Extract first name from agentName (e.g., "Sarah, LinkedIn Support" -> "Sarah")
+              const firstName = msg.agentName?.split(',')[0] || 'Agent';
+              return (
+                <div key={index} className="flex flex-col gap-vca-lg">
+                  {/* Divider appears just above connected status */}
+                  <Divider text="LIVE CHAT" />
+                  <AgentStatus 
+                    state="success"
+                    agentName={firstName}
+                  />
+                </div>
+              );
+            }
+            
+            if (msg.type === 'agent-status') {
+              return <AgentStatus key={index} statusLabel={msg.text} />;
             }
             
             return null;
@@ -201,45 +380,44 @@ const FlowPreviewView = () => {
               <ThinkingIndicator />
             </div>
           )}
-          </div>
-        </>
-      );
-    }
-    
-    // Default: Show welcome message
-    return (
-      <div className="flex flex-col gap-vca-lg px-vca-lg">
-        <Message 
-          type="ai"
-          defaultText="Hi there. With the help of AI, I can answer questions about Premium products or connect you to our team."
-        />
-        <Message type="disclaimer" />
-        <Message 
-          type="ai"
-          defaultText="Not sure where to start? You can try:"
-        />
-        <PromptGroup prompts={welcomePrompts} />
-      </div>
+        </div>
+      </>
     );
   };
   
   return (
     <div className="flex h-full">
       <Sidebar>
-        {/* Freeform - Always at top */}
-        <div className="space-y-0.5 mb-6">
-          <button
-            onClick={() => setSelectedFlow('freeform')}
-            className={cn(
-              "block text-left px-3 py-2 text-2xs rounded transition-colors w-full",
-              isActive('freeform')
-                ? "bg-gray-100 text-gray-900"
-                : "text-gray-700 hover:bg-gray-50"
-            )}
+        {/* General - First section */}
+        <button
+          onClick={() => setGeneralExpanded(!generalExpanded)}
+          className="flex items-center gap-2 text-sm font-medium text-gray-900 mb-4 cursor-pointer hover:text-gray-700 transition-colors w-full"
+        >
+          <span>General</span>
+          <svg
+            className={cn("w-3 h-3 transition-transform", generalExpanded ? "rotate-0" : "-rotate-90")}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
           >
-            Freeform
-          </button>
-        </div>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        {generalExpanded && (
+          <div className="space-y-0.5 mb-6">
+            <button
+              onClick={() => setSelectedFlow('connect-to-live-agent')}
+              className={cn(
+                "block text-left px-3 py-2 text-2xs rounded transition-colors w-full",
+                isActive('connect-to-live-agent')
+                  ? "bg-gray-100 text-gray-900"
+                  : "text-gray-700 hover:bg-gray-50"
+              )}
+            >
+              Connect to live agent
+            </button>
+          </div>
+        )}
 
         {/* Admin Center */}
         <button
@@ -398,41 +576,16 @@ const FlowPreviewView = () => {
             <div className="text-xs font-normal text-gray-500 italic">No flows yet</div>
           </div>
         )}
-
-        {/* General - Last section */}
-        <button
-          onClick={() => setGeneralExpanded(!generalExpanded)}
-          className="flex items-center gap-2 text-sm font-medium text-gray-900 mb-4 cursor-pointer hover:text-gray-700 transition-colors w-full"
-        >
-          <span>General</span>
-          <svg
-            className={cn("w-3 h-3 transition-transform", generalExpanded ? "rotate-0" : "-rotate-90")}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-        {generalExpanded && (
-          <div className="space-y-0.5 mb-6">
-            <button
-              onClick={() => setSelectedFlow('connect-to-live-agent')}
-              className={cn(
-                "block text-left px-3 py-2 text-2xs rounded transition-colors w-full",
-                isActive('connect-to-live-agent')
-                  ? "bg-gray-100 text-gray-900"
-                  : "text-gray-700 hover:bg-gray-50"
-              )}
-            >
-              Connect to live agent
-            </button>
-          </div>
-        )}
       </Sidebar>
 
-      <div className="flex-1 h-full relative bg-gray-50">
-        {/* Desktop/Mobile Toggle */}
+      <div 
+        className="flex-1 h-full relative bg-stone-50"
+        style={{
+          backgroundImage: 'radial-gradient(circle, rgba(0, 0, 0, 0.08) 1px, transparent 1px)',
+          backgroundSize: '20px 20px',
+        }}
+      >
+        {/* Viewport Toggle */}
         <div className="absolute top-4 left-4 z-10">
           <Tabs value={viewport} onValueChange={(value) => setViewport(value as ContainerViewport)}>
             <TabsList>
@@ -457,9 +610,9 @@ const FlowPreviewView = () => {
 
         {/* Chat panel - centered for mobile, bottom-right for desktop */}
         {viewport === 'mobile' ? (
-          // Mobile: Centered in main content area with 75% scale (phone only)
+          // Mobile: Centered in main content area with 85% scale (phone only)
           <div className="w-full h-full flex items-center justify-center">
-            <div className="flex flex-col items-center gap-3">
+            <div className="flex flex-col items-center gap-2">
               {/* Restart button - only show after first interaction (full size) */}
               {hasInteracted && selectedFlow === 'connect-to-live-agent' && (
                 <Button onClick={handleRestart} variant="outline" size="sm">
@@ -470,13 +623,16 @@ const FlowPreviewView = () => {
                 </Button>
               )}
               
-              {/* Phone frame scaled to 75% */}
-              <div className="scale-75">
+              {/* Phone frame scaled to 85% */}
+              <div className="scale-[0.85] origin-top">
                 <PhoneFrame showStatusBar={true} dimBackground={true}>
                   <Container 
                     headerTitle="Help"
                     viewport={viewport}
                     contentRef={contentRef}
+                    composerValue={composerValue}
+                    onComposerChange={setComposerValue}
+                    onComposerSend={handleSendMessage}
                   >
                     {renderChatContent()}
                   </Container>
@@ -501,6 +657,9 @@ const FlowPreviewView = () => {
               headerTitle="Help"
               viewport={viewport}
               contentRef={contentRef}
+              composerValue={composerValue}
+              onComposerChange={setComposerValue}
+              onComposerSend={handleSendMessage}
             >
               {renderChatContent()}
             </Container>

@@ -13,9 +13,10 @@ const TopNavigation = () => {
   // Determine active tab based on current path
   const getActiveTab = () => {
     if (currentPath.startsWith('/components')) return 'components';
+    if (currentPath.startsWith('/foundations')) return 'components';
     if (currentPath.startsWith('/flows')) return 'flows';
     if (currentPath.startsWith('/builder')) return 'builder';
-    return 'components';
+    return 'flows';
   };
 
   const handleTabChange = (value: string) => {
@@ -42,16 +43,16 @@ const TopNavigation = () => {
         <Tabs value={getActiveTab()} onValueChange={handleTabChange}>
           <TabsList className="gap-2">
             <TabsTrigger 
-              value="components" 
-              className="shadow-none data-[state=active]:shadow-none data-[state=active]:bg-gray-100 text-sm"
-            >
-              Components
-            </TabsTrigger>
-            <TabsTrigger 
               value="flows" 
               className="shadow-none data-[state=active]:shadow-none data-[state=active]:bg-gray-100 text-sm"
             >
               Playground
+            </TabsTrigger>
+            <TabsTrigger 
+              value="components" 
+              className="shadow-none data-[state=active]:shadow-none data-[state=active]:bg-gray-100 text-sm"
+            >
+              Components
             </TabsTrigger>
             <TabsTrigger 
               value="builder"

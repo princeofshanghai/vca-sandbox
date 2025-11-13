@@ -18,7 +18,7 @@ const TypographyView = () => {
     <div className="border-b border-gray-100 last:border-0 pb-6 last:pb-0">
       <div className="flex items-baseline justify-between mb-3">
         <div>
-          <h3 className="text-base font-medium text-gray-900">{label}</h3>
+          <h3 className="text-lg font-medium text-gray-900">{label}</h3>
           <code className="text-xs text-gray-500 font-mono">{token}</code>
         </div>
         <div className="text-right">
@@ -34,13 +34,13 @@ const TypographyView = () => {
 
   return (
     <div className="pt-16">
-      <h1 className="mb-2">Typography</h1>
-      <p className="text-md text-gray-500 mb-12">VCA design system typography styles matching Figma tokens. Each style includes font-size, line-height, and font-weight.</p>
+      <h1 className="mb-4">Typography</h1>
+      <p className="text-base text-gray-500 mb-12">VCA design system typography styles matching Figma tokens. Each style includes font-size, line-height, and font-weight.</p>
       
       <div className="space-y-12">
         {/* Font Families */}
         <div>
-          <h2 className="mb-4">Font Families</h2>
+          <h2 className="mb-4">Font families</h2>
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <div className="space-y-4">
               <div>
@@ -61,7 +61,7 @@ const TypographyView = () => {
 
         {/* Body XSmall */}
         <div>
-          <h2 className="mb-4">Body XSmall (12px)</h2>
+          <h2 className="mb-4">Body xsmall (12px)</h2>
           <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-6">
             <TypeStyle
               label="Body XSmall"
@@ -100,7 +100,7 @@ const TypographyView = () => {
 
         {/* Body Small */}
         <div>
-          <h2 className="mb-4">Body Small (14px)</h2>
+          <h2 className="mb-4">Body small (14px)</h2>
           <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-6">
             <TypeStyle
               label="Body Small"
@@ -139,7 +139,7 @@ const TypographyView = () => {
 
         {/* Body Medium */}
         <div>
-          <h2 className="mb-4">Body Medium (16px)</h2>
+          <h2 className="mb-4">Body medium (16px)</h2>
           <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-6">
             <TypeStyle
               label="Body Medium"
@@ -178,7 +178,7 @@ const TypographyView = () => {
 
         {/* Body Large */}
         <div>
-          <h2 className="mb-4">Body Large (20px)</h2>
+          <h2 className="mb-4">Body large (20px)</h2>
           <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-6">
             <TypeStyle
               label="Body Large"
@@ -217,8 +217,8 @@ const TypographyView = () => {
 
         {/* Heading Styles */}
         <div>
-          <h2 className="mb-4">Heading Styles</h2>
-          <p className="text-sm text-gray-500 mb-4">All heading styles are semibold (600 weight) by default.</p>
+          <h2 className="mb-4">Heading styles</h2>
+          <p className="text-md text-gray-900 mb-4">All heading styles are semibold (600 weight) by default.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-6">
             <TypeStyle
               label="Heading Small"
@@ -257,8 +257,8 @@ const TypographyView = () => {
 
         {/* Display Styles */}
         <div>
-          <h2 className="mb-4">Display Styles</h2>
-          <p className="text-sm text-gray-500 mb-4">Large display text for prominent UI elements and hero sections.</p>
+          <h2 className="mb-4">Display styles</h2>
+          <p className="text-md text-gray-900 mb-4">Large display text for prominent UI elements and hero sections.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-6">
             <TypeStyle
               label="Display Large"
@@ -297,7 +297,7 @@ const TypographyView = () => {
 
         {/* Usage Guidelines */}
         <div>
-          <h2 className="mb-4">Usage Guidelines</h2>
+          <h2 className="mb-4">Usage guidelines</h2>
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <div className="space-y-4 text-sm text-gray-700">
               <div>
