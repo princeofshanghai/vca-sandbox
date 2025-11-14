@@ -8,6 +8,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     currentView: 'components',
     selectedComponentId: null,
     selectedFlowId: null,
+    mobileMenuOpen: false,
   });
 
   const setCurrentView = (view: ViewType) => {
@@ -22,8 +23,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setState(prev => ({ ...prev, selectedFlowId: flowId }));
   };
 
+  const setMobileMenuOpen = (open: boolean) => {
+    setState(prev => ({ ...prev, mobileMenuOpen: open }));
+  };
+
   return (
-    <AppContext.Provider value={{ state, setCurrentView, selectComponent, selectFlow }}>
+    <AppContext.Provider value={{ state, setCurrentView, selectComponent, selectFlow, setMobileMenuOpen }}>
       {children}
     </AppContext.Provider>
   );

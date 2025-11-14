@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import Sidebar from '@/components/layout/Sidebar';
 import MainContent from '@/components/layout/MainContent';
@@ -6,6 +6,7 @@ import CollapsibleSection from '@/components/layout/CollapsibleSection';
 import NavLink from '@/components/layout/NavLink';
 import NavigationGroup from '@/components/layout/NavigationGroup';
 import { componentNavigation } from '@/config/componentNavigation';
+import { useApp } from '@/contexts/AppContext';
 import TypographyView from './TypographyView';
 import ColorsView from './ColorsView';
 import SpacingView from './SpacingView';
@@ -36,14 +37,28 @@ import FeedbackComponentView from './components/FeedbackComponentView';
 
 const ComponentLibraryView = () => {
   const location = useLocation();
+  const { state, setMobileMenuOpen } = useApp();
   const [foundationsExpanded, setFoundationsExpanded] = useState(true);
   const [componentsExpanded, setComponentsExpanded] = useState(true);
+  const prevPathnameRef = useRef(location.pathname);
   
   const isActive = (path: string) => location.pathname === path;
+
+  // Close mobile menu when navigating to a new page (but not on initial mount)
+  useEffect(() => {
+    // Only close if pathname actually changed (not on initial mount)
+    if (prevPathnameRef.current !== location.pathname) {
+      setMobileMenuOpen(false);
+      prevPathnameRef.current = location.pathname;
+    }
+  }, [location.pathname, setMobileMenuOpen]);
   
   return (
     <div className="flex h-full">
-      <Sidebar>
+      <Sidebar 
+        isMobileOpen={state.mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+      >
         {/* Foundations */}
         <CollapsibleSection
           title="Foundations"

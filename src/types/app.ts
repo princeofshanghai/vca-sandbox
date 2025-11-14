@@ -4,6 +4,7 @@ export interface AppState {
   currentView: ViewType;
   selectedComponentId: string | null;
   selectedFlowId: string | null;
+  mobileMenuOpen: boolean;
 }
 
 export interface AppContextType {
@@ -11,5 +12,6 @@ export interface AppContextType {
   setCurrentView: (view: ViewType) => void;
   selectComponent: (componentId: string) => void;
   selectFlow: (flowId: string) => void;
+  setMobileMenuOpen: (open: boolean) => void;
 }
 

@@ -3,6 +3,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import CollapsibleSection from '@/components/layout/CollapsibleSection';
 import NavLink from '@/components/layout/NavLink';
 import NavigationGroup from '@/components/layout/NavigationGroup';
+import { useApp } from '@/contexts/AppContext';
 import { AppIcon } from '@/components/app-shell/AppIcon';
 import { Container, ContainerViewport } from '@/components/vca-components/container';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -16,6 +17,7 @@ import { ThinkingIndicator } from '@/components/vca-components/thinking-indicato
 import { FlowEngine, type FlowMessage } from '@/utils/flowEngine';
 
 const FlowPreviewView = () => {
+  const { state, setMobileMenuOpen } = useApp();
   const [viewport, setViewport] = useState<ContainerViewport>('desktop');
   const [selectedFlow, setSelectedFlow] = useState<string>('connect-to-live-agent');
   const [flowMessages, setFlowMessages] = useState<FlowMessage[]>([]);
@@ -390,7 +392,10 @@ const FlowPreviewView = () => {
   
   return (
     <div className="flex h-full">
-      <Sidebar>
+      <Sidebar 
+        isMobileOpen={state.mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+      >
         {/* General - First section */}
         <CollapsibleSection
           title="General"
