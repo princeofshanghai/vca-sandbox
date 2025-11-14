@@ -14,7 +14,7 @@ const SourceLinkComponentView = () => {
   return (
     <ComponentViewLayout
       title="Source Link"
-      description="Clickable source citation link."
+      description="Source citation link."
     >
       
       {/* Demo Section */}

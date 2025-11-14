@@ -11,7 +11,7 @@ const DividerComponentView = () => {
   return (
     <ComponentViewLayout
       title="Divider"
-      description="Horizontal divider with optional label text."
+      description="Used to indicate transition to live chat and status."
     >
       
       {/* Demo Section */}

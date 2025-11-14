@@ -19,7 +19,7 @@ const InfoMessageComponentView = () => {
   return (
     <ComponentViewLayout
       title="Info Message"
-      description="Display rich message with context and link to sources."
+      description="Displays rich AI message with context with link to sources and option to give feedback."
     >
       
       {/* Demo Section */}

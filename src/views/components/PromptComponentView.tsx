@@ -44,7 +44,7 @@ const PromptComponentView = () => {
   return (
     <ComponentViewLayout
       title="Prompt"
-      description="Suggested prompt button for quick actions."
+      description="Shows suggested questions for user to ask."
     >
       
       {/* Demo Section */}

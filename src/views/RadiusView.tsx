@@ -40,7 +40,7 @@ const RadiusView = () => {
   return (
     <div className="pt-16">
       <h1 className="mb-4">Border Radius</h1>
-      <p className="text-base text-gray-500 mb-12">VCA design system border radius tokens and specifications.</p>
+      <p className="text-base text-gray-500 mb-12">Radius in VCA is based on the Mercado radius scale.</p>
       
       <div className="space-y-12">
         {/* Radius Scale */}

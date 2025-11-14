@@ -75,7 +75,7 @@ const SpacingView = () => {
     <div className="pt-16">
       <h1 className="mb-4">Spacing</h1>
       <p className="text-base text-gray-500 mb-12">
-        VCA design system spacing scale. Each token shows its visual size, Tailwind class, pixel value, and the primitive it references from Figma.
+        Spacing in VCA is based on the Mercado spacing scale.
       </p>
       
       <div className="space-y-12">

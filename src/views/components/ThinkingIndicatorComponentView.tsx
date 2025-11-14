@@ -6,7 +6,7 @@ const ThinkingIndicatorComponentView = () => {
   return (
     <ComponentViewLayout
       title="Thinking Indicator"
-      description="Animated indicator showing AI is processing. Displays 3 dots that pulse in sequence."
+      description="Animated indicator used to show that AI is processing."
     >
       {/* Demo Section */}
       <DemoSection controls={null}>

@@ -15,7 +15,7 @@ const InlineFeedbackComponentView = () => {
   return (
     <ComponentViewLayout
       title="Inline Feedback"
-      description="Inline success/error feedback messages with optional action button."
+      description="Used to show message delivery status."
     >
       {/* Demo Section */}
       <DemoSection

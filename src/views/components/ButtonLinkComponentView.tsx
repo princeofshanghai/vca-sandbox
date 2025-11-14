@@ -14,7 +14,7 @@ const ButtonLinkComponentView = () => {
   return (
     <ComponentViewLayout
       title="Button Link"
-      description="Text link styled as button for inline actions."
+      description="Used for inline actions that need to be aligned with text."
     >
       
       {/* Demo Section */}

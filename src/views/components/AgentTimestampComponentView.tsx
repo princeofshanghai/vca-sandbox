@@ -13,7 +13,7 @@ const AgentTimestampComponentView = () => {
   return (
     <ComponentViewLayout
       title="Agent Timestamp"
-      description="Displays agent avatar, name, and timestamp for human agent messages."
+      description="Displays avatar, name, and timestamp for human agent messages."
     >
       {/* Demo Section */}
       <DemoSection

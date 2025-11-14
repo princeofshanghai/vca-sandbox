@@ -15,7 +15,7 @@ const ButtonIconComponentView = () => {
   return (
     <ComponentViewLayout
       title="Button Icon"
-      description="Icon-only button for secondary actions."
+      description="Button Icons are used primarily for actions in the VCA container."
     >
       
       {/* Demo Section */}

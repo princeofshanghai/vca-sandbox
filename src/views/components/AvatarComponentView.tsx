@@ -16,7 +16,7 @@ const AvatarComponentView = () => {
   return (
     <ComponentViewLayout
       title="Avatar"
-      description="Circular profile image with optional status badge."
+      description="Used to display picture of live agent with optional status badge."
     >
       
       {/* Demo Section */}

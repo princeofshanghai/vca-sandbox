@@ -20,7 +20,7 @@ const SourcesComponentView = () => {
   return (
     <ComponentViewLayout
       title="Sources"
-      description="List of source citations and references."
+      description="Grouping of source citation links."
     >
       
       {/* Demo Section */}

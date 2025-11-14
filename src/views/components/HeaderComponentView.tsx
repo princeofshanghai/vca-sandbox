@@ -17,7 +17,7 @@ const HeaderComponentView = () => {
   return (
     <ComponentViewLayout
       title="Header"
-      description="Chat header with title and optional close button."
+      description="Chat container header that varies across desktop and mobile."
     >
       
       {/* Demo Section */}

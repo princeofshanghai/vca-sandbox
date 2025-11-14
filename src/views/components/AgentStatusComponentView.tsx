@@ -54,7 +54,7 @@ const AgentStatusComponentView = () => {
   return (
     <ComponentViewLayout
       title="Agent Status"
-      description="Display agent connection status (connecting, connected, disconnected)."
+      description="Displays connection status when transferring to live agent."
     >
       
       {/* Demo Section */}

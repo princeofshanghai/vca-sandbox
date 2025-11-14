@@ -47,7 +47,7 @@ const IconsComponentView = () => {
   return (
     <ComponentViewLayout
       title="Icons"
-      description="VCA icon system with LinkedIn design language."
+      description="Icons in VCA are a subset from the Mercado design system."
     >
       
       {/* Demo Section */}

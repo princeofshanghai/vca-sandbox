@@ -12,7 +12,7 @@ const BadgeComponentView = () => {
   return (
     <ComponentViewLayout
       title="Badge"
-      description="Small status indicator badge."
+      description="Shows status availability of live agent. Used with Avatar."
     >
       
       {/* Demo Section */}

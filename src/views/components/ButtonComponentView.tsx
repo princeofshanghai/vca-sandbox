@@ -16,7 +16,7 @@ const ButtonComponentView = () => {
   return (
     <ComponentViewLayout
       title="Button"
-      description="Buttons are used for primary, secondary, and tertiary actions throughout VCA."
+      description="Buttons are used sparingly for key message related actions in VCA."
     >
       {/* Demo Section */}
       <DemoSection

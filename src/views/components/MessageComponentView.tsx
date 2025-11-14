@@ -29,7 +29,7 @@ const MessageComponentView = () => {
   return (
     <ComponentViewLayout
       title="Message"
-      description="Used to display messages with distinct styling across AI, human agent, and user messages."
+      description="Used to display messages with distinct styling across AI, live agent, and user messages."
     >
       
       {/* Demo Section */}

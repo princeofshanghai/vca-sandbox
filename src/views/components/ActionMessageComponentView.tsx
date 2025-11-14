@@ -16,7 +16,7 @@ const ActionMessageComponentView = () => {
   return (
     <ComponentViewLayout
       title="Action Message"
-      description="Suggest recommended actions for the user to take."
+      description="Provides recommended actions for the user to take."
     >
       {/* Demo Section */}
       <DemoSection

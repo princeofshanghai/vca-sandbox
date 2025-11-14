@@ -54,7 +54,7 @@ const PromptGroupComponentView = () => {
   return (
     <ComponentViewLayout
       title="Prompt Group"
-      description="Collection of related prompt suggestions."
+      description="Grouping of multiple prompts."
     >
       
       {/* Demo Section */}

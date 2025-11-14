@@ -13,7 +13,7 @@ const AgentBannerComponentView = () => {
   return (
     <ComponentViewLayout
       title="Agent Banner"
-      description="Banner displayed when user is in an active live chat session with a human agent."
+      description="Shows that user is in an active chat session with a live human agent."
     >
       
       {/* Demo Section */}
