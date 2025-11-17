@@ -43,7 +43,7 @@ export const Avatar = ({
     <div className={cn('relative inline-block', sizeClasses[size], className)}>
       {/* Avatar Image */}
       <img
-        src={src || `https://i.pravatar.cc/${size}`}
+        src={src || '/avatar.jpg'}
         alt={alt}
         className="w-full h-full rounded-full object-cover"
       />

@@ -40,14 +40,14 @@ const AgentBannerComponentView = () => {
 
       {/* Usage */}
       <div className="mb-8">
-        <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Usage</h2>
+        <h2>Usage</h2>
       </div>
 
       <div className="space-y-12">
         {/* Active Live Chat */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Active live chat</h3>
-          <p className="text-md text-gray-900 mb-3">Appears at the top of chat when user is connected to a human agent. Shows agent's online status and provides option to end the session.</p>
+          <h3 className="mb-2">Active live chat</h3>
+          <p className="mb-3">Appears at the top of chat when user is connected to a human agent. Shows agent's online status and provides option to end the session.</p>
           <div className="bg-gray-50 border border-gray-200 rounded-lg pt-6 pb-0 px-4 overflow-hidden">
             <div className="w-[400px] mx-auto">
               {/* Mini conversation view - zoomed to top */}
@@ -63,7 +63,7 @@ const AgentBannerComponentView = () => {
                 
                 {/* Banner below header */}
                 <AgentBanner
-                  agentName="Sarah Chen"
+                  agentName="John"
                   onEndChat={() => alert('End chat clicked!')}
                 />
                 

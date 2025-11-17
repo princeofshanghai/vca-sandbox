@@ -88,7 +88,7 @@ const IconsComponentView = () => {
 
       {/* Usage */}
       <div className="mb-8">
-        <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">All icons</h2>
+        <h2>All icons</h2>
       </div>
 
       <div className="space-y-12">
@@ -108,8 +108,8 @@ const IconsComponentView = () => {
 
         {/* Sizes */}
         <div>
-        <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Sizes</h2>
-          <p className="text-md text-gray-900 mb-3">Icons in VCA are used in three sizes.</p>
+        <h2>Sizes</h2>
+          <p className="mb-3">Icons in VCA are used in three sizes.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <div className="flex items-end gap-8">
               <div className="flex flex-col items-center gap-2">

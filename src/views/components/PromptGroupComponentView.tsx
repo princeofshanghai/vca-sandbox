@@ -84,14 +84,14 @@ const PromptGroupComponentView = () => {
 
       {/* Usage */}
       <div className="mb-8">
-        <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Usage</h2>
+        <h2>Usage</h2>
       </div>
 
       <div className="space-y-12">
         {/* Three Prompts */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Group prompts</h3>
-          <p className="text-md text-gray-900 mb-3">Show multiple prompts at once.</p>
+          <h3 className="mb-2">Group prompts</h3>
+          <p className="mb-3">Show multiple prompts at once.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
               <PromptGroup 
@@ -107,8 +107,8 @@ const PromptGroupComponentView = () => {
 
         {/* In context - After AI Message */}
         <div>
-          <h3 className="text-lg font-medium mb-2">In context</h3>
-          <p className="text-md text-gray-900 mb-3">Example showing prompt group after an AI message.</p>
+          <h3 className="mb-2">In context</h3>
+          <p className="mb-3">Example showing prompt group after an AI message.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl space-y-4">
               <p className="font-vca-text text-[14px] leading-[21px] text-vca-text">
@@ -130,8 +130,8 @@ const PromptGroupComponentView = () => {
 
         {/* Interaction Behavior */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Behavior</h3>
-          <p className="text-md text-gray-900 mb-3">Clicking any prompt in the group instantly sends that text as a user message to the AI. Try clicking a prompt below.</p>
+          <h3 className="mb-2">Behavior</h3>
+          <p className="mb-3">Clicking any prompt in the group instantly sends that text as a user message to the AI. Try clicking a prompt below.</p>
           <div className="bg-gray-50 border border-gray-200 rounded-lg pt-0 pb-6 px-4 overflow-hidden">
             <div className="w-[400px] mx-auto">
               {/* Mini conversation view - focused and compact */}

@@ -1,0 +1,136 @@
+import { useEffect, useState } from 'react';
+import { cn } from '@/utils';
+
+type HeadingItem = {
+  id: string;
+  text: string;
+  level: 2 | 3;
+};
+
+/**
+ * OnThisPage - Sticky sidebar navigation for component view pages
+ * Automatically detects h2 and h3 headings and creates anchor links
+ */
+export const OnThisPage = () => {
+  const [headings, setHeadings] = useState<HeadingItem[]>([]);
+  const [activeId, setActiveId] = useState<string>('');
+
+  useEffect(() => {
+    // Find all h2 and h3 elements in the page
+    const headingElements = document.querySelectorAll('h2, h3');
+    const headingItems: HeadingItem[] = [];
+
+    headingElements.forEach((heading) => {
+      const text = heading.textContent || '';
+      const level = heading.tagName === 'H2' ? 2 : 3;
+      
+      // Generate ID from text (convert to lowercase, replace spaces with hyphens)
+      const id = text
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+
+      // Set the ID on the heading element if it doesn't have one
+      if (!heading.id) {
+        heading.id = id;
+      }
+
+      headingItems.push({
+        id: heading.id || id,
+        text: text.trim(),
+        level,
+      });
+    });
+
+    setHeadings(headingItems);
+
+    // Set up intersection observer to highlight active heading
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveId(entry.target.id);
+          }
+        });
+      },
+      {
+        rootMargin: '-20% 0% -70% 0%',
+        threshold: 0,
+      }
+    );
+
+    headingElements.forEach((heading) => {
+      observer.observe(heading);
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  if (headings.length === 0) {
+    return null;
+  }
+
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
+    e.preventDefault();
+    const element = document.getElementById(id);
+    if (element) {
+      // Find the scroll container (main element with overflow-y-auto)
+      const scrollContainer = document.querySelector('main');
+      
+      if (scrollContainer) {
+        // Get the element's position relative to the scroll container
+        const containerRect = scrollContainer.getBoundingClientRect();
+        const elementRect = element.getBoundingClientRect();
+        
+        // Calculate the scroll position needed
+        const offset = 20; // Small offset from top
+        const scrollTop = scrollContainer.scrollTop;
+        const elementTop = elementRect.top - containerRect.top + scrollTop;
+        
+        scrollContainer.scrollTo({
+          top: elementTop - offset,
+          behavior: 'smooth',
+        });
+      } else {
+        // Fallback to window scroll if main container not found
+        const offset = 80; // Account for TopNavigation + padding
+        const elementPosition = element.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - offset;
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth',
+        });
+      }
+    }
+  };
+
+  return (
+    <div>
+      <div className="mb-4">
+        <h4 className="text-xs font-medium text-gray-500">On this page</h4>
+      </div>
+      <nav className="space-y-1">
+        {headings.map((heading) => (
+          <a
+            key={heading.id}
+            href={`#${heading.id}`}
+            onClick={(e) => handleClick(e, heading.id)}
+            className={cn(
+              'block text-[13px] transition-colors',
+              heading.level === 2
+                ? 'text-gray-500 hover:text-gray-900 font-medium'
+                : 'text-gray-500 hover:text-gray-700 pl-4',
+              activeId === heading.id && 'text-gray-900 font-medium'
+            )}
+          >
+            {heading.text}
+          </a>
+        ))}
+      </nav>
+    </div>
+  );
+};
+

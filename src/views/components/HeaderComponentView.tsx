@@ -4,6 +4,7 @@ import { DemoSection } from '@/components/component-library/DemoSection';
 import { ComponentViewLayout } from '@/components/component-library/ComponentViewLayout';
 import type { HeaderPosition } from '@/components/vca-components/header/Header';
 import { ToggleButtons, FormInput, FormCheckbox } from '@/components/component-library/DemoControls';
+import { Badge } from '@/components/ui/badge';
 
 const HeaderComponentView = () => {
   // Interactive demo state
@@ -96,14 +97,14 @@ const HeaderComponentView = () => {
 
       {/* Usage */}
       <div className="mb-8">
-        <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Usage</h2>
+        <h2>Usage</h2>
       </div>
 
       <div className="space-y-12">
         {/* Desktop */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Desktop</h3>
-          <p className="text-md text-gray-900 mb-3">Desktop shows Help title and close button.</p>
+          <h3 className="mb-2">Desktop</h3>
+          <p className="mb-3">Desktop shows Help title and close button.</p>
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
             <div className="w-[400px] mx-auto my-4 border-t border-x border-gray-200 rounded-lg overflow-hidden">
               <Header 
@@ -120,8 +121,8 @@ const HeaderComponentView = () => {
 
         {/* Mobile */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Mobile</h3>
-          <p className="text-md text-gray-900 mb-3">Mobile includes a centered handle bar and close button.</p>
+          <h3 className="mb-2">Mobile</h3>
+          <p className="mb-3">Mobile includes a centered handle bar and close button.</p>
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
             <div className="w-[393px] mx-auto my-4 border-t border-x border-gray-200 rounded-lg overflow-hidden">
               <Header 
@@ -134,8 +135,11 @@ const HeaderComponentView = () => {
 
         {/* Premium */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Premium (WIP)</h3>
-          <p className="text-md text-gray-900 mb-3">Premium users have unique Premium styling.</p>
+          <h3 className="mb-2 flex items-center gap-2">
+            Premium
+            <Badge variant="wip">WIP</Badge>
+          </h3>
+          <p className="mb-3">Premium users have unique Premium styling.</p>
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden p-4">
             <div className="space-y-4">
               {/* Desktop Premium */}

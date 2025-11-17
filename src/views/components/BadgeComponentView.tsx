@@ -33,14 +33,14 @@ const BadgeComponentView = () => {
 
       {/* Usage */}
       <div className="mb-8">
-        <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Usage</h2>
+        <h2>Usage</h2>
       </div>
 
       <div className="space-y-12">
         {/* States */}
         <div>
-          <h3 className="text-lg font-medium mb-2">States</h3>
-          <p className="text-md text-gray-900 mb-3">Two status states for user availability.</p>
+          <h3 className="mb-2">States</h3>
+          <p className="mb-3">Two status states for user availability.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <div className="flex items-center gap-8">
               <div className="flex items-center gap-2">
@@ -57,8 +57,8 @@ const BadgeComponentView = () => {
 
         {/* Sizes Reference */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Size reference</h3>
-          <p className="text-md text-gray-900 mb-3">Badge is 8px × 8px (fixed size).</p>
+          <h3 className="mb-2">Size reference</h3>
+          <p className="mb-3">Badge is 8px × 8px (fixed size).</p>
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <div className="flex items-center gap-4">
               <Badge state="online" />
@@ -69,8 +69,8 @@ const BadgeComponentView = () => {
 
         {/* Usage with Avatar */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Usage example</h3>
-          <p className="text-md text-gray-900 mb-3">Badge is typically used with the Avatar component to show status.</p>
+          <h3 className="mb-2">Usage example</h3>
+          <p className="mb-3">Badge is typically used with the Avatar component to show status.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <div className="space-y-2">
               <p>The Badge component is automatically integrated into the Avatar component.</p>

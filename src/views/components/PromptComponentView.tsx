@@ -80,7 +80,7 @@ const PromptComponentView = () => {
 
       {/* Usage */}
       <div className="mb-8">
-        <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Usage</h2>
+        <h2>Usage</h2>
       </div>
 
       <div className="space-y-12">
@@ -91,8 +91,8 @@ const PromptComponentView = () => {
 
         {/* In context Example */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Intro message</h3>
-          <p className="text-md text-gray-900 mb-3">Use prompts in intro message to the user to help them get started quickly.</p>
+          <h3 className="mb-2">Intro message</h3>
+          <p className="mb-3">Use prompts in intro message to the user to help them get started quickly.</p>
           <div className="bg-gray-50 border border-gray-200 rounded-lg pt-0 pb-6 px-4 overflow-hidden">
             <div className="w-[400px] mx-auto">
               {/* Mini conversation view - focused and compact */}
@@ -142,8 +142,8 @@ const PromptComponentView = () => {
 
         {/* Interaction Behavior */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Behavior</h3>
-          <p className="text-md text-gray-900 mb-3">Clicking a prompt instantly sends that text as a user message to the AI. Try clicking a prompt below.</p>
+          <h3 className="mb-2">Behavior</h3>
+          <p className="mb-3">Clicking a prompt instantly sends that text as a user message to the AI. Try clicking a prompt below.</p>
           <div className="bg-gray-50 border border-gray-200 rounded-lg pt-0 pb-6 px-4 overflow-hidden">
             <div className="w-[400px] mx-auto">
               {/* Mini conversation view - focused and compact */}

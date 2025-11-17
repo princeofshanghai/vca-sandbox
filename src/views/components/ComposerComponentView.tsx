@@ -96,14 +96,14 @@ const ComposerComponentView = () => {
 
       {/* Usage */}
       <div className="mb-8">
-        <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Usage</h2>
+        <h2>Usage</h2>
       </div>
 
       <div className="space-y-12">
         {/* Default State */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Default</h3>
-          <p className="text-md text-gray-900 mb-3">Empty input field ready for user input.</p>
+          <h3 className="mb-2">Default</h3>
+          <p className="mb-3">Empty input field ready for user input.</p>
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
             <div className="w-[400px] mx-auto my-4 border-b border-x border-gray-200 rounded-lg overflow-hidden">
               <Composer state="default" />
@@ -113,8 +113,8 @@ const ComposerComponentView = () => {
 
         {/* Active State */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Active (focused)</h3>
-          <p className="text-md text-gray-900 mb-3">Input field in focused state with cursor blinker.</p>
+          <h3 className="mb-2">Active (focused)</h3>
+          <p className="mb-3">Input field in focused state with cursor blinker.</p>
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
             <div className="w-[400px] mx-auto my-4 border-b border-x border-gray-200 rounded-lg overflow-hidden">
               <Composer state="active" />
@@ -124,8 +124,8 @@ const ComposerComponentView = () => {
 
         {/* Typing State */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Typing</h3>
-          <p className="text-md text-gray-900 mb-3">Input field with text being entered.</p>
+          <h3 className="mb-2">Typing</h3>
+          <p className="mb-3">Input field with text being entered.</p>
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
             <div className="w-[400px] mx-auto my-4 border-b border-x border-gray-200 rounded-lg overflow-hidden">
               <Composer state="typing" value="How to" />
@@ -135,8 +135,8 @@ const ComposerComponentView = () => {
 
         {/* Multiline State */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Multiline</h3>
-          <p className="text-md text-gray-900 mb-3">Expanded input for longer messages (max 4 lines).</p>
+          <h3 className="mb-2">Multiline</h3>
+          <p className="mb-3">Expanded input for longer messages (max 4 lines).</p>
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
             <div className="w-[400px] mx-auto my-4 border-b border-x border-gray-200 rounded-lg overflow-hidden">
               <Composer 
@@ -149,8 +149,8 @@ const ComposerComponentView = () => {
 
         {/* Disabled State */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Disabled</h3>
-          <p className="text-md text-gray-900 mb-3">Non-interactive disabled state.</p>
+          <h3 className="mb-2">Disabled</h3>
+          <p className="mb-3">Non-interactive disabled state.</p>
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
             <div className="w-[400px] mx-auto my-4 border-b border-x border-gray-200 rounded-lg overflow-hidden">
               <Composer state="disabled" />
@@ -160,8 +160,8 @@ const ComposerComponentView = () => {
 
         {/* Stop State */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Stop answering</h3>
-          <p className="text-md text-gray-900 mb-3">Special state shown when AI is generating a response.</p>
+          <h3 className="mb-2">Stop answering</h3>
+          <p className="mb-3">Special state shown when AI is generating a response.</p>
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
             <div className="w-[400px] mx-auto my-4 border-b border-x border-gray-200 rounded-lg overflow-hidden">
               <Composer state="stop" />
@@ -171,8 +171,8 @@ const ComposerComponentView = () => {
 
         {/* Without attachment */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Without attachment</h3>
-          <p className="text-md text-gray-900 mb-3">Composer without the attachment icon.</p>
+          <h3 className="mb-2">Without attachment</h3>
+          <p className="mb-3">Composer without the attachment icon.</p>
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
             <div className="w-[400px] mx-auto my-4 border-b border-x border-gray-200 rounded-lg overflow-hidden">
               <Composer state="default" attachment={false} />

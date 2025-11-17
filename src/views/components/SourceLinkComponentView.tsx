@@ -57,14 +57,14 @@ const SourceLinkComponentView = () => {
 
       {/* Usage */}
       <div className="mb-8">
-        <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Usage</h2>
+        <h2>Usage</h2>
       </div>
 
       <div className="space-y-12">
         {/* Enabled State */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Enabled</h3>
-          <p className="text-md text-gray-900 mb-3">Default state with gray text and underline.</p>
+          <h3 className="mb-2">Enabled</h3>
+          <p className="mb-3">Default state with gray text and underline.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
               <SourceLink 
@@ -78,8 +78,8 @@ const SourceLinkComponentView = () => {
 
         {/* Hover State */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Hover</h3>
-          <p className="text-md text-gray-900 mb-3">Interactive state when user hovers over the link.</p>
+          <h3 className="mb-2">Hover</h3>
+          <p className="mb-3">Interactive state when user hovers over the link.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
               <SourceLink 
@@ -92,8 +92,8 @@ const SourceLinkComponentView = () => {
 
         {/* Active State */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Active</h3>
-          <p className="text-md text-gray-900 mb-3">State when user clicks/presses the link.</p>
+          <h3 className="mb-2">Active</h3>
+          <p className="mb-3">State when user clicks/presses the link.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
               <SourceLink 
@@ -106,8 +106,8 @@ const SourceLinkComponentView = () => {
 
         {/* Visited State */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Visited</h3>
-          <p className="text-md text-gray-900 mb-3">State for previously visited links (purple).</p>
+          <h3 className="mb-2">Visited</h3>
+          <p className="mb-3">State for previously visited links (purple).</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
               <SourceLink 
@@ -120,8 +120,8 @@ const SourceLinkComponentView = () => {
 
         {/* In context Example */}
         <div>
-          <h3 className="text-lg font-medium mb-2">In context</h3>
-          <p className="text-md text-gray-900 mb-3">Example showing how source links appear within text content.</p>
+          <h3 className="mb-2">In context</h3>
+          <p className="mb-3">Example showing how source links appear within text content.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
               <p className="font-vca-text text-[14px] leading-[21px] text-vca-text">
@@ -138,8 +138,8 @@ const SourceLinkComponentView = () => {
 
         {/* Multiple Links Example */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Multiple sources</h3>
-          <p className="text-md text-gray-900 mb-3">Example with multiple source citations in a single paragraph.</p>
+          <h3 className="mb-2">Multiple sources</h3>
+          <p className="mb-3">Example with multiple source citations in a single paragraph.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
               <p className="font-vca-text text-[14px] leading-[21px] text-vca-text">

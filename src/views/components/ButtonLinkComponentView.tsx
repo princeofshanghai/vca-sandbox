@@ -58,14 +58,14 @@ const ButtonLinkComponentView = () => {
 
       {/* Usage */}
       <div className="mb-8">
-        <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Usage</h2>
+        <h2>Usage</h2>
       </div>
 
       <div className="space-y-12">
         {/* In Human Agent Status */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Agent status</h3>
-          <p className="text-md text-gray-900 mb-3">Used for secondary actions where button needs to be aligned with text, like ending a live chat session.</p>
+          <h3 className="mb-2">Agent status</h3>
+          <p className="mb-3">Used for secondary actions where button needs to be aligned with text, like ending a live chat session.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="w-[352px] mx-auto">
               <AgentStatus 

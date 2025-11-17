@@ -12,7 +12,7 @@ const AgentStatusComponentView = () => {
   // Interactive demo state
   const [state, setState] = useState<AgentStatusState>('success');
   const [statusLabel, setStatusLabel] = useState("You're next in line");
-  const [agentName, setAgentName] = useState('Sarah');
+  const [agentName, setAgentName] = useState('John');
   const [description, setDescription] = useState('A member of our team will join the chat soon.');
   const [actionLabel, setActionLabel] = useState('Cancel');
   const [showDescription, setShowDescription] = useState(true);
@@ -141,14 +141,14 @@ const AgentStatusComponentView = () => {
 
       {/* Usage */}
       <div className="mb-8">
-        <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Usage</h2>
+        <h2>Usage</h2>
       </div>
 
       <div className="space-y-12">
         {/* Connecting State - Full */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Connecting (full)</h3>
-          <p className="text-md text-gray-900 mb-3">Shows spinning progress indicator while connecting to live agent, with description and cancel action.</p>
+          <h3 className="mb-2">Connecting (full)</h3>
+          <p className="mb-3">Shows spinning progress indicator while connecting to live agent, with description and cancel action.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="w-[352px] mx-auto">
               <AgentStatus 
@@ -165,13 +165,13 @@ const AgentStatusComponentView = () => {
 
         {/* Connected */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Connected</h3>
-          <p className="text-md text-gray-900 mb-3">Shows success icon when agent has joined. Displays agent first name.</p>
+          <h3 className="mb-2">Connected</h3>
+          <p className="mb-3">Shows success icon when agent has joined. Displays agent first name.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="w-[352px] mx-auto">
               <AgentStatus 
                 state="success"
-                agentName="Sarah"
+                agentName="John"
               />
             </div>
           </div>
@@ -179,8 +179,8 @@ const AgentStatusComponentView = () => {
 
         {/* Behavior Demo */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Behavior</h3>
-          <p className="text-md text-gray-900 mb-3">Agent status transitions from connecting to connected, then agent sends first message.</p>
+          <h3 className="mb-2">Behavior</h3>
+          <p className="mb-3">Agent status transitions from connecting to connected, then agent sends first message.</p>
           <div className="bg-gray-50 border border-gray-200 rounded-lg pt-0 pb-6 px-4 overflow-hidden">
             <div className="w-[400px] mx-auto">
               {/* Mini conversation view - focused and compact */}
@@ -215,7 +215,7 @@ const AgentStatusComponentView = () => {
                         <Divider text="LIVE CHAT" />
                         <AgentStatus 
                           state="success"
-                          agentName="Sarah"
+                          agentName="John"
                         />
                       </>
                     )}
@@ -224,8 +224,8 @@ const AgentStatusComponentView = () => {
                     {demoStep === 'agentMessage' && (
                       <Message 
                         type="human-agent"
-                        humanAgentText="Hi I'm Sarah, how can I help you?"
-                        agentTimestampText="Sarah  12:34 PM"
+                        humanAgentText="Hi I'm John, how can I help you?"
+                        agentTimestampText="John  12:34 PM"
                       />
                     )}
                   </div>

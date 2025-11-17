@@ -56,14 +56,14 @@ const AvatarComponentView = () => {
 
       {/* Usage */}
       <div className="mb-8">
-        <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Usage</h2>
+        <h2>Usage</h2>
       </div>
 
       <div className="space-y-12">
         {/* Agent Message */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Agent message</h3>
-          <p className="text-md text-gray-900 mb-4">Used to show that message is written by a human agent.</p>
+          <h3 className="mb-2">Agent message</h3>
+          <p className="mb-4">Used to show that message is written by a human agent.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="w-[352px] mx-auto">
               <Message type="human-agent" humanAgentText="Hi there! I'm here to help you with any questions you have about your account." />

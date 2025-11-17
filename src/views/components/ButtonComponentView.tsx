@@ -16,7 +16,7 @@ const ButtonComponentView = () => {
   return (
     <ComponentViewLayout
       title="Button"
-      description="Buttons are used sparingly for key message related actions in VCA."
+      description="Buttons are used sparingly for message related actions in VCA."
     >
       {/* Demo Section */}
       <DemoSection
@@ -74,14 +74,14 @@ const ButtonComponentView = () => {
 
       {/* Usage */}
       <div className="mb-8">
-        <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Usage</h2>
+        <h2>Usage</h2>
       </div>
 
       <div className="space-y-12">
         {/* Recommendations */}
         <div>
-          <h3 className="text-lg font-medium mb-2">In recommendations</h3>
-          <p className="text-md text-gray-900 mb-4">Used in recommendation cards to apply or dismiss AI suggestions.</p>
+          <h3 className="mb-2">In recommendations</h3>
+          <p className="mb-4">Used in recommendation cards to apply or dismiss AI suggestions.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="w-[352px] mx-auto">
               <ActionMessage 

@@ -81,7 +81,7 @@ const ActionMessageComponentView = () => {
 
       {/* Usage */}
       <div className="mb-8">
-        <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Usage</h2>
+        <h2>Usage</h2>
       </div>
 
       <div className="space-y-12">
@@ -90,8 +90,8 @@ const ActionMessageComponentView = () => {
 
         {/* Custom content Example */}
         <div>
-          <h3 className="text-lg font-medium mb-2">With impact</h3>
-          <p className="text-md text-gray-900 mb-3">Recommendation with impact metric displayed to show expected benefit.</p>
+          <h3 className="mb-2">With impact</h3>
+          <p className="mb-3">Recommendation with impact metric displayed to show expected benefit.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="w-[352px] mx-auto">
               <ActionMessage 

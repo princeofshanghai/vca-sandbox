@@ -43,14 +43,14 @@ const SourcesComponentView = () => {
 
       {/* Usage */}
       <div className="mb-8">
-        <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Usage</h2>
+        <h2>Usage</h2>
       </div>
 
       <div className="space-y-12">
         {/* Default - 3 Sources */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Default (3 sources)</h3>
-          <p className="text-md text-gray-900 mb-3">Standard sources list with three references.</p>
+          <h3 className="mb-2">Default (3 sources)</h3>
+          <p className="mb-3">Standard sources list with three references.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
               <Sources 
@@ -66,8 +66,8 @@ const SourcesComponentView = () => {
 
         {/* Single source */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Single source</h3>
-          <p className="text-md text-gray-900 mb-3">Sources list with one reference.</p>
+          <h3 className="mb-2">Single source</h3>
+          <p className="mb-3">Sources list with one reference.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
               <Sources 
@@ -81,8 +81,8 @@ const SourcesComponentView = () => {
 
         {/* Two sources */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Two sources</h3>
-          <p className="text-md text-gray-900 mb-3">Sources list with two references.</p>
+          <h3 className="mb-2">Two sources</h3>
+          <p className="mb-3">Sources list with two references.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
               <Sources 
@@ -97,8 +97,8 @@ const SourcesComponentView = () => {
 
         {/* Mixed States */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Mixed link states</h3>
-          <p className="text-md text-gray-900 mb-3">Sources with different link states (enabled, visited).</p>
+          <h3 className="mb-2">Mixed link states</h3>
+          <p className="mb-3">Sources with different link states (enabled, visited).</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl">
               <Sources 
@@ -114,8 +114,8 @@ const SourcesComponentView = () => {
 
         {/* In context with AI Message */}
         <div>
-          <h3 className="text-lg font-medium mb-2">In context</h3>
-          <p className="text-md text-gray-900 mb-3">Example showing Sources component after an AI response.</p>
+          <h3 className="mb-2">In context</h3>
+          <p className="mb-3">Example showing Sources component after an AI response.</p>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="px-vca-xxl space-y-4">
               <p className="font-vca-text text-[14px] leading-[21px] text-vca-text">

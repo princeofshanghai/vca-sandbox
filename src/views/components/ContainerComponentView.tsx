@@ -5,6 +5,7 @@ import { DemoSection } from '@/components/component-library/DemoSection';
 import { ComponentViewLayout } from '@/components/component-library/ComponentViewLayout';
 import { FormInput, FormCheckbox, ToggleButtons } from '@/components/component-library/DemoControls';
 import { PhoneFrame } from '@/components/component-library/PhoneFrame';
+import { Badge } from '@/components/ui/badge';
 
 const ContainerComponentView = () => {
   // Interactive demo state
@@ -158,14 +159,14 @@ const ContainerComponentView = () => {
 
       {/* Usage */}
       <div className="mb-8">
-        <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Usage</h2>
+        <h2>Usage</h2>
       </div>
       
       <div className="space-y-12">
         {/* Empty Container - Just the Shell */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Desktop</h3>
-          <p className="text-md text-gray-900 mb-3">Header contains Help title and close button.</p>
+          <h3 className="mb-2">Desktop</h3>
+          <p className="mb-3">Header contains Help title and close button.</p>
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 flex justify-center">
             <Container 
               headerTitle="Help"
@@ -180,8 +181,8 @@ const ContainerComponentView = () => {
 
         {/* Mobile Container */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Mobile</h3>
-          <p className="text-md text-gray-900 mb-3">Mobile container appears as a sheet overlay with handle bar and close button.</p>
+          <h3 className="mb-2">Mobile</h3>
+          <p className="mb-3">Mobile container appears as a sheet overlay with handle bar and close button.</p>
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 flex justify-center">
             <Container 
               headerTitle="Help"
@@ -199,8 +200,11 @@ const ContainerComponentView = () => {
 
         {/* With Premium border */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Premium (WIP)</h3>
-          <p className="text-md text-gray-900 mb-3">LinkedIn premium bug and gold bottom border for premium users.</p>
+          <h3 className="mb-2 flex items-center gap-2">
+            Premium
+            <Badge variant="wip">WIP</Badge>
+          </h3>
+          <p className="mb-3">LinkedIn premium bug and gold bottom border for premium users.</p>
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 flex justify-center">
             <Container 
               headerTitle="Help"
@@ -221,8 +225,8 @@ const ContainerComponentView = () => {
 
         {/* With back button */}
         <div>
-          <h3 className="text-lg font-medium mb-2">From IPH</h3>
-          <p className="text-md text-gray-900 mb-3">Header contains additional back button to go back to IPH.</p>
+          <h3 className="mb-2">From IPH</h3>
+          <p className="mb-3">Header contains additional back button to go back to IPH.</p>
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 flex justify-center">
             <Container 
               headerTitle="Help"
@@ -237,8 +241,8 @@ const ContainerComponentView = () => {
 
         {/* Full example */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Full example</h3>
-          <p className="text-md text-gray-900 mb-3">Complete container with all features enabled and rich content.</p>
+          <h3 className="mb-2">Full example</h3>
+          <p className="mb-3">Complete container with all features enabled and rich content.</p>
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 flex justify-center">
             <Container 
               headerTitle="Help"

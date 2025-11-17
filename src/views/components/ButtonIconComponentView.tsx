@@ -64,7 +64,7 @@ const ButtonIconComponentView = () => {
 
       {/* Usage */}
       <div className="mb-8">
-        <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Usage</h2>
+        <h2>Usage</h2>
       </div>
 
       <div className="space-y-12">
@@ -73,8 +73,8 @@ const ButtonIconComponentView = () => {
 
         {/* In Composer */}
         <div>
-          <h3 className="text-lg font-medium mb-2">Composer</h3>
-          <p className="text-md text-gray-900 mb-4">Used for attachment and send actions in the composer.</p>
+          <h3 className="mb-2">Composer</h3>
+          <p className="mb-4">Used for attachment and send actions in the composer.</p>
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
             <div className="w-[400px] mx-auto my-4 border border-gray-200 rounded-lg overflow-hidden">
               <Composer 
