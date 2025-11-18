@@ -52,17 +52,9 @@ const ParticleBackground = () => {
       particles: {
         color: {
           value: [
-            "#3B82F6", // Bright blue
-            "#60A5FA", // Light blue
-            "#2563EB", // Deep blue
-            "#1E40AF", // Dark blue
-            "#0EA5E9", // Sky blue
-            "#06B6D4", // Cyan
-            "#0891B2", // Teal blue
-            "#0284C7", // Ocean blue
-            "#7DD3FC", // Pale blue
-            "#38BDF8", // Azure
-          ], // Random blue-oriented color palette
+            "#666666", // Grey
+        
+          ], // Random grey-oriented color palette
         },
         links: {
           enable: false, // No connecting lines - just particles
