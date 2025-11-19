@@ -4,6 +4,7 @@ import TopNavigation from '@/components/layout/TopNavigation';
 import ComponentLibraryView from '@/views/ComponentLibraryView';
 import FlowPreviewView from '@/views/FlowPreviewView';
 import HomeView from '@/views/HomeView';
+import { FlowBuilder } from '@/components/builder/FlowBuilder';
 
 const App = () => {
   return (
@@ -17,7 +18,7 @@ const App = () => {
               <Route path="/foundations/*" element={<ComponentLibraryView />} />
               <Route path="/components/*" element={<ComponentLibraryView />} />
               <Route path="/flows" element={<FlowPreviewView />} />
-              <Route path="/builder" element={<Navigate to="/flows" replace />} />
+              <Route path="/builder" element={<FlowBuilder />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </div>

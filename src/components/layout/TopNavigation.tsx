@@ -9,7 +9,7 @@ const TopNavigation = () => {
   const { setCurrentView, state, setMobileMenuOpen } = useApp();
 
   const currentPath = location.pathname;
-  
+
   // Determine active tab based on current path
   const getActiveTab = () => {
     if (currentPath.startsWith('/components')) return 'components';
@@ -21,23 +21,24 @@ const TopNavigation = () => {
 
   const handleTabChange = (value: string) => {
     if (value === 'builder') {
-      // Builder is disabled for MVP, show tooltip or do nothing
+      setCurrentView('builder');
+      navigate('/builder');
       return;
     }
-    
+
     setCurrentView(value as 'components' | 'flows' | 'builder');
-    
+
     // Navigate to appropriate default page for each tab
     if (value === 'components') {
       navigate('/foundations/typography');
-    } else {
-      navigate(`/${value}`);
+    } else if (value === 'flows') {
+      navigate('/flows');
     }
   };
 
   // Only show hamburger menu on pages that have a sidebar (components/foundations/flows routes)
-  const showMobileMenu = 
-    location.pathname.startsWith('/components') || 
+  const showMobileMenu =
+    location.pathname.startsWith('/components') ||
     location.pathname.startsWith('/foundations') ||
     location.pathname.startsWith('/flows');
 
@@ -71,26 +72,24 @@ const TopNavigation = () => {
           )}
           <VcaLogo />
         </div>
-        
+
         <Tabs value={getActiveTab()} onValueChange={handleTabChange}>
           <TabsList className="gap-2">
-            <TabsTrigger 
-              value="components" 
+            <TabsTrigger
+              value="components"
               className="shadow-none data-[state=active]:shadow-none data-[state=active]:bg-gray-100 text-sm"
             >
               Components
             </TabsTrigger>
-            <TabsTrigger 
-              value="flows" 
+            <TabsTrigger
+              value="flows"
               className="shadow-none data-[state=active]:shadow-none data-[state=active]:bg-gray-100 text-sm"
             >
               Playground
             </TabsTrigger>
-            <TabsTrigger 
+            <TabsTrigger
               value="builder"
-              disabled
-              title="Coming in Phase 2"
-              className="shadow-none text-sm"
+              className="shadow-none data-[state=active]:shadow-none data-[state=active]:bg-gray-100 text-sm"
             >
               Build
             </TabsTrigger>

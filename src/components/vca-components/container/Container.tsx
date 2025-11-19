@@ -22,6 +22,7 @@ export type ContainerProps = {
   composerValue?: string;
   onComposerChange?: (value: string) => void;
   onComposerSend?: () => void;
+  hideHeader?: boolean;
 };
 
 /**
@@ -46,14 +47,15 @@ export const Container = ({
   composerValue: externalComposerValue,
   onComposerChange: externalOnComposerChange,
   onComposerSend: externalOnComposerSend,
+  hideHeader = false,
 }: ContainerProps) => {
   // Interactive composer state (simplified - library handles auto-resize)
   const [internalComposerValue, setInternalComposerValue] = useState('');
-  
+
   // Use external value if provided, otherwise use internal state
   const composerValue = externalComposerValue !== undefined ? externalComposerValue : internalComposerValue;
   const setComposerValue = externalOnComposerChange || setInternalComposerValue;
-  
+
   const handleSend = () => {
     if (composerValue.trim()) {
       if (externalOnComposerSend) {
@@ -64,19 +66,19 @@ export const Container = ({
       }
     }
   };
-  
+
   // Dimensions and styling based on viewport
-  const dimensions = viewport === 'mobile' 
-    ? 'w-[393px] h-[772px]' 
+  const dimensions = viewport === 'mobile'
+    ? 'w-[393px] h-[772px]'
     : 'w-[400px] h-[688px]';
-  
+
   // Mobile: only top corners rounded (bottom sheet). Desktop: all corners rounded
   const borderRadius = viewport === 'mobile'
     ? 'rounded-t-2xl' // 16px top corners only
     : 'rounded-vca-sm'; // 8px all corners
-  
+
   return (
-    <div 
+    <div
       className={cn(
         dimensions,
         borderRadius,
@@ -87,29 +89,31 @@ export const Container = ({
       )}
     >
       {/* Header - Fixed at top */}
-      <Header 
-        title={headerTitle}
-        position="left"
-        viewport={viewport}
-        showBack={showHeaderBack}
-        showPremiumIcon={showHeaderPremiumIcon}
-        showAction={showHeaderAction}
-        showPremiumBorder={showPremiumBorder}
-        onBack={onHeaderBack}
-        onAction={onHeaderAction}
-        onClose={onHeaderClose}
-        className="shrink-0"
-      />
-      
+      {!hideHeader && (
+        <Header
+          title={headerTitle}
+          position="left"
+          viewport={viewport}
+          showBack={showHeaderBack}
+          showPremiumIcon={showHeaderPremiumIcon}
+          showAction={showHeaderAction}
+          showPremiumBorder={showPremiumBorder}
+          onBack={onHeaderBack}
+          onAction={onHeaderAction}
+          onClose={onHeaderClose}
+          className="shrink-0"
+        />
+      )}
+
       {/* Content Area - Scrollable */}
       <div ref={contentRef} className="flex-1 bg-vca-background overflow-y-auto overflow-x-hidden">
         <div className="flex flex-col justify-end min-h-full py-vca-lg">
           {children}
         </div>
       </div>
-      
+
       {/* Composer - Fixed at bottom */}
-      <Composer 
+      <Composer
         value={composerValue}
         onChange={setComposerValue}
         onSend={handleSend}
