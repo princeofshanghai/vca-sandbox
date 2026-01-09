@@ -23,7 +23,7 @@ export const OnThisPage = () => {
     headingElements.forEach((heading) => {
       const text = heading.textContent || '';
       const level = heading.tagName === 'H2' ? 2 : 3;
-      
+
       // Generate ID from text (convert to lowercase, replace spaces with hyphens)
       const id = text
         .toLowerCase()
@@ -78,24 +78,24 @@ export const OnThisPage = () => {
     if (element) {
       // Find the scroll container (main element with overflow-y-auto)
       const scrollContainer = document.querySelector('main');
-      
+
       if (scrollContainer) {
         // Get the element's position relative to the scroll container
         const containerRect = scrollContainer.getBoundingClientRect();
         const elementRect = element.getBoundingClientRect();
-        
+
         // Calculate the scroll position needed
         const offset = 20; // Small offset from top
         const scrollTop = scrollContainer.scrollTop;
         const elementTop = elementRect.top - containerRect.top + scrollTop;
-        
+
         scrollContainer.scrollTo({
           top: elementTop - offset,
           behavior: 'smooth',
         });
       } else {
         // Fallback to window scroll if main container not found
-        const offset = 80; // Account for TopNavigation + padding
+        const offset = 20; // Account for padding (TopNavigation removed)
         const elementPosition = element.getBoundingClientRect().top;
         const offsetPosition = elementPosition + window.pageYOffset - offset;
 

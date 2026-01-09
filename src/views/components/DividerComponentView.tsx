@@ -13,42 +13,46 @@ const DividerComponentView = () => {
       title="Divider"
       description="Used to indicate transition to live chat and status."
     >
-      
-      {/* Demo Section */}
-      <DemoSection
-        controls={
-          <div className="grid grid-cols-1 gap-4">
-            <FormInput
-              id="text"
-              label="Text"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder="Enter text..."
-            />
-          </div>
-        }
-      >
-        <div className="w-[400px] mx-auto">
-          <Divider text={text} />
-        </div>
-      </DemoSection>
 
-      {/* Usage Section */}
-      <div className="mt-16">
-        <h2 className="mb-8">Usage</h2>
-        
+      {/* Demo Section */}
+      <div className="space-y-20">
+        <DemoSection
+          controls={
+            <div className="grid grid-cols-1 gap-4">
+              <FormInput
+                id="text"
+                label="Text"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="Enter text..."
+              />
+            </div>
+          }
+        >
+          <div className="w-[400px] mx-auto">
+            <Divider text={text} />
+          </div>
+        </DemoSection>
+
+        {/* Usage Section */}
         <div className="space-y-12">
           <div>
-            <h3 className="mb-4">Live chat mode</h3>
-            <p className="mb-3">Indicates transition to live chat with a human agent.</p>
-            <div className="bg-white border border-gray-200 rounded-lg p-4">
-              <div className="w-[400px] mx-auto">
-                <Divider text="LIVE CHAT" />
-              </div>
-            </div>
+            <h2>Usage</h2>
           </div>
 
-         
+          <div className="space-y-12">
+            <div>
+              <h3 className="mb-4">Live chat mode</h3>
+              <p className="mb-3">Indicates transition to live chat with a human agent.</p>
+              <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <div className="w-[400px] mx-auto">
+                  <Divider text="LIVE CHAT" />
+                </div>
+              </div>
+            </div>
+
+
+          </div>
         </div>
       </div>
     </ComponentViewLayout>

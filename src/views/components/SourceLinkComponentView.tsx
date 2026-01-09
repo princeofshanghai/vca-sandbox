@@ -16,155 +16,157 @@ const SourceLinkComponentView = () => {
       title="Source Link"
       description="Source citation link."
     >
-      
+
       {/* Demo Section */}
-      <DemoSection
-        controls={
-          <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-            <ToggleButtons
-              label="State"
-              options={['enabled', 'hover', 'active', 'visited'] as const}
-              value={state}
-              onChange={setState}
+      <div className="space-y-20">
+        <DemoSection
+          controls={
+            <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+              <ToggleButtons
+                label="State"
+                options={['enabled', 'hover', 'active', 'visited'] as const}
+                value={state}
+                onChange={setState}
+              />
+
+              <FormCheckbox
+                id="hasHref"
+                label="External link"
+                checked={hasHref}
+                onCheckedChange={setHasHref}
+              />
+
+              <FormInput
+                id="text"
+                label="Link text"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="Enter link text..."
+                className="col-span-2"
+              />
+            </div>
+          }
+        >
+          <div className="px-vca-xxl">
+            <SourceLink
+              state={state}
+              text={text}
+              href={hasHref ? 'https://example.com' : undefined}
             />
-
-            <FormCheckbox
-              id="hasHref"
-              label="External link"
-              checked={hasHref}
-              onCheckedChange={setHasHref}
-            />
-
-            <FormInput
-              id="text"
-              label="Link text"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder="Enter link text..."
-              className="col-span-2"
-            />
           </div>
-        }
-      >
-        <div className="px-vca-xxl">
-          <SourceLink 
-            state={state}
-            text={text}
-            href={hasHref ? 'https://example.com' : undefined}
-          />
-        </div>
-      </DemoSection>
+        </DemoSection>
 
-      {/* Usage */}
-      <div className="mb-8">
-        <h2>Usage</h2>
-      </div>
+        {/* Usage */}
+        <div className="space-y-12">
+          <div>
+            <h2>Usage</h2>
+          </div>
 
-      <div className="space-y-12">
-        {/* Enabled State */}
-        <div>
-          <h3 className="mb-2">Enabled</h3>
-          <p className="mb-3">Default state with gray text and underline.</p>
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="px-vca-xxl">
-              <SourceLink 
-                state="enabled"
-                text="This is title of link"
-                href="https://example.com"
-              />
+          <div className="space-y-12">
+            {/* Enabled State */}
+            <div>
+              <h3 className="mb-2">Enabled</h3>
+              <p className="mb-3">Default state with gray text and underline.</p>
+              <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <div className="px-vca-xxl">
+                  <SourceLink
+                    state="enabled"
+                    text="This is title of link"
+                    href="https://example.com"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Hover State */}
+            <div>
+              <h3 className="mb-2">Hover</h3>
+              <p className="mb-3">Interactive state when user hovers over the link.</p>
+              <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <div className="px-vca-xxl">
+                  <SourceLink
+                    state="hover"
+                    text="This is title of link"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Active State */}
+            <div>
+              <h3 className="mb-2">Active</h3>
+              <p className="mb-3">State when user clicks/presses the link.</p>
+              <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <div className="px-vca-xxl">
+                  <SourceLink
+                    state="active"
+                    text="This is title of link"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Visited State */}
+            <div>
+              <h3 className="mb-2">Visited</h3>
+              <p className="mb-3">State for previously visited links (purple).</p>
+              <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <div className="px-vca-xxl">
+                  <SourceLink
+                    state="visited"
+                    text="This is title of link"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* In context Example */}
+            <div>
+              <h3 className="mb-2">In context</h3>
+              <p className="mb-3">Example showing how source links appear within text content.</p>
+              <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <div className="px-vca-xxl">
+                  <p className="font-vca-text text-[14px] leading-[21px] text-vca-text">
+                    According to recent research, user engagement increased by 45% after implementing AI recommendations.{' '}
+                    <SourceLink
+                      state="enabled"
+                      text="Source: LinkedIn Study 2024"
+                      href="https://example.com/study"
+                    />
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Multiple Links Example */}
+            <div>
+              <h3 className="mb-2">Multiple sources</h3>
+              <p className="mb-3">Example with multiple source citations in a single paragraph.</p>
+              <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <div className="px-vca-xxl">
+                  <p className="font-vca-text text-[14px] leading-[21px] text-vca-text">
+                    The data shows significant improvements in productivity (
+                    <SourceLink
+                      state="enabled"
+                      text="Study A"
+                      href="https://example.com/a"
+                    />, {' '}
+                    <SourceLink
+                      state="visited"
+                      text="Study B"
+                      href="https://example.com/b"
+                    />) and user satisfaction (
+                    <SourceLink
+                      state="enabled"
+                      text="Survey 2024"
+                      href="https://example.com/survey"
+                    />).
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-
-        {/* Hover State */}
-        <div>
-          <h3 className="mb-2">Hover</h3>
-          <p className="mb-3">Interactive state when user hovers over the link.</p>
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="px-vca-xxl">
-              <SourceLink 
-                state="hover"
-                text="This is title of link"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Active State */}
-        <div>
-          <h3 className="mb-2">Active</h3>
-          <p className="mb-3">State when user clicks/presses the link.</p>
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="px-vca-xxl">
-              <SourceLink 
-                state="active"
-                text="This is title of link"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Visited State */}
-        <div>
-          <h3 className="mb-2">Visited</h3>
-          <p className="mb-3">State for previously visited links (purple).</p>
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="px-vca-xxl">
-              <SourceLink 
-                state="visited"
-                text="This is title of link"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* In context Example */}
-        <div>
-          <h3 className="mb-2">In context</h3>
-          <p className="mb-3">Example showing how source links appear within text content.</p>
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="px-vca-xxl">
-              <p className="font-vca-text text-[14px] leading-[21px] text-vca-text">
-                According to recent research, user engagement increased by 45% after implementing AI recommendations.{' '}
-                <SourceLink 
-                  state="enabled"
-                  text="Source: LinkedIn Study 2024"
-                  href="https://example.com/study"
-                />
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Multiple Links Example */}
-        <div>
-          <h3 className="mb-2">Multiple sources</h3>
-          <p className="mb-3">Example with multiple source citations in a single paragraph.</p>
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="px-vca-xxl">
-              <p className="font-vca-text text-[14px] leading-[21px] text-vca-text">
-                The data shows significant improvements in productivity (
-                <SourceLink 
-                  state="enabled"
-                  text="Study A"
-                  href="https://example.com/a"
-                />, {' '}
-                <SourceLink 
-                  state="visited"
-                  text="Study B"
-                  href="https://example.com/b"
-                />) and user satisfaction (
-                <SourceLink 
-                  state="enabled"
-                  text="Survey 2024"
-                  href="https://example.com/survey"
-                />).
-              </p>
-            </div>
-          </div>
-        </div>
-
-        
       </div>
     </ComponentViewLayout>
   );

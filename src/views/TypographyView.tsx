@@ -1,18 +1,20 @@
+import { ComponentViewLayout } from '@/components/component-library/ComponentViewLayout';
+
 const TypographyView = () => {
   // Helper component to display a typography style
-  const TypeStyle = ({ 
-    label, 
-    token, 
-    size, 
-    lineHeight, 
-    weight, 
-    fontFamily 
-  }: { 
-    label: string; 
-    token: string; 
-    size: string; 
-    lineHeight: string; 
-    weight: string; 
+  const TypeStyle = ({
+    label,
+    token,
+    size,
+    lineHeight,
+    weight,
+    fontFamily
+  }: {
+    label: string;
+    token: string;
+    size: string;
+    lineHeight: string;
+    weight: string;
     fontFamily: string;
   }) => (
     <div className="border-b border-gray-100 last:border-0 pb-6 last:pb-0">
@@ -32,12 +34,14 @@ const TypographyView = () => {
     </div>
   );
 
+
+
   return (
-    <div className="pt-16">
-      <h1 className="mb-4">Typography</h1>
-      <p className="text-base text-gray-500 mb-12">Typography in VCA uses standard Mercado styles.</p>
-      
-      <div className="space-y-12">
+    <ComponentViewLayout
+      title="Typography"
+      description="Typography in VCA uses standard Mercado styles."
+    >
+      <div className="space-y-20">
         {/* Font Families */}
         <div>
           <h2 className="mb-4">Font families</h2>
@@ -294,9 +298,9 @@ const TypographyView = () => {
           </div>
         </div>
 
-        
+
       </div>
-    </div>
+    </ComponentViewLayout>
   );
 };
 

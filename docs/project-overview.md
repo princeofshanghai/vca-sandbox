@@ -45,7 +45,7 @@ This is an internal tool built for LinkedIn employees working on the Virtual Cha
 I want to quickly prototype conversation sequences using existing UI components so I can focus on the conversation logic instead of redrawing the same interface over and over.
 
 **When I'm testing a conversation design:**  
-I want to click through the flow in a realistic chat environment so I can experience how the dialogue actually feels and catch UX issues before engineering handoff.
+I want to click through the flow in a realistic chat environment so I can experience how the conversation actually feels and catch UX issues before engineering handoff.
 
 **When I'm handing off designs to engineering:**  
 I want to provide structured flow documentation (not just static mockups) so engineers understand the exact conversation logic and can implement it accurately.
@@ -66,7 +66,7 @@ Browse all VCA chat components (buttons, message bubbles, inputs, etc.) in one o
 **Status:** Single source of truth established. Designers no longer need to recreate components from scratch.
 
 ### **Phase 2: Flow Preview** 
-Test conversation flows in a realistic chat interface. Click through dialogues to see how conversations actually play out before eng hand-off.
+Test conversation flows in a realistic chat interface. Click through dialogues to see how conversations actually play out before engineering handoff.
 
 **What's working:**
 - Plays pre-built conversation flows
@@ -103,7 +103,7 @@ Enable designers to test conversation flows in a realistic environment before en
 ### Success Looks Like
 - ✅ Designers have access to accurate, up-to-date component library
 - 🚧 Designers can preview and share conversation flows for feedback
-- 🔮 Designers can create new flows independently without recreating UI
+- 🔮 Designers can create flows independently without recreating UI
 - 🔮 Engineering receives structured, implementable conversation flows
 
 ### Long-term Vision

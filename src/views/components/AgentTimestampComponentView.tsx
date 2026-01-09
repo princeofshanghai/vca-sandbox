@@ -16,40 +16,42 @@ const AgentTimestampComponentView = () => {
       description="Displays avatar, name, and timestamp for human agent messages."
     >
       {/* Demo Section */}
-      <DemoSection
-        controls={
-          <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-            <FormInput
-              id="agentName"
-              label="Agent name"
-              value={agentName}
-              onChange={(e) => setAgentName(e.target.value)}
-              placeholder="Enter agent name..."
-            />
+      <div className="space-y-20">
+        <DemoSection
+          controls={
+            <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+              <FormInput
+                id="agentName"
+                label="Agent name"
+                value={agentName}
+                onChange={(e) => setAgentName(e.target.value)}
+                placeholder="Enter agent name..."
+              />
 
-            <FormInput
-              id="timestamp"
-              label="Timestamp"
-              value={timestamp}
-              onChange={(e) => setTimestamp(e.target.value)}
-              placeholder="Enter timestamp..."
-            />
+              <FormInput
+                id="timestamp"
+                label="Timestamp"
+                value={timestamp}
+                onChange={(e) => setTimestamp(e.target.value)}
+                placeholder="Enter timestamp..."
+              />
 
-            <FormCheckbox
-              id="showBadge"
-              label="Show badge"
-              checked={showBadge}
-              onCheckedChange={setShowBadge}
-            />
-          </div>
-        }
-      >
-        <AgentTimestamp 
-          agentName={agentName}
-          timestamp={timestamp}
-          showBadge={showBadge}
-        />
-      </DemoSection>
+              <FormCheckbox
+                id="showBadge"
+                label="Show badge"
+                checked={showBadge}
+                onCheckedChange={setShowBadge}
+              />
+            </div>
+          }
+        >
+          <AgentTimestamp
+            agentName={agentName}
+            timestamp={timestamp}
+            showBadge={showBadge}
+          />
+        </DemoSection>
+      </div>
     </ComponentViewLayout>
   );
 };

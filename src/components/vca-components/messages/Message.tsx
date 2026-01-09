@@ -11,7 +11,7 @@ export type MessageProps = {
   userText?: string;
   humanAgentText?: string;
   disclaimerText?: string;
-  defaultText?: string;
+  defaultText?: string | React.ReactNode;
   agentTimestampText?: string;
   type?: 'human-agent' | 'ai' | 'disclaimer' | 'user';
   className?: string;
@@ -69,7 +69,7 @@ export const Message = ({
             </p>
           </div>
           {showTimestamp && (
-            <AgentTimestamp 
+            <AgentTimestamp
               text={agentTimestampText}
               showBadge={true}
             />
@@ -83,9 +83,9 @@ export const Message = ({
   return (
     <div className={cn('flex flex-col gap-vca-lg items-start', className)}>
       <div className="flex flex-col gap-vca-s items-start w-full">
-        <p className="font-vca-text text-vca-small-open text-vca-text w-full">
+        <div className="font-vca-text text-vca-small-open text-vca-text w-full [&_p]:text-vca-small-open [&_ul]:text-vca-small-open [&_ol]:text-vca-small-open [&_li]:text-vca-small-open">
           {defaultText}
-        </p>
+        </div>
       </div>
     </div>
   );

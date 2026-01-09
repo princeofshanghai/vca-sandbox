@@ -18,54 +18,56 @@ const InlineFeedbackComponentView = () => {
       description="Used to show message delivery status."
     >
       {/* Demo Section */}
-      <DemoSection
-        controls={
-          <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-            <ToggleButtons
-              label="Type"
-              options={['positive', 'negative', 'neutral'] as const}
-              value={type}
-              onChange={setType}
-            />
+      <div className="space-y-20">
+        <DemoSection
+          controls={
+            <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+              <ToggleButtons
+                label="Type"
+                options={['positive', 'negative', 'neutral'] as const}
+                value={type}
+                onChange={setType}
+              />
 
-            <FormCheckbox
-              id="showAction"
-              label="Show action (negative only)"
-              checked={showAction}
-              onCheckedChange={setShowAction}
-              disabled={type !== 'negative'}
-            />
+              <FormCheckbox
+                id="showAction"
+                label="Show action (negative only)"
+                checked={showAction}
+                onCheckedChange={setShowAction}
+                disabled={type !== 'negative'}
+              />
 
-            <FormInput
-              id="message"
-              label="Message (optional)"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Leave empty for default..."
-              className="col-span-2"
-            />
-
-            {type === 'negative' && showAction && (
               <FormInput
-                id="actionText"
-                label="Action text"
-                value={actionText}
-                onChange={(e) => setActionText(e.target.value)}
-                placeholder="Try again"
+                id="message"
+                label="Message (optional)"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Leave empty for default..."
                 className="col-span-2"
               />
-            )}
-          </div>
-        }
-      >
-        <InlineFeedback 
-          type={type}
-          showAction={showAction}
-          message={message || undefined}
-          actionText={actionText}
-          onActionClick={() => alert('Action clicked!')}
-        />
-      </DemoSection>
+
+              {type === 'negative' && showAction && (
+                <FormInput
+                  id="actionText"
+                  label="Action text"
+                  value={actionText}
+                  onChange={(e) => setActionText(e.target.value)}
+                  placeholder="Try again"
+                  className="col-span-2"
+                />
+              )}
+            </div>
+          }
+        >
+          <InlineFeedback
+            type={type}
+            showAction={showAction}
+            message={message || undefined}
+            actionText={actionText}
+            onActionClick={() => alert('Action clicked!')}
+          />
+        </DemoSection>
+      </div>
     </ComponentViewLayout>
   );
 };

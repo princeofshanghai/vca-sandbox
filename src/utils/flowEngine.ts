@@ -9,11 +9,17 @@ export type FlowButton = {
   nextStep: string;
 };
 
+export type FlowIntent = {
+  keywords: string[];
+  nextStep: string;
+};
+
 export type FlowStep = {
   id: string;
   type: 'ai-message' | 'user-message' | 'human-agent-message' | 'agent-status' | 'agent-status-connecting' | 'agent-status-connected' | 'disclaimer';
   text: string;
   buttons?: FlowButton[];
+  intents?: FlowIntent[];
   nextStep?: string;
   agentName?: string;
   timestamp?: string;
@@ -51,7 +57,7 @@ export class FlowEngine {
     this.flow = flowData;
     this.currentStepIndex = 0;
     this.displayedMessages = [];
-    
+
     // Auto-display the first step
     if (this.flow && this.flow.steps.length > 0) {
       this.displayCurrentStep();
@@ -74,7 +80,7 @@ export class FlowEngine {
     }
 
     const step = this.flow.steps[this.currentStepIndex];
-    
+
     // Add this step to displayed messages
     this.displayedMessages.push({
       stepId: step.id,
@@ -124,18 +130,46 @@ export class FlowEngine {
   }
 
   /**
+   * Handle user text input to check for keyword matches (intents)
+   * Returns true if a match was found and navigation occurred
+   */
+  handleUserInput(text: string): boolean {
+    if (!this.flow) return false;
+
+    const currentStep = this.flow.steps[this.currentStepIndex];
+    if (!currentStep.intents) return false;
+
+    const normalizedInput = text.toLowerCase().trim();
+
+    // Find matching intent
+    const matchedIntent = currentStep.intents.find(intent => {
+      // Check for wildcard '*' which matches anything
+      if (intent.keywords.includes('*')) return true;
+      return intent.keywords.some(keyword => normalizedInput.includes(keyword.toLowerCase()));
+    });
+
+    if (matchedIntent) {
+      this.goToStep(matchedIntent.nextStep);
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
    * Check if the flow has ended (no more steps)
    */
   isFlowComplete(): boolean {
     if (!this.flow) return true;
-    
+
     const currentStep = this.flow.steps[this.currentStepIndex];
-    
+
     // Flow is complete if we're at the last step and it has no buttons or nextStep
     return (
       this.currentStepIndex === this.flow.steps.length - 1 &&
       !currentStep.buttons &&
-      !currentStep.nextStep
+      !currentStep.nextStep &&
+      !currentStep.intents
     );
   }
 
@@ -144,7 +178,7 @@ export class FlowEngine {
    */
   restart() {
     if (!this.flow) return;
-    
+
     this.currentStepIndex = 0;
     this.displayedMessages = [];
     this.displayCurrentStep();

@@ -14,6 +14,7 @@ import RadiusView from './RadiusView';
 import MessageComponentView from './components/MessageComponentView';
 import InfoMessageComponentView from './components/InfoMessageComponentView';
 import ActionMessageComponentView from './components/ActionMessageComponentView';
+import ActionStatusComponentView from './components/ActionStatusComponentView';
 import AgentStatusComponentView from './components/AgentStatusComponentView';
 import AgentTimestampComponentView from './components/AgentTimestampComponentView';
 import InlineFeedbackComponentView from './components/InlineFeedbackComponentView';
@@ -34,14 +35,17 @@ import IconsComponentView from './components/IconsComponentView';
 import AgentBannerComponentView from './components/AgentBannerComponentView';
 import DividerComponentView from './components/DividerComponentView';
 import FeedbackComponentView from './components/FeedbackComponentView';
+import ConversationFlowPatternView from './patterns/ConversationFlowPatternView';
+
 
 const ComponentLibraryView = () => {
   const location = useLocation();
   const { state, setMobileMenuOpen } = useApp();
   const [foundationsExpanded, setFoundationsExpanded] = useState(true);
   const [componentsExpanded, setComponentsExpanded] = useState(true);
+  const [patternsExpanded, setPatternsExpanded] = useState(true);
   const prevPathnameRef = useRef(location.pathname);
-  
+
   const isActive = (path: string) => location.pathname === path;
 
   // Close mobile menu when navigating to a new page (but not on initial mount)
@@ -52,13 +56,28 @@ const ComponentLibraryView = () => {
       prevPathnameRef.current = location.pathname;
     }
   }, [location.pathname, setMobileMenuOpen]);
-  
+
   return (
     <div className="flex h-full">
-      <Sidebar 
+      <Sidebar
         isMobileOpen={state.mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
       >
+        {/* Patterns */}
+        <CollapsibleSection
+          title="Patterns"
+          expanded={patternsExpanded}
+          onToggle={() => setPatternsExpanded(!patternsExpanded)}
+        >
+          <NavigationGroup className="mb-6">
+            {componentNavigation.patterns.map((item) => (
+              <NavLink key={item.path} to={item.path} isActive={isActive(item.path)}>
+                {item.label}
+              </NavLink>
+            ))}
+          </NavigationGroup>
+        </CollapsibleSection>
+
         {/* Foundations */}
         <CollapsibleSection
           title="Foundations"
@@ -81,8 +100,8 @@ const ComponentLibraryView = () => {
           onToggle={() => setComponentsExpanded(!componentsExpanded)}
         >
           {componentNavigation.components.map((category, categoryIndex) => (
-            <NavigationGroup 
-              key={category.label} 
+            <NavigationGroup
+              key={category.label}
               label={category.label}
               className={categoryIndex > 0 ? 'mt-6' : ''}
             >
@@ -98,18 +117,23 @@ const ComponentLibraryView = () => {
 
       <MainContent>
         <Routes>
+          <Route path="conversation-flow" element={<ConversationFlowPatternView />} />
+
+
+
           {/* Foundation Routes */}
           <Route path="typography" element={<TypographyView />} />
           <Route path="colors" element={<ColorsView />} />
           <Route path="icons" element={<IconsComponentView />} />
           <Route path="spacing" element={<SpacingView />} />
           <Route path="radius" element={<RadiusView />} />
-          
+
           {/* Component Routes */}
           <Route index element={<Navigate to="/foundations/typography" replace />} />
           <Route path="message" element={<MessageComponentView />} />
           <Route path="info-message" element={<InfoMessageComponentView />} />
           <Route path="action-message" element={<ActionMessageComponentView />} />
+          <Route path="action-status" element={<ActionStatusComponentView />} />
           <Route path="agent-status" element={<AgentStatusComponentView />} />
           <Route path="agent-timestamp" element={<AgentTimestampComponentView />} />
           <Route path="inline-feedback" element={<InlineFeedbackComponentView />} />

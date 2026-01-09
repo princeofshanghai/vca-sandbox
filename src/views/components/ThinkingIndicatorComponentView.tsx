@@ -9,9 +9,11 @@ const ThinkingIndicatorComponentView = () => {
       description="Animated indicator used to show that AI is processing."
     >
       {/* Demo Section */}
-      <DemoSection controls={null}>
-        <ThinkingIndicator />
-      </DemoSection>
+      <div className="space-y-20">
+        <DemoSection controls={null}>
+          <ThinkingIndicator />
+        </DemoSection>
+      </div>
     </ComponentViewLayout>
   );
 };

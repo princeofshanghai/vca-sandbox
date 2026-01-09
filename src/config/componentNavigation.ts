@@ -25,6 +25,7 @@ export type NavCategory = {
 export type NavigationConfig = {
   foundations: NavItem[];
   components: NavCategory[];
+  patterns: NavItem[];
 };
 
 /**
@@ -70,11 +71,12 @@ const rawNavigation: NavigationConfig = {
         { path: '/components/prompt-group', label: 'Prompt Group' },
       ],
     },
-    
+
     // Display Category
     {
       label: 'Display',
       items: [
+        { path: '/components/action-status', label: 'Action Status' },
         { path: '/components/agent-banner', label: 'Agent Banner' },
         { path: '/components/agent-status', label: 'Agent Status' },
         { path: '/components/agent-timestamp', label: 'Agent Timestamp' },
@@ -84,7 +86,7 @@ const rawNavigation: NavigationConfig = {
         { path: '/components/inline-feedback', label: 'Inline Feedback' },
       ],
     },
-    
+
     // Layout Category
     {
       label: 'Layout',
@@ -94,7 +96,7 @@ const rawNavigation: NavigationConfig = {
         { path: '/components/header', label: 'Header' },
       ],
     },
-    
+
     // Messages Category
     {
       label: 'Messages',
@@ -108,11 +110,17 @@ const rawNavigation: NavigationConfig = {
       ],
     },
   ],
+
+  // Patterns Section (Introduction to Mental Model)
+  patterns: [
+    { path: '/patterns/conversation-flow', label: 'Conversation Flow' },
+  ],
 };
 
 // Export sorted navigation (components auto-sorted A-Z within each category)
 export const componentNavigation: NavigationConfig = {
   foundations: rawNavigation.foundations, // Foundations kept as-is
   components: sortCategories(rawNavigation.components), // Components auto-sorted
+  patterns: rawNavigation.patterns, // Patterns kept as-is (ordered 1-5)
 };
 

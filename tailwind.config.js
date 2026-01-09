@@ -191,45 +191,45 @@ export default {
         'vca-xsmall-bold': ['12px', { lineHeight: '1.25', fontWeight: '600' }],
         'vca-xsmall-open': ['12px', { lineHeight: '1.5', fontWeight: '400' }],
         'vca-xsmall-bold-open': ['12px', { lineHeight: '1.5', fontWeight: '600' }],
-        
+
         // VCA Body Small (14px)
         'vca-small': ['14px', { lineHeight: '1.25', fontWeight: '400' }],
         'vca-small-bold': ['14px', { lineHeight: '1.25', fontWeight: '600' }],
         'vca-small-open': ['14px', { lineHeight: '1.5', fontWeight: '400' }],
         'vca-small-bold-open': ['14px', { lineHeight: '1.5', fontWeight: '600' }],
-        
+
         // VCA Body Medium (16px)
         'vca-medium': ['16px', { lineHeight: '1.25', fontWeight: '400' }],
         'vca-medium-bold': ['16px', { lineHeight: '1.25', fontWeight: '600' }],
         'vca-medium-open': ['16px', { lineHeight: '1.5', fontWeight: '400' }],
         'vca-medium-bold-open': ['16px', { lineHeight: '1.5', fontWeight: '600' }],
-        
+
         // VCA Body Large (20px)
         'vca-large': ['20px', { lineHeight: '1.25', fontWeight: '400' }],
         'vca-large-bold': ['20px', { lineHeight: '1.25', fontWeight: '600' }],
         'vca-large-open': ['20px', { lineHeight: '1.5', fontWeight: '400' }],
         'vca-large-bold-open': ['20px', { lineHeight: '1.5', fontWeight: '600' }],
-        
+
         // VCA Heading Small (14px)
         'vca-heading-small': ['14px', { lineHeight: '1.25', fontWeight: '600' }],
-        
+
         // VCA Heading Medium (16px)
         'vca-heading-medium': ['16px', { lineHeight: '1.25', fontWeight: '600' }],
-        
+
         // VCA Heading Large (20px)
         'vca-heading-large': ['20px', { lineHeight: '1.25', fontWeight: '600' }],
-        
+
         // VCA Heading XLarge (24px)
         'vca-heading-xlarge': ['24px', { lineHeight: '1.25', fontWeight: '600' }],
-        
+
         // VCA Display Large (48px)
         'vca-display-large': ['48px', { lineHeight: '1.25', fontWeight: '400' }],
         'vca-display-large-bold': ['48px', { lineHeight: '1.25', fontWeight: '600' }],
-        
+
         // VCA Display XLarge (64px)
         'vca-display-xlarge': ['64px', { lineHeight: '1.25', fontWeight: '400' }],
         'vca-display-xlarge-bold': ['64px', { lineHeight: '1.25', fontWeight: '600' }],
-        
+
         // Custom app shell sizes
         '2xs': '13px',
         '15': ['15px', { lineHeight: '1.6' }], // Custom size for body text
@@ -239,24 +239,36 @@ export default {
         'vca': '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
         'vca-lg': '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
       },
-      keyframes: {
-        "accordion-down": {
-          from: { height: 0 },
-          to: { height: "var(--radix-accordion-content-height)" },
-        },
-        "accordion-up": {
-          from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: 0 },
-        },
-        "thinking-dot": {
-          "0%, 60%, 100%": { opacity: "0.4" },
-          "30%": { opacity: "1" },
-        },
+      "accordion-down": "accordion-down 0.2s ease-out",
+      "accordion-up": "accordion-up 0.2s ease-out",
+      "thinking-dot": "thinking-dot 1.4s ease-in-out infinite",
+      "pop-spin": "pop-spin 2s ease-in-out infinite",
+      "progress-load": "progress-load 2s ease-in-out infinite",
+    },
+    keyframes: {
+      "accordion-down": {
+        from: { height: 0 },
+        to: { height: "var(--radix-accordion-content-height)" },
       },
-      animation: {
-        "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
-        "thinking-dot": "thinking-dot 1.4s ease-in-out infinite",
+      "accordion-up": {
+        from: { height: "var(--radix-accordion-content-height)" },
+        to: { height: 0 },
+      },
+      "thinking-dot": {
+        "0%, 60%, 100%": { opacity: "0.4" },
+        "30%": { opacity: "1" },
+      },
+      "pop-spin": {
+        "0%, 80%, 100%": { transform: "scale(1) rotate(0deg)" },
+        "20%": { transform: "scale(1.2) rotate(15deg)" },
+        "40%": { transform: "scale(1) rotate(0deg)" },
+        "50%": { transform: "scale(1) rotate(0deg)" },
+        "60%": { transform: "scale(1.2) rotate(-15deg)" },
+      },
+      "progress-load": {
+        "0%": { width: "0%", opacity: "1" },
+        "50%": { width: "70%", opacity: "1" },
+        "100%": { width: "100%", opacity: "0" },
       },
     },
   },

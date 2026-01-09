@@ -1,4 +1,5 @@
 import { vcaColorsMeta } from '@/design-tokens';
+import { ComponentViewLayout } from '@/components/component-library/ComponentViewLayout';
 
 type ColorToken = {
   name: string;
@@ -54,7 +55,7 @@ const ColorCategory = ({ title, description, colors }: { title: string; descript
 // Auto-generate color categories from design tokens
 const generateColorCategories = (): ColorCategory[] => {
   const categories: ColorCategory[] = [];
-  
+
   const categoryInfo: Record<string, { title: string; description: string }> = {
     'vca-action': {
       title: 'Action',
@@ -159,7 +160,7 @@ const generateColorCategories = (): ColorCategory[] => {
   // Process each category from vcaColorsMeta
   for (const [vcaKey, tokens] of Object.entries(vcaColorsMeta)) {
     const colors: ColorToken[] = [];
-    
+
     if (typeof tokens === 'object' && tokens !== null && 'value' in tokens && 'ref' in tokens) {
       // Single color token (like vca-track, vca-shadow)
       colors.push({
@@ -193,17 +194,17 @@ const generateColorCategories = (): ColorCategory[] => {
   return categories;
 };
 
+
+
 const ColorsView = () => {
   const colorCategories = generateColorCategories();
-  
+
   return (
-    <div className="pt-16">
-      <h1 className="mb-4">Colors</h1>
-      <p className="text-base text-gray-500 mb-12">
-        Colors in VCA used the standard Mercado color palette.
-      </p>
-      
-      <div className="space-y-16">
+    <ComponentViewLayout
+      title="Colors"
+      description="Colors in VCA used the standard Mercado color palette."
+    >
+      <div className="space-y-20">
         {colorCategories.map((category) => (
           <ColorCategory
             key={category.title}
@@ -213,7 +214,8 @@ const ColorsView = () => {
           />
         ))}
       </div>
-    </div>
+    </ComponentViewLayout>
+
   );
 };
 

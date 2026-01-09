@@ -1,4 +1,5 @@
 import { vcaRadiusMeta } from '@/design-tokens';
+import { ComponentViewLayout } from '@/components/component-library/ComponentViewLayout';
 
 type RadiusTokenDisplay = {
   name: string;
@@ -11,7 +12,7 @@ const RadiusSwatch = ({ name, class: tailwindClass, value, reference }: RadiusTo
   return (
     <div className="flex items-start gap-6">
       <div className="flex-shrink-0">
-        <div 
+        <div
           className={`w-24 h-24 bg-blue-100 border-2 border-blue-400 ${tailwindClass}`}
         />
       </div>
@@ -37,12 +38,14 @@ const RadiusView = () => {
     };
   });
 
+
+
   return (
-    <div className="pt-16">
-      <h1 className="mb-4">Border Radius</h1>
-      <p className="text-base text-gray-500 mb-12">Radius in VCA is based on the Mercado radius scale.</p>
-      
-      <div className="space-y-12">
+    <ComponentViewLayout
+      title="Border Radius"
+      description="Radius in VCA is based on the Mercado radius scale."
+    >
+      <div className="space-y-20">
         {/* Radius Scale */}
         <div>
           <h2 className="mb-4">Radius scale</h2>
@@ -92,14 +95,14 @@ const RadiusView = () => {
               <h3 className="mb-2">Inputs & Forms</h3>
               <p className="text-md text-gray-900 mb-4">Text inputs use `rounded-vca-md` to match the overall design system.</p>
               <div className="space-y-3 max-w-md">
-                <input 
-                  type="text" 
-                  placeholder="Search..." 
+                <input
+                  type="text"
+                  placeholder="Search..."
                   className="w-full px-4 py-2 border border-gray-300 rounded-vca-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-                <input 
-                  type="email" 
-                  placeholder="Email address" 
+                <input
+                  type="email"
+                  placeholder="Email address"
                   className="w-full px-4 py-2 border border-gray-300 rounded-vca-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -151,7 +154,7 @@ const RadiusView = () => {
           </div>
         </div>
       </div>
-    </div>
+    </ComponentViewLayout>
   );
 };
 

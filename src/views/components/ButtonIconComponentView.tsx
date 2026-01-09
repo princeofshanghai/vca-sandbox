@@ -17,71 +17,76 @@ const ButtonIconComponentView = () => {
       title="Button Icon"
       description="Button Icons are used primarily for actions in the VCA container."
     >
-      
+
       {/* Demo Section */}
-      <DemoSection
-        controls={
-          <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-            <ToggleButtons
-              label="Type"
-              options={['primary', 'secondary', 'tertiary'] as const}
-              value={type}
-              onChange={setType}
-            />
-
-            <ToggleButtons
-              label="Size"
-              options={['sm', 'md'] as const}
-              value={size}
-              onChange={setSize}
-            />
-
-            <FormCheckbox
-              id="emphasis"
-              label="High emphasis"
-              checked={emphasis}
-              onCheckedChange={setEmphasis}
-            />
-
-            <FormCheckbox
-              id="disabled"
-              label="Disabled"
-              checked={disabled}
-              onCheckedChange={setDisabled}
-            />
-          </div>
-        }
-      >
-        <ButtonIcon
-          type={type}
-          size={size}
-          emphasis={emphasis}
-          disabled={disabled}
-          icon="placeholder"
-          onClick={() => alert('Button icon clicked!')}
-        />
-      </DemoSection>
-
-      {/* Usage */}
-      <div className="mb-8">
-        <h2>Usage</h2>
-      </div>
-
-      <div className="space-y-12">
-      
-     
-
-        {/* In Composer */}
-        <div>
-          <h3 className="mb-2">Composer</h3>
-          <p className="mb-4">Used for attachment and send actions in the composer.</p>
-          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <div className="w-[400px] mx-auto my-4 border border-gray-200 rounded-lg overflow-hidden">
-              <Composer 
-                state="active"
-                value="How can I help you today?"
-                attachment={true}
+      <div className="space-y-20">
+        <DemoSection
+          controls={
+            <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+              <ToggleButtons
+                label="Type"
+                options={['primary', 'secondary', 'tertiary'] as const}
+                value={type}
+                onChange={setType}
               />
+
+              <ToggleButtons
+                label="Size"
+                options={['sm', 'md'] as const}
+                value={size}
+                onChange={setSize}
+              />
+
+              <FormCheckbox
+                id="emphasis"
+                label="High emphasis"
+                checked={emphasis}
+                onCheckedChange={setEmphasis}
+              />
+
+              <FormCheckbox
+                id="disabled"
+                label="Disabled"
+                checked={disabled}
+                onCheckedChange={setDisabled}
+              />
+            </div>
+          }
+        >
+          <ButtonIcon
+            type={type}
+            size={size}
+            emphasis={emphasis}
+            disabled={disabled}
+            icon="placeholder"
+            onClick={() => alert('Button icon clicked!')}
+          />
+        </DemoSection>
+
+        {/* Usage */}
+        <div className="space-y-12">
+          <div>
+            <h2>Usage</h2>
+          </div>
+
+          <div className="space-y-12">
+
+
+
+
+            {/* In Composer */}
+            <div>
+              <h3 className="mb-2">Composer</h3>
+              <p className="mb-4">Used for attachment and send actions in the composer.</p>
+              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                <div className="w-[400px] mx-auto my-4 border border-gray-200 rounded-lg overflow-hidden">
+                  <Composer
+                    state="active"
+                    value="How can I help you today?"
+                    attachment={true}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>

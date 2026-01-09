@@ -1,4 +1,5 @@
 import { vcaSpacingMeta } from '@/design-tokens';
+import { ComponentViewLayout } from '@/components/component-library/ComponentViewLayout';
 
 type SpacingToken = {
   name: string;
@@ -8,10 +9,10 @@ type SpacingToken = {
   reference: string;
 };
 
-const SpacingItem = ({ name, spacingClass, value, unit, reference }: { 
-  name: string; 
-  spacingClass: string; 
-  value: number; 
+const SpacingItem = ({ name, spacingClass, value, unit, reference }: {
+  name: string;
+  spacingClass: string;
+  value: number;
   unit: string;
   reference: string;
 }) => {
@@ -19,13 +20,13 @@ const SpacingItem = ({ name, spacingClass, value, unit, reference }: {
     <div className="space-y-4">
       {/* Visual representation */}
       <div className="flex items-center gap-4">
-        <div 
+        <div
           className="bg-blue-500 rounded"
           style={{ width: `${value}px`, height: '40px' }}
         />
         <div className="text-sm text-gray-400 font-mono">{value}{unit}</div>
       </div>
-      
+
       {/* Token info */}
       <div className="space-y-1">
         <div className="text-sm font-medium text-gray-900">{name}</div>
@@ -40,7 +41,7 @@ const SpacingItem = ({ name, spacingClass, value, unit, reference }: {
 // Auto-generate spacing tokens from design tokens
 const generateSpacingTokens = (): SpacingToken[] => {
   const tokens: SpacingToken[] = [];
-  
+
   const nameMap: Record<string, string> = {
     'vca-none': 'None',
     'vca-xs': 'Extra Small',
@@ -68,17 +69,17 @@ const generateSpacingTokens = (): SpacingToken[] => {
   return tokens.sort((a, b) => a.value - b.value);
 };
 
+
+
 const SpacingView = () => {
   const spacingTokens = generateSpacingTokens();
-  
+
   return (
-    <div className="pt-16">
-      <h1 className="mb-4">Spacing</h1>
-      <p className="text-base text-gray-500 mb-12">
-        Spacing in VCA is based on the Mercado spacing scale.
-      </p>
-      
-      <div className="space-y-12">
+    <ComponentViewLayout
+      title="Spacing"
+      description="Spacing in VCA is based on the Mercado spacing scale."
+    >
+      <div className="space-y-20">
         {/* Spacing Scale */}
         <div>
           <h2 className="mb-4">Spacing scale</h2>
@@ -100,7 +101,7 @@ const SpacingView = () => {
         <div>
           <h2 className="mb-4">Usage examples</h2>
           <div className="bg-white border border-gray-200 rounded-lg p-8 space-y-8">
-            
+
             {/* Padding Example */}
             <div>
               <h3 className="mb-2">Padding</h3>
@@ -225,7 +226,7 @@ const SpacingView = () => {
           </div>
         </div>
       </div>
-    </div>
+    </ComponentViewLayout>
   );
 };
 

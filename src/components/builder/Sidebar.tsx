@@ -13,9 +13,9 @@ export const Sidebar = () => {
         <h2 className="font-semibold text-gray-900">Components</h2>
         <p className="text-xs text-gray-500 mt-1">Drag to add to flow</p>
       </div>
-      
+
       <div className="p-4 space-y-3">
-        <div 
+        <div
           className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg cursor-grab hover:border-blue-500 hover:shadow-sm transition-all"
           onDragStart={(event) => onDragStart(event, 'message')}
           draggable
@@ -29,7 +29,7 @@ export const Sidebar = () => {
           </div>
         </div>
 
-        <div 
+        <div
           className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg cursor-grab hover:border-blue-500 hover:shadow-sm transition-all"
           onDragStart={(event) => onDragStart(event, 'options')}
           draggable
@@ -43,7 +43,7 @@ export const Sidebar = () => {
           </div>
         </div>
 
-        <div 
+        <div
           className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg cursor-grab hover:border-blue-500 hover:shadow-sm transition-all"
           onDragStart={(event) => onDragStart(event, 'input')}
           draggable
