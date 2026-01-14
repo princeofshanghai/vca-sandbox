@@ -4,20 +4,24 @@ import {
     SmartCollectNodeData,
     SmartSlot,
     ComponentConfig,
-    MockPerson
+    MockPerson,
+    SmartActionNodeData,
+    SmartResponseNodeData,
+    SmartFollowUpNodeData,
+    SmartEntryNodeData
 } from '@/types/smartFlow';
 
 // Runtime Types
 export interface RuntimeVariable {
     name: string;
-    value: any;
+    value: unknown;
     type: 'person' | 'text' | 'date' | 'select';
 }
 
 export interface SmartFlowState {
     currentNodeId: string;
     variables: Record<string, RuntimeVariable>; // "targetUser" -> { ... }
-    history: any[]; // For undo/debugging
+    history: unknown[]; // For undo/debugging
 
     // For Smart Collection Nodes:
     internalNodeState: {
@@ -36,7 +40,7 @@ export interface EngineMessage {
 }
 
 export class SmartFlowEngine {
-    private nodes: Map<string, SmartNodeData> = new Map();
+    private nodes: Map<string, { id: string; type: string; data: SmartNodeData }> = new Map();
     private edges: Map<string, string> = new Map(); // sourceId -> targetId (Simple linear flow for now)
 
     private state: SmartFlowState = {
@@ -49,7 +53,7 @@ export class SmartFlowEngine {
         }
     };
 
-    constructor(nodes: any[], edges: any[]) {
+    constructor(nodes: { id: string; type: string; data: SmartNodeData }[], edges: { source: string; target: string }[]) {
         // Hydrate the graph
         // STORE THE FULL NODE Object, not just data, so we can access .type
         nodes.forEach(n => this.nodes.set(n.id, n));
@@ -74,11 +78,11 @@ export class SmartFlowEngine {
 
         if (!node) return [{ id: 'err', text: 'Lost in flow', isSystemMessage: true }];
 
-        const nodeType = (node as any).type as SmartNodeType;
+        const nodeType = (node as unknown as { type: string }).type as SmartNodeType;
 
         // 1. Handle Smart Collection Logic
         if (nodeType === 'smart-collect') {
-            return this.processInputForCollectNode((node as any).data as SmartCollectNodeData, input);
+            return this.processInputForCollectNode(node as unknown as SmartCollectNodeData, input);
         }
 
         // Default: If we are not in a collect node but received input, 
@@ -136,7 +140,7 @@ export class SmartFlowEngine {
         if (exact) {
             this.saveVariable(slot.variable, exact, 'person');
             this.state.internalNodeState.activeSlotIndex++;
-            return this.advanceValidation(null as any);
+            return this.advanceValidation(null as unknown as SmartCollectNodeData);
         }
 
         // 2. Fuzzy / Ambiguous Match
@@ -157,7 +161,7 @@ export class SmartFlowEngine {
         if (candidates.length === 1) {
             this.saveVariable(slot.variable, candidates[0], 'person');
             this.state.internalNodeState.activeSlotIndex++;
-            return this.advanceValidation(null as any);
+            return this.advanceValidation(null as unknown as SmartCollectNodeData);
         }
 
         // 3. No Match
@@ -170,7 +174,7 @@ export class SmartFlowEngine {
     // Check if we are done with this node or need to ask the next question
     private advanceValidation(node: SmartCollectNodeData): EngineMessage[] {
         // If passed null (recursive step), retrieve from storage
-        const actualNode = node || (this.nodes.get(this.state.currentNodeId) as any).data;
+        const actualNode = node || (this.nodes.get(this.state.currentNodeId) as unknown as { data: SmartCollectNodeData }).data;
 
         // Are we done with all slots?
         if (this.state.internalNodeState.activeSlotIndex >= actualNode.slots.length) {
@@ -204,7 +208,7 @@ export class SmartFlowEngine {
 
     private processCurrentNode(): EngineMessage[] {
         const nodeId = this.state.currentNodeId;
-        const node = this.nodes.get(nodeId) as any;
+        const node = this.nodes.get(nodeId);
 
         if (!node) return [{ id: 'err', text: 'Node not found' }];
 
@@ -216,11 +220,13 @@ export class SmartFlowEngine {
             const messages: EngineMessage[] = [];
 
             // Greeting Text
-            if (data.greetingConfig?.props?.content) {
+            const entryData = data as SmartEntryNodeData;
+            if (entryData.greetingConfig?.props?.content) {
                 messages.push({
                     id: 'greeting',
-                    text: data.greetingConfig.props.content,
-                    component: data.greetingConfig // Pass full config if needed
+                    text: (entryData.greetingConfig.props.content as string),
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    component: entryData.greetingConfig as any // Pass full config if needed
                 });
             } else {
                 messages.push({ id: 'greeting', text: "Hello!" });
@@ -236,17 +242,17 @@ export class SmartFlowEngine {
 
         // 3. Action
         if (nodeType === 'smart-action') {
-            return this.processSmartAction(data);
+            return this.processSmartAction(data as SmartActionNodeData);
         }
 
         // 4. Response
         if (nodeType === 'smart-response') {
-            const respData = data as any;
+            const respData = data as SmartResponseNodeData;
             // Process template strings in content
-            let content = respData.component?.props?.content || '';
+            let content = (respData.component?.props?.content as string) || '';
             // Simple variable substitution
             Object.entries(this.state.variables).forEach(([key, val]) => {
-                const replacement = val.type === 'person' ? (val.value as MockPerson).name : val.value;
+                const replacement = val.type === 'person' ? (val.value as MockPerson).name : String(val.value);
                 content = content.replace(new RegExp(`\\$${key}`, 'g'), replacement);
             });
 
@@ -262,7 +268,7 @@ export class SmartFlowEngine {
 
         // 5. Follow Up
         if (nodeType === 'smart-follow-up') {
-            const followData = data as any;
+            const followData = data as SmartFollowUpNodeData;
             const buttons = followData.suggestions?.map((s: string) => ({ label: s, value: s })) || [];
             return [{
                 id: 'followup',
@@ -274,12 +280,12 @@ export class SmartFlowEngine {
         return [{ id: 'unknown', text: `Unknown Node Type: ${nodeType}` }];
     }
 
-    private processSmartAction(data: any): EngineMessage[] {
+    private processSmartAction(data: SmartActionNodeData): EngineMessage[] {
         const actionId = data.actionId;
 
         // MOCKED ACTIONS
         if (actionId === 'remove_license_api') {
-            const targetVarName = data.config?.target?.replace('$', '');
+            const targetVarName = (data.config?.target as string)?.replace('$', '');
             const targetUser = this.state.variables[targetVarName]?.value as MockPerson;
 
             if (targetUser) {
@@ -298,7 +304,7 @@ export class SmartFlowEngine {
         return this.advanceToNextNode();
     }
 
-    private saveVariable(name: string, value: any, type: any) {
+    private saveVariable(name: string, value: unknown, type: 'person' | 'text' | 'date' | 'select') {
         this.state.variables[name] = { name, value, type };
         console.log(`[SmartEngine] Saved ${name} =`, value);
     }

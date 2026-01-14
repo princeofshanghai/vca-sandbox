@@ -11,7 +11,9 @@ const ThinkingIndicatorComponentView = () => {
       {/* Demo Section */}
       <div className="space-y-20">
         <DemoSection controls={null}>
-          <ThinkingIndicator />
+          <div className="p-8 bg-vca-background border border-vca-border-subtle rounded-vca-md">
+            <ThinkingIndicator />
+          </div>
         </DemoSection>
       </div>
     </ComponentViewLayout>

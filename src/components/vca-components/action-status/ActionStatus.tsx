@@ -3,7 +3,7 @@ import { cn } from '@/utils';
 import { VcaIcon } from '../icons';
 
 export type ActionStatusProps = {
-    status: 'in-progress' | 'complete';
+    status: 'in-progress' | 'complete' | 'success' | 'failure';
     title: string;
     description?: string | React.ReactNode;
     actionLabel?: string;
@@ -48,13 +48,19 @@ export const ActionStatus = ({
             <div className="flex gap-vca-s p-vca-lg items-start">
                 {/* Icon */}
                 <div className="shrink-0">
-                    {status === 'in-progress' ? (
+                    {status === 'in-progress' && (
                         <div className="animate-ai-pulse-custom origin-center text-vca-brand-logo-brand">
                             <VcaIcon icon="signal-ai" size="md" />
                         </div>
-                    ) : (
+                    )}
+                    {(status === 'complete' || status === 'success') && (
                         <div className="text-vca-accent-4">
                             <VcaIcon icon="signal-success" size="md" />
+                        </div>
+                    )}
+                    {status === 'failure' && (
+                        <div className="text-red-600">
+                            <VcaIcon icon="signal-error" size="md" />
                         </div>
                     )}
                 </div>
@@ -65,13 +71,13 @@ export const ActionStatus = ({
                         {title}
                     </div>
 
-                    {status === 'complete' && description && (
+                    {(status === 'complete' || status === 'success' || status === 'failure') && description && (
                         <div className="font-vca-text text-vca-small-open text-vca-text mt-0 space-y-2 [&_a]:text-vca-link [&_a]:font-semibold [&_a]:no-underline hover:[&_a]:underline">
                             {description}
                         </div>
                     )}
 
-                    {status === 'complete' && actionLabel && (
+                    {(status === 'complete' || status === 'success' || status === 'failure') && actionLabel && (
                         <button
                             onClick={onActionClick}
                             className="mt-2 text-left font-vca-text text-vca-small-bold-open text-vca-link hover:underline bg-transparent border-none p-0 cursor-pointer w-fit"

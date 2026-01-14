@@ -1,0 +1,62 @@
+
+> vca-sandbox@0.0.0 lint
+> eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 2
+
+
+/Users/chhu/cursor-projects/vca-sandbox-6/src/components/vca-components/markdown-renderer/Markdown.tsx
+  25:27  error  'node' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/chhu/cursor-projects/vca-sandbox-6/src/types/smartFlow.ts
+  13:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  53:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/chhu/cursor-projects/vca-sandbox-6/src/utils/flowCompiler.ts
+  99:9  error  'firstStepId' is never reassigned. Use 'const' instead  prefer-const
+
+/Users/chhu/cursor-projects/vca-sandbox-6/src/utils/flowStorage.ts
+  157:9  error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+
+/Users/chhu/cursor-projects/vca-sandbox-6/src/utils/smartFlowEngine.ts
+   13:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   20:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   52:24  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   52:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   77:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   81:61  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  139:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  160:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  173:81  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  207:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  244:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  265:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  277:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  301:47  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  301:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/chhu/cursor-projects/vca-sandbox-6/src/views/patterns/HumanHandoffPatternView.tsx
+  102:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/chhu/cursor-projects/vca-sandbox-6/src/views/studio/MarkdownEditor.tsx
+  102:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/chhu/cursor-projects/vca-sandbox-6/src/views/studio/ScriptEditor.tsx
+   57:13   error  'newBlock' is never reassigned. Use 'const' instead  prefer-const
+   57:23   error  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  121:61   error  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  176:35   error  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  206:19   error  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  430:58   error  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  431:92   error  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  440:58   error  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  441:92   error  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  444:58   error  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  445:96   error  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  480:38   error  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  499:110  error  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  506:110  error  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  526:38   error  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  538:77   error  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+
+✖ 38 problems (38 errors, 0 warnings)
+  2 errors and 0 warnings potentially fixable with the `--fix` option.
+

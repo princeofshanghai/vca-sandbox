@@ -10,6 +10,7 @@ export default {
     './src/**/*.{ts,tsx}',
   ],
   safelist: [
+    'animate-spin',
     // Ensure all VCA radius classes are included even when dynamically generated
     'rounded-vca-none',
     'rounded-vca-xs',

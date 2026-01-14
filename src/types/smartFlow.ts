@@ -10,7 +10,7 @@ export type SmartNodeType =
 
 export interface ComponentConfig {
     type: 'Message' | 'InfoMessage' | 'PromptGroup'; // Capitalized to match likely component names or standardized IDs
-    props: Record<string, any>;
+    props: Record<string, unknown>;
 }
 
 export interface MockPerson {
@@ -50,7 +50,7 @@ export interface SmartCollectNodeData {
 
 export interface SmartActionNodeData {
     actionId: string; // "remove_user"
-    config?: Record<string, any>;
+    config?: Record<string, unknown>;
 }
 
 export interface SmartResponseNodeData {

@@ -114,6 +114,7 @@ const rawNavigation: NavigationConfig = {
   // Patterns Section (Introduction to Mental Model)
   patterns: [
     { path: '/patterns/conversation-flow', label: 'Conversation Flow' },
+    { path: '/patterns/live-agent', label: 'Connecting to Live Agent' },
   ],
 };
 

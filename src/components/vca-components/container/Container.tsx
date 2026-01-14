@@ -82,9 +82,11 @@ export const Container = ({
       className={cn(
         dimensions,
         borderRadius,
-        'border border-vca-border-faint overflow-hidden',
-        'flex flex-col',
-        'shadow-[0_4px_12px_0_rgba(0,0,0,0.30),0_0_1px_0_rgba(140,140,140,0.20)]',
+        borderRadius,
+        'overflow-hidden flex flex-col',
+        // Desktop: Border + Shadow
+        // Mobile: No border/shadow (blends with sheet)
+        viewport === 'desktop' && 'border border-vca-border-faint shadow-[0_4px_12px_0_rgba(0,0,0,0.30),0_0_1px_0_rgba(140,140,140,0.20)]',
         className
       )}
     >
@@ -107,7 +109,7 @@ export const Container = ({
 
       {/* Content Area - Scrollable */}
       <div ref={contentRef} className="flex-1 bg-vca-background overflow-y-auto overflow-x-hidden">
-        <div className="flex flex-col justify-end min-h-full py-vca-lg">
+        <div className="flex flex-col min-h-full py-vca-lg">
           {children}
         </div>
       </div>

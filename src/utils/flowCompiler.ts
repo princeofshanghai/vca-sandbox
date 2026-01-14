@@ -96,7 +96,7 @@ export const compileFlow = (nodes: Node[], edges: Edge[]): Flow => {
     });
 
     // 4. Determine the first step (connected to Start Node)
-    let firstStepId = getTargetNodeId(startNode.id);
+    const firstStepId = getTargetNodeId(startNode.id);
 
     // 5. Inject "Smart Start" steps (Disclaimer, Greeting, Prompts)
     // These behave as a prefix to the flow.

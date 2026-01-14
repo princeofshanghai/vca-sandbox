@@ -15,7 +15,6 @@ const ContainerComponentView = () => {
   const [showAction, setShowAction] = useState(false);
   const [contentType, setContentType] = useState<'empty' | 'simple' | 'full'>('simple');
   const [viewport, setViewport] = useState<'desktop' | 'mobile'>('desktop');
-  const [showPhoneFrame, setShowPhoneFrame] = useState(false);
 
   const renderContent = () => {
     if (contentType === 'empty') {
@@ -74,16 +73,6 @@ const ContainerComponentView = () => {
                   value={viewport}
                   onChange={setViewport}
                 />
-                {viewport === 'mobile' && (
-                  <div className="mt-3">
-                    <FormCheckbox
-                      id="showPhoneFrame"
-                      label="Show phone frame"
-                      checked={showPhoneFrame}
-                      onCheckedChange={setShowPhoneFrame}
-                    />
-                  </div>
-                )}
               </div>
 
               {/* Other Controls - Grid Layout */}
@@ -127,10 +116,10 @@ const ContainerComponentView = () => {
             </div>
           }
         >
-          <div className="flex justify-center">
-            {showPhoneFrame && viewport === 'mobile' ? (
-              // Phone frame mockup with status bar and dimmed background
-              <PhoneFrame showStatusBar={true} dimBackground={true}>
+          <div className="flex justify-center items-center py-8">
+            {viewport === 'mobile' ? (
+              // Mobile View - Always wrapped in Sheet Frame
+              <PhoneFrame showStatusBar={true}>
                 <Container
                   headerTitle={title}
                   viewport={viewport}
@@ -143,7 +132,7 @@ const ContainerComponentView = () => {
                 </Container>
               </PhoneFrame>
             ) : (
-              // No frame - just container
+              // Desktop - No frame, just container
               <Container
                 headerTitle={title}
                 viewport={viewport}

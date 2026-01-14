@@ -4,13 +4,14 @@ import { Message } from '@/components/vca-components/messages';
 import { ActionStatus } from '@/components/vca-components/action-status/ActionStatus';
 import { Container } from '@/components/vca-components/container/Container';
 import { PromptGroup } from '@/components/vca-components/prompt-group/PromptGroup';
+import { InfoMessage } from '@/components/vca-components/info-message/InfoMessage';
 
 
 const ConversationFlowPatternView = () => {
     return (
         <PatternPage
             title="Conversation Flow"
-            description="Every interaction follows a standard lifecycle: Welcome, Intent Recognition, Information Gathering, Action, and Follow Up. Understanding this flow ensures a consistent, high-quality experience across all skills."
+            description="Great conversations feel natural, not robotic. By following this standard flow—Welcome, Intent Recognition, Info Gathering, and Action—we ensure every interaction feels helpful, consistent, and human."
             relatedComponents={[
                 { label: 'Message', path: '/components/message' },
                 { label: 'Prompt Group', path: '/components/prompt-group' },
@@ -18,25 +19,115 @@ const ConversationFlowPatternView = () => {
                 { label: 'Container', path: '/components/container' }
             ]}
         >
+            {/* 0. Designing the Conversation */}
+            <div className="border-b border-gray-200 pb-16">
+                <h2 id="the-conversation-lifecycle" className="scroll-mt-24 mb-4">Designing the Conversation</h2>
+                <p className="text-gray-600 mb-10 max-w-3xl text-lg">
+                    Designing for AI doesn't mean reinventing the wheel. At its core, a good chat interaction follows a reliable structure—similar to a traditional user flow, but more flexible. Use this 5-step framework to map out your experience.
+                </p>
+
+                <div className="space-y-12">
+                    {/* Visual Process Map */}
+                    <div className="bg-white rounded-xl p-8 border border-gray-200 shadow-sm">
+                        <div className="hidden md:grid grid-cols-7 gap-4">
+                            <ProcessStep
+                                number="01"
+                                title="Welcome"
+                                icon="👋"
+                                desc="Establish context"
+                            />
+                            <div className="flex items-center justify-center text-gray-300">
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                            </div>
+                            <ProcessStep
+                                number="02"
+                                title="Intent"
+                                icon="🤔"
+                                desc="Confirm request"
+                            />
+                            <div className="flex items-center justify-center text-gray-300">
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                            </div>
+                            <ProcessStep
+                                number="03"
+                                title="Info"
+                                icon="📝"
+                                desc="Collect details"
+                            />
+                            <div className="flex items-center justify-center text-gray-300">
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                            </div>
+                            <ProcessStep
+                                number="04"
+                                title="Action"
+                                icon="⚡️"
+                                desc="Execute & Follow up"
+                            />
+                        </div>
+                        {/* Mobile View / Fallback text list */}
+                        <div className="md:hidden space-y-4">
+                            <div className="flex items-center gap-3"><span className="font-mono text-gray-400">01</span> <span className="font-semibold">Welcome</span></div>
+                            <div className="flex items-center gap-3"><span className="font-mono text-gray-400">02</span> <span className="font-semibold">Intent Recognition</span></div>
+                            <div className="flex items-center gap-3"><span className="font-mono text-gray-400">03</span> <span className="font-semibold">Info Gathering</span></div>
+                            <div className="flex items-center gap-3"><span className="font-mono text-gray-400">04</span> <span className="font-semibold">Action</span></div>
+                        </div>
+                    </div>
+
+                    {/* Core Principles Block */}
+                    <div>
+                        <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-6">Core Design Principles</h3>
+                        <div className="grid md:grid-cols-3 gap-6">
+                            <div className="bg-gray-50 p-6 rounded-lg border border-gray-100">
+                                <div className="text-blue-600 mb-3">
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                </div>
+                                <h4 className="font-semibold text-vca-text mb-2">Establish Context</h4>
+                                <p className="text-sm text-gray-600 leading-relaxed">
+                                    Don't ask questions the system already understands. Use the user's current page and permissions to skip the basics.
+                                </p>
+                            </div>
+                            <div className="bg-gray-50 p-6 rounded-lg border border-gray-100">
+                                <div className="text-blue-600 mb-3">
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                                </div>
+                                <h4 className="font-semibold text-vca-text mb-2">Clarify Early</h4>
+                                <p className="text-sm text-gray-600 leading-relaxed">
+                                    Vague requests lead to errors. If there's doubt, ask a quick multiple-choice question to zero in on the goal.
+                                </p>
+                            </div>
+                            <div className="bg-gray-50 p-6 rounded-lg border border-gray-100">
+                                <div className="text-blue-600 mb-3">
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                </div>
+                                <h4 className="font-semibold text-vca-text mb-2">Provide Feedback</h4>
+                                <p className="text-sm text-gray-600 leading-relaxed">
+                                    Silence is scary. Chat interfaces need clear "working" and "success" states to build trust during tasks.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
             {/* 1. Welcome */}
             <div className="border-b border-gray-200 pb-16">
                 <h2 id="welcome" className="scroll-mt-24 mb-4">Welcome</h2>
                 <p className="text-gray-600 mb-10 max-w-3xl text-lg">
-                    The welcome stage sets the tone. It should be contextual, leveraging the user's current page or recent actions to offer relevant shortcuts immediately.
+                    Make a great first impression. Acknowledge where the user is and offer relevant help immediately.
                 </p>
 
                 <PatternSection
-                    title="Contextual Introduction"
-                    description="When a user opens the AI chat, we should leverage their current context (e.g., the page they are on, recent actions) to provide a tailored greeting."
+                    title="Start with Context"
+                    description="Don't start with a blank slate. Use what you know about the user's current page or recent actions to offer a tailored greeting."
                 >
                     <div className="space-y-16">
                         <div className="space-y-8">
                             <ExampleShowcase
                                 title="EXAMPLE: RECRUITER HELP CENTER"
                                 rationale={[
-                                    "Acknowledges the product context (Recruiter)",
-                                    "Clearly states capabilities (answer questions, connect to team)",
-                                    "Provides specific, relevant starting points with Prompts"
+                                    "Acknowledges the product context (Recruiter).",
+                                    "Clearly states how it can help.",
+                                    "Offers specific shortcuts (Prompts) to get started."
                                 ]}
                             >
                                 <Container
@@ -68,9 +159,9 @@ const ConversationFlowPatternView = () => {
                             <ExampleShowcase
                                 title="EXAMPLE: LMS HELP CENTER"
                                 rationale={[
-                                    "Contextualized for LMS users",
-                                    "Offers immediate help for common high-friction tasks (account hold)",
-                                    "Guides new users on getting started"
+                                    "Contextualized for LMS users.",
+                                    "Addresses the highest-friction pain point immediately (account hold).",
+                                    "Guides new users on where to begin."
                                 ]}
                             >
                                 <Container
@@ -102,14 +193,14 @@ const ConversationFlowPatternView = () => {
                         <div className="mt-12">
                             <GuidelineGrid
                                 dos={[
-                                    "Mention the specific context (page, item, action).",
-                                    "Keep the greeting concise and friendly.",
-                                    "Provide 2-3 relevant suggested prompts."
+                                    "Be specific. Mention the page or item they're looking at.",
+                                    "Keep it friendly and short.",
+                                    "Offer 2-3 relevant prompts to help them get moving."
                                 ]}
                                 donts={[
-                                    "Start with a generic \"How can I help you?\" if context is known.",
-                                    "Overwhelm the user with too many options.",
-                                    "Make assumptions about user intent without offering choices."
+                                    "Don't be generic (e.g., 'How can I help?') when you know where they are.",
+                                    "Don't overwhelm them with too many choices.",
+                                    "Don't guess what they want without offering options."
                                 ]}
                             />
                         </div>
@@ -121,20 +212,20 @@ const ConversationFlowPatternView = () => {
             <div className="border-b border-gray-200 pb-16">
                 <h2 id="intent-recognition" className="scroll-mt-24 mb-4">Intent Recognition</h2>
                 <p className="text-gray-600 mb-10 max-w-3xl text-lg">
-                    Once the user engages, the system must accurately understand their goal. For ambiguous, high-stakes, or destructive actions, always confirm intent before proceeding.
+                    Understand what they need. If their request is vague, dangerous, or high-stakes, clarify it before taking action.
                 </p>
 
                 <div className="space-y-16">
                     <PatternSection
                         title="Refining Intent"
-                        description="Often a user's initial request is a broad goal. The AI should provide essential context—such as consequences or trade-offs—to help the user refine their intent into a specific, informed action."
+                        description="Sometimes users start broad. Help them narrow it down by explaining the consequences or trade-offs of their request."
                     >
                         <ExampleShowcase
                             title="EXAMPLE: DESTRUCTIVE ACTION (RECRUITER)"
                             rationale={[
-                                "Proactively provides context (e.g. data loss consequences)",
-                                "Offers safer alternatives before locking in intent",
-                                "Ensures the user makes an informed decision"
+                                "Warns about data loss before it happens.",
+                                "Suggests safer alternatives (Reassign/Park).",
+                                "Lets the user make the final call."
                             ]}
                         >
                             <Container
@@ -180,14 +271,14 @@ const ConversationFlowPatternView = () => {
 
                     <PatternSection
                         title="Confirming Intent"
-                        description="For high-stakes or inferred requests, the AI helps clarify and 'lock in' the user's intent. Explicit confirmation ensures the system acts on the correct goal before execution."
+                        description="For risky or sensitive actions, measure twice, cut once. Ask a simple query to ensure you're solving the right problem."
                     >
                         <ExampleShowcase
                             title="EXAMPLE: CONFIRMING INTENT (LMS)"
                             rationale={[
-                                "Confirms high-stakes or specific intent before acting",
-                                "Phrased as a polite closed-ended question",
-                                "Offers an immediate 'out' if the AI is wrong"
+                                "Validates the request before diving in.",
+                                "Uses a simple Closed Question (Yes/No).",
+                                "Gives them an easy way to say 'No'."
                             ]}
                         >
                             <Container
@@ -218,14 +309,14 @@ const ConversationFlowPatternView = () => {
 
                     <PatternSection
                         title="Clarifying Ambiguity"
-                        description="When a user's request is vague or could apply to multiple items, the AI should proactively ask for details rather than guessing."
+                        description="Don't guess. If a request could mean multiple things (like two people named 'Sam'), ask for clarification."
                     >
                         <ExampleShowcase
                             title="EXAMPLE: AMBIGUOUS USER SEARCH"
                             rationale={[
-                                "Prevents critical errors (e.g., deleting the wrong user)",
-                                "Reduces typing effort by offering one-tap resolution",
-                                "Builds trust by demonstrating thoroughness"
+                                "Prevents errors (like deleting the wrong Sam).",
+                                "Makes it easy to resolve with one click.",
+                                "Builds trust by being thorough."
                             ]}
                         >
                             <Container
@@ -258,38 +349,38 @@ const ConversationFlowPatternView = () => {
                     <div className="mt-12">
                         <GuidelineGrid
                             dos={[
-                                "Ask specific clarifying questions.",
-                                "Provide explicit options when data is available.",
-                                "Explain why clarification is needed (e.g., 'I found multiple...')."
+                                "Ask specific follow-ups to narrow things down.",
+                                "Give explicit options whenever possible.",
+                                "Explain *why* you're asking (e.g., 'I found two Sams...')."
                             ]}
                             donts={[
-                                "Guess the most likely user without confirmation (dangerous for actions like delete).",
-                                "Ask open-ended 'Who?' questions without context if you have a list.",
-                                "Reprompt with generic 'I didn't understand' messages."
+                                "Don't guess (especially for destructive actions).",
+                                "Don't ask open-ended questions if you have the list already.",
+                                "Don't just say 'I don't understand.' Be helpful."
                             ]}
                         />
                     </div>
                 </div>
             </div>
 
-            {/* 3. Information Gathering */}
+            {/* 3. Info Gathering */}
             <div className="border-b border-gray-200 pb-16">
-                <h2 id="information-gathering" className="scroll-mt-24 mb-4">Information Gathering</h2>
+                <h2 id="info-gathering" className="scroll-mt-24 mb-4">Info Gathering</h2>
                 <p className="text-gray-600 mb-10 max-w-3xl text-lg">
-                    Transform a confirmed intent into a fully specified command. Collect missing details naturally, and empower users with alternatives if they get stuck.
+                    Get the details. Ask for what's missing naturally, and check for blockers early so users don't waste time.
                 </p>
 
                 <div className="space-y-16">
                     <PatternSection
-                        title="Gathering Missing Details"
-                        description="When the user's intent is clear but specific parameters are missing (e.g., 'which user?'), the AI should request them naturally. It should also provide helpful context or self-serve alternatives to empower the user."
+                        title="Fill in the Blanks"
+                        description="If you know *what* they want but not *who* or *when*, just ask. And always offer a way for them to do it themselves if they prefer."
                     >
                         <ExampleShowcase
                             title="EXAMPLE: MISSING ENTITY (RECRUITER)"
                             rationale={[
-                                "Friendly, direct request for the specific missing info (Name/Email)",
-                                "Provides a 'step-by-step guide' link as a self-serve alternative",
-                                "Maintains forward momentum without erroring out"
+                                "Friendly request for the missing info.",
+                                "Offers a self-serve guide as a backup.",
+                                "Keeps the conversation moving forward."
                             ]}
                         >
                             <Container
@@ -323,15 +414,15 @@ const ConversationFlowPatternView = () => {
                     </PatternSection>
 
                     <PatternSection
-                        title="Prerequisite Check"
-                        description="Before moving to the final action, the AI must ensure all conditions are met (e.g., permissions, business rules). Detecting blockers early saves the user from potential failure steps later."
+                        title="Check Before You Start"
+                        description="Don't let them go through the whole process just to fail at the end. Check for permissions or rules right away."
                     >
                         <ExampleShowcase
                             title="EXAMPLE: PERMISSION DENIED (LMS)"
                             rationale={[
-                                "Validates permissions immediately after intent is confirmed",
-                                "Provides a clear 'Why' (lack of permissions)",
-                                "Offers an actionable alternative (contact administrator)"
+                                "Checks permissions immediately.",
+                                "Explains exactly why it can't be done.",
+                                "Tells them who to contact to fix it."
                             ]}
                         >
                             <Container
@@ -366,98 +457,126 @@ const ConversationFlowPatternView = () => {
                     <div className="mt-12">
                         <GuidelineGrid
                             dos={[
-                                "Ask for missing information clearly and concisely.",
-                                "Provide alternatives (like guide links) in case the user prefers self-service.",
-                                "Check for blockers (permissions) before attempting the action."
+                                "Ask clearly for the missing piece of info.",
+                                "Offer self-serve alternatives (like guide links).",
+                                "Check for permission blockers immediately."
                             ]}
                             donts={[
-                                "Ask for information the system already knows.",
-                                "Wait until the Action phase to tell the user they lack permissions.",
-                                "Leave the user dead-ended without an alternative path."
+                                "Don't ask for things you already know.",
+                                "Don't wait until the end to say 'Access Denied'.",
+                                "Don't leave them stuck without a next step."
                             ]}
                         />
                     </div>
                 </div>
             </div>
 
-            {/* 4. Action & Result */}
-            <div className="border-b border-gray-200 pb-16">
-                <h2 id="action-result" className="scroll-mt-24 mb-4">Action & Result</h2>
-                <p className="text-gray-600 mb-10 max-w-3xl text-lg">
-                    Execute the request with transparency. Use an animated 'In Progress' state for actions taking &gt;1 second, and provide clear proof of completion.
-                </p>
-
-                <PatternSection
-                    title="Action Execution & Feedback"
-                    description="Use the Action Status component to communicate ongoing work. For actions that take more than a few seconds, an animated 'In Progress' state assures the user that the system is working. Upon completion, transition to a 'Success' state that confirms the result and provides links to relevant records or next steps."
-                >
-                    <div className="space-y-16">
-                        <ExampleShowcase
-                            title="EXAMPLE: REMOVE USER (RECRUITER)"
-                            rationale={[
-                                "Confirms specific details (Name/Email) before execution",
-                                "Uses animated status for transparency during processing",
-                                "Provides direct link to verify results in Admin Center"
-                            ]}
-                        >
-                            <RemovingUserExample />
-                        </ExampleShowcase>
-                        <div>
-                            <GuidelineGrid
-                                dos={[
-                                    "Use the 'In Progress' state for actions taking >1 second.",
-                                    "Provide a direct link to the affected record in the 'Complete' state.",
-                                    "Clearly state what was done (e.g., 'User removed') rather than generic success messages."
-                                ]}
-                                donts={[
-                                    "Leave the user guessing if the system is stuck.",
-                                    "Use generic 'Success' toasts for complex actions where context matters.",
-                                    "Fail silently without explaining what happened."
-                                ]}
-                            />
-                        </div>
-                    </div>
-                </PatternSection>
-            </div>
-
-            {/* 5. Follow Up */}
+            {/* 4. Action */}
             <div>
-                <h2 id="follow-up" className="scroll-mt-24 mb-4">Follow Up</h2>
+                <h2 id="action" className="scroll-mt-24 mb-4">Action</h2>
                 <p className="text-gray-600 mb-10 max-w-3xl text-lg">
-                    Don't just end the conversation. Proactively suggest logical next steps to keep the workflow moving.
+                    Do the work confidently. Keep the user in the loop, verify the result, and proactively suggest what comes next.
                 </p>
-                <PatternSection
-                    title="Proactive Suggestions"
-                    description="Once a task is finished, anticipate what the user might want to do next. Use Prompts to offer one-click shortcuts to related actions, saving the user from having to type their next intent."
-                >
-                    <div className="space-y-16">
-                        <ExampleShowcase
-                            title="EXAMPLE: POST-ACTION OPTIONS"
-                            rationale={[
-                                "Acknowledges completion via the visible Action Status",
-                                "Immediately offers relevant next steps (e.g., repeating the action)",
-                                "Keeps the agent helpful and forward-looking"
-                            ]}
-                        >
-                            <FollowUpExample />
-                        </ExampleShowcase>
 
-                        <div>
-                            <GuidelineGrid
-                                dos={[
-                                    "Suggest relevant actions based on the task just completed.",
-                                    "Keep prompts concise and action-oriented.",
-                                    "Ask an open-ended question ('How else can I help?') to reset context."
+                <div className="space-y-16">
+                    <PatternSection
+                        title="Transparency & Feedback"
+                        description="If it takes more than a second, show them you're working on it. When finished, confirm it clearly and link them to the result."
+                    >
+                        <div className="space-y-16">
+                            <ExampleShowcase
+                                title="EXAMPLE: REMOVE USER (RECRUITER)"
+                                rationale={[
+                                    "Confirms details before executing.",
+                                    "Shows 'In Progress' so they know it's working.",
+                                    "Links directly to the record so they can verify."
                                 ]}
-                                donts={[
-                                    "End the conversation immediately after an action.",
-                                    "Suggest unrelated or random capabilities.",
-                                    "Overwhelm the user with too many options (keep it to 2-3)."
-                                ]}
-                            />
+                            >
+                                <RemovingUserExample />
+                            </ExampleShowcase>
+                            <div>
+                                <GuidelineGrid
+                                    dos={[
+                                        "Use 'In Progress' states for longer actions.",
+                                        "Link to the 'Complete' record whenever possible.",
+                                        "Say exactly what was done (e.g., 'User removed')."
+                                    ]}
+                                    donts={[
+                                        "Don't leave them guessing if it froze.",
+                                        "Don't use generic 'Success' messages if you can be specific.",
+                                        "Don't fail silently."
+                                    ]}
+                                />
+                            </div>
                         </div>
-                    </div>
-                </PatternSection>
+                    </PatternSection>
+
+                    <PatternSection
+                        title="Proactive Suggestions"
+                        description="The job isn't done until they're ready to move on. Suggest the next logical step so they don't have to type it out."
+                    >
+                        <div className="space-y-16">
+                            <ExampleShowcase
+                                title="EXAMPLE: POST-ACTION OPTIONS"
+                                rationale={[
+                                    "Acknowledges the action is done.",
+                                    "Suggests logical next steps (like doing it again).",
+                                    "Asks 'How else can I help?' to reset the flow."
+                                ]}
+                            >
+                                <FollowUpExample />
+                            </ExampleShowcase>
+
+                            <div>
+                                <GuidelineGrid
+                                    dos={[
+                                        "Suggest relevant next steps.",
+                                        "Keep prompts short and actionable.",
+                                        "Reset the context with an open-ended question."
+                                    ]}
+                                    donts={[
+                                        "Don't cut the conversation dead.",
+                                        "Don't suggest random, unrelated things.",
+                                        "Don't offer too many options."
+                                    ]}
+                                />
+                            </div>
+                        </div>
+                    </PatternSection>
+
+                    <PatternSection
+                        title="Handling Capability Limits"
+                        description="Be honest when the AI can't do something. Don't just apologize—offer a self-serve alternative so the user isn't stuck."
+                    >
+                        <div className="space-y-16">
+                            <ExampleShowcase
+                                title="EXAMPLE: GUIDANCE OVER ACTION (RECRUITER)"
+                                rationale={[
+                                    "Admits limitation clearly but politely.",
+                                    "Provide the 'How-To' steps immediately in chat.",
+                                    "Links to the official documentation for verification."
+                                ]}
+                            >
+                                <ParkingLicenseExample />
+                            </ExampleShowcase>
+
+                            <div>
+                                <GuidelineGrid
+                                    dos={[
+                                        "Say 'I can't do that yet, but here is how you can...'",
+                                        "Provide the steps directly in the chat window.",
+                                        "Link to the source article."
+                                    ]}
+                                    donts={[
+                                        "Don't just say 'I can't do that'.",
+                                        "Don't make them search for the help article themselves.",
+                                        "Don't promise actions you can't deliver."
+                                    ]}
+                                />
+                            </div>
+                        </div>
+                    </PatternSection>
+                </div>
             </div>
         </PatternPage>
     );
@@ -555,7 +674,7 @@ const FollowUpExample = () => {
                 />
 
                 {/* Prompts */}
-                <div className="pl-12">
+                <div>
                     <PromptGroup
                         prompts={[
                             { text: "Remove another user" },
@@ -568,4 +687,79 @@ const FollowUpExample = () => {
     );
 };
 
+// Example Component (from User Request)
+const ParkingLicenseExample = () => {
+    return (
+        <Container
+            headerTitle="Help"
+            className="h-[600px] shadow-sm"
+            viewport="desktop"
+        >
+            <div className="space-y-vca-lg px-4 pt-4">
+                <Message
+                    type="user"
+                    userText="Park a license"
+                    className="flex justify-end"
+                />
+
+                <Message
+                    type="ai"
+                    defaultText="While I'm not able to park a license for you right now, here's an easy guide to help you do it yourself."
+                />
+
+                <InfoMessage
+                    title="To park a license in LinkedIn Recruiter, follow these steps:"
+                    message={
+                        <div className="space-y-4 font-vca-text text-vca-small-open text-vca-text [&_p]:text-vca-small-open [&_ul]:text-vca-small-open [&_ol]:text-vca-small-open [&_li]:text-vca-small-open">
+                            <ol className="list-decimal list-outside ml-4 space-y-2">
+                                <li><span className="font-semibold">Sign in to Recruiter.</span></li>
+                                <li>
+                                    <span className="font-semibold">Access the Admin Center:</span> Move your cursor over your profile picture at the top of your Recruiter homepage and select <span className="font-semibold">Manage users in Admin Center</span> from the dropdown.
+                                </li>
+                                <li>
+                                    <span className="font-semibold">Locate the User:</span> In the Users tab, find the user whose license you want to park. You can filter by license type, status, or search by name/email.
+                                </li>
+                                <li>
+                                    <span className="font-semibold">Park the License:</span> Click the <span className="font-semibold">More</span> icon next to the user and select <span className="font-semibold">Park</span> from the dropdown.
+                                </li>
+                            </ol>
+                            <p className="font-semibold">
+                                Important Note: The number of times a license can be parked is limited and varies by contract. For example, if your organization has 15 seats, you can park 15 licenses every 30 days.
+                            </p>
+                            <p>
+                                For more detailed guidance, you can refer to the <a href="#" className="font-bold text-vca-link hover:underline">LinkedIn Help Center article on managing licenses.</a>
+                            </p>
+                        </div>
+                    }
+                    showSources={true}
+                    sources={[
+                        { text: "Remove or park a license in LinkedIn Admin Center for Recruiter", href: "#" },
+                        { text: "Actions admins can take to manage user licenses in Recruiter", href: "#" }
+                    ]}
+                    showRating={true}
+                />
+            </div>
+        </Container>
+    );
+};
+
 export default ConversationFlowPatternView;
+
+interface ProcessStepProps {
+    number: string;
+    title: string;
+    icon: string;
+    desc: string;
+}
+
+const ProcessStep = ({ number, title, icon, desc }: ProcessStepProps) => (
+    <div className="flex flex-col items-center text-center group">
+        <div className="w-12 h-12 rounded-full bg-white border border-gray-200 flex items-center justify-center text-xl mb-3 shadow-sm group-hover:border-blue-300 group-hover:shadow-md transition-all">
+            {icon}
+        </div>
+        <div className="text-xs font-mono text-gray-400 font-medium mb-1">{number}</div>
+        <div className="font-semibold text-vca-text text-sm mb-1">{title}</div>
+        <div className="text-xs text-gray-500 leading-tight px-2">{desc}</div>
+    </div>
+);
+

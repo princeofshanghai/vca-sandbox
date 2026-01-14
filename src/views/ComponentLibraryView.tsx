@@ -36,6 +36,7 @@ import AgentBannerComponentView from './components/AgentBannerComponentView';
 import DividerComponentView from './components/DividerComponentView';
 import FeedbackComponentView from './components/FeedbackComponentView';
 import ConversationFlowPatternView from './patterns/ConversationFlowPatternView';
+import HumanHandoffPatternView from './patterns/HumanHandoffPatternView';
 
 
 const ComponentLibraryView = () => {
@@ -63,21 +64,6 @@ const ComponentLibraryView = () => {
         isMobileOpen={state.mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
       >
-        {/* Patterns */}
-        <CollapsibleSection
-          title="Patterns"
-          expanded={patternsExpanded}
-          onToggle={() => setPatternsExpanded(!patternsExpanded)}
-        >
-          <NavigationGroup className="mb-6">
-            {componentNavigation.patterns.map((item) => (
-              <NavLink key={item.path} to={item.path} isActive={isActive(item.path)}>
-                {item.label}
-              </NavLink>
-            ))}
-          </NavigationGroup>
-        </CollapsibleSection>
-
         {/* Foundations */}
         <CollapsibleSection
           title="Foundations"
@@ -99,25 +85,43 @@ const ComponentLibraryView = () => {
           expanded={componentsExpanded}
           onToggle={() => setComponentsExpanded(!componentsExpanded)}
         >
-          {componentNavigation.components.map((category, categoryIndex) => (
-            <NavigationGroup
-              key={category.label}
-              label={category.label}
-              className={categoryIndex > 0 ? 'mt-6' : ''}
-            >
-              {category.items.map((item) => (
-                <NavLink key={item.path} to={item.path} isActive={isActive(item.path)}>
-                  {item.label}
-                </NavLink>
-              ))}
-            </NavigationGroup>
-          ))}
+          <div className="mb-6">
+            {componentNavigation.components.map((category, categoryIndex) => (
+              <NavigationGroup
+                key={category.label}
+                label={category.label}
+                className={categoryIndex > 0 ? 'mt-6' : ''}
+              >
+                {category.items.map((item) => (
+                  <NavLink key={item.path} to={item.path} isActive={isActive(item.path)}>
+                    {item.label}
+                  </NavLink>
+                ))}
+              </NavigationGroup>
+            ))}
+          </div>
+        </CollapsibleSection>
+
+        {/* Patterns */}
+        <CollapsibleSection
+          title="Patterns"
+          expanded={patternsExpanded}
+          onToggle={() => setPatternsExpanded(!patternsExpanded)}
+        >
+          <NavigationGroup className="mb-6">
+            {componentNavigation.patterns.map((item) => (
+              <NavLink key={item.path} to={item.path} isActive={isActive(item.path)}>
+                {item.label}
+              </NavLink>
+            ))}
+          </NavigationGroup>
         </CollapsibleSection>
       </Sidebar>
 
       <MainContent>
         <Routes>
           <Route path="conversation-flow" element={<ConversationFlowPatternView />} />
+          <Route path="live-agent" element={<HumanHandoffPatternView />} />
 
 
 

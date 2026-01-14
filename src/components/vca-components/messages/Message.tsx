@@ -1,6 +1,7 @@
 import { cn } from '@/utils';
 import { AgentTimestamp } from '../agent-timestamp';
 import { InlineFeedback } from '../inline-feedback';
+import { ThinkingIndicator } from '../thinking-indicator/ThinkingIndicator';
 
 // ============================================================
 // Main Message Component
@@ -14,6 +15,7 @@ export type MessageProps = {
   defaultText?: string | React.ReactNode;
   agentTimestampText?: string;
   type?: 'human-agent' | 'ai' | 'disclaimer' | 'user';
+  isThinking?: boolean;
   className?: string;
 };
 
@@ -26,6 +28,7 @@ export const Message = ({
   defaultText = 'This is a message',
   agentTimestampText,
   type = 'ai',
+  isThinking = false,
   className,
 }: MessageProps) => {
   // Disclaimer type - AI disclaimer with link
@@ -83,9 +86,13 @@ export const Message = ({
   return (
     <div className={cn('flex flex-col gap-vca-lg items-start', className)}>
       <div className="flex flex-col gap-vca-s items-start w-full">
-        <div className="font-vca-text text-vca-small-open text-vca-text w-full [&_p]:text-vca-small-open [&_ul]:text-vca-small-open [&_ol]:text-vca-small-open [&_li]:text-vca-small-open">
-          {defaultText}
-        </div>
+        {isThinking ? (
+          <ThinkingIndicator />
+        ) : (
+          <div className="font-vca-text text-vca-small-open text-vca-text w-full [&_p]:text-vca-small-open [&_ul]:text-vca-small-open [&_ol]:text-vca-small-open [&_li]:text-vca-small-open">
+            {defaultText}
+          </div>
+        )}
       </div>
     </div>
   );

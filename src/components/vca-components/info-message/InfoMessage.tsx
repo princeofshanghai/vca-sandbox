@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import { VcaIcon } from '../icons';
 import { Feedback, FeedbackValue } from '../feedback';
 import { Sources } from '../sources';
@@ -6,7 +7,7 @@ import { cn } from '@/utils';
 export type InfoMessageProps = {
   type?: 'default' | 'response-stopped';
   title?: string;
-  message?: string;
+  message?: string | ReactNode;
   showTitle?: boolean;
   showResponseStopped?: boolean;
   showSources?: boolean;
@@ -28,8 +29,8 @@ export type InfoMessageProps = {
  */
 export const InfoMessage = ({
   type = 'default',
-  title = 'Optional title',
-  message = 'This is the message this is the message this is the message this is the message this is the message.',
+  title,
+  message,
   showTitle = true,
   showResponseStopped = false,
   showSources = true,
@@ -39,31 +40,31 @@ export const InfoMessage = ({
   onFeedbackChange,
   className,
 }: InfoMessageProps) => {
-  
+
   // Response stopped variant - simplified
   if (type === 'response-stopped') {
     return (
       <div className={cn('flex flex-col gap-vca-xl items-start w-full', className)}>
-          {/* Response Stopped Feedback */}
-          <div className="flex gap-vca-xs items-center w-full">
-            <div className="flex gap-vca-xs items-center flex-1">
-              <VcaIcon icon="close" size="sm" className="text-vca-text-neutral" />
-              <p className="font-vca-text text-vca-small text-vca-text-neutral">
-                Response stopped
-              </p>
+        {/* Response Stopped Feedback */}
+        <div className="flex gap-vca-xs items-center w-full">
+          <div className="flex gap-vca-xs items-center flex-1">
+            <VcaIcon icon="close" size="sm" className="text-vca-text-neutral" />
+            <p className="font-vca-text text-vca-small text-vca-text-neutral">
+              Response stopped
+            </p>
           </div>
         </div>
       </div>
     );
   }
-  
+
   // Default variant - full featured
   return (
     <div className={cn('flex flex-col items-start w-full', className)}>
       {/* Title and Message with 16px gap */}
       <div className="flex flex-col gap-vca-lg items-start w-full">
         {/* Optional Title */}
-        {showTitle && (
+        {showTitle && title && (
           <div className="flex flex-col justify-center min-w-full">
             <p className="font-vca-text text-vca-small-bold text-vca-text">
               {title}
@@ -72,39 +73,39 @@ export const InfoMessage = ({
         )}
 
         {/* Message Text */}
-        <p className="font-vca-text text-vca-small-open text-vca-text">
+        <div className="font-vca-text text-vca-small-open text-vca-text">
           {message}
-        </p>
+        </div>
       </div>
 
-        {/* Optional Response Stopped Feedback */}
-        {showResponseStopped && (
+      {/* Optional Response Stopped Feedback */}
+      {showResponseStopped && (
         <div className="flex gap-vca-xs items-center w-full mt-vca-xl">
-            <div className="flex gap-vca-xs items-center flex-1">
-              <VcaIcon icon="close" size="sm" className="text-vca-text-neutral" />
-              <p className="font-vca-text text-vca-small text-vca-text-neutral">
-                Response stopped
-              </p>
-            </div>
+          <div className="flex gap-vca-xs items-center flex-1">
+            <VcaIcon icon="close" size="sm" className="text-vca-text-neutral" />
+            <p className="font-vca-text text-vca-small text-vca-text-neutral">
+              Response stopped
+            </p>
           </div>
-        )}
+        </div>
+      )}
 
       {/* Optional Sources - 20px gap from message */}
-        {showSources && sources && (
+      {showSources && sources && (
         <div className="mt-vca-xl w-full">
           <Sources sources={sources} />
         </div>
-        )}
+      )}
 
       {/* Optional Rating - 20px gap from sources */}
-        {showRating && (
+      {showRating && (
         <div className="flex items-center justify-start w-full mt-vca-xl">
-          <Feedback 
+          <Feedback
             value={feedbackValue}
             onChange={onFeedbackChange}
-            />
-          </div>
-        )}
+          />
+        </div>
+      )}
     </div>
   );
 };

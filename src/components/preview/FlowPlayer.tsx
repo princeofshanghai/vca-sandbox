@@ -95,7 +95,8 @@ export const FlowPlayer = ({
 
         if (nodes && edges && nodes.length > 0) {
             // Smart Flow Mode
-            smartEngineRef.current = new SmartFlowEngine(nodes, edges);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            smartEngineRef.current = new SmartFlowEngine(nodes as any, edges);
             const startMsgs = smartEngineRef.current.start();
             setFlowMessages(mapSmartMessagesToFlowMessages(startMsgs));
         }
