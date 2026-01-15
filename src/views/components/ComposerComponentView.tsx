@@ -2,19 +2,19 @@ import { useState } from 'react';
 import { Composer } from '@/components/vca-components/composer';
 import { DemoSection } from '@/components/component-library/DemoSection';
 import { ComponentViewLayout } from '@/components/component-library/ComponentViewLayout';
-import type { ComposerState } from '@/components/vca-components/composer/Composer';
+import type { ComposerStatus } from '@/components/vca-components/composer/Composer';
 import { ToggleButtons, FormCheckbox } from '@/components/component-library/DemoControls';
 import { Label } from '@/components/ui/label';
 
 const ComposerComponentView = () => {
   // Interactive demo state
-  const [manualState, setManualState] = useState<ComposerState | null>(null);
+  const [manualState, setManualState] = useState<ComposerStatus | null>(null);
   const [attachment, setAttachment] = useState(true);
   const [value, setValue] = useState('');
 
   // Auto-determine state based on interaction (unless manually overridden)
-  const getActiveState = (): ComposerState => {
-    if (manualState === 'disabled' || manualState === 'stop') {
+  const getActiveState = (): ComposerStatus => {
+    if (manualState) {
       return manualState;
     }
 
@@ -30,7 +30,7 @@ const ComposerComponentView = () => {
 
   const activeState = getActiveState();
 
-  const handleStateClick = (s: ComposerState) => {
+  const handleStateClick = (s: ComposerStatus) => {
     // Toggle manual state - if clicking the same state, turn off manual mode
     if (manualState === s) {
       setManualState(null);
@@ -58,7 +58,7 @@ const ComposerComponentView = () => {
                 </div>
                 <ToggleButtons
                   label=""
-                  options={['disabled', 'stop'] as const}
+                  options={['default', 'active', 'typing', 'multiline', 'disabled', 'stop'] as const}
                   value={manualState || 'disabled'}
                   onChange={(s) => handleStateClick(s)}
                 />
@@ -78,7 +78,7 @@ const ComposerComponentView = () => {
         >
           <div className="w-[400px] mx-auto my-4 border-b border-x border-gray-200 rounded-lg overflow-hidden">
             <Composer
-              state={activeState}
+              status={activeState}
               value={value}
               attachment={attachment}
               onSend={() => {
@@ -108,7 +108,7 @@ const ComposerComponentView = () => {
               <p className="mb-3">Empty input field ready for user input.</p>
               <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
                 <div className="w-[400px] mx-auto my-4 border-b border-x border-gray-200 rounded-lg overflow-hidden">
-                  <Composer state="default" />
+                  <Composer status="default" />
                 </div>
               </div>
             </div>
@@ -119,7 +119,7 @@ const ComposerComponentView = () => {
               <p className="mb-3">Input field in focused state with cursor blinker.</p>
               <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
                 <div className="w-[400px] mx-auto my-4 border-b border-x border-gray-200 rounded-lg overflow-hidden">
-                  <Composer state="active" />
+                  <Composer status="active" />
                 </div>
               </div>
             </div>
@@ -130,7 +130,18 @@ const ComposerComponentView = () => {
               <p className="mb-3">Input field with text being entered.</p>
               <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
                 <div className="w-[400px] mx-auto my-4 border-b border-x border-gray-200 rounded-lg overflow-hidden">
-                  <Composer state="typing" value="How to" />
+                  <Composer status="typing" value="How to" />
+                </div>
+              </div>
+            </div>
+
+            {/* Ready to send State */}
+            <div>
+              <h3 className="mb-2">Ready to Send</h3>
+              <p className="mb-3">Input field with content, enabling the send button.</p>
+              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                <div className="w-[400px] mx-auto my-4 border-b border-x border-gray-200 rounded-lg overflow-hidden">
+                  <Composer status="typing" value="Hello world" />
                 </div>
               </div>
             </div>
@@ -142,7 +153,7 @@ const ComposerComponentView = () => {
               <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
                 <div className="w-[400px] mx-auto my-4 border-b border-x border-gray-200 rounded-lg overflow-hidden">
                   <Composer
-                    state="multiline"
+                    status="multiline"
                     value="Use this component when the content is more than two lines. The input box reaches its maximum height at 4 lines."
                   />
                 </div>
@@ -155,7 +166,7 @@ const ComposerComponentView = () => {
               <p className="mb-3">Non-interactive disabled state.</p>
               <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
                 <div className="w-[400px] mx-auto my-4 border-b border-x border-gray-200 rounded-lg overflow-hidden">
-                  <Composer state="disabled" />
+                  <Composer status="disabled" />
                 </div>
               </div>
             </div>
@@ -166,7 +177,7 @@ const ComposerComponentView = () => {
               <p className="mb-3">Special state shown when AI is generating a response.</p>
               <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
                 <div className="w-[400px] mx-auto my-4 border-b border-x border-gray-200 rounded-lg overflow-hidden">
-                  <Composer state="stop" />
+                  <Composer status="stop" />
                 </div>
               </div>
             </div>
@@ -177,7 +188,7 @@ const ComposerComponentView = () => {
               <p className="mb-3">Composer without the attachment icon.</p>
               <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
                 <div className="w-[400px] mx-auto my-4 border-b border-x border-gray-200 rounded-lg overflow-hidden">
-                  <Composer state="default" attachment={false} />
+                  <Composer status="default" attachment={false} />
                 </div>
               </div>
             </div>

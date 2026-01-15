@@ -6,13 +6,13 @@ import { ToggleButtons, FormTextarea, FormCheckbox } from '@/components/componen
 
 const MessageComponentView = () => {
   // Interactive demo state
-  const [type, setType] = useState<'ai' | 'user' | 'human-agent' | 'disclaimer'>('ai');
+  const [variant, setVariant] = useState<'ai' | 'user' | 'human-agent' | 'disclaimer'>('ai');
   const [text, setText] = useState('This is a sample message');
   const [errorFeedback, setErrorFeedback] = useState(false);
 
   // Determine which text prop to use based on type
   const getTextProps = () => {
-    switch (type) {
+    switch (variant) {
       case 'ai':
         return { defaultText: text };
       case 'user':
@@ -38,10 +38,10 @@ const MessageComponentView = () => {
           controls={
             <div className="grid grid-cols-2 gap-x-8 gap-y-4">
               <ToggleButtons
-                label="Type"
+                label="Variant"
                 options={['ai', 'user', 'human-agent', 'disclaimer'] as const}
-                value={type}
-                onChange={setType}
+                value={variant}
+                onChange={setVariant}
               />
 
               <FormCheckbox
@@ -49,10 +49,10 @@ const MessageComponentView = () => {
                 label="Show error (user only)"
                 checked={errorFeedback}
                 onCheckedChange={setErrorFeedback}
-                disabled={type !== 'user'}
+                disabled={variant !== 'user'}
               />
 
-              {type !== 'disclaimer' && (
+              {variant !== 'disclaimer' && (
                 <FormTextarea
                   id="text"
                   label="Message text"
@@ -68,9 +68,9 @@ const MessageComponentView = () => {
         >
           <div className="w-[352px] mx-auto px-vca-xxl">
             <Message
-              type={type}
+              variant={variant}
               {...getTextProps()}
-              errorFeedback={type === 'user' ? errorFeedback : undefined}
+              errorFeedback={variant === 'user' ? errorFeedback : undefined}
             />
           </div>
         </DemoSection>
@@ -85,7 +85,7 @@ const MessageComponentView = () => {
               <p className="mb-3">Messages sent by AI are basic with minimal styling.</p>
               <div className="bg-white border border-gray-200 rounded-lg p-4">
                 <div className="px-vca-xxl">
-                  <Message type="ai" defaultText="Hi there. With the help of AI, I can answer questions about administration or connect you to someone who can." />
+                  <Message variant="ai" defaultText="Hi there. With the help of AI, I can answer questions about administration or connect you to someone who can." />
                 </div>
               </div>
             </div>
@@ -95,7 +95,7 @@ const MessageComponentView = () => {
               <p className="mb-3">User-submitted messages are displayed on the right, with a subtle beige background.</p>
               <div className="bg-white border border-gray-200 rounded-lg p-4">
                 <div className="px-vca-xxl">
-                  <Message type="user" userText="Why was my contest campaign rejected if it falls within Linkedin Contest guidelines? I need that campaign to be running." />
+                  <Message variant="user" userText="Why was my contest campaign rejected if it falls within Linkedin Contest guidelines? I need that campaign to be running." />
                 </div>
               </div>
             </div>
@@ -105,7 +105,7 @@ const MessageComponentView = () => {
               <p className="mb-3">Failed user messages can be re-submitted inline.</p>
               <div className="bg-white border border-gray-200 rounded-lg p-4">
                 <div className="px-vca-xxl">
-                  <Message type="user" userText="This message failed to send" errorFeedback={true} />
+                  <Message variant="user" userText="This message failed to send" errorFeedback={true} />
                 </div>
               </div>
             </div>
@@ -115,7 +115,7 @@ const MessageComponentView = () => {
               <p className="mb-3">Live human agent messages are displayed with a subtle blue background, along with avatar, name, and timestamp.</p>
               <div className="bg-white border border-gray-200 rounded-lg p-4">
                 <div className="px-vca-xxl">
-                  <Message type="human-agent" humanAgentText="Hi Nick, how can I help?" />
+                  <Message variant="human-agent" humanAgentText="Hi Nick, how can I help?" />
                 </div>
               </div>
             </div>

@@ -1,10 +1,11 @@
+import React from 'react';
 import { cn } from '@/utils';
 import { VcaIcon } from '@/components/vca-components/icons';
 import type { VcaIconProps } from '@/components/vca-components/icons/VcaIcon';
 
 type ButtonProps = {
   /** Button text */
-  children: string;
+  children: React.ReactNode;
   /** Button type/style variant */
   variant?: 'primary' | 'secondary' | 'tertiary';
   /** Visual emphasis level */
@@ -21,7 +22,7 @@ type ButtonProps = {
   className?: string;
 };
 
-const Button = ({ 
+const Button = ({
   children,
   variant = 'primary',
   emphasis = true,
@@ -31,7 +32,7 @@ const Button = ({
   onClick,
   className
 }: ButtonProps) => {
-  
+
   // Base styles - always applied (typography removed to avoid cn() conflicts)
   const baseStyles = cn(
     'inline-flex items-center justify-center',
@@ -44,7 +45,7 @@ const Button = ({
     'cursor-pointer',
     disabled && 'cursor-not-allowed'
   );
-  
+
   // Typography classes applied separately to avoid cn() removing them
   const textClasses = 'font-vca-text text-vca-small-bold tracking-[-0.15px]';
 

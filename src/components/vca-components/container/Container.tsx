@@ -20,6 +20,7 @@ export type ContainerProps = {
   className?: string;
   contentRef?: RefObject<HTMLDivElement>;
   composerValue?: string;
+  composerStatus?: 'default' | 'active' | 'typing' | 'multiline' | 'disabled' | 'stop';
   onComposerChange?: (value: string) => void;
   onComposerSend?: () => void;
   hideHeader?: boolean;
@@ -45,6 +46,7 @@ export const Container = ({
   className,
   contentRef,
   composerValue: externalComposerValue,
+  composerStatus = 'default',
   onComposerChange: externalOnComposerChange,
   onComposerSend: externalOnComposerSend,
   hideHeader = false,
@@ -116,6 +118,7 @@ export const Container = ({
 
       {/* Composer - Fixed at bottom */}
       <Composer
+        status={composerStatus}
         value={composerValue}
         onChange={setComposerValue}
         onSend={handleSend}

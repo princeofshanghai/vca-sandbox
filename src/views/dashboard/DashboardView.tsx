@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Grid, Folder, FolderPlus, Trash2 } from 'lucide-react';
+import { Plus, Search, Folder, FolderPlus, Trash2, MessageSquare } from 'lucide-react';
 import { flowStorage, FlowMetadata, Folder as FolderType } from '@/utils/flowStorage';
 import { FlowCard } from '@/components/dashboard/FlowCard';
 import { Button } from '@/components/ui/button';
@@ -74,14 +74,14 @@ export const DashboardView = () => {
                                 : "text-gray-700 hover:bg-gray-50"
                         )}
                     >
-                        <Grid size={16} />
+                        <MessageSquare size={16} strokeWidth={1.25} />
                         All conversations
                     </button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-4">
                     <div className="flex items-center justify-between mb-2 px-1">
-                        <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Folders</h2>
+                        <h2 className="text-sm font-medium text-gray-900">Folders</h2>
                         <button
                             onClick={() => setIsCreatingFolder(true)}
                             className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-600 transition-colors"
@@ -152,7 +152,7 @@ export const DashboardView = () => {
                             className="bg-black text-white hover:bg-gray-800 gap-2"
                         >
                             <Plus size={18} />
-                            New {activeFolderId ? 'in Folder' : 'Conversation'}
+                            New {activeFolderId ? 'in Folder' : 'conversation'}
                         </Button>
                     </div>
 
@@ -195,7 +195,7 @@ export const DashboardView = () => {
                                 variant="outline"
                                 onClick={handleCreateFlow}
                             >
-                                Create New
+                                Create new
                             </Button>
                         </div>
                     )}

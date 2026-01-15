@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { SourceLink } from '@/components/vca-components/source-link';
-import type { SourceLinkState } from '@/components/vca-components/source-link/SourceLink';
+import type { SourceLinkStatus } from '@/components/vca-components/source-link/SourceLink';
 import { DemoSection } from '@/components/component-library/DemoSection';
 import { ComponentViewLayout } from '@/components/component-library/ComponentViewLayout';
 import { ToggleButtons, FormInput, FormCheckbox } from '@/components/component-library/DemoControls';
 
 const SourceLinkComponentView = () => {
   // Interactive demo state
-  const [state, setState] = useState<SourceLinkState>('enabled');
+  const [status, setStatus] = useState<SourceLinkStatus>('enabled');
   const [text, setText] = useState('This is title of link');
   const [hasHref, setHasHref] = useState(true);
 
@@ -23,10 +23,10 @@ const SourceLinkComponentView = () => {
           controls={
             <div className="grid grid-cols-2 gap-x-8 gap-y-4">
               <ToggleButtons
-                label="State"
+                label="Status"
                 options={['enabled', 'hover', 'active', 'visited'] as const}
-                value={state}
-                onChange={setState}
+                value={status}
+                onChange={setStatus}
               />
 
               <FormCheckbox
@@ -49,7 +49,7 @@ const SourceLinkComponentView = () => {
         >
           <div className="px-vca-xxl">
             <SourceLink
-              state={state}
+              status={status}
               text={text}
               href={hasHref ? 'https://example.com' : undefined}
             />
@@ -70,7 +70,7 @@ const SourceLinkComponentView = () => {
               <div className="bg-white border border-gray-200 rounded-lg p-4">
                 <div className="px-vca-xxl">
                   <SourceLink
-                    state="enabled"
+                    status="enabled"
                     text="This is title of link"
                     href="https://example.com"
                   />
@@ -85,7 +85,7 @@ const SourceLinkComponentView = () => {
               <div className="bg-white border border-gray-200 rounded-lg p-4">
                 <div className="px-vca-xxl">
                   <SourceLink
-                    state="hover"
+                    status="hover"
                     text="This is title of link"
                   />
                 </div>
@@ -99,7 +99,7 @@ const SourceLinkComponentView = () => {
               <div className="bg-white border border-gray-200 rounded-lg p-4">
                 <div className="px-vca-xxl">
                   <SourceLink
-                    state="active"
+                    status="active"
                     text="This is title of link"
                   />
                 </div>
@@ -113,7 +113,7 @@ const SourceLinkComponentView = () => {
               <div className="bg-white border border-gray-200 rounded-lg p-4">
                 <div className="px-vca-xxl">
                   <SourceLink
-                    state="visited"
+                    status="visited"
                     text="This is title of link"
                   />
                 </div>
@@ -129,7 +129,7 @@ const SourceLinkComponentView = () => {
                   <p className="font-vca-text text-[14px] leading-[21px] text-vca-text">
                     According to recent research, user engagement increased by 45% after implementing AI recommendations.{' '}
                     <SourceLink
-                      state="enabled"
+                      status="enabled"
                       text="Source: LinkedIn Study 2024"
                       href="https://example.com/study"
                     />
@@ -147,17 +147,17 @@ const SourceLinkComponentView = () => {
                   <p className="font-vca-text text-[14px] leading-[21px] text-vca-text">
                     The data shows significant improvements in productivity (
                     <SourceLink
-                      state="enabled"
+                      status="enabled"
                       text="Study A"
                       href="https://example.com/a"
                     />, {' '}
                     <SourceLink
-                      state="visited"
+                      status="visited"
                       text="Study B"
                       href="https://example.com/b"
                     />) and user satisfaction (
                     <SourceLink
-                      state="enabled"
+                      status="enabled"
                       text="Survey 2024"
                       href="https://example.com/survey"
                     />).

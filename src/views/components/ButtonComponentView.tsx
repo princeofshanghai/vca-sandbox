@@ -87,12 +87,12 @@ const ButtonComponentView = () => {
               <div className="bg-white border border-gray-200 rounded-lg p-4">
                 <div className="w-[352px] mx-auto">
                   <ActionMessage
-                    state="default"
-                    title="Add seat assignments"
-                    impactText="+25% engagement"
-                    showImpact={true}
-                    description="Assign seats to all pending users in your organization. This will improve team collaboration and product adoption."
-                  />
+                    status="default"
+                    title="Your campaign is underperforming"
+                    impactText="impact"
+                  >
+                    'Campaign A' is currently trailing behind competitors with 2.9% fewer impressions among your target audience.
+                  </ActionMessage>
                 </div>
               </div>
             </div>

@@ -6,8 +6,6 @@ export type AgentTimestampProps = {
   agentName?: string;
   /** Time of message (e.g., "1:32 PM") */
   timestamp?: string;
-  /** Full formatted text (legacy - will be deprecated) */
-  text?: string;
   /** Avatar image source */
   avatarSrc?: string;
   /** Show online badge on avatar */
@@ -31,23 +29,20 @@ export type AgentTimestampProps = {
  * />
  * ```
  */
-export const AgentTimestamp = ({ 
+export const AgentTimestamp = ({
   agentName = 'Agent',
   timestamp = '1:32 PM',
-  text,
   avatarSrc,
   showBadge = true,
   className,
 }: AgentTimestampProps) => {
-  
-  // If legacy 'text' prop is provided, use it directly
-  // Otherwise, format from agentName and timestamp (with two spaces between)
-  const displayText = text || `${agentName}  ${timestamp}`;
-  
+
+  const displayText = `${agentName}  ${timestamp}`;
+
   return (
     <div className={cn('flex gap-vca-s items-center', className)}>
-      <Avatar 
-        size={24} 
+      <Avatar
+        size={24}
         src={avatarSrc}
         alt={agentName}
         showBadge={showBadge}

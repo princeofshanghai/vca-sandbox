@@ -23,16 +23,17 @@ export const PromptGroup = ({
   ],
   className,
 }: PromptGroupProps) => {
-  
+
   return (
     <div className={cn('flex flex-col gap-vca-s items-start', className)}>
       {prompts.map((prompt, index) => (
-        <Prompt 
+        <Prompt
           key={index}
-          text={prompt.text}
           showAiIcon={prompt.showAiIcon}
           onClick={prompt.onClick}
-        />
+        >
+          {prompt.text}
+        </Prompt>
       ))}
     </div>
   );

@@ -73,6 +73,44 @@ export const MarkdownEditor = ({
         }, 0);
     };
 
+    const handleList = () => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const text = textarea.value;
+
+        const before = text.substring(0, start);
+        // Expand selection to include full lines if selection exists
+        // simplified version: just treat selection as is, or maybe find line start?
+        // For now, let's keep it simple: split selected text by newline.
+
+        const selection = text.substring(start, end);
+        const after = text.substring(end);
+
+        // If no selection, just insert "- "
+        if (selection.length === 0) {
+            insertFormat('- ');
+            return;
+        }
+
+        // Split by newline and add "- " to each non-empty line
+        const lines = selection.split('\n');
+        const formattedSelection = lines
+            .map(line => line.trim().length === 0 ? line : `- ${line}`)
+            .join('\n');
+
+        const newText = before + formattedSelection + after;
+        onChange(newText);
+
+        setTimeout(() => {
+            textarea.focus();
+            // Select the formatted text
+            textarea.setSelectionRange(start, start + formattedSelection.length);
+        }, 0);
+    };
+
     return (
         <div className={cn("border border-gray-200 rounded-md bg-white overflow-hidden focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-300 transition-all", className)}>
             {/* Toolbar */}
@@ -81,7 +119,7 @@ export const MarkdownEditor = ({
                 <ToolbarButton icon={Italic} onClick={() => insertFormat('*', '*')} tooltip="Italic" />
                 <div className="w-px h-4 bg-gray-200 mx-1" />
                 <ToolbarButton icon={Link} onClick={handleLink} tooltip="Link" />
-                <ToolbarButton icon={List} onClick={() => insertFormat('- ')} tooltip="List" />
+                <ToolbarButton icon={List} onClick={handleList} tooltip="List" />
                 <ToolbarButton icon={Code} onClick={() => insertFormat('`', '`')} tooltip="Code" />
             </div>
 
@@ -92,8 +130,8 @@ export const MarkdownEditor = ({
                 onChange={(e) => onChange(e.target.value)}
                 placeholder={placeholder}
                 rows={rows}
-                className="w-full p-3 text-sm text-gray-700 placeholder-gray-400 border-0 focus:ring-0 resize-y min-h-[80px] bg-transparent font-mono"
-                style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace' }}
+                className="w-full p-3 text-sm text-gray-700 placeholder-gray-400 border-0 focus:ring-0 resize-y min-h-[80px] bg-transparent"
+
             />
         </div>
     );

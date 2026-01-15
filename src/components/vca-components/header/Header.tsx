@@ -37,15 +37,15 @@ export const Header = ({
   onClose,
   className,
 }: HeaderProps) => {
-  
-  const borderClass = showPremiumBorder 
-    ? 'border-b-2 border-vca-premium-text-brand' 
+
+  const borderClass = showPremiumBorder
+    ? 'border-b-2 border-vca-premium-text-brand'
     : 'border-b border-vca-border-faint';
-  
+
   // Mobile viewport - show only handle bar and close button
   if (viewport === 'mobile') {
     return (
-      <div 
+      <div
         className={cn(
           'relative bg-vca-background h-[64px] w-full flex items-center justify-center',
           borderClass,
@@ -54,13 +54,13 @@ export const Header = ({
       >
         {/* Centered handle bar */}
         <div className="w-12 h-1 bg-gray-400 rounded-full" />
-        
+
         {/* Close button - right side */}
         <div className="absolute right-5 top-1/2 -translate-y-1/2">
-          <ButtonIcon 
-            type="tertiary" 
-            size="md" 
-            emphasis={false} 
+          <ButtonIcon
+            variant="tertiary"
+            size="md"
+            emphasis={false}
             icon="close"
             onClick={onClose}
             ariaLabel="Close"
@@ -69,11 +69,11 @@ export const Header = ({
       </div>
     );
   }
-  
+
   // Center-aligned layout
   if (position === 'center') {
     return (
-      <div 
+      <div
         className={cn(
           'relative bg-vca-background h-[72px] w-full',
           borderClass,
@@ -83,17 +83,17 @@ export const Header = ({
         {/* Back button - left side */}
         {showBack && (
           <div className="absolute left-5 top-1/2 -translate-y-1/2">
-            <ButtonIcon 
-              type="tertiary" 
-              size="md" 
-              emphasis={false} 
+            <ButtonIcon
+              variant="tertiary"
+              size="md"
+              emphasis={false}
               icon="arrow-left"
               onClick={onBack}
               ariaLabel="Go back"
             />
           </div>
         )}
-        
+
         {/* Title - center */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-vca-s">
           {showPremiumIcon && (
@@ -103,23 +103,23 @@ export const Header = ({
             {title}
           </span>
         </div>
-        
+
         {/* Actions - right side */}
         <div className="absolute right-5 top-1/2 -translate-y-1/2 flex items-center">
           {showAction && (
-            <ButtonIcon 
-              type="tertiary" 
-              size="md" 
-              emphasis={false} 
+            <ButtonIcon
+              variant="tertiary"
+              size="md"
+              emphasis={false}
               icon="placeholder"
               onClick={onAction}
               ariaLabel="Minimize"
             />
           )}
-          <ButtonIcon 
-            type="tertiary" 
-            size="md" 
-            emphasis={false} 
+          <ButtonIcon
+            variant="tertiary"
+            size="md"
+            emphasis={false}
             icon="close"
             onClick={onClose}
             ariaLabel="Close"
@@ -128,10 +128,10 @@ export const Header = ({
       </div>
     );
   }
-  
+
   // Left-aligned layout (default)
   return (
-    <div 
+    <div
       className={cn(
         'bg-vca-background h-[72px] w-full flex items-center justify-between px-vca-xl py-vca-xxl gap-vca-lg',
         borderClass,
@@ -141,10 +141,10 @@ export const Header = ({
       {/* Left side - Title */}
       <div className="flex items-center gap-vca-xs">
         {showBack && (
-          <ButtonIcon 
-            type="tertiary" 
-            size="md" 
-            emphasis={false} 
+          <ButtonIcon
+            variant="tertiary"
+            size="md"
+            emphasis={false}
             icon="arrow-left"
             onClick={onBack}
             ariaLabel="Go back"
@@ -159,23 +159,23 @@ export const Header = ({
           </span>
         </div>
       </div>
-      
+
       {/* Right side - Actions */}
       <div className="flex items-center">
         {showAction && (
-          <ButtonIcon 
-            type="tertiary" 
-            size="md" 
-            emphasis={false} 
+          <ButtonIcon
+            variant="tertiary"
+            size="md"
+            emphasis={false}
             icon="placeholder"
             onClick={onAction}
             ariaLabel="Minimize"
           />
         )}
-        <ButtonIcon 
-          type="tertiary" 
-          size="md" 
-          emphasis={false} 
+        <ButtonIcon
+          variant="tertiary"
+          size="md"
+          emphasis={false}
           icon="close"
           onClick={onClose}
           ariaLabel="Close"

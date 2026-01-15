@@ -1,51 +1,51 @@
 
-export type BlockType = 'message' | 'user-input' | 'action' | 'handoff' | 'system';
 
-export type AIBlockVariant = 'standard' | 'info';
+export type BlockType = 'user' | 'ai';
+
+export type AIBlockVariant = 'message' | 'info' | 'action';
 
 export interface BaseBlock {
     id: string;
     type: BlockType;
 }
 
-export interface MessageBlock extends BaseBlock {
-    type: 'message';
+export interface UserBlock extends BaseBlock {
+    type: 'user';
+    content: string; // The text the user sends
+    metadata?: {
+        disableInput?: boolean;
+    };
+}
+
+export interface AIMessageContent {
+    text?: string;
+}
+
+export interface AIInfoContent {
+    title?: string;
+    body?: string;
+    sources?: { text: string; url?: string }[];
+    showFeedback?: boolean;
+}
+
+export interface AIActionContent {
+    loadingTitle: string;
+    successTitle: string;
+    successDescription?: string;
+}
+
+
+
+export interface AIBlock extends BaseBlock {
+    type: 'ai';
     variant: AIBlockVariant;
-    content: {
-        text?: string;        // For Standard
-        title?: string;       // For Info
-        body?: string;        // For Info (Markdown-like)
-        sources?: { text: string; url?: string }[];
-        showFeedback?: boolean; // For Info
-    };
+    content: AIMessageContent | AIInfoContent | AIActionContent;
     metadata?: {
-        prompts?: string[]; // Suggested replies
+        prompts?: string[];
     };
 }
 
-export interface UserInputBlock extends BaseBlock {
-    type: 'user-input';
-    content: string; // The label/text the user "says"
-    metadata?: {
-        disableInput?: boolean; // If true, only clickable options allowed?
-    };
-}
-
-export interface ActionBlock extends BaseBlock {
-    type: 'action';
-    content: {
-        loadingTitle: string;
-        successTitle: string;
-        successDescription?: string;
-    };
-}
-
-export interface HandoffBlock extends BaseBlock {
-    type: 'handoff';
-    content: string;
-}
-
-export type Block = MessageBlock | UserInputBlock | ActionBlock | HandoffBlock;
+export type Block = UserBlock | AIBlock;
 
 export interface GlobalSettings {
     showDisclaimer: boolean;

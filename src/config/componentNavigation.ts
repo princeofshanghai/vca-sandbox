@@ -76,7 +76,7 @@ const rawNavigation: NavigationConfig = {
     {
       label: 'Display',
       items: [
-        { path: '/components/action-status', label: 'Action Status' },
+        { path: '/components/action-card', label: 'Action Card' },
         { path: '/components/agent-banner', label: 'Agent Banner' },
         { path: '/components/agent-status', label: 'Agent Status' },
         { path: '/components/agent-timestamp', label: 'Agent Timestamp' },

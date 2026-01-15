@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { PatternPage, PatternSection, GuidelineGrid, ExampleShowcase } from './components';
 import { Message } from '@/components/vca-components/messages';
-import { ActionStatus } from '@/components/vca-components/action-status/ActionStatus';
+import { ActionCard } from '@/components/vca-components/action-card/ActionCard';
 import { Container } from '@/components/vca-components/container/Container';
 import { PromptGroup } from '@/components/vca-components/prompt-group/PromptGroup';
 import { InfoMessage } from '@/components/vca-components/info-message/InfoMessage';
@@ -15,7 +15,7 @@ const ConversationFlowPatternView = () => {
             relatedComponents={[
                 { label: 'Message', path: '/components/message' },
                 { label: 'Prompt Group', path: '/components/prompt-group' },
-                { label: 'Action Status', path: '/components/action-status' },
+                { label: 'Action Card', path: '/components/action-card' },
                 { label: 'Container', path: '/components/container' }
             ]}
         >
@@ -136,13 +136,13 @@ const ConversationFlowPatternView = () => {
                                     viewport="desktop"
                                 >
                                     <div className="space-y-vca-lg px-4 pt-4">
-                                        <Message type="disclaimer" />
+                                        <Message variant="disclaimer" />
                                         <Message
-                                            type="ai"
+                                            variant="ai"
                                             defaultText="Hi there. With the help of AI, I can answer questions about Recruiter solutions or connect you to our team."
                                         />
                                         <Message
-                                            type="ai"
+                                            variant="ai"
                                             defaultText="Not sure where to start? You can try:"
                                         />
                                         <PromptGroup
@@ -170,13 +170,13 @@ const ConversationFlowPatternView = () => {
                                     viewport="desktop"
                                 >
                                     <div className="space-y-vca-lg px-4 pt-4">
-                                        <Message type="disclaimer" />
+                                        <Message variant="disclaimer" />
                                         <Message
-                                            type="ai"
+                                            variant="ai"
                                             defaultText="Hi there. With the help of AI, I can answer questions about LinkedIn Marketing Solutions or connect you to our team."
                                         />
                                         <Message
-                                            type="ai"
+                                            variant="ai"
                                             defaultText="Not sure where to start? You can try:"
                                         />
                                         <PromptGroup
@@ -235,12 +235,12 @@ const ConversationFlowPatternView = () => {
                             >
                                 <div className="space-y-vca-lg px-4 pt-4">
                                     <Message
-                                        type="user"
+                                        variant="user"
                                         userText="I need to remove a user from the account"
                                         className="flex justify-end"
                                     />
                                     <Message
-                                        type="ai"
+                                        variant="ai"
                                         defaultText={
                                             <div className="space-y-4">
                                                 <p>
@@ -288,12 +288,12 @@ const ConversationFlowPatternView = () => {
                             >
                                 <div className="space-y-vca-lg px-4 pt-4">
                                     <Message
-                                        type="user"
+                                        variant="user"
                                         userText="It looks like my ad account is on hold"
                                         className="flex justify-end"
                                     />
                                     <Message
-                                        type="ai"
+                                        variant="ai"
                                         defaultText="Just to confirm, are you looking for me to review why your Ad account is on hold?"
                                     />
                                     <PromptGroup
@@ -326,12 +326,12 @@ const ConversationFlowPatternView = () => {
                             >
                                 <div className="space-y-vca-lg px-4 pt-4">
                                     <Message
-                                        type="user"
+                                        variant="user"
                                         userText="Show me Sam's profile"
                                         className="flex justify-end"
                                     />
                                     <Message
-                                        type="ai"
+                                        variant="ai"
                                         defaultText="I found multiple people named 'Sam' in your organization. Which one are you looking for?"
                                     />
                                     <PromptGroup
@@ -390,12 +390,12 @@ const ConversationFlowPatternView = () => {
                             >
                                 <div className="space-y-vca-lg px-4 pt-4">
                                     <Message
-                                        type="user"
+                                        variant="user"
                                         userText="Remove a user"
                                         className="flex justify-end"
                                     />
                                     <Message
-                                        type="ai"
+                                        variant="ai"
                                         defaultText={
                                             <div className="space-y-4 font-vca-text text-vca-small-open text-vca-text [&_p]:text-vca-small-open [&_ul]:text-vca-small-open [&_ol]:text-vca-small-open [&_li]:text-vca-small-open">
                                                 <p>
@@ -432,21 +432,21 @@ const ConversationFlowPatternView = () => {
                             >
                                 <div className="space-y-vca-lg px-4 pt-4">
                                     <Message
-                                        type="user"
+                                        variant="user"
                                         userText="It looks like my ad account is on hold"
                                         className="flex justify-end"
                                     />
                                     <Message
-                                        type="ai"
+                                        variant="ai"
                                         defaultText="Just to confirm, are you looking for me to review why your Ad account is on hold?"
                                     />
                                     <Message
-                                        type="user"
+                                        variant="user"
                                         userText="Yes"
                                         className="flex justify-end"
                                     />
                                     <Message
-                                        type="ai"
+                                        variant="ai"
                                         defaultText="It looks like you don't have the necessary permissions to have a member of our team to review the rejected Ad. Please contact your administrator at [fake email] for assistance."
                                     />
                                 </div>
@@ -611,28 +611,29 @@ const RemovingUserExample = () => {
             >
                 <div className="space-y-vca-lg px-4 pt-4">
                     <Message
-                        type="ai"
+                        variant="ai"
                         defaultText="I've verified you have admin access to remove Alex Jenkins (ajenkins@flexis.com) from dashboard Flexis Recruiter. Do you want to continue?"
                     />
 
                     <div className="flex justify-end">
                         <Message
-                            type="user"
+                            variant="user"
                             userText="Yes, remove Alex Jenkins"
                         />
                     </div>
 
                     {/* Dynamic Action Status */}
                     <div className="mt-2 transition-all duration-300">
-                        <ActionStatus
+                        <ActionCard
                             status={status}
                             title={status === 'in-progress' ? "Removing user..." : "User removed from Flexis Recruiter"}
-                            description={status === 'complete' && (
+                        >
+                            {status === 'complete' && (
                                 <span>
                                     You can view the updates in the <a href="#">Users & License Management</a> tab in Admin Center.
                                 </span>
                             )}
-                        />
+                        </ActionCard>
                     </div>
                 </div>
             </Container>
@@ -656,20 +657,19 @@ const FollowUpExample = () => {
             <div className="space-y-vca-lg px-4 pt-4">
                 {/* Previous Context: Action Completed */}
                 <div className="mt-2">
-                    <ActionStatus
+                    <ActionCard
                         status="complete"
                         title="User removed from Flexis Recruiter"
-                        description={
-                            <span>
-                                You can view the updates in the <a href="#">Users & License Management</a> tab in Admin Center.
-                            </span>
-                        }
-                    />
+                    >
+                        <span>
+                            You can view the updates in the <a href="#">Users & License Management</a> tab in Admin Center.
+                        </span>
+                    </ActionCard>
                 </div>
 
                 {/* AI Follow Up */}
                 <Message
-                    type="ai"
+                    variant="ai"
                     defaultText="How else can I help you today?"
                 />
 
@@ -697,47 +697,44 @@ const ParkingLicenseExample = () => {
         >
             <div className="space-y-vca-lg px-4 pt-4">
                 <Message
-                    type="user"
+                    variant="user"
                     userText="Park a license"
                     className="flex justify-end"
                 />
 
                 <Message
-                    type="ai"
+                    variant="ai"
                     defaultText="While I'm not able to park a license for you right now, here's an easy guide to help you do it yourself."
                 />
 
                 <InfoMessage
                     title="To park a license in LinkedIn Recruiter, follow these steps:"
-                    message={
-                        <div className="space-y-4 font-vca-text text-vca-small-open text-vca-text [&_p]:text-vca-small-open [&_ul]:text-vca-small-open [&_ol]:text-vca-small-open [&_li]:text-vca-small-open">
-                            <ol className="list-decimal list-outside ml-4 space-y-2">
-                                <li><span className="font-semibold">Sign in to Recruiter.</span></li>
-                                <li>
-                                    <span className="font-semibold">Access the Admin Center:</span> Move your cursor over your profile picture at the top of your Recruiter homepage and select <span className="font-semibold">Manage users in Admin Center</span> from the dropdown.
-                                </li>
-                                <li>
-                                    <span className="font-semibold">Locate the User:</span> In the Users tab, find the user whose license you want to park. You can filter by license type, status, or search by name/email.
-                                </li>
-                                <li>
-                                    <span className="font-semibold">Park the License:</span> Click the <span className="font-semibold">More</span> icon next to the user and select <span className="font-semibold">Park</span> from the dropdown.
-                                </li>
-                            </ol>
-                            <p className="font-semibold">
-                                Important Note: The number of times a license can be parked is limited and varies by contract. For example, if your organization has 15 seats, you can park 15 licenses every 30 days.
-                            </p>
-                            <p>
-                                For more detailed guidance, you can refer to the <a href="#" className="font-bold text-vca-link hover:underline">LinkedIn Help Center article on managing licenses.</a>
-                            </p>
-                        </div>
-                    }
-                    showSources={true}
                     sources={[
                         { text: "Remove or park a license in LinkedIn Admin Center for Recruiter", href: "#" },
                         { text: "Actions admins can take to manage user licenses in Recruiter", href: "#" }
                     ]}
-                    showRating={true}
-                />
+                >
+                    <div className="space-y-4 font-vca-text text-vca-small-open text-vca-text [&_p]:text-vca-small-open [&_ul]:text-vca-small-open [&_ol]:text-vca-small-open [&_li]:text-vca-small-open">
+                        <ol className="list-decimal list-outside ml-4 space-y-2">
+                            <li><span className="font-semibold">Sign in to Recruiter.</span></li>
+                            <li>
+                                <span className="font-semibold">Access the Admin Center:</span> Move your cursor over your profile picture at the top of your Recruiter homepage and select <span className="font-semibold">Manage users in Admin Center</span> from the dropdown.
+                            </li>
+                            <li>
+                                <span className="font-semibold">Locate the User:</span> In the Users tab, find the user whose license you want to park. You can filter by license type, status, or search by name/email.
+                            </li>
+                            <li>
+                                <span className="font-semibold">Park the License:</span> Click the <span className="font-semibold">More</span> icon next to the user and select <span className="font-semibold">Park</span> from the dropdown.
+                            </li>
+                        </ol>
+                        <p className="font-semibold">
+                            Important Note: The number of times a license can be parked is limited and varies by contract. For example, if your organization has 15 seats, you can park 15 licenses every 30 days.
+                        </p>
+                        <p>
+                            For more detailed guidance, you can refer to the <a href="#" className="font-bold text-vca-link hover:underline">LinkedIn Help Center article on managing licenses.</a>
+                        </p>
+                    </div>
+                </InfoMessage>
             </div>
         </Container>
     );

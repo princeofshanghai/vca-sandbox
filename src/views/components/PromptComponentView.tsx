@@ -72,10 +72,11 @@ const PromptComponentView = () => {
         >
           <div className="px-vca-xxl">
             <Prompt
-              text={text}
               showAiIcon={showAiIcon}
               onClick={() => alert('Prompt clicked!')}
-            />
+            >
+              {text}
+            </Prompt>
           </div>
         </DemoSection>
 
@@ -106,37 +107,40 @@ const PromptComponentView = () => {
                       <div className="px-vca-xxl space-y-vca-lg pb-vca-lg">
                         {/* AI Message with intro text */}
                         <Message
-                          type="ai"
+                          variant="ai"
                           defaultText="Hi there! I see you may need help with seat management. Ask me a question and I'll help you find the right answer."
                         />
 
                         {/* AI Message with prompt intro */}
                         <Message
-                          type="ai"
+                          variant="ai"
                           defaultText="You can try asking me something like:"
                         />
 
                         {/* Prompt suggestions */}
                         <div className="flex flex-col gap-vca-s">
                           <Prompt
-                            text="How can I assign a seat to a user?"
                             showAiIcon={false}
-                          />
+                          >
+                            How can I assign a seat to a user?
+                          </Prompt>
                           <Prompt
-                            text="What are seat allocation best practices?"
                             showAiIcon={false}
-                          />
+                          >
+                            What are seat allocation best practices?
+                          </Prompt>
                           <Prompt
-                            text="Show me user management options"
                             showAiIcon={false}
-                          />
+                          >
+                            Show me user management options
+                          </Prompt>
                         </div>
                       </div>
                     </div>
 
                     {/* Composer at bottom */}
                     <Composer
-                      state="default"
+                      status="default"
                       placeholder="Ask a question..."
                     />
                   </div>
@@ -157,7 +161,7 @@ const PromptComponentView = () => {
                       <div className="px-vca-xxl space-y-vca-lg pb-vca-lg">
                         {/* AI Message with prompts */}
                         <Message
-                          type="ai"
+                          variant="ai"
                           defaultText="Not sure where to start? You can try:"
                         />
 
@@ -165,15 +169,17 @@ const PromptComponentView = () => {
                         {!selectedPrompt && (
                           <div className="flex flex-col gap-vca-s">
                             <Prompt
-                              text="How can I assign a seat to a user?"
                               showAiIcon={false}
                               onClick={() => handlePromptClick("How can I assign a seat to a user?")}
-                            />
+                            >
+                              How can I assign a seat to a user?
+                            </Prompt>
                             <Prompt
-                              text="What are seat allocation best practices?"
                               showAiIcon={false}
                               onClick={() => handlePromptClick("What are seat allocation best practices?")}
-                            />
+                            >
+                              What are seat allocation best practices?
+                            </Prompt>
                           </div>
                         )}
 
@@ -181,7 +187,7 @@ const PromptComponentView = () => {
                         {selectedPrompt && (
                           <div className="flex justify-end">
                             <Message
-                              type="user"
+                              variant="user"
                               userText={selectedPrompt}
                               errorFeedback={false}
                             />
@@ -198,7 +204,7 @@ const PromptComponentView = () => {
                         {/* Show AI response after thinking */}
                         {aiResponse && (
                           <Message
-                            type="ai"
+                            variant="ai"
                             defaultText={aiResponse}
                           />
                         )}
@@ -207,7 +213,7 @@ const PromptComponentView = () => {
 
                     {/* Composer at bottom */}
                     <Composer
-                      state="default"
+                      status="default"
                       placeholder="Ask a question..."
                     />
                   </div>

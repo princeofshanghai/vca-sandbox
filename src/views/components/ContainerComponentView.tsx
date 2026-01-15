@@ -25,7 +25,7 @@ const ContainerComponentView = () => {
       return (
         <div className="px-vca-xxl space-y-vca-lg">
           <Message
-            type="ai"
+            variant="ai"
             defaultText="Hi there. With the help of AI, I can answer questions about administration or connect you to someone who can."
           />
         </div>
@@ -35,19 +35,19 @@ const ContainerComponentView = () => {
     // full
     return (
       <div className="px-vca-xxl space-y-vca-lg">
-        <Message type="disclaimer" />
+        <Message variant="disclaimer" />
         <Message
-          type="ai"
+          variant="ai"
           defaultText="Hi there. With the help of AI, I can answer questions about administration or connect you to someone who can."
         />
         <Message
-          type="user"
+          variant="user"
           userText="How can I remove a user?"
           errorFeedback={false}
           className="flex justify-end"
         />
         <Message
-          type="ai"
+          variant="ai"
           defaultText="To assign a seat to a user, you'll need admin permissions..."
         />
       </div>
@@ -206,7 +206,7 @@ const ContainerComponentView = () => {
                 >
                   <div className="px-vca-xxl space-y-vca-lg">
                     <Message
-                      type="ai"
+                      variant="ai"
                       defaultText="Welcome! How can I help you today?"
                     />
                   </div>
@@ -243,23 +243,23 @@ const ContainerComponentView = () => {
                   showPremiumBorder={true}
                 >
                   <div className="px-vca-xxl space-y-vca-xxl">
-                    <Message type="disclaimer" />
+                    <Message variant="disclaimer" />
                     <Message
-                      type="ai"
+                      variant="ai"
                       defaultText="Hi there. With the help of AI, I can answer questions about administration or connect you to someone who can."
                     />
                     <Message
-                      type="ai"
+                      variant="ai"
                       defaultText="Not sure where to start? You can try:"
                     />
                     <Message
-                      type="user"
+                      variant="user"
                       userText="How can I assign a seat to a user?"
                       errorFeedback={false}
                       className="flex justify-end"
                     />
                     <Message
-                      type="ai"
+                      variant="ai"
                       defaultText="To assign a seat to a user, you'll need admin permissions..."
                     />
                   </div>

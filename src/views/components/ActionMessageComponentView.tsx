@@ -7,7 +7,7 @@ import { ToggleButtons, FormInput, FormTextarea, FormCheckbox } from '@/componen
 
 const ActionMessageComponentView = () => {
   // Interactive demo state
-  const [state, setState] = useState<ActionMessageState>('default');
+  const [status, setStatus] = useState<ActionMessageState>('default');
   const [title, setTitle] = useState('Add seat assignments');
   const [impactText, setImpactText] = useState('+25% engagement');
   const [showImpact, setShowImpact] = useState(true);
@@ -24,10 +24,10 @@ const ActionMessageComponentView = () => {
           controls={
             <div className="grid grid-cols-2 gap-x-8 gap-y-4">
               <ToggleButtons
-                label="State"
+                label="Status"
                 options={['default', 'applied', 'dismissed'] as const}
-                value={state}
-                onChange={setState}
+                value={status}
+                onChange={setStatus}
               />
 
               <div></div>
@@ -69,14 +69,14 @@ const ActionMessageComponentView = () => {
         >
           <div className="w-[352px] mx-auto">
             <ActionMessage
-              state={state}
+              status={status}
               title={title}
-              impactText={impactText}
-              showImpact={showImpact}
-              description={description}
+              impactText={showImpact ? impactText : undefined}
               onApply={() => alert('Apply clicked!')}
               onDismiss={() => alert('Dismiss clicked!')}
-            />
+            >
+              {description}
+            </ActionMessage>
           </div>
         </DemoSection>
 
@@ -97,11 +97,12 @@ const ActionMessageComponentView = () => {
             <div className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="w-[352px] mx-auto">
                 <ActionMessage
-                  state="default"
+                  status="default"
                   title="Your campaign is underperforming"
-                  showImpact={false}
-                  description="'Campaign A' is currently trailing behind competitors with 2.9% fewer impressions among your target audience."
-                />
+                  impactText={undefined}
+                >
+                  'Campaign A' is currently trailing behind competitors with 2.9% fewer impressions among your target audience.
+                </ActionMessage>
               </div>
             </div>
           </div>

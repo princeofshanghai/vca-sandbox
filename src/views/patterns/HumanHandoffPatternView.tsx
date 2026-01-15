@@ -100,8 +100,8 @@ const LiveAgentDemo = () => {
 
     const [isThinking, setIsThinking] = useState(false);
     const [messages, setMessages] = useState<Record<string, unknown>[]>([
-        { type: 'ai', defaultText: "Hi there. With the help of AI, I can answer questions about Recruiter solutions or connect you to our team." },
-        { type: 'ai', defaultText: "Not sure where to start? You can try:" },
+        { variant: 'ai', defaultText: "Hi there. With the help of AI, I can answer questions about Recruiter solutions or connect you to our team." },
+        { variant: 'ai', defaultText: "Not sure where to start? You can try:" },
         {
             type: 'prompts',
             items: [
@@ -130,7 +130,7 @@ const LiveAgentDemo = () => {
         // Add user message immediately
         setMessages(prev => [
             ...prev,
-            { type: 'user', userText: userText, className: "flex justify-end" }
+            { variant: 'user', userText: userText, className: "flex justify-end" }
         ]);
 
         // Logic for keyword detection
@@ -144,7 +144,7 @@ const LiveAgentDemo = () => {
                 setStep('confirming');
                 setMessages(prev => [
                     ...prev,
-                    { type: 'ai', defaultText: "Would you like to speak with a member of our team?" }
+                    { variant: 'ai', defaultText: "Would you like to speak with a member of our team?" }
                 ]);
             }, 1000);
             return;
@@ -163,7 +163,7 @@ const LiveAgentDemo = () => {
                 setIsThinking(false);
                 setMessages(prev => [
                     ...prev,
-                    { type: 'ai', defaultText: "I can help with that. But if you'd prefer, I can connect you to a live agent. Just let me know if you'd like to speak to a person." }
+                    { variant: 'ai', defaultText: "I can help with that. But if you'd prefer, I can connect you to a live agent. Just let me know if you'd like to speak to a person." }
                 ]);
             }, 1000);
         }
@@ -175,7 +175,7 @@ const LiveAgentDemo = () => {
         setStep('connecting');
         setMessages(prev => [
             ...prev,
-            { type: 'user', userText: "Yes, connect me", className: "flex justify-end" },
+            { variant: 'user', userText: "Yes, connect me", className: "flex justify-end" },
             // We don't add a text message here, the AgentStatus will appear
         ]);
 
@@ -185,9 +185,10 @@ const LiveAgentDemo = () => {
             setMessages(prev => [
                 ...prev,
                 {
-                    type: 'human-agent',
+                    variant: 'human-agent',
                     humanAgentText: "Hi there! My name is John. I see you're having some trouble. How can I help you today?",
-                    agentTimestampText: "John 10:42 AM"
+                    agentName: "John",
+                    agentTimestamp: "10:42 AM"
                 }
             ]);
         }, 3000);
@@ -196,8 +197,8 @@ const LiveAgentDemo = () => {
     const resetDemo = () => {
         setStep('initial');
         setMessages([
-            { type: 'ai', defaultText: "Hi there. With the help of AI, I can answer questions about Recruiter solutions or connect you to our team." },
-            { type: 'ai', defaultText: "Not sure where to start? You can try:" },
+            { variant: 'ai', defaultText: "Hi there. With the help of AI, I can answer questions about Recruiter solutions or connect you to our team." },
+            { variant: 'ai', defaultText: "Not sure where to start? You can try:" },
             {
                 type: 'prompts',
                 items: [
@@ -232,7 +233,7 @@ const LiveAgentDemo = () => {
 
                 <div className={`flex-1 overflow-y-auto ${step === 'connected' ? 'pt-[72px]' : ''}`}>
                     <div className="space-y-vca-lg px-4 pt-4 pb-4">
-                        <Message type="disclaimer" />
+                        <Message variant="disclaimer" />
 
                         {/* Messages before success status */}
                         {/* Messages before success status */}
@@ -250,7 +251,7 @@ const LiveAgentDemo = () => {
 
                         {/* Thinking Indicator */}
                         {isThinking && (
-                            <Message type="ai" defaultText={<ThinkingIndicator />} />
+                            <Message variant="ai" defaultText={<ThinkingIndicator />} />
                         )}
 
                         {/* Connected Status (Success) - appears before the agent message */}

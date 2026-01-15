@@ -361,14 +361,14 @@ export const FlowPlayer = ({
         return (
             <div className="flex flex-col gap-vca-lg px-vca-lg">
                 {disclaimers.map((_msg, index) => (
-                    <Message key={`disclaimer-${index}`} type="disclaimer" />
+                    <Message key={`disclaimer-${index}`} variant="disclaimer" />
                 ))}
 
                 {otherMessages.map((msg, index) => {
                     if (msg.type === 'ai-message') {
                         return (
                             <div key={index} className="flex flex-col gap-vca-s">
-                                <Message type="ai" defaultText={msg.text} />
+                                <Message variant="ai" defaultText={msg.text} />
                                 {msg.buttons && msg.buttons.length > 0 && (
                                     <PromptGroup
                                         prompts={msg.buttons.map(btn => ({
@@ -383,17 +383,19 @@ export const FlowPlayer = ({
                     }
 
                     if (msg.type === 'user-message') {
-                        return <Message key={index} type="user" userText={msg.text} />;
+                        return <Message key={index} variant="user" userText={msg.text} />;
                     }
 
                     if (msg.type === 'human-agent-message') {
                         return (
                             <Message
                                 key={index}
-                                type="human-agent"
+                                variant="human-agent"
                                 humanAgentText={msg.text}
                                 showTimestamp={true}
-                                agentTimestampText={msg.agentName && msg.timestamp ? `${msg.agentName}  ${msg.timestamp}` : undefined}
+                                agentName={msg.agentName}
+                                agentTimestamp={msg.timestamp}
+                                className="animate-in fade-in slide-in-from-bottom-2 duration-300"
                             />
                         );
                     }

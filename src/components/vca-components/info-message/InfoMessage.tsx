@@ -5,17 +5,14 @@ import { Sources } from '../sources';
 import { cn } from '@/utils';
 
 export type InfoMessageProps = {
-  type?: 'default' | 'response-stopped';
+
+  status?: 'complete' | 'interrupted';
   title?: string;
-  message?: string | ReactNode;
-  showTitle?: boolean;
-  showResponseStopped?: boolean;
-  showSources?: boolean;
-  showRating?: boolean;
+  children?: ReactNode;
   sources?: Array<{
     text: string;
     href?: string;
-    state?: 'enabled' | 'hover' | 'active' | 'visited';
+    status?: 'enabled' | 'hover' | 'active' | 'visited';
   }>;
   feedbackValue?: FeedbackValue;
   onFeedbackChange?: (value: FeedbackValue) => void;
@@ -23,29 +20,22 @@ export type InfoMessageProps = {
 };
 
 /**
- * InfoMessage - AI-generated informational message with optional title, divider, sources, and rating
- * Plain layout without background container, similar to AI message type
- * Note: No built-in horizontal padding or width - parent container controls spacing
+ * InfoMessage - AI-generated informational message
  */
 export const InfoMessage = ({
-  type = 'default',
+  status = 'complete',
   title,
-  message,
-  showTitle = true,
-  showResponseStopped = false,
-  showSources = true,
-  showRating = true,
+  children,
   sources,
   feedbackValue,
   onFeedbackChange,
   className,
 }: InfoMessageProps) => {
 
-  // Response stopped variant - simplified
-  if (type === 'response-stopped') {
+  // Interrupted / Response Stopped state
+  if (status === 'interrupted') {
     return (
       <div className={cn('flex flex-col gap-vca-xl items-start w-full', className)}>
-        {/* Response Stopped Feedback */}
         <div className="flex gap-vca-xs items-center w-full">
           <div className="flex gap-vca-xs items-center flex-1">
             <VcaIcon icon="close" size="sm" className="text-vca-text-neutral" />
@@ -58,13 +48,13 @@ export const InfoMessage = ({
     );
   }
 
-  // Default variant - full featured
+  // Default / Complete state
   return (
     <div className={cn('flex flex-col items-start w-full', className)}>
-      {/* Title and Message with 16px gap */}
+      {/* Title and Message */}
       <div className="flex flex-col gap-vca-lg items-start w-full">
         {/* Optional Title */}
-        {showTitle && title && (
+        {title && (
           <div className="flex flex-col justify-center min-w-full">
             <p className="font-vca-text text-vca-small-bold text-vca-text">
               {title}
@@ -72,33 +62,23 @@ export const InfoMessage = ({
           </div>
         )}
 
-        {/* Message Text */}
-        <div className="font-vca-text text-vca-small-open text-vca-text">
-          {message}
-        </div>
+        {/* Message Content (children) */}
+        {children && (
+          <div className="font-vca-text text-vca-small-open text-vca-text">
+            {children}
+          </div>
+        )}
       </div>
 
-      {/* Optional Response Stopped Feedback */}
-      {showResponseStopped && (
-        <div className="flex gap-vca-xs items-center w-full mt-vca-xl">
-          <div className="flex gap-vca-xs items-center flex-1">
-            <VcaIcon icon="close" size="sm" className="text-vca-text-neutral" />
-            <p className="font-vca-text text-vca-small text-vca-text-neutral">
-              Response stopped
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Optional Sources - 20px gap from message */}
-      {showSources && sources && (
+      {/* Optional Sources */}
+      {sources && sources.length > 0 && (
         <div className="mt-vca-xl w-full">
           <Sources sources={sources} />
         </div>
       )}
 
-      {/* Optional Rating - 20px gap from sources */}
-      {showRating && (
+      {/* Optional Rating */}
+      {onFeedbackChange && (
         <div className="flex items-center justify-start w-full mt-vca-xl">
           <Feedback
             value={feedbackValue}

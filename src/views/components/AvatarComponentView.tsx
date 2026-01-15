@@ -68,7 +68,7 @@ const AvatarComponentView = () => {
               <p className="mb-4">Used to show that message is written by a human agent.</p>
               <div className="bg-white border border-gray-200 rounded-lg p-4">
                 <div className="w-[352px] mx-auto">
-                  <Message type="human-agent" humanAgentText="Hi there! I'm here to help you with any questions you have about your account." />
+                  <Message variant="human-agent" humanAgentText="Hi there! I'm here to help you with any questions you have about your account." />
                 </div>
               </div>
             </div>

@@ -5,7 +5,7 @@ export type ButtonIconType = 'primary' | 'secondary' | 'tertiary';
 export type ButtonIconSize = 'sm' | 'md';
 
 export type ButtonIconProps = {
-  type?: ButtonIconType;
+  variant?: ButtonIconType;
   size?: ButtonIconSize;
   emphasis?: boolean;
   disabled?: boolean;
@@ -20,7 +20,7 @@ export type ButtonIconProps = {
  * Compact button for actions represented by icons (send, close, etc.)
  */
 export const ButtonIcon = ({
-  type = 'primary',
+  variant = 'primary',
   size = 'sm',
   emphasis = true,
   disabled = false,
@@ -29,26 +29,26 @@ export const ButtonIcon = ({
   className,
   ariaLabel,
 }: ButtonIconProps) => {
-  
+
   // Size classes
   const sizeClasses = {
     sm: 'w-8 h-8 p-vca-s', // 32px
     md: 'w-12 h-12 p-vca-md', // 48px
   };
-  
+
   // Icon sizes
   const iconSizeMap = {
     sm: 'sm' as const,
     md: 'md' as const,
   };
-  
+
   // Base styles - always circular
   const baseClasses = 'flex items-center justify-center rounded-full transition-colors';
-  
+
   // Type & emphasis combinations
   let variantClasses = '';
-  
-  if (type === 'primary') {
+
+  if (variant === 'primary') {
     if (emphasis) {
       // Primary Emphasis - Blue background
       variantClasses = cn(
@@ -64,7 +64,7 @@ export const ButtonIcon = ({
         disabled && 'bg-vca-background-disabled text-vca-text-disabled cursor-not-allowed'
       );
     }
-  } else if (type === 'secondary') {
+  } else if (variant === 'secondary') {
     if (emphasis) {
       // Secondary Emphasis - Blue border
       variantClasses = cn(
@@ -82,7 +82,7 @@ export const ButtonIcon = ({
         disabled && 'bg-vca-background-disabled border-none text-vca-text-disabled cursor-not-allowed'
       );
     }
-  } else if (type === 'tertiary') {
+  } else if (variant === 'tertiary') {
     if (emphasis) {
       // Tertiary Emphasis - Blue text, transparent background
       variantClasses = cn(
@@ -101,7 +101,7 @@ export const ButtonIcon = ({
       );
     }
   }
-  
+
   return (
     <button
       onClick={onClick}

@@ -26,8 +26,8 @@ export const INITIAL_FLOW: Flow = {
     blocks: [
         {
             id: '1',
-            type: 'message',
-            variant: 'standard',
+            type: 'ai',
+            variant: 'message',
             content: {
                 text: 'Hi there! I can help you with your account.'
             }
@@ -168,10 +168,15 @@ export const flowStorage = {
 
 function getPreviewText(block?: import('../views/studio/types').Block): string | undefined {
     if (!block) return undefined;
-    if (block.type === 'message') {
-        return block.content.text || block.content.title;
+    if (block.type === 'ai') {
+        const content = block.content;
+        // Determine preview based on variant using type guards or loose checks
+        if ('text' in content) return content.text;
+        if ('title' in content) return content.title;
+        if ('loadingTitle' in content) return content.loadingTitle;
+        return 'System Message';
     }
-    if (block.type === 'user-input') {
+    if (block.type === 'user') {
         return block.content;
     }
     return undefined;

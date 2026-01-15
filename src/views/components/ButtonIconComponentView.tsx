@@ -7,7 +7,7 @@ import { ToggleButtons, FormCheckbox } from '@/components/component-library/Demo
 
 const ButtonIconComponentView = () => {
   // Interactive demo state
-  const [type, setType] = useState<'primary' | 'secondary' | 'tertiary'>('primary');
+  const [variant, setVariant] = useState<'primary' | 'secondary' | 'tertiary'>('primary');
   const [size, setSize] = useState<'sm' | 'md'>('md');
   const [emphasis, setEmphasis] = useState(true);
   const [disabled, setDisabled] = useState(false);
@@ -24,10 +24,10 @@ const ButtonIconComponentView = () => {
           controls={
             <div className="grid grid-cols-2 gap-x-8 gap-y-4">
               <ToggleButtons
-                label="Type"
+                label="Variant"
                 options={['primary', 'secondary', 'tertiary'] as const}
-                value={type}
-                onChange={setType}
+                value={variant}
+                onChange={setVariant}
               />
 
               <ToggleButtons
@@ -54,7 +54,7 @@ const ButtonIconComponentView = () => {
           }
         >
           <ButtonIcon
-            type={type}
+            variant={variant}
             size={size}
             emphasis={emphasis}
             disabled={disabled}
@@ -81,7 +81,7 @@ const ButtonIconComponentView = () => {
               <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
                 <div className="w-[400px] mx-auto my-4 border border-gray-200 rounded-lg overflow-hidden">
                   <Composer
-                    state="active"
+                    status="active"
                     value="How can I help you today?"
                     attachment={true}
                   />

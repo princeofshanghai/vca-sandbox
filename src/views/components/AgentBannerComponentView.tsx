@@ -78,7 +78,7 @@ const AgentBannerComponentView = () => {
 
                     {/* Composer at bottom */}
                     <Composer
-                      state="default"
+                      status="default"
                       placeholder="Ask a question..."
                     />
                   </div>

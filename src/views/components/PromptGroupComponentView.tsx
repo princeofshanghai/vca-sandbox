@@ -143,7 +143,7 @@ const PromptGroupComponentView = () => {
                       <div className="px-vca-xxl space-y-vca-lg pb-vca-lg">
                         {/* AI Message with prompt group */}
                         <Message
-                          type="ai"
+                          variant="ai"
                           defaultText="Not sure where to start? You can try:"
                         />
 
@@ -162,7 +162,7 @@ const PromptGroupComponentView = () => {
                         {selectedPrompt && (
                           <div className="flex justify-end">
                             <Message
-                              type="user"
+                              variant="user"
                               userText={selectedPrompt}
                               errorFeedback={false}
                             />
@@ -179,7 +179,7 @@ const PromptGroupComponentView = () => {
                         {/* Show AI response after thinking */}
                         {aiResponse && (
                           <Message
-                            type="ai"
+                            variant="ai"
                             defaultText={aiResponse}
                           />
                         )}
@@ -188,7 +188,7 @@ const PromptGroupComponentView = () => {
 
                     {/* Composer at bottom */}
                     <Composer
-                      state="default"
+                      status="default"
                       placeholder="Ask a question..."
                     />
                   </div>

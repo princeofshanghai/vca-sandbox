@@ -1,8 +1,9 @@
+import React from 'react';
 import { VcaIcon } from '../icons';
 import { cn } from '@/utils';
 
 export type PromptProps = {
-  text?: string;
+  children?: React.ReactNode;
   showAiIcon?: boolean;
   onClick?: () => void;
   className?: string;
@@ -14,12 +15,12 @@ export type PromptProps = {
  * Typically used as suggested follow-up questions or quick actions
  */
 export const Prompt = ({
-  text = 'This is a prompt',
+  children = 'This is a prompt',
   showAiIcon = false,
   onClick,
   className,
 }: PromptProps) => {
-  
+
   return (
     <button
       type="button"
@@ -30,15 +31,15 @@ export const Prompt = ({
       )}
     >
       {showAiIcon && (
-        <VcaIcon 
-          icon="signal-ai" 
-          size="md" 
-          className="text-vca-action shrink-0" 
+        <VcaIcon
+          icon="signal-ai"
+          size="md"
+          className="text-vca-action shrink-0"
         />
       )}
-      <p className="font-vca-text text-vca-small-bold text-vca-link hover:text-vca-link-hover flex-1 text-left">
-        {text}
-      </p>
+      <div className="font-vca-text text-vca-small-bold text-vca-link hover:text-vca-link-hover flex-1 text-left">
+        {children}
+      </div>
     </button>
   );
 };

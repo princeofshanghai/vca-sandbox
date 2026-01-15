@@ -2,10 +2,10 @@ import { cn } from '@/utils';
 import TextareaAutosize from 'react-textarea-autosize';
 import { ButtonIcon } from '../buttons/ButtonIcon';
 
-export type ComposerState = 'default' | 'active' | 'typing' | 'multiline' | 'disabled' | 'stop';
+export type ComposerStatus = 'default' | 'active' | 'typing' | 'multiline' | 'disabled' | 'stop';
 
 export type ComposerProps = {
-  state?: ComposerState;
+  status?: ComposerStatus;
   value?: string;
   placeholder?: string;
   attachment?: boolean;
@@ -21,7 +21,7 @@ export type ComposerProps = {
  * Handles text input with multiple states (default, active, typing, multiline, disabled, stop)
  */
 export const Composer = ({
-  state = 'default',
+  status = 'default',
   value = '',
   placeholder = 'Ask a question...',
   attachment = true,
@@ -31,9 +31,9 @@ export const Composer = ({
   onChange,
   className,
 }: ComposerProps) => {
-  
+
   // Stop state - shows "Stop answering" with loading spinner
-  if (state === 'stop') {
+  if (status === 'stop') {
     return (
       <div className={cn(
         'bg-vca-background border-t border-vca-border-faint w-full',
@@ -49,11 +49,11 @@ export const Composer = ({
               <span className="font-vca-text text-vca-small text-vca-text-meta">
                 Stop answering
               </span>
-              
+
               {/* Loading spinner GIF */}
-              <img 
-                src="/answer-loading.gif" 
-                alt="Loading" 
+              <img
+                src="/answer-loading.gif"
+                alt="Loading"
                 className="w-8 h-8"
               />
             </button>
@@ -65,10 +65,10 @@ export const Composer = ({
 
   // Determine if we should show multiline layout (based on content length or newlines)
   const hasMultipleLines = value.length > 35 || value.includes('\n');
-  const isActive = state === 'active' || state === 'typing' || state === 'multiline' || hasMultipleLines;
-  const isDisabled = state === 'disabled';
+  const isActive = status === 'active' || status === 'typing' || status === 'multiline' || hasMultipleLines;
+  const isDisabled = status === 'disabled';
   const isSendDisabled = isDisabled || !value || value.trim().length === 0;
-  
+
   return (
     <div className={cn(
       'bg-vca-background border-t border-vca-border-faint w-full',
@@ -105,17 +105,16 @@ export const Composer = ({
                 disabled={isDisabled}
                 minRows={1}
                 maxRows={5}
-                className={`flex-1 font-vca-text text-vca-small-open bg-transparent outline-none border-none w-full caret-vca-action placeholder:text-vca-small-open placeholder:text-vca-text-meta resize-none leading-[21px] ${
-                  isDisabled ? 'text-vca-text-disabled cursor-not-allowed' : 'text-vca-text'
-                }`}
+                className={`flex-1 font-vca-text text-vca-small-open bg-transparent outline-none border-none w-full caret-vca-action placeholder:text-vca-small-open placeholder:text-vca-text-meta resize-none leading-[21px] ${isDisabled ? 'text-vca-text-disabled cursor-not-allowed' : 'text-vca-text'
+                  }`}
               />
             </div>
-            
+
             {attachment && (
               <div className={cn('shrink-0', hasMultipleLines ? 'ml-[10px]' : 'ml-vca-s')}>
                 <ButtonIcon
                   icon="attachment"
-                  type="tertiary"
+                  variant="tertiary"
                   emphasis={false}
                   size="sm"
                   disabled={isDisabled}
@@ -125,17 +124,17 @@ export const Composer = ({
               </div>
             )}
           </div>
-          
+
           <div className={cn('shrink-0', hasMultipleLines && 'pb-vca-s')}>
-          <ButtonIcon
-            icon="send"
-            type="tertiary"
-            emphasis={false}
-            size="sm"
-            disabled={isSendDisabled}
-            onClick={onSend}
-            ariaLabel="Send message"
-          />
+            <ButtonIcon
+              icon="send"
+              variant="tertiary"
+              emphasis={false}
+              size="sm"
+              disabled={isSendDisabled}
+              onClick={onSend}
+              ariaLabel="Send message"
+            />
           </div>
         </div>
       </div>

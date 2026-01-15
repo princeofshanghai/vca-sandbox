@@ -5,7 +5,7 @@ export type SourcesProps = {
   sources?: Array<{
     text: string;
     href?: string;
-    state?: 'enabled' | 'hover' | 'active' | 'visited';
+    status?: 'enabled' | 'hover' | 'active' | 'visited';
   }>;
   className?: string;
 };
@@ -17,27 +17,27 @@ export type SourcesProps = {
  */
 export const Sources = ({
   sources = [
-    { text: 'This is title of link', state: 'enabled' },
-    { text: 'This is title of link', state: 'enabled' },
-    { text: 'This is title of link', state: 'enabled' },
+    { text: 'This is title of link', status: 'enabled' },
+    { text: 'This is title of link', status: 'enabled' },
+    { text: 'This is title of link', status: 'enabled' },
   ],
   className,
 }: SourcesProps) => {
-  
+
   return (
     <div className={cn('flex flex-col gap-vca-s items-start', className)}>
       {/* Sources heading */}
       <p className="font-vca-text text-vca-small-bold text-vca-text-meta w-full">
         Sources
       </p>
-      
+
       {/* Source links list */}
       {sources.map((source, index) => (
-        <SourceLink 
+        <SourceLink
           key={index}
           text={source.text}
           href={source.href}
-          state={source.state}
+          status={source.status}
           className="w-full"
         />
       ))}

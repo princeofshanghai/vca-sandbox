@@ -13,8 +13,9 @@ export type MessageProps = {
   humanAgentText?: string;
   disclaimerText?: string;
   defaultText?: string | React.ReactNode;
-  agentTimestampText?: string;
-  type?: 'human-agent' | 'ai' | 'disclaimer' | 'user';
+  agentName?: string;
+  agentTimestamp?: string;
+  variant?: 'human-agent' | 'ai' | 'disclaimer' | 'user';
   isThinking?: boolean;
   className?: string;
 };
@@ -26,13 +27,14 @@ export const Message = ({
   humanAgentText = 'This is a human agent message',
   disclaimerText = 'This AI-powered chat may make mistakes. ',
   defaultText = 'This is a message',
-  agentTimestampText,
-  type = 'ai',
+  agentName,
+  agentTimestamp,
+  variant = 'ai',
   isThinking = false,
   className,
 }: MessageProps) => {
   // Disclaimer type - AI disclaimer with link
-  if (type === 'disclaimer') {
+  if (variant === 'disclaimer') {
     return (
       <div className={cn('flex flex-col gap-vca-lg items-start', className)}>
         <div className="flex flex-col gap-vca-s items-start w-full">
@@ -46,7 +48,7 @@ export const Message = ({
   }
 
   // User type - User message bubble (right-aligned, beige)
-  if (type === 'user') {
+  if (variant === 'user') {
     return (
       <div className={cn('flex items-center justify-end', className)}>
         <div className="flex flex-col gap-vca-s items-end">
@@ -62,7 +64,7 @@ export const Message = ({
   }
 
   // Human Agent type - Agent message bubble (left-aligned, light blue)
-  if (type === 'human-agent') {
+  if (variant === 'human-agent') {
     return (
       <div className={cn('flex gap-vca-s items-end', className)}>
         <div className="flex flex-col gap-vca-s items-start grow pb-1">
@@ -73,7 +75,8 @@ export const Message = ({
           </div>
           {showTimestamp && (
             <AgentTimestamp
-              text={agentTimestampText}
+              agentName={agentName}
+              timestamp={agentTimestamp}
               showBadge={true}
             />
           )}

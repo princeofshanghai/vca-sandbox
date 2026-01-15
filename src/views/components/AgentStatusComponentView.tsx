@@ -193,7 +193,7 @@ const AgentStatusComponentView = () => {
                         {/* User message */}
                         <div className="flex justify-end">
                           <Message
-                            type="user"
+                            variant="user"
                             userText="I'd like to speak with a support agent"
                             errorFeedback={false}
                           />
@@ -225,9 +225,10 @@ const AgentStatusComponentView = () => {
                         {/* Agent message */}
                         {demoStep === 'agentMessage' && (
                           <Message
-                            type="human-agent"
+                            variant="human-agent"
                             humanAgentText="Hi I'm John, how can I help you?"
-                            agentTimestampText="John  12:34 PM"
+                            agentName="John"
+                            agentTimestamp="12:34 PM"
                           />
                         )}
                       </div>
@@ -235,7 +236,7 @@ const AgentStatusComponentView = () => {
 
                     {/* Composer at bottom */}
                     <Composer
-                      state="default"
+                      status="default"
                       placeholder="Type your message..."
                     />
                   </div>

@@ -10,9 +10,9 @@ const SourcesComponentView = () => {
 
   const getSources = () => {
     const allSources = [
-      { text: 'LinkedIn Research Study 2024', href: 'https://example.com/study1', state: 'enabled' as const },
-      { text: 'User Engagement Metrics Report', href: 'https://example.com/report', state: 'enabled' as const },
-      { text: 'Industry Benchmark Analysis', href: 'https://example.com/analysis', state: 'visited' as const },
+      { text: 'LinkedIn Research Study 2024', href: 'https://example.com/study1', status: 'enabled' as const },
+      { text: 'User Engagement Metrics Report', href: 'https://example.com/report', status: 'enabled' as const },
+      { text: 'Industry Benchmark Analysis', href: 'https://example.com/analysis', status: 'visited' as const },
     ];
     return allSources.slice(0, Number(sourceCount));
   };
@@ -57,9 +57,9 @@ const SourcesComponentView = () => {
                 <div className="px-vca-xxl">
                   <Sources
                     sources={[
-                      { text: 'LinkedIn Research Study 2024', href: 'https://example.com/study1', state: 'enabled' },
-                      { text: 'User Engagement Metrics Report', href: 'https://example.com/report', state: 'enabled' },
-                      { text: 'Industry Benchmark Analysis', href: 'https://example.com/analysis', state: 'enabled' },
+                      { text: 'LinkedIn Research Study 2024', href: 'https://example.com/study1', status: 'enabled' },
+                      { text: 'User Engagement Metrics Report', href: 'https://example.com/report', status: 'enabled' },
+                      { text: 'Industry Benchmark Analysis', href: 'https://example.com/analysis', status: 'enabled' },
                     ]}
                   />
                 </div>
@@ -74,7 +74,7 @@ const SourcesComponentView = () => {
                 <div className="px-vca-xxl">
                   <Sources
                     sources={[
-                      { text: 'LinkedIn Help Center Documentation', href: 'https://help.linkedin.com', state: 'enabled' },
+                      { text: 'LinkedIn Help Center Documentation', href: 'https://help.linkedin.com', status: 'enabled' },
                     ]}
                   />
                 </div>
@@ -89,8 +89,8 @@ const SourcesComponentView = () => {
                 <div className="px-vca-xxl">
                   <Sources
                     sources={[
-                      { text: 'Product Documentation', href: 'https://example.com/docs', state: 'enabled' },
-                      { text: 'API Reference Guide', href: 'https://example.com/api', state: 'visited' },
+                      { text: 'Product Documentation', href: 'https://example.com/docs', status: 'enabled' },
+                      { text: 'API Reference Guide', href: 'https://example.com/api', status: 'visited' },
                     ]}
                   />
                 </div>
@@ -105,9 +105,9 @@ const SourcesComponentView = () => {
                 <div className="px-vca-xxl">
                   <Sources
                     sources={[
-                      { text: 'New Study on Team Collaboration', href: 'https://example.com/new', state: 'enabled' },
-                      { text: 'Previously Viewed Report', href: 'https://example.com/old', state: 'visited' },
-                      { text: 'Another New Resource', href: 'https://example.com/resource', state: 'enabled' },
+                      { text: 'New Study on Team Collaboration', href: 'https://example.com/new', status: 'enabled' },
+                      { text: 'Previously Viewed Report', href: 'https://example.com/old', status: 'visited' },
+                      { text: 'Another New Resource', href: 'https://example.com/resource', status: 'enabled' },
                     ]}
                   />
                 </div>
@@ -125,8 +125,8 @@ const SourcesComponentView = () => {
                   </p>
                   <Sources
                     sources={[
-                      { text: 'LinkedIn Productivity Study 2024', href: 'https://example.com/productivity', state: 'enabled' },
-                      { text: 'License Management Best Practices', href: 'https://example.com/best-practices', state: 'enabled' },
+                      { text: 'LinkedIn Productivity Study 2024', href: 'https://example.com/productivity', status: 'enabled' },
+                      { text: 'License Management Best Practices', href: 'https://example.com/best-practices', status: 'enabled' },
                     ]}
                   />
                 </div>

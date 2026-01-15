@@ -103,7 +103,7 @@ const FeedbackComponentView = () => {
               <div className="bg-white border border-gray-200 rounded-lg p-4">
                 <div className="w-[400px] mx-auto">
                   <Message
-                    type="ai"
+                    variant="ai"
                     defaultText="Based on recent data, implementing seat assignments can increase team productivity by up to 45% and improve user engagement significantly."
                   />
                   <div className="mt-vca-s px-vca-lg">

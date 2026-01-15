@@ -14,7 +14,7 @@ import RadiusView from './RadiusView';
 import MessageComponentView from './components/MessageComponentView';
 import InfoMessageComponentView from './components/InfoMessageComponentView';
 import ActionMessageComponentView from './components/ActionMessageComponentView';
-import ActionStatusComponentView from './components/ActionStatusComponentView';
+import ActionCardComponentView from './components/ActionCardComponentView';
 import AgentStatusComponentView from './components/AgentStatusComponentView';
 import AgentTimestampComponentView from './components/AgentTimestampComponentView';
 import InlineFeedbackComponentView from './components/InlineFeedbackComponentView';
@@ -137,7 +137,7 @@ const ComponentLibraryView = () => {
           <Route path="message" element={<MessageComponentView />} />
           <Route path="info-message" element={<InfoMessageComponentView />} />
           <Route path="action-message" element={<ActionMessageComponentView />} />
-          <Route path="action-status" element={<ActionStatusComponentView />} />
+          <Route path="action-card" element={<ActionCardComponentView />} />
           <Route path="agent-status" element={<AgentStatusComponentView />} />
           <Route path="agent-timestamp" element={<AgentTimestampComponentView />} />
           <Route path="inline-feedback" element={<InlineFeedbackComponentView />} />

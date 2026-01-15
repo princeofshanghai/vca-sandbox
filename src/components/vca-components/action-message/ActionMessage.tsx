@@ -1,3 +1,4 @@
+import React from 'react';
 import { VcaIcon } from '../icons';
 import { Button } from '../buttons';
 import { cn } from '@/utils';
@@ -5,11 +6,10 @@ import { cn } from '@/utils';
 export type ActionMessageState = 'default' | 'applied' | 'dismissed';
 
 export type ActionMessageProps = {
-  state?: ActionMessageState;
+  status?: ActionMessageState;
   title?: string;
   impactText?: string;
-  showImpact?: boolean;
-  description?: string;
+  children?: React.ReactNode;
   onApply?: () => void;
   onDismiss?: () => void;
   className?: string;
@@ -21,16 +21,15 @@ export type ActionMessageProps = {
  * Note: No built-in horizontal padding or width - parent container controls spacing
  */
 export const ActionMessage = ({
-  state = 'default',
+  status = 'default',
   title = 'Recommended action',
   impactText = 'impact',
-  showImpact = false,
-  description = 'Description',
+  children = 'Description',
   onApply,
   onDismiss,
   className,
 }: ActionMessageProps) => {
-  
+
   return (
     <div className={cn('flex flex-col gap-vca-lg items-start', className)}>
       <div className="bg-vca-surface-tint flex flex-col gap-vca-lg p-vca-lg rounded-tl-vca-md rounded-tr-vca-md rounded-br-vca-md rounded-bl-vca-sm w-full">
@@ -38,30 +37,30 @@ export const ActionMessage = ({
         <div className="flex flex-col gap-vca-s items-start w-full">
           <div className="flex gap-vca-s items-center w-full">
             <p className="font-vca-text text-vca-small-bold text-vca-text flex-1">
-              {title}{showImpact && impactText && <> <span className="text-vca-text-positive">{impactText}</span></>}
+              {title}{impactText && <> <span className="text-vca-text-positive">{impactText}</span></>}
             </p>
           </div>
         </div>
 
         {/* Description */}
         <div className="flex flex-col gap-vca-md items-start w-full">
-          <p className="font-vca-text text-vca-small-open text-vca-text w-full">
-            {description}
-          </p>
+          <div className="font-vca-text text-vca-small-open text-vca-text w-full">
+            {children}
+          </div>
         </div>
 
         {/* Actions or Feedback */}
-        {state === 'default' && (
+        {status === 'default' && (
           <div className="flex items-start w-full gap-vca-none">
-            <Button 
-              variant="primary" 
+            <Button
+              variant="primary"
               emphasis={true}
               onClick={onApply}
             >
               Apply
             </Button>
-            <Button 
-              variant="tertiary" 
+            <Button
+              variant="tertiary"
               emphasis={false}
               onClick={onDismiss}
             >
@@ -70,7 +69,7 @@ export const ActionMessage = ({
           </div>
         )}
 
-        {state === 'applied' && (
+        {status === 'applied' && (
           <div className="flex gap-vca-xs items-center w-full">
             <div className="flex gap-vca-xs items-center flex-1">
               <VcaIcon icon="signal-success" size="sm" className="text-vca-text-positive" />
@@ -81,7 +80,7 @@ export const ActionMessage = ({
           </div>
         )}
 
-        {state === 'dismissed' && (
+        {status === 'dismissed' && (
           <div className="flex gap-vca-xs items-center w-full">
             <div className="flex gap-vca-xs items-center flex-1">
               <VcaIcon icon="signal-notice" size="sm" className="text-vca-text-neutral" />

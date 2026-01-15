@@ -2,23 +2,23 @@ import React from 'react';
 import { cn } from '@/utils';
 import { VcaIcon } from '../icons';
 
-export type ActionStatusProps = {
+export type ActionCardProps = {
     status: 'in-progress' | 'complete' | 'success' | 'failure';
     title: string;
-    description?: string | React.ReactNode;
+    children?: React.ReactNode;
     actionLabel?: string;
     onActionClick?: () => void;
     className?: string;
 };
 
-export const ActionStatus = ({
+export const ActionCard = ({
     status,
     title,
-    description,
+    children,
     actionLabel,
     onActionClick,
     className,
-}: ActionStatusProps) => {
+}: ActionCardProps) => {
     return (
         <div
             className={cn(
@@ -71,9 +71,9 @@ export const ActionStatus = ({
                         {title}
                     </div>
 
-                    {(status === 'complete' || status === 'success' || status === 'failure') && description && (
+                    {(status === 'complete' || status === 'success' || status === 'failure') && children && (
                         <div className="font-vca-text text-vca-small-open text-vca-text mt-0 space-y-2 [&_a]:text-vca-link [&_a]:font-semibold [&_a]:no-underline hover:[&_a]:underline">
-                            {description}
+                            {children}
                         </div>
                     )}
 
