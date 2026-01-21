@@ -34,6 +34,7 @@ export const GlobalSidebar = () => {
     const location = useLocation();
 
     // Mapping active states
+    // Mapping active states
     const isStudioActive = location.pathname === '/' || location.pathname.startsWith('/studio');
     const isLibraryActive = location.pathname.startsWith('/components') || location.pathname.startsWith('/foundations');
 
@@ -54,6 +55,7 @@ export const GlobalSidebar = () => {
                     isActive={isStudioActive}
                     onClick={() => navigate('/')}
                 />
+
                 <SidebarItem
                     icon={BookMarked}
                     label="Library"

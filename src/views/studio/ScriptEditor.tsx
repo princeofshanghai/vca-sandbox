@@ -1,28 +1,16 @@
-
-import { Flow, Block, BlockType, AIBlock, AIBlockVariant, AIMessageContent, AIInfoContent, AIActionContent } from './types';
+import { Flow, Block, BlockType, AIBlock, AIBlockVariant, AIMessageContent, AIInfoContent, AIActionContent, FlowPhase } from './types';
 import { VcaIcon } from '@/components/vca-components/icons/VcaIcon';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Trash2, User, GripVertical, Plus } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import {
-    DndContext,
-    closestCenter,
-    KeyboardSensor,
-    PointerSensor,
-    useSensor,
-    useSensors,
-    DragEndEvent
-} from '@dnd-kit/core';
-import {
-    arrayMove,
-    SortableContext,
-    sortableKeyboardCoordinates,
-    verticalListSortingStrategy,
     useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { MarkdownEditor } from './MarkdownEditor';
+import { ActionBlockEditor } from './ActionBlockEditor';
 import { VariantButton } from './VariantButton';
+import { LifecycleCanvas } from './LifecycleCanvas';
 
 
 interface ScriptEditorProps {
@@ -32,39 +20,23 @@ interface ScriptEditorProps {
 
 export const ScriptEditor = ({ flow, onUpdateFlow }: ScriptEditorProps) => {
 
-    const sensors = useSensors(
-        useSensor(PointerSensor),
-        useSensor(KeyboardSensor, {
-            coordinateGetter: sortableKeyboardCoordinates,
-        })
-    );
-
-    const handleDragEnd = (event: DragEndEvent) => {
-        const { active, over } = event;
-
-        if (over && active.id !== over.id) {
-            const oldIndex = flow.blocks.findIndex((item) => item.id === active.id);
-            const newIndex = flow.blocks.findIndex((item) => item.id === over.id);
-
-            onUpdateFlow({
-                ...flow,
-                blocks: arrayMove(flow.blocks, oldIndex, newIndex)
-            });
-        }
-    };
-
-    const handleAddBlock = (type: BlockType) => {
+    const handleAddBlock = (phase: FlowPhase, type: BlockType, variant?: AIBlockVariant) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const newBlock: any = {
             id: Date.now().toString(),
             type,
+            phase,
         };
 
         if (type === 'ai') {
-            newBlock.variant = 'message';
-            newBlock.content = { text: '' };
+            newBlock.variant = variant || 'message';
+
+            // Set initial content based on variant
+            if (newBlock.variant === 'message') newBlock.content = { text: '' };
+            if (newBlock.variant === 'info') newBlock.content = { title: '', body: '', sources: [], showFeedback: true };
+            if (newBlock.variant === 'action') newBlock.content = { loadingTitle: '', successTitle: '' };
         } else {
-            newBlock.content = '';
+            newBlock.content = ''; // User content
         }
 
         onUpdateFlow({
@@ -89,64 +61,21 @@ export const ScriptEditor = ({ flow, onUpdateFlow }: ScriptEditorProps) => {
 
     return (
         <div className="h-full flex flex-col bg-white">
-
-
-            <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50/50">
-                {flow.blocks.length === 0 ? (
-                    <div className="text-center py-20 border-2 border-dashed border-gray-200 rounded-xl">
-                        <div className="text-gray-400 mb-2">👋 Start your conversation</div>
-                        <p className="text-sm text-gray-400">Add a message below to begin</p>
-                    </div>
-                ) : (
-                    <DndContext
-                        sensors={sensors}
-                        collisionDetection={closestCenter}
-                        onDragEnd={handleDragEnd}
-                    >
-                        <SortableContext
-                            items={flow.blocks.map(b => b.id)}
-                            strategy={verticalListSortingStrategy}
-                        >
-                            <div className="space-y-4">
-                                {flow.blocks.map((block, index) => (
-                                    <SortableBlockItem
-                                        key={block.id}
-                                        block={block}
-                                        index={index}
-                                        onUpdate={(updates: Partial<Block>) => handleUpdateBlock(block.id, updates)}
-                                        onDelete={() => handleDeleteBlock(block.id)}
-                                    />
-                                ))}
-                            </div>
-                        </SortableContext>
-                    </DndContext>
-                )}
-
-                {/* Add Block Controls */}
-                <div className="pt-4 pb-20">
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="h-px flex-1 bg-gray-200"></div>
-                        <span className="text-xs font-medium text-gray-400">Add step</span>
-                        <div className="h-px flex-1 bg-gray-200"></div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 max-w-lg mx-auto">
-                        <AddBlockButton
-                            icon={User}
-                            label="User turn"
-                            description="User asks something"
-                            color="gray"
-                            onClick={() => handleAddBlock('user')}
+            <div className="flex-1 overflow-y-auto bg-gray-50/50">
+                <LifecycleCanvas
+                    flow={flow}
+                    onUpdateFlow={onUpdateFlow}
+                    onAddBlock={handleAddBlock}
+                    renderBlock={(block, index) => (
+                        <SortableBlockItem
+                            key={block.id}
+                            block={block}
+                            index={index}
+                            onUpdate={(updates: Partial<Block>) => handleUpdateBlock(block.id, updates)}
+                            onDelete={() => handleDeleteBlock(block.id)}
                         />
-                        <AddBlockButton
-                            icon={AITurnIcon}
-                            label="AI turn"
-                            description="AI responds to user"
-                            color="blue"
-                            onClick={() => handleAddBlock('ai')}
-                        />
-                    </div>
-                </div>
+                    )}
+                />
             </div>
         </div>
     );
@@ -160,7 +89,7 @@ const AITurnIcon = ({ size, className }: { size?: number, className?: string }) 
 
 // Sub-components
 
-const SortableBlockItem = (props: { block: Block, index: number, onUpdate: (u: Partial<Block>) => void, onDelete: () => void }) => {
+export const SortableBlockItem = (props: { block: Block, index: number, onUpdate: (u: Partial<Block>) => void, onDelete: () => void }) => {
     const {
         attributes,
         listeners,
@@ -384,126 +313,64 @@ const BlockEditor = ({ block, index, onUpdate, onDelete }: {
 
                 {/* 4. AI Action (Simulated) */}
                 {block.type === 'ai' && block.variant === 'action' && (
-                    <div className="space-y-6">
-                        {/* In Progress */}
-                        <div className="space-y-3">
-                            <span className="text-sm font-semibold text-gray-900 block border-b border-gray-100 pb-2">
-                                In progress
-                            </span>
-                            <div className="space-y-2">
-                                <label className="text-xs font-medium text-gray-500">Title</label>
-                                <input
-                                    className="w-full text-sm font-medium text-gray-900 border border-gray-200 rounded-md p-2 focus:ring-2 focus:ring-blue-100 focus:border-blue-300"
-                                    placeholder="Ex. Removing user..."
-                                    value={(block.content as AIActionContent).loadingTitle || ''}
-                                    onChange={(e) => onUpdate({ content: { ...block.content, loadingTitle: e.target.value } as AIActionContent })}
-                                />
-                            </div>
-                        </div>
-
-                        {/* Success      */}
-                        <div className="space-y-3">
-                            <span className="text-sm font-semibold text-gray-900 block border-b border-gray-100 pb-2">
-                                Success
-                            </span>
-                            <div className="space-y-2">
-                                <label className="text-xs font-medium text-gray-500">Title</label>
-                                <input
-                                    className="w-full text-sm font-medium text-gray-900 border border-gray-200 rounded-md p-2 focus:ring-2 focus:ring-blue-100 focus:border-blue-300"
-                                    placeholder="Ex. User removed from Flexis Recruiter"
-                                    value={(block.content as AIActionContent).successTitle || ''}
-                                    onChange={(e) => onUpdate({ content: { ...block.content, successTitle: e.target.value } as AIActionContent })}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-xs font-medium text-gray-500">Message</label>
-                                <MarkdownEditor
-                                    value={(block.content as AIActionContent).successDescription || ''}
-                                    onChange={(value) => onUpdate({ content: { ...block.content, successDescription: value } as AIActionContent })}
-                                    placeholder="Ex. You can view the updates in the Users & License Management tab in Admin Center."
-                                    className="w-full"
-                                />
-                            </div>
-                        </div>
-                    </div>
+                    <ActionBlockEditor
+                        content={block.content as AIActionContent}
+                        onChange={(newContent) => onUpdate({ content: newContent })}
+                    />
                 )}
-
-
-
             </div>
 
             {/* Prompts Section (Only available on message blocks) */}
-            {isAI && (block as AIBlock).variant === 'message' && (
-                <div className="px-3 pb-3 pt-0 mt-2">
-                    <button
-                        onClick={() => {
-                            const currentPrompts = (block as AIBlock).metadata?.prompts || [];
-                            onUpdate({
-                                metadata: {
-                                    ...(block as AIBlock).metadata,
-                                    prompts: [...currentPrompts, '']
-                                }
-                            });
-                        }}
-                        className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 font-medium py-2 rounded transition-colors mb-2"
-                    >
-                        <Plus size={14} />
-                        <span>Add prompt</span>
-                    </button>
+            {
+                isAI && (block as AIBlock).variant === 'message' && (
+                    <div className="px-3 pb-3 pt-0 mt-2">
+                        <button
+                            onClick={() => {
+                                const currentPrompts = (block as AIBlock).metadata?.prompts || [];
+                                onUpdate({
+                                    metadata: {
+                                        ...(block as AIBlock).metadata,
+                                        prompts: [...currentPrompts, '']
+                                    }
+                                });
+                            }}
+                            className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 font-medium py-2 rounded transition-colors mb-2"
+                        >
+                            <Plus size={14} />
+                            <span>Add prompt</span>
+                        </button>
 
-                    <div className="space-y-2">
-                        {((block as AIBlock).metadata?.prompts || []).map((prompt, i) => (
-                            <div key={i} className="flex items-center gap-2 group/prompt">
-                                <input
-                                    className="flex-1 bg-blue-50 border-0 rounded-full px-3 py-1 text-sm text-blue-700 placeholder-blue-300 focus:ring-1 focus:ring-blue-300 focus:bg-white transition-all"
-                                    placeholder="Prompt text..."
-                                    value={prompt}
-                                    onChange={(e) => {
-                                        const newPrompts = [...((block as AIBlock).metadata?.prompts || [])];
-                                        newPrompts[i] = e.target.value;
-                                        onUpdate({ metadata: { ...(block as AIBlock).metadata, prompts: newPrompts } });
-                                    }}
-                                />
-                                <button
-                                    onClick={() => {
-                                        const newPrompts = [...((block as AIBlock).metadata?.prompts || [])];
-                                        newPrompts.splice(i, 1);
-                                        onUpdate({ metadata: { ...(block as AIBlock).metadata, prompts: newPrompts } });
-                                    }}
-                                    className="text-gray-300 hover:text-red-500 p-1 opacity-0 group-hover/prompt:opacity-100 transition-opacity"
-                                >
-                                    <Trash2 size={14} />
-                                </button>
-                            </div>
-                        ))}
+                        <div className="space-y-2">
+                            {((block as AIBlock).metadata?.prompts || []).map((prompt, i) => (
+                                <div key={i} className="flex items-center gap-2 group/prompt">
+                                    <input
+                                        className="flex-1 bg-blue-50 border-0 rounded-full px-3 py-1 text-sm text-blue-700 placeholder-blue-300 focus:ring-1 focus:ring-blue-300 focus:bg-white transition-all"
+                                        placeholder="Prompt text..."
+                                        value={prompt}
+                                        onChange={(e) => {
+                                            const newPrompts = [...((block as AIBlock).metadata?.prompts || [])];
+                                            newPrompts[i] = e.target.value;
+                                            onUpdate({ metadata: { ...(block as AIBlock).metadata, prompts: newPrompts } });
+                                        }}
+                                    />
+                                    <button
+                                        onClick={() => {
+                                            const newPrompts = [...((block as AIBlock).metadata?.prompts || [])];
+                                            newPrompts.splice(i, 1);
+                                            onUpdate({ metadata: { ...(block as AIBlock).metadata, prompts: newPrompts } });
+                                        }}
+                                        className="text-gray-300 hover:text-red-500 p-1 opacity-0 group-hover/prompt:opacity-100 transition-opacity"
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 };
 
-const AddBlockButton = ({ icon: Icon, label, description, color, onClick }: { icon: React.ElementType, label: string, description: string, color: string, onClick: () => void }) => {
-    const colorClasses = {
-        blue: "hover:border-blue-300 hover:bg-blue-50 text-blue-600",
-        gray: "hover:border-gray-300 hover:bg-gray-100 text-gray-600",
-        amber: "hover:border-amber-300 hover:bg-amber-50 text-amber-600",
-        green: "hover:border-green-300 hover:bg-green-50 text-green-600",
-    }[color as string] || "";
 
-    return (
-        <button
-            onClick={onClick}
-            className={cn(
-                "flex flex-col items-center justify-center p-6 rounded-xl border border-gray-200 bg-white transition-all text-center group hover:shadow-md",
-                colorClasses
-            )}
-        >
-            <div className="p-3 rounded-full bg-gray-50 group-hover:bg-white border border-gray-100 mb-3 transition-colors">
-                <Icon size={24} />
-            </div>
-            <span className="font-semibold text-sm text-gray-900 mb-1">{label}</span>
-            <span className="text-xs text-gray-400">{description}</span>
-        </button>
-    );
-};

@@ -5,6 +5,8 @@ import { flowStorage, FlowMetadata, Folder as FolderType } from '@/utils/flowSto
 import { FlowCard } from '@/components/dashboard/FlowCard';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/utils/cn';
+import { NewFlowDialog } from '@/components/dashboard/NewFlowDialog';
+import { Flow } from '@/views/studio/types';
 
 export const DashboardView = () => {
     const navigate = useNavigate();
@@ -14,6 +16,7 @@ export const DashboardView = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [isCreatingFolder, setIsCreatingFolder] = useState(false);
     const [newFolderName, setNewFolderName] = useState('');
+    const [showNewFlowDialog, setShowNewFlowDialog] = useState(false);
 
     useEffect(() => {
         loadData();
@@ -26,11 +29,16 @@ export const DashboardView = () => {
         setFolders(flowStorage.getAllFolders());
     };
 
-    const handleCreateFlow = () => {
-        // If inside a folder, create flow in that folder
-        const id = flowStorage.createFlow(activeFolderId || undefined);
-        navigate(`/studio/${id}`);
+    const handleCreateFlow = (flow: Flow) => {
+        // Save flow with folder if active
+        if (activeFolderId) {
+            flowStorage.saveFlow({ ...flow, folderId: activeFolderId });
+        } else {
+            flowStorage.saveFlow(flow);
+        }
+        navigate(`/studio/${flow.id}`);
     };
+
 
     const handleDeleteFlow = (id: string) => {
         flowStorage.deleteFlow(id);
@@ -148,7 +156,7 @@ export const DashboardView = () => {
                             <p className="text-gray-500 mt-1">Manage and edit your conversation flows</p>
                         </div>
                         <Button
-                            onClick={handleCreateFlow}
+                            onClick={() => setShowNewFlowDialog(true)}
                             className="bg-black text-white hover:bg-gray-800 gap-2"
                         >
                             <Plus size={18} />
@@ -193,7 +201,7 @@ export const DashboardView = () => {
                             </p>
                             <Button
                                 variant="outline"
-                                onClick={handleCreateFlow}
+                                onClick={() => setShowNewFlowDialog(true)}
                             >
                                 Create new
                             </Button>
@@ -201,6 +209,14 @@ export const DashboardView = () => {
                     )}
                 </div>
             </div>
+
+            {/* New Flow Dialog */}
+            {showNewFlowDialog && (
+                <NewFlowDialog
+                    onCreateFlow={handleCreateFlow}
+                    onClose={() => setShowNewFlowDialog(false)}
+                />
+            )}
         </div>
     );
 };

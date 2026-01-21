@@ -6,6 +6,7 @@ import { FlowPreview } from './FlowPreview';
 import { FlowToolbar } from './FlowToolbar';
 import { Flow } from './types';
 import { flowStorage, INITIAL_FLOW } from '@/utils/flowStorage';
+import { CanvasEditor } from '../studio-canvas/CanvasEditor';
 
 export const StudioView = () => {
     const { id } = useParams<{ id: string }>();
@@ -42,6 +43,7 @@ export const StudioView = () => {
 
     const [isPremium, setIsPremium] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
+    const [viewMode, setViewMode] = useState<'list' | 'canvas'>('list');
 
 
 
@@ -79,6 +81,28 @@ export const StudioView = () => {
                     </div>
                 </div>
 
+                {/* View Toggle */}
+                <div className="flex items-center gap-1 p-1 bg-gray-100 rounded-lg">
+                    <button
+                        onClick={() => setViewMode('list')}
+                        className={`px-3 py-1 text-xs font-medium rounded transition ${viewMode === 'list'
+                            ? 'bg-white text-gray-900 shadow-sm'
+                            : 'text-gray-600 hover:text-gray-900'
+                            }`}
+                    >
+                        List
+                    </button>
+                    <button
+                        onClick={() => setViewMode('canvas')}
+                        className={`px-3 py-1 text-xs font-medium rounded transition ${viewMode === 'canvas'
+                            ? 'bg-white text-gray-900 shadow-sm'
+                            : 'text-gray-600 hover:text-gray-900'
+                            }`}
+                    >
+                        Canvas
+                    </button>
+                </div>
+
                 <FlowToolbar
                     flow={flow}
                     onLoadFlow={setFlow}
@@ -92,13 +116,17 @@ export const StudioView = () => {
             </div>
 
             <div className="flex flex-1 overflow-hidden">
-                {/* Left Pane: Editor (Flexible width, min 400px) */}
-                <div className="w-[500px] flex-shrink-0 border-r border-gray-200 h-full bg-white z-0">
-                    <ScriptEditor flow={flow} onUpdateFlow={setFlow} />
+                {/* Left Pane: Canvas/Editor - Takes 2/3 of space */}
+                <div className="flex-[2] border-r border-gray-200 h-full bg-white z-0 min-w-0">
+                    {viewMode === 'list' ? (
+                        <ScriptEditor flow={flow} onUpdateFlow={setFlow} />
+                    ) : (
+                        <CanvasEditor flow={flow} onUpdateFlow={setFlow} />
+                    )}
                 </div>
 
-                {/* Right Pane: Preview (Fills remaining space) */}
-                <div className="flex-1 bg-gray-100 h-full overflow-hidden relative">
+                {/* Right Pane: Preview - Takes 1/3 of space */}
+                <div className="flex-1 bg-gray-100 h-full overflow-hidden relative min-w-0">
                     <FlowPreview flow={flow} isPremium={isPremium} isMobile={isMobile} />
                 </div>
             </div>

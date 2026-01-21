@@ -21,12 +21,18 @@ export interface FlowMetadata {
 export const INITIAL_FLOW: Flow = {
     id: 'initial',
     title: 'New Conversation',
-    settings: { showDisclaimer: true, simulateThinking: false },
+    settings: {
+        showDisclaimer: true,
+        simulateThinking: false,
+        entryPoint: 'custom', // Default for old flows
+        productName: 'LinkedIn'
+    },
     lastModified: Date.now(),
     blocks: [
         {
             id: '1',
             type: 'ai',
+            phase: 'welcome',
             variant: 'message',
             content: {
                 text: 'Hi there! I can help you with your account.'
@@ -91,7 +97,21 @@ export const flowStorage = {
     getFlow: (id: string): Flow | null => {
         try {
             const stored = localStorage.getItem(`${FLOW_PREFIX}${id}`);
-            return stored ? JSON.parse(stored) : null;
+            if (!stored) return null;
+
+            const flow = JSON.parse(stored) as Flow;
+
+            // Simple Migration: Ensure all blocks have a phase
+            // If strictly missing, default to 'action' (safe catch-all)
+            // In a real app we might try to infer based on position, but this is safe.
+            if (flow.blocks) {
+                flow.blocks = flow.blocks.map(b => ({
+                    ...b,
+                    phase: b.phase || 'action'
+                }));
+            }
+
+            return flow;
         } catch (e) {
             console.error(`Failed to load flow ${id}`, e);
             return null;
