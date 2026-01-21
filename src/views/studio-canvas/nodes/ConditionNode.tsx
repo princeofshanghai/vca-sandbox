@@ -13,7 +13,7 @@ export const ConditionNode = memo(({ data }: NodeProps<ConditionNodeData>) => {
     ];
 
     return (
-        <div className="bg-amber-50 border-2 border-amber-400 rounded-lg shadow-sm min-w-[200px] hover:shadow-md transition-shadow">
+        <div className="bg-amber-50 border-2 border-amber-400 rounded-lg shadow-sm min-w-[200px] transition-shadow cursor-default">
             {/* Input Handle */}
             <Handle
                 type="target"

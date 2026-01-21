@@ -147,7 +147,7 @@ export const LifecycleCanvas = ({ flow, onUpdateFlow, renderBlock, onAddBlock }:
                                         phase === 'info' ? "📝" : "⚡️"
                             }
                             items={sections[phase].map(b => b.id)}
-                            onAddBlock={(e) => handleAddClick(phase, e as any)}
+                            onAddBlock={(e) => handleAddClick(phase, e as React.MouseEvent)}
                         >
                             {sections[phase].map((block, i) => renderBlock(block, i))}
                         </PhaseSection>

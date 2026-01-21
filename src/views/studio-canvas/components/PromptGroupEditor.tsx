@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 
 interface Prompt {
@@ -34,13 +34,13 @@ export function PromptGroupEditor({ title, prompts, onSave, onClose, anchorEl }:
 
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [editedTitle, editedPrompts]);
+    }, [editedTitle, editedPrompts, anchorEl, handleSave]);
 
-    const handleSave = () => {
+    const handleSave = useCallback(() => {
         const cleanedPrompts = editedPrompts.filter(p => p.text.trim());
         onSave(editedTitle.trim() || undefined, cleanedPrompts);
         onClose();
-    };
+    }, [editedTitle, editedPrompts, onSave, onClose]);
 
     const updatePrompt = (id: string, text: string) => {
         setEditedPrompts(editedPrompts.map(p => p.id === id ? { ...p, text } : p));

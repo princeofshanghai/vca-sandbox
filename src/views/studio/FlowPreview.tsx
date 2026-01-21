@@ -8,7 +8,6 @@ import { ActionCard } from '@/components/vca-components/action-card/ActionCard';
 import { PromptGroup } from '@/components/vca-components/prompt-group/PromptGroup';
 import { PhoneFrame } from '@/components/component-library/PhoneFrame';
 import { MarkdownRenderer } from '@/components/vca-components/markdown-renderer/Markdown';
-import { cn } from '@/utils/cn';
 
 interface FlowPreviewProps {
     flow: Flow;
@@ -17,48 +16,24 @@ interface FlowPreviewProps {
 }
 
 export const FlowPreview = ({ flow, isPremium, isMobile }: FlowPreviewProps) => {
-    // Global Scenario state for the preview session
-    const [activeScenario, setActiveScenario] = useState<'success' | 'failure'>('success');
-
     return (
-        <div className="h-full flex flex-col relative bg-gray-100">
-            {/* Scenario Controller Overlay */}
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 bg-white/90 backdrop-blur border border-gray-200 shadow-sm rounded-full p-1 flex items-center gap-1">
-                <button
-                    onClick={() => setActiveScenario('success')}
-                    className={cn(
-                        "px-3 py-1 rounded-full text-xs font-semibold transition-all",
-                        activeScenario === 'success' ? "bg-green-100 text-green-700" : "text-gray-500 hover:bg-gray-100"
-                    )}
-                >
-                    Success
-                </button>
-                <div className="w-px h-3 bg-gray-200"></div>
-                <button
-                    onClick={() => setActiveScenario('failure')}
-                    className={cn(
-                        "px-3 py-1 rounded-full text-xs font-semibold transition-all",
-                        activeScenario === 'failure' ? "bg-amber-100 text-amber-700" : "text-gray-500 hover:bg-gray-100"
-                    )}
-                >
-                    Failure
-                </button>
-            </div>
-
-            <div className="flex-1 flex flex-col items-center justify-center p-8 overflow-auto">
+        <div className="h-full flex flex-col relative bg-white">
+            <div className="flex-1 flex flex-col items-center justify-center p-4 overflow-y-auto thin-scrollbar">
                 {isMobile ? (
-                    <div className="scale-[0.85] origin-center">
-                        <PhoneFrame showStatusBar={true} dimBackground={false}>
-                            <Container
-                                headerTitle="Help"
-                                className="bg-white h-[772px] w-[393px]"
-                                viewport="mobile"
-                                showHeaderPremiumIcon={isPremium}
-                                showPremiumBorder={isPremium}
-                            >
-                                <PreviewContent flow={flow} activeScenario={activeScenario} />
-                            </Container>
-                        </PhoneFrame>
+                    <div className="w-[334px] h-[726px] shrink-0 flex items-center justify-center">
+                        <div className="scale-[0.85] origin-center">
+                            <PhoneFrame showStatusBar={true} dimBackground={false}>
+                                <Container
+                                    headerTitle="Help"
+                                    className="bg-white h-[772px] w-[393px]"
+                                    viewport="mobile"
+                                    showHeaderPremiumIcon={isPremium}
+                                    showPremiumBorder={isPremium}
+                                >
+                                    <PreviewContent flow={flow} />
+                                </Container>
+                            </PhoneFrame>
+                        </div>
                     </div>
                 ) : (
                     <Container
@@ -68,7 +43,7 @@ export const FlowPreview = ({ flow, isPremium, isMobile }: FlowPreviewProps) => 
                         showHeaderPremiumIcon={isPremium}
                         showPremiumBorder={isPremium}
                     >
-                        <PreviewContent flow={flow} activeScenario={activeScenario} />
+                        <PreviewContent flow={flow} />
                     </Container>
                 )}
             </div>
@@ -78,7 +53,7 @@ export const FlowPreview = ({ flow, isPremium, isMobile }: FlowPreviewProps) => 
 
 
 // Extracted content helper to avoid code duplication across viewports
-const PreviewContent = ({ flow, activeScenario }: { flow: Flow, activeScenario: 'success' | 'failure' }) => {
+const PreviewContent = ({ flow }: { flow: Flow }) => {
     // Use new steps[] if available, otherwise fall back to old blocks[]
     const steps = flow.steps || [];
     const blocks = flow.blocks || [];
@@ -125,7 +100,6 @@ const PreviewContent = ({ flow, activeScenario }: { flow: Flow, activeScenario: 
                         successDescription={actionContent.successDescription}
                         failureTitle={actionContent.failureTitle}
                         failureDescription={actionContent.failureDescription}
-                        scenario={activeScenario}
                     />
                 </div>
             );
@@ -239,7 +213,6 @@ const PreviewContent = ({ flow, activeScenario }: { flow: Flow, activeScenario: 
                                     successDescription={content.successDescription}
                                     failureTitle={content.failureTitle}
                                     failureDescription={content.failureDescription}
-                                    scenario={activeScenario}
                                 />
                             </div>
                         );
@@ -301,27 +274,24 @@ const SimulatedAction = ({
     successDescription,
     failureTitle,
     failureDescription,
-    scenario
 }: {
     loadingTitle: string,
     successTitle: string,
     successDescription?: string,
     failureTitle?: string,
     failureDescription?: string,
-    scenario: 'success' | 'failure'
 }) => {
     const [status, setStatus] = useState<'in-progress' | 'success' | 'failure'>('in-progress');
 
-    // Auto-transition effect
+    // Auto-transition effect - always transitions to success
     useEffect(() => {
         setStatus('in-progress');
         const timer = setTimeout(() => {
-            // Transition to the status dictated by the global scenario
-            setStatus(scenario);
+            setStatus('success');
         }, 2000);
 
         return () => clearTimeout(timer);
-    }, [scenario, loadingTitle, successTitle, failureTitle]);
+    }, [loadingTitle, successTitle, failureTitle]);
 
     // Determine content based on final status
     const title = status === 'in-progress' ? loadingTitle

@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
-import { ScriptEditor } from './ScriptEditor';
-import { FlowPreview } from './FlowPreview';
-import { FlowToolbar } from './FlowToolbar';
+
+import { PreviewDrawer } from './PreviewDrawer';
 import { Flow } from './types';
 import { flowStorage, INITIAL_FLOW } from '@/utils/flowStorage';
 import { CanvasEditor } from '../studio-canvas/CanvasEditor';
@@ -43,7 +41,7 @@ export const StudioView = () => {
 
     const [isPremium, setIsPremium] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
-    const [viewMode, setViewMode] = useState<'list' | 'canvas'>('list');
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
 
 
@@ -55,81 +53,29 @@ export const StudioView = () => {
 
     return (
         <div className="flex h-full overflow-hidden flex-col bg-white">
-            {/* Toolbar Header */}
-            <div className="h-14 border-b border-gray-200 bg-white flex items-center justify-between px-4 shrink-0 shadow-sm z-10">
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={handleBack}
-                        className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-gray-900 transition-colors"
-                        title="Back to Dashboard"
-                    >
-                        <ArrowLeft size={20} />
-                    </button>
-                    <div className="h-6 w-px bg-gray-200" />
-                    <div className="flex flex-col">
-                        <input
-                            value={flow.title}
-                            onChange={(e) => setFlow(prev => ({ ...prev, title: e.target.value }))}
-                            className="font-semibold text-gray-700 bg-transparent hover:bg-gray-50 focus:bg-gray-50 px-2 py-0.5 -ml-2 rounded border-none focus:ring-0 text-sm w-64"
-                            placeholder="Untitled Conversation"
-                        />
-                        <div className="flex items-center gap-2 text-[10px] text-gray-400 px-0.5">
-                            <span>{flow.blocks.length} steps</span>
-                            <span>•</span>
-                            <span>Last edited {new Date(flow.lastModified).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                        </div>
-                    </div>
-                </div>
 
-                {/* View Toggle */}
-                <div className="flex items-center gap-1 p-1 bg-gray-100 rounded-lg">
-                    <button
-                        onClick={() => setViewMode('list')}
-                        className={`px-3 py-1 text-xs font-medium rounded transition ${viewMode === 'list'
-                            ? 'bg-white text-gray-900 shadow-sm'
-                            : 'text-gray-600 hover:text-gray-900'
-                            }`}
-                    >
-                        List
-                    </button>
-                    <button
-                        onClick={() => setViewMode('canvas')}
-                        className={`px-3 py-1 text-xs font-medium rounded transition ${viewMode === 'canvas'
-                            ? 'bg-white text-gray-900 shadow-sm'
-                            : 'text-gray-600 hover:text-gray-900'
-                            }`}
-                    >
-                        Canvas
-                    </button>
-                </div>
 
-                <FlowToolbar
+            {/* Canvas Editor - Full Width */}
+            <div className="flex-1 overflow-hidden bg-white">
+                <CanvasEditor
                     flow={flow}
-                    onLoadFlow={setFlow}
                     onUpdateFlow={setFlow}
-
-                    isPremium={isPremium}
-                    onTogglePremium={() => setIsPremium(!isPremium)}
-                    isMobile={isMobile}
-                    onToggleMobile={() => setIsMobile(!isMobile)}
+                    onBack={handleBack}
+                    onPreview={() => setIsPreviewOpen(!isPreviewOpen)}
+                    isPreviewActive={isPreviewOpen}
                 />
             </div>
 
-            <div className="flex flex-1 overflow-hidden">
-                {/* Left Pane: Canvas/Editor - Takes 2/3 of space */}
-                <div className="flex-[2] border-r border-gray-200 h-full bg-white z-0 min-w-0">
-                    {viewMode === 'list' ? (
-                        <ScriptEditor flow={flow} onUpdateFlow={setFlow} />
-                    ) : (
-                        <CanvasEditor flow={flow} onUpdateFlow={setFlow} />
-                    )}
-                </div>
-
-                {/* Right Pane: Preview - Takes 1/3 of space */}
-                <div className="flex-1 bg-gray-100 h-full overflow-hidden relative min-w-0">
-                    <FlowPreview flow={flow} isPremium={isPremium} isMobile={isMobile} />
-                </div>
-            </div>
+            {/* Preview Drawer */}
+            <PreviewDrawer
+                isOpen={isPreviewOpen}
+                flow={flow}
+                onUpdateFlow={setFlow}
+                isPremium={isPremium}
+                isMobile={isMobile}
+                onTogglePremium={() => setIsPremium(!isPremium)}
+                onToggleMobile={() => setIsMobile(!isMobile)}
+            />
         </div>
     );
 };

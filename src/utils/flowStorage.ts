@@ -22,7 +22,7 @@ export const INITIAL_FLOW: Flow = {
     id: 'initial',
     title: 'New Conversation',
     settings: {
-        showDisclaimer: true,
+        showDisclaimer: false,
         simulateThinking: false,
         entryPoint: 'custom', // Default for old flows
         productName: 'LinkedIn'

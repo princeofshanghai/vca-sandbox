@@ -1,4 +1,4 @@
-import { Turn, Component, AIMessageContent, AIPromptGroupContent } from '../studio/types';
+import { Turn, Component, AIMessageContent, AIPromptGroupContent, FlowPhase } from '../studio/types';
 import { useState } from 'react';
 
 interface TurnEditorProps {
@@ -184,7 +184,7 @@ export function TurnEditor({ turn, onUpdate, onClose }: TurnEditorProps) {
                     </label>
                     <select
                         value={turn.phase || 'intent'}
-                        onChange={(e) => onUpdate({ ...turn, phase: e.target.value as any })}
+                        onChange={(e) => onUpdate({ ...turn, phase: e.target.value as FlowPhase })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                         <option value="welcome">Welcome</option>

@@ -57,7 +57,7 @@ export function createNewFlow(entryPoint: EntryPointId): Flow {
         title: `New ${entryConfig.productName} Conversation`,
         description: '',
         settings: {
-            showDisclaimer: true,
+            showDisclaimer: false,
             simulateThinking: false,
             entryPoint,
             productName: entryConfig.productName

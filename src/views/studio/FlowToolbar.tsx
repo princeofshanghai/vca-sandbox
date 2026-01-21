@@ -56,7 +56,7 @@ export const FlowToolbar = ({ flow, onLoadFlow, onUpdateFlow, isPremium, onToggl
     };
 
     const toggleSetting = (key: 'showDisclaimer' | 'simulateThinking') => {
-        const currentSettings = flow.settings || { showDisclaimer: true, simulateThinking: false };
+        const currentSettings = flow.settings || { showDisclaimer: false, simulateThinking: false };
         onUpdateFlow({
             ...flow,
             settings: {
@@ -66,7 +66,7 @@ export const FlowToolbar = ({ flow, onLoadFlow, onUpdateFlow, isPremium, onToggl
         });
     };
 
-    const settings = flow.settings || { showDisclaimer: true, simulateThinking: false };
+    const settings = flow.settings || { showDisclaimer: false, simulateThinking: false };
 
     return (
         <div className="flex items-center gap-2">
