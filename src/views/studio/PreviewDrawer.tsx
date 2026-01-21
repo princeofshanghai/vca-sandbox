@@ -1,5 +1,7 @@
+import { useState, useEffect } from 'react';
 import { Settings, Check } from 'lucide-react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import { cn } from '@/utils/cn';
 import { FlowPreview } from './FlowPreview';
 import { Flow } from './types';
 
@@ -22,7 +24,18 @@ export function PreviewDrawer({
     onTogglePremium,
     onToggleMobile,
 }: PreviewDrawerProps) {
-    if (!isOpen) return null;
+    const [shouldRender, setShouldRender] = useState(isOpen);
+
+    useEffect(() => {
+        if (isOpen) {
+            setShouldRender(true);
+        } else {
+            const timer = setTimeout(() => setShouldRender(false), 300);
+            return () => clearTimeout(timer);
+        }
+    }, [isOpen]);
+
+    if (!shouldRender) return null;
 
     const settings = flow.settings || { showDisclaimer: false, simulateThinking: false };
 
@@ -38,7 +51,10 @@ export function PreviewDrawer({
     };
 
     return (
-        <div className="fixed right-3 top-[64px] bottom-[64px] w-[480px] bg-white shadow-lg z-50 rounded-2xl flex flex-col animate-in slide-in-from-right duration-300 overflow-hidden border border-gray-200">
+        <div className={cn(
+            "fixed right-3 top-[64px] bottom-[64px] w-[480px] bg-white shadow-lg z-50 rounded-2xl flex flex-col overflow-hidden border border-gray-200 duration-300 fill-mode-forwards",
+            isOpen ? "animate-in slide-in-from-right" : "animate-out slide-out-to-right"
+        )}>
             {/* Floating Display Settings Button */}
             <div className="absolute top-3 right-3 z-10">
                 <DropdownMenu.Root>
