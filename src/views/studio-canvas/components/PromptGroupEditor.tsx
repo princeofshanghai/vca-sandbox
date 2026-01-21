@@ -19,6 +19,12 @@ export function PromptGroupEditor({ title, prompts, onSave, onClose, anchorEl }:
     const [editedPrompts, setEditedPrompts] = useState<Prompt[]>(prompts);
     const popoverRef = useRef<HTMLDivElement>(null);
 
+    const handleSave = useCallback(() => {
+        const cleanedPrompts = editedPrompts.filter(p => p.text.trim());
+        onSave(editedTitle.trim() || undefined, cleanedPrompts);
+        onClose();
+    }, [editedTitle, editedPrompts, onSave, onClose]);
+
     // Close on click outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -35,12 +41,6 @@ export function PromptGroupEditor({ title, prompts, onSave, onClose, anchorEl }:
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [editedTitle, editedPrompts, anchorEl, handleSave]);
-
-    const handleSave = useCallback(() => {
-        const cleanedPrompts = editedPrompts.filter(p => p.text.trim());
-        onSave(editedTitle.trim() || undefined, cleanedPrompts);
-        onClose();
-    }, [editedTitle, editedPrompts, onSave, onClose]);
 
     const updatePrompt = (id: string, text: string) => {
         setEditedPrompts(editedPrompts.map(p => p.id === id ? { ...p, text } : p));

@@ -39,7 +39,13 @@ const getDefaultContent = (type: ComponentType): ComponentContent => {
         case 'buttons':
             return { options: [] };
         case 'input':
-            return { placeholder: '', validationRules: [] };
+            return { placeholder: '' };
+        case 'promptGroup':
+            return { title: '', prompts: [] };
+        default: {
+            const exhaustiveCheck: never = type;
+            throw new Error(`Unhandled component type: ${exhaustiveCheck}`);
+        }
     }
 };
 
