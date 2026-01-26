@@ -2,8 +2,6 @@ import { useRef, useEffect, useState } from 'react';
 import TextareaAutosize from 'react-textarea-autosize';
 import { Component, PromptContent } from '../../studio/types';
 import { ComponentEditorPopover } from './ComponentEditorPopover';
-import * as SwitchPrimitive from '@radix-ui/react-switch';
-
 interface PromptEditorProps {
     component: Component;
     onChange: (updates: Partial<PromptContent>) => void;
@@ -16,18 +14,6 @@ const Label = ({ children }: { children: React.ReactNode }) => (
     <label className="text-xs font-semibold text-gray-500">
         {children}
     </label>
-);
-
-const Toggle = ({ checked, onCheckedChange }: { checked: boolean; onCheckedChange: (c: boolean) => void }) => (
-    <SwitchPrimitive.Root
-        checked={checked}
-        onCheckedChange={onCheckedChange}
-        className={`w-9 h-5 rounded-full relative shadow-sm transition-colors border-transparent focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center ${checked ? 'bg-blue-600' : 'bg-gray-200'}`}
-    >
-        <SwitchPrimitive.Thumb
-            className={`block w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${checked ? 'translate-x-4' : 'translate-x-0.75'}`}
-        />
-    </SwitchPrimitive.Root>
 );
 
 export function PromptEditor({ component, onChange, children, isOpen, onOpenChange }: PromptEditorProps) {
@@ -46,7 +32,13 @@ export function PromptEditor({ component, onChange, children, isOpen, onOpenChan
     // Focus handling
     useEffect(() => {
         if (isOpen && textareaRef.current) {
-            textareaRef.current.focus();
+            const el = textareaRef.current;
+            el.focus();
+            // Small timeout to ensure cursor is placed at the end after browser's default focus behavior
+            setTimeout(() => {
+                const length = el.value.length;
+                el.setSelectionRange(length, length);
+            }, 0);
         }
     }, [isOpen]);
 
@@ -67,15 +59,6 @@ export function PromptEditor({ component, onChange, children, isOpen, onOpenChan
                     minRows={2}
                     maxRows={10}
                     className="w-full text-sm leading-relaxed text-gray-700 placeholder:text-gray-300 border border-gray-200 rounded px-2 py-1.5 resize-none focus:ring-1 focus:ring-blue-500 focus:outline-none"
-                />
-            </div>
-
-            {/* AI Icon Toggle */}
-            <div className="flex items-center justify-between pt-1">
-                <span className="text-xs font-medium text-gray-900">Show AI icon</span>
-                <Toggle
-                    checked={content.showAiIcon !== false}
-                    onCheckedChange={(val) => onChange({ ...content, showAiIcon: val })}
                 />
             </div>
         </div>

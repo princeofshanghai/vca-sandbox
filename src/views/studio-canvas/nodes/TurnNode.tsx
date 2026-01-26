@@ -1,12 +1,9 @@
-import { memo, useState, useRef, useEffect, forwardRef } from 'react';
+import { memo, useState, useRef, useEffect } from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
 import { VcaIcon } from '@/components/vca-components/icons/VcaIcon';
-import { MessageSquare, MessageCirclePlus, MessageSquareText, Zap } from 'lucide-react';
-import { Component, ComponentType, AIMessageContent, PromptContent, AIInfoContent, AIActionContent } from '../../studio/types';
-import { InfoMessageEditor } from '../components/InfoMessageEditor';
-import { MessageEditor } from '../components/MessageEditor';
-import { PromptEditor } from '../components/PromptEditor';
-import { ActionCardEditor } from '../components/ActionCardEditor';
+import { Component, ComponentType } from '../../studio/types';
+import { TurnNodeComponentList } from './components/TurnNodeComponentList';
+import { formatPhase } from './utils/turnNodeUtils';
 
 interface TurnNodeData {
     speaker: 'user' | 'ai';
@@ -27,95 +24,6 @@ interface TurnNodeData {
     onComponentDelete?: (componentId: string) => void;
     onComponentReorder?: (componentIds: string[]) => void;
 }
-
-// Capitalize phase for display
-const formatPhase = (phase?: string): string => {
-    if (!phase) return '';
-    if (phase === 'intent') return 'Intent recognition';
-    if (phase === 'info') return 'Info gathering';
-    return phase.charAt(0).toUpperCase() + phase.slice(1);
-};
-
-// Get icon and label for component type
-const getComponentDisplay = (component: Component): { icon: JSX.Element; label: string; detail?: string } => {
-    switch (component.type) {
-        case 'message': {
-            const messageContent = component.content as AIMessageContent;
-            return {
-                icon: <MessageSquare className="w-3 h-3" />,
-                label: 'Message',
-                detail: messageContent.text || ''
-            };
-        }
-        case 'prompt': {
-            const promptContent = component.content as PromptContent;
-            return {
-                icon: <MessageCirclePlus className="w-3 h-3" />,
-                label: 'Prompt',
-                detail: promptContent.text || ''
-            };
-        }
-        case 'infoMessage': {
-            const infoContent = component.content as AIInfoContent;
-            return {
-                icon: <MessageSquareText className="w-3 h-3" />,
-                label: 'Info Message',
-                detail: infoContent.title || infoContent.body || ''
-            };
-        }
-        case 'actionCard': {
-            const actionContent = component.content as AIActionContent;
-            return {
-                icon: <Zap className="w-3 h-3" />,
-                label: 'Action Card',
-                detail: actionContent.loadingTitle || actionContent.successTitle || ''
-            };
-        }
-        default:
-            return { icon: <MessageSquare className="w-3 h-3" />, label: 'Component' };
-    }
-};
-
-// Simplified Component Card - Display only, no inline editing
-const SimpleComponentCard = memo(forwardRef<HTMLDivElement, {
-    component: Component;
-    display: { icon: JSX.Element; label: string; detail?: string };
-    isSelected: boolean;
-    onClick: () => void;
-}>(({
-    component,
-    display,
-    isSelected,
-    onClick,
-}, ref) => {
-    return (
-        <div
-            ref={ref}
-            id={`component-${component.id}`}
-            onClick={(e) => {
-                e.stopPropagation(); // Prevent node selection
-                onClick();
-            }}
-            className={`component-card flex items-start gap-2 px-3 py-2.5 rounded-md border transition-all ${isSelected
-                ? 'border-blue-500 bg-blue-50'
-                : 'border-gray-200 bg-white hover:border-blue-300'
-                } cursor-default`}
-        >
-            <span className="text-gray-600 flex-shrink-0 mt-0.5">{display.icon}</span>
-            <div className="flex-1 min-w-0">
-                {display.detail ? (
-                    <div className="text-xs text-gray-700 whitespace-pre-wrap leading-normal font-sans break-words">
-                        {display.detail}
-                    </div>
-                ) : (
-                    <div className="text-[11px] text-gray-400">Add {display.label.toLowerCase()} text</div>
-                )}
-            </div>
-        </div>
-    );
-}));
-
-SimpleComponentCard.displayName = 'SimpleComponentCard';
 
 export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
     const nodeId = id as string;
@@ -152,8 +60,6 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
             setIsEditingLabel(false);
         }
     };
-
-
 
     const handleNodeClick = (e: React.MouseEvent) => {
         const target = e.target as HTMLElement;
@@ -236,95 +142,15 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
                 </div>
             </div>
 
-            {/* Component List - Card style with spacing */}
-            <div className="px-5 pb-5 pt-5 space-y-3 bg-gray-50 rounded-b-lg">
-                {components.map((component: Component) => {
-                    const display = getComponentDisplay(component);
-
-                    const card = (
-                        <SimpleComponentCard
-                            component={component}
-                            display={display}
-                            isSelected={typedData.selectedComponentId === component.id}
-                            onClick={() => {
-                                const el = document.getElementById(`component-${component.id}`);
-                                if (typedData.onSelectComponent) {
-                                    typedData.onSelectComponent(nodeId, component.id, el || document.body);
-                                }
-                            }}
-                        />
-                    );
-
-                    // Wrap each component type with its respective editor
-                    const handleOpenChange = (open: boolean) => {
-                        if (!open && typedData.selectedComponentId === component.id) {
-                            typedData.onDeselect?.();
-                        }
-                    };
-
-                    if (component.type === 'message') {
-                        return (
-                            <MessageEditor
-                                key={component.id}
-                                component={component}
-                                onChange={(updates) => typedData.onComponentUpdate?.(component.id, { content: { ...component.content, ...updates } })}
-                                isOpen={typedData.selectedComponentId === component.id}
-                                onOpenChange={handleOpenChange}
-                            >
-                                {card}
-                            </MessageEditor>
-                        );
-                    }
-
-                    if (component.type === 'prompt') {
-                        return (
-                            <PromptEditor
-                                key={component.id}
-                                component={component}
-                                onChange={(updates) => typedData.onComponentUpdate?.(component.id, { content: { ...component.content, ...updates } })}
-                                isOpen={typedData.selectedComponentId === component.id}
-                                onOpenChange={handleOpenChange}
-                            >
-                                {card}
-                            </PromptEditor>
-                        );
-                    }
-
-                    if (component.type === 'infoMessage') {
-                        return (
-                            <InfoMessageEditor
-                                key={component.id}
-                                component={component}
-                                onChange={(updates) => typedData.onComponentUpdate?.(component.id, { content: { ...component.content, ...updates } })}
-                                isOpen={typedData.selectedComponentId === component.id}
-                                onOpenChange={handleOpenChange}
-                            >
-                                {card}
-                            </InfoMessageEditor>
-                        );
-                    }
-
-                    if (component.type === 'actionCard') {
-                        return (
-                            <ActionCardEditor
-                                key={component.id}
-                                component={component}
-                                onChange={(updates) => typedData.onComponentUpdate?.(component.id, { content: { ...component.content, ...updates } })}
-                                isOpen={typedData.selectedComponentId === component.id}
-                                onOpenChange={handleOpenChange}
-                            >
-                                {card}
-                            </ActionCardEditor>
-                        );
-                    }
-
-                    return card;
-                })}
-            </div>
-
-
-
-
+            {/* Component List */}
+            <TurnNodeComponentList
+                nodeId={nodeId}
+                components={components}
+                selectedComponentId={typedData.selectedComponentId}
+                onSelectComponent={typedData.onSelectComponent}
+                onDeselect={typedData.onDeselect}
+                onComponentUpdate={typedData.onComponentUpdate}
+            />
 
             {/* Output Handle */}
             <Handle
@@ -337,3 +163,4 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
 });
 
 TurnNode.displayName = 'TurnNode';
+

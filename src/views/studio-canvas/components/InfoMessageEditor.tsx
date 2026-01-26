@@ -53,7 +53,13 @@ export function InfoMessageEditor({ component, onChange, children, isOpen, onOpe
     // Focus handling
     useEffect(() => {
         if (isOpen && bodyRef.current) {
-            bodyRef.current.focus();
+            const el = bodyRef.current;
+            el.focus();
+            // Small timeout to ensure cursor is placed at the end after browser's default focus behavior
+            setTimeout(() => {
+                const length = el.value.length;
+                el.setSelectionRange(length, length);
+            }, 0);
         }
     }, [isOpen]);
 

@@ -42,6 +42,31 @@ export function ActionCardEditor({ component, onChange, children, isOpen, onOpen
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [component.id]);
 
+    // Handle initial focus on open
+    useEffect(() => {
+        if (isOpen && successDescRef.current) {
+            const el = successDescRef.current;
+            el.focus();
+            setTimeout(() => {
+                const length = el.value.length;
+                el.setSelectionRange(length, length);
+            }, 0);
+        }
+    }, [isOpen]);
+
+    // Handle focus when failure state is toggled on
+    useEffect(() => {
+        if (showFailureState && failureDescRef.current) {
+            const el = failureDescRef.current;
+            // Need a slight delay to ensure it's rendered
+            setTimeout(() => {
+                el.focus();
+                const length = el.value.length;
+                el.setSelectionRange(length, length);
+            }, 0);
+        }
+    }, [showFailureState]);
+
     const handleLoadingTitleChange = (value: string) => {
         setLocalLoadingTitle(value);
         onChange({ ...content, loadingTitle: value });

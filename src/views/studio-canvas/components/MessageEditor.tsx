@@ -34,7 +34,13 @@ export function MessageEditor({ component, onChange, children, isOpen, onOpenCha
     // Focus handling
     useEffect(() => {
         if (isOpen && textareaRef.current) {
-            textareaRef.current.focus();
+            const el = textareaRef.current;
+            el.focus();
+            // Small timeout to ensure cursor is placed at the end after browser's default focus behavior
+            setTimeout(() => {
+                const length = el.value.length;
+                el.setSelectionRange(length, length);
+            }, 0);
         }
     }, [isOpen]);
 
