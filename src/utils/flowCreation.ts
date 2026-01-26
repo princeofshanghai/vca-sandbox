@@ -47,8 +47,7 @@ export function createNewFlow(entryPoint: EntryPointId): Flow {
         phase: 'welcome',
         label: 'Standard welcome',
         components,
-        position: { x: 250, y: 50 },
-        locked: true
+        position: { x: 250, y: 50 }
     };
 
     return {

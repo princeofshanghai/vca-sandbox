@@ -1,18 +1,11 @@
-import { useRef } from 'react';
-import { createPortal } from 'react-dom';
 import * as HoverCard from '@radix-ui/react-hover-card';
-import { MessageSquare, SquareStack, MessageSquareText, Zap, Circle, Edit3 } from 'lucide-react';
+import * as Popover from '@radix-ui/react-popover';
+import { MessageSquare, MessageCirclePlus, MessageSquareText, Zap } from 'lucide-react';
 import type { ComponentType } from '../../studio/types';
 import { Message } from '@/components/vca-components/messages/Message';
 import { PromptGroup } from '@/components/vca-components/prompt-group/PromptGroup';
 import { InfoMessage } from '@/components/vca-components/info-message/InfoMessage';
 import { ActionCard } from '@/components/vca-components/action-card/ActionCard';
-
-interface AddComponentPopoverProps {
-    onAdd: (type: ComponentType) => void;
-    onClose: () => void;
-    anchorEl: HTMLElement | null;
-}
 
 interface ComponentOption {
     type: ComponentType;
@@ -39,7 +32,7 @@ const componentOptions: ComponentOption[] = [
     },
     {
         type: 'prompt',
-        icon: <SquareStack className="w-5 h-5" />,
+        icon: <MessageCirclePlus className="w-5 h-5" />,
         name: 'Prompt',
         description: 'Suggested user actions',
         previewComponent: (
@@ -86,58 +79,44 @@ const componentOptions: ComponentOption[] = [
             </div>
         ),
     },
-    {
-        type: 'buttons',
-        icon: <Circle className="w-5 h-5" />,
-        name: 'Buttons',
-        description: 'User response options',
-        previewComponent: (
-            <div className="text-sm text-gray-500 px-4 py-2">
-                Multiple choice buttons (not yet implemented in preview)
-            </div>
-        ),
-    },
-    {
-        type: 'input',
-        icon: <Edit3 className="w-5 h-5" />,
-        name: 'Input',
-        description: 'Text input field',
-        previewComponent: (
-            <div className="text-sm text-gray-500 px-4 py-2">
-                User input field (not yet implemented in preview)
-            </div>
-        ),
-    },
 ];
 
-const ComponentOptionCard = ({ option, onClick }: { option: ComponentOption; onClick: () => void }) => (
+const ComponentOptionCard = ({
+    option,
+    onClick,
+    side
+}: {
+    option: ComponentOption;
+    onClick: () => void;
+    side: 'left' | 'right';
+}) => (
     <HoverCard.Root openDelay={200} closeDelay={100}>
         <HoverCard.Trigger asChild>
             <button
                 onClick={onClick}
-                className="flex items-center gap-2 p-3 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition-colors text-left w-full group cursor-default"
+                className="flex items-center gap-2 p-3 rounded-lg border border-gray-800 bg-gray-900/50 hover:bg-blue-600/20 hover:border-blue-500/50 transition-colors text-left w-full group cursor-default"
             >
-                <span className="text-gray-600 group-hover:text-blue-600 transition-colors">
+                <span className="text-gray-400 group-hover:text-blue-400 transition-colors">
                     {option.icon}
                 </span>
-                <span className="text-sm font-medium text-gray-700 group-hover:text-blue-700">
+                <span className="text-sm font-medium text-gray-300 group-hover:text-blue-400">
                     {option.name}
                 </span>
             </button>
         </HoverCard.Trigger>
         <HoverCard.Portal>
             <HoverCard.Content
-                className="w-[320px] bg-white rounded-xl shadow-xl border border-gray-200 p-0 z-50 animate-in fade-in zoom-in-95 overflow-hidden"
-                sideOffset={8}
-                side="right"
+                className="w-[320px] bg-gray-900 rounded-xl shadow-2xl border border-gray-800 p-0 z-[1002] animate-in fade-in zoom-in-95 overflow-hidden"
+                sideOffset={12}
+                side={side}
             >
                 <div className="flex flex-col">
                     {/* Header */}
-                    <div className="flex items-center justify-between px-4 py-3 bg-gray-50/50 border-b border-gray-200">
-                        <span className="text-xs font-bold text-gray-900">
+                    <div className="flex items-center justify-between px-4 py-3 bg-gray-800/50 border-b border-gray-800">
+                        <span className="text-xs font-bold text-white">
                             {option.name}
                         </span>
-                        <span className="text-[10px] uppercase tracking-wider font-medium text-gray-400">
+                        <span className="text-[10px] uppercase tracking-wider font-medium text-gray-500">
                             Preview
                         </span>
                     </div>
@@ -145,62 +124,44 @@ const ComponentOptionCard = ({ option, onClick }: { option: ComponentOption; onC
                     {/* Content Area */}
                     <div className="p-4 space-y-4">
                         {/* Scaled Preview Wrapper */}
-                        <div className="relative w-full flex justify-center py-4 min-h-[140px] items-center bg-gray-50/50 rounded-lg border border-dashed border-gray-200">
+                        <div className="relative w-full flex justify-center py-4 min-h-[140px] items-center bg-white/5 rounded-lg border border-dashed border-gray-800">
                             <div className="origin-center scale-[0.85] transform-gpu pointer-events-none select-none w-full flex justify-center">
                                 {option.previewComponent}
                             </div>
                         </div>
 
-                        <p className="text-xs text-center text-gray-500 leading-relaxed px-4">
+                        <p className="text-xs text-center text-gray-400 leading-relaxed px-4">
                             {option.description}
                         </p>
                     </div>
                 </div>
-                <HoverCard.Arrow className="fill-white" />
+                <HoverCard.Arrow className="fill-gray-900" />
             </HoverCard.Content>
         </HoverCard.Portal>
     </HoverCard.Root>
 );
 
-export function AddComponentPopover({ onAdd, onClose, anchorEl }: AddComponentPopoverProps) {
-    const popoverRef = useRef<HTMLDivElement>(null);
-
-    // Position popover below anchor element
-    const getPopoverStyle = (): React.CSSProperties => {
-        if (!anchorEl) return {};
-
-        const rect = anchorEl.getBoundingClientRect();
-        const spacing = 8;
-
-        return {
-            position: 'fixed',
-            top: rect.bottom + spacing,
-            left: rect.left,
-            zIndex: 50,
-        };
-    };
-
-    const handleAdd = (type: ComponentType) => {
-        onAdd(type);
-        onClose();
-    };
-
-    return createPortal(
-        <div
-            ref={popoverRef}
-            style={getPopoverStyle()}
-            className="bg-white border border-gray-200 rounded-lg shadow-xl p-3 w-[340px]"
+export function AddComponentContent({ onAdd }: { onAdd: (type: ComponentType) => void }) {
+    return (
+        <Popover.Content
+            side="top"
+            sideOffset={12}
+            align="center"
+            onOpenAutoFocus={(e) => e.preventDefault()}
+            className="bg-gray-900 border border-gray-800 rounded-xl shadow-2xl p-4 w-[380px] z-[1001] animate-in fade-in zoom-in-95 duration-200 ease-out"
         >
-            <div className="grid grid-cols-2 gap-2">
-                {componentOptions.map((option) => (
+            <div className="grid grid-cols-2 gap-2.5">
+                {componentOptions.map((option, index) => (
                     <ComponentOptionCard
                         key={option.type}
                         option={option}
-                        onClick={() => handleAdd(option.type)}
+                        onClick={() => onAdd(option.type)}
+                        side={index % 2 === 0 ? 'left' : 'right'}
                     />
                 ))}
             </div>
-        </div>,
-        document.body
+            <Popover.Arrow className="fill-gray-900 stroke-gray-800" />
+        </Popover.Content>
     );
 }
+

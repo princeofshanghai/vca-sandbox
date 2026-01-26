@@ -2,7 +2,7 @@
 
 export type BlockType = 'user' | 'ai';
 
-export type AIBlockVariant = 'message' | 'info' | 'action' | 'promptGroup';
+export type AIBlockVariant = 'message' | 'info' | 'action';
 
 export type FlowPhase = 'welcome' | 'intent' | 'info' | 'action';
 
@@ -43,20 +43,12 @@ export interface AIActionContent {
     failureDescription?: string;
 }
 
-export interface AIPromptGroupContent {
-    title?: string; // Optional heading above prompts
-    prompts?: Array<{
-        text: string;
-        showAiIcon?: boolean;
-    }>;
-}
-
 
 
 export interface AIBlock extends BaseBlock {
     type: 'ai';
     variant: AIBlockVariant;
-    content: AIMessageContent | AIInfoContent | AIActionContent | AIPromptGroupContent;
+    content: AIMessageContent | AIInfoContent | AIActionContent;
     metadata?: {
         prompts?: string[];
     };
@@ -91,32 +83,19 @@ export interface Flow {
 // ============================================
 
 // Component types match the old AIBlockVariant
-export type ComponentType = 'message' | 'infoMessage' | 'actionCard' | 'buttons' | 'input' | 'prompt' | 'promptGroup';
+export type ComponentType = 'message' | 'infoMessage' | 'actionCard' | 'prompt';
 
 // Component content union
 export type ComponentContent =
     | AIMessageContent
     | AIInfoContent
     | AIActionContent
-    | AIPromptGroupContent
-    | PromptContent
-    | ButtonsContent
-    | InputContent;
+    | PromptContent;
 
 // Individual prompt component
 export interface PromptContent {
     text: string;
     showAiIcon?: boolean;
-}
-
-// Buttons component
-export interface ButtonsContent {
-    options: string[];
-}
-
-// Input component
-export interface InputContent {
-    placeholder?: string;
 }
 
 // A component is a single UI element

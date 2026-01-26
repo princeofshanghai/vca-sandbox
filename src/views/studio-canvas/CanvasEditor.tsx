@@ -5,15 +5,15 @@ import {
     useEdgesState,
     NodeTypes,
     Node,
-} from 'reactflow';
-import 'reactflow/dist/style.css';
+    Edge,
+} from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
 import { TurnNode } from './nodes/TurnNode';
 import { ConditionNode } from './nodes/ConditionNode';
 import { Flow, Component, ComponentType, FlowPhase, Turn, ComponentContent } from '../studio/types';
 import { useCallback, useMemo, useEffect, useState } from 'react';
 import { SelectionState } from './types';
 import { ContextToolbar } from './components/ContextToolbar';
-import { AddComponentPopover } from './components/AddComponentPopover';
 import { ZoomControls } from './components/ZoomControls';
 import { ArrowLeft, Play, Download } from 'lucide-react';
 
@@ -36,12 +36,6 @@ const getDefaultContent = (type: ComponentType): ComponentContent => {
             return { title: '', body: '', sources: [], showFeedback: true };
         case 'actionCard':
             return { loadingTitle: '', successTitle: '', successDescription: '' };
-        case 'buttons':
-            return { options: [] };
-        case 'input':
-            return { placeholder: '' };
-        case 'promptGroup':
-            return { title: '', prompts: [] };
         default: {
             const exhaustiveCheck: never = type;
             throw new Error(`Unhandled component type: ${exhaustiveCheck}`);
@@ -61,10 +55,11 @@ export function CanvasEditor({ flow, onUpdateFlow, onBack, onPreview, isPreviewA
     // Selection state
     const [selection, setSelection] = useState<SelectionState | null>(null);
     const [selectionAnchorEl, setSelectionAnchorEl] = useState<HTMLElement | null>(null);
-    const [editingComponent, setEditingComponent] = useState<{ nodeId: string, componentId: string, initialCursorIndex?: number } | null>(null);
-    const [showAddComponent, setShowAddComponent] = useState(false);
-    const [addComponentAnchorEl, setAddComponentAnchorEl] = useState<HTMLElement | null>(null);
 
+
+    const selectionType = selection?.type;
+    const selectionNodeId = selection?.nodeId;
+    const selectionComponentId = selection?.type === 'component' ? selection.componentId : undefined;
 
     // Convert flow steps to React Flow nodes
     const initialNodes = useMemo(() => {
@@ -84,7 +79,22 @@ export function CanvasEditor({ flow, onUpdateFlow, onBack, onPreview, isPreviewA
                         ? block.variant
                         : undefined,
                     componentCount: 1,
-                    locked: index === 0 && block.phase === 'welcome',
+                    onSelectNode: (nodeId: string, anchorEl: HTMLElement) => {
+                        if (selectionType === 'node' && selectionNodeId === nodeId) return;
+                        setSelection({ type: 'node', nodeId });
+                        setSelectionAnchorEl(anchorEl);
+                    },
+                    onSelectComponent: (nodeId: string, componentId: string, anchorEl: HTMLElement) => {
+                        // Allow re-clicking to toggle popover off
+                        if (selectionType === 'component' && selectionNodeId === nodeId && selectionComponentId === componentId) {
+                            setSelection(null);
+                            setSelectionAnchorEl(null);
+                        } else {
+                            setSelection({ type: 'component', nodeId, componentId });
+                            setSelectionAnchorEl(anchorEl);
+                        }
+                    },
+
                 },
             }));
         }
@@ -98,32 +108,31 @@ export function CanvasEditor({ flow, onUpdateFlow, onBack, onPreview, isPreviewA
                     position: step.position || { x: 250, y: 0 },
                     data: {
                         speaker: step.speaker,
-                        phase: step.phase || 'intent',
+                        phase: step.phase,
                         label: step.label,
                         componentCount: step.components.length,
-                        locked: step.locked || false,
                         components: step.components,
-                        isSelected: selection?.type === 'node' && selection.nodeId === step.id,
-                        selectedComponentId: selection?.type === 'component' && selection.nodeId === step.id ? selection.componentId : undefined,
-                        editingComponentId: editingComponent?.nodeId === step.id ? editingComponent.componentId : undefined,
-                        initialCursorIndex: editingComponent?.nodeId === step.id ? editingComponent.initialCursorIndex : undefined,
+                        selectedComponentId: selectionType === 'component' && selectionNodeId === step.id ? selectionComponentId : undefined,
                         onSelectNode: (nodeId: string, anchorEl: HTMLElement) => {
-                            if (selection?.type === 'node' && selection.nodeId === nodeId) return;
+                            if (selectionType === 'node' && selectionNodeId === nodeId) return;
                             setSelection({ type: 'node', nodeId });
                             setSelectionAnchorEl(anchorEl);
                         },
                         onSelectComponent: (nodeId: string, componentId: string, anchorEl: HTMLElement) => {
-                            if (selection?.type === 'component' && selection.nodeId === nodeId && selection.componentId === componentId) return;
-                            setSelection({ type: 'component', nodeId, componentId });
-                            setSelectionAnchorEl(anchorEl);
-                        },
-                        onSetEditingComponent: (nodeId: string, componentId: string | null, cursorIndex?: number) => {
-                            if (componentId) {
-                                setEditingComponent({ nodeId, componentId, initialCursorIndex: cursorIndex });
+                            // Allow re-clicking to toggle popover off
+                            if (selectionType === 'component' && selectionNodeId === nodeId && selectionComponentId === componentId) {
+                                setSelection(null);
+                                setSelectionAnchorEl(null);
                             } else {
-                                setEditingComponent(null);
+                                setSelection({ type: 'component', nodeId, componentId });
+                                setSelectionAnchorEl(anchorEl);
                             }
                         },
+                        onDeselect: () => {
+                            setSelection(null);
+                            setSelectionAnchorEl(null);
+                        },
+
                         onLabelChange: (newLabel: string) => {
                             // Update the turn label
                             const updatedSteps = flow.steps?.map(s =>
@@ -254,7 +263,7 @@ export function CanvasEditor({ flow, onUpdateFlow, onBack, onPreview, isPreviewA
                 };
             }
         });
-    }, [flow, selection, editingComponent, onUpdateFlow]);
+    }, [flow, selectionType, selectionNodeId, selectionComponentId, onUpdateFlow]);
 
     // Create connections from flow.connections or generate from blocks
     const initialEdges = useMemo(() => {
@@ -279,7 +288,7 @@ export function CanvasEditor({ flow, onUpdateFlow, onBack, onPreview, isPreviewA
     }, [flow.blocks, flow.connections]);
 
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes as Node[]);
-    const [edges, , onEdgesChange] = useEdgesState(initialEdges);
+    const [edges, , onEdgesChange] = useEdgesState(initialEdges as Edge[]);
 
     // Sync node data (but preserve positions) when flow changes
     useEffect(() => {
@@ -305,14 +314,6 @@ export function CanvasEditor({ flow, onUpdateFlow, onBack, onPreview, isPreviewA
         setSelectionAnchorEl(null);
     }, [setSelection, setSelectionAnchorEl]);
 
-    const handleAddComponent = () => {
-        if (selection?.type === 'node') {
-            const nodeEl = document.getElementById(`node-${selection.nodeId}`);
-            setAddComponentAnchorEl(nodeEl);
-            setShowAddComponent(true);
-        }
-    };
-
     const handleComponentAdd = (type: ComponentType) => {
         if (selection?.type === 'node') {
             // Find the turn and add component
@@ -331,8 +332,6 @@ export function CanvasEditor({ flow, onUpdateFlow, onBack, onPreview, isPreviewA
                 onUpdateFlow({ ...flow, steps: updatedSteps, lastModified: Date.now() });
             }
         }
-        setShowAddComponent(false);
-        setAddComponentAnchorEl(null);
     };
 
     const handleChangePhase = (phase: FlowPhase | undefined) => {
@@ -543,6 +542,8 @@ export function CanvasEditor({ flow, onUpdateFlow, onBack, onPreview, isPreviewA
                 selectionOnDrag={true}
                 zoomOnScroll={false}
                 zoomOnDoubleClick={false}
+                panOnScrollSpeed={2.0} // Increased for snappier feel
+                zoomOnPinch={true}      // FigJam-like pinch to zoom
             >
                 <Background />
                 <ZoomControls />
@@ -552,7 +553,7 @@ export function CanvasEditor({ flow, onUpdateFlow, onBack, onPreview, isPreviewA
                 {selection && selectionAnchorEl && (
                     <ContextToolbar
                         selection={selection}
-                        onAddComponent={handleAddComponent}
+                        onAddComponent={handleComponentAdd}
                         onChangePhase={handleChangePhase}
                         onMoveUp={handleMoveComponentUp}
                         onMoveDown={handleMoveComponentDown}
@@ -564,17 +565,7 @@ export function CanvasEditor({ flow, onUpdateFlow, onBack, onPreview, isPreviewA
                     />
                 )}
 
-                {/* Add Component Popover */}
-                {showAddComponent && addComponentAnchorEl && (
-                    <AddComponentPopover
-                        onAdd={handleComponentAdd}
-                        onClose={() => {
-                            setShowAddComponent(false);
-                            setAddComponentAnchorEl(null);
-                        }}
-                        anchorEl={addComponentAnchorEl}
-                    />
-                )}
+
 
 
             </ReactFlow>

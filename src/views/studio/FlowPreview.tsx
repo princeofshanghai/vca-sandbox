@@ -105,22 +105,6 @@ const PreviewContent = ({ flow }: { flow: Flow }) => {
             );
         }
 
-        if (type === 'promptGroup') {
-            const promptContent = content as import('./types').AIPromptGroupContent;
-            return (
-                <div key={key}>
-                    {promptContent.title && (
-                        <div className="text-sm text-gray-700 mb-2">
-                            <MarkdownRenderer>{promptContent.title}</MarkdownRenderer>
-                        </div>
-                    )}
-                    <PromptGroup
-                        prompts={promptContent.prompts || []}
-                    />
-                </div>
-            );
-        }
-
         return null;
     };
 

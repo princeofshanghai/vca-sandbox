@@ -1,4 +1,4 @@
-import { useReactFlow } from 'reactflow';
+import { useReactFlow } from '@xyflow/react';
 import { Plus, Minus } from 'lucide-react';
 
 export function ZoomControls() {

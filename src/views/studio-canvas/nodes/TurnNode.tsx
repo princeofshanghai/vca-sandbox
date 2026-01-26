@@ -1,24 +1,25 @@
-import { memo, useState, useRef, useEffect } from 'react';
-import { Handle, Position, NodeProps } from 'reactflow';
+import { memo, useState, useRef, useEffect, forwardRef } from 'react';
+import { Handle, Position, NodeProps } from '@xyflow/react';
 import { VcaIcon } from '@/components/vca-components/icons/VcaIcon';
-import { MessageSquare, SquareStack, MessageSquareText, Zap, Circle, Edit3 } from 'lucide-react';
-import { Component, ComponentType, AIMessageContent, PromptContent } from '../../studio/types';
-import TextareaAutosize from 'react-textarea-autosize';
+import { MessageSquare, MessageCirclePlus, MessageSquareText, Zap } from 'lucide-react';
+import { Component, ComponentType, AIMessageContent, PromptContent, AIInfoContent, AIActionContent } from '../../studio/types';
+import { InfoMessageEditor } from '../components/InfoMessageEditor';
+import { MessageEditor } from '../components/MessageEditor';
+import { PromptEditor } from '../components/PromptEditor';
+import { ActionCardEditor } from '../components/ActionCardEditor';
 
 interface TurnNodeData {
     speaker: 'user' | 'ai';
     phase?: string;
     label?: string;
     componentCount?: number;
-    locked?: boolean;
     components?: Component[];
-    isSelected?: boolean;
     selectedComponentId?: string;
-    editingComponentId?: string;
-    initialCursorIndex?: number;
+
     onSelectNode?: (nodeId: string, anchorEl: HTMLElement) => void;
     onSelectComponent?: (nodeId: string, componentId: string, anchorEl: HTMLElement) => void;
-    onSetEditingComponent?: (nodeId: string, componentId: string | null, cursorIndex?: number) => void;
+    onDeselect?: () => void;
+
     onLabelChange?: (newLabel: string) => void;
     onPhaseChange?: (newPhase: string | undefined) => void;
     onComponentUpdate?: (componentId: string, updates: Partial<Component>) => void;
@@ -30,6 +31,8 @@ interface TurnNodeData {
 // Capitalize phase for display
 const formatPhase = (phase?: string): string => {
     if (!phase) return '';
+    if (phase === 'intent') return 'Intent recognition';
+    if (phase === 'info') return 'Info gathering';
     return phase.charAt(0).toUpperCase() + phase.slice(1);
 };
 
@@ -39,7 +42,7 @@ const getComponentDisplay = (component: Component): { icon: JSX.Element; label: 
         case 'message': {
             const messageContent = component.content as AIMessageContent;
             return {
-                icon: <MessageSquare className="w-4 h-4" />,
+                icon: <MessageSquare className="w-3 h-3" />,
                 label: 'Message',
                 detail: messageContent.text || ''
             };
@@ -47,110 +50,82 @@ const getComponentDisplay = (component: Component): { icon: JSX.Element; label: 
         case 'prompt': {
             const promptContent = component.content as PromptContent;
             return {
-                icon: <SquareStack className="w-4 h-4" />,
+                icon: <MessageCirclePlus className="w-3 h-3" />,
                 label: 'Prompt',
                 detail: promptContent.text || ''
             };
         }
-        case 'infoMessage':
-            return { icon: <MessageSquareText className="w-4 h-4" />, label: 'Info Message' };
-        case 'actionCard':
-            return { icon: <Zap className="w-4 h-4" />, label: 'Action Card' };
-        case 'buttons':
-            return { icon: <Circle className="w-4 h-4" />, label: 'Buttons' };
-        case 'input':
-            return { icon: <Edit3 className="w-4 h-4" />, label: 'Input' };
+        case 'infoMessage': {
+            const infoContent = component.content as AIInfoContent;
+            return {
+                icon: <MessageSquareText className="w-3 h-3" />,
+                label: 'Info Message',
+                detail: infoContent.title || infoContent.body || ''
+            };
+        }
+        case 'actionCard': {
+            const actionContent = component.content as AIActionContent;
+            return {
+                icon: <Zap className="w-3 h-3" />,
+                label: 'Action Card',
+                detail: actionContent.loadingTitle || actionContent.successTitle || ''
+            };
+        }
         default:
-            return { icon: <MessageSquare className="w-4 h-4" />, label: 'Component' };
+            return { icon: <MessageSquare className="w-3 h-3" />, label: 'Component' };
     }
 };
 
-// Simplified Component Card (no drag handles or buttons)
-const SimpleComponentCard = ({
-    component,
-    display,
-    isSelected,
-    isEditing,
-    initialCursorIndex,
-    onClick,
-    onDoubleClick,
-    onSave,
-}: {
+// Simplified Component Card - Display only, no inline editing
+const SimpleComponentCard = memo(forwardRef<HTMLDivElement, {
     component: Component;
     display: { icon: JSX.Element; label: string; detail?: string };
     isSelected: boolean;
-    isEditing: boolean;
-    initialCursorIndex?: number;
     onClick: () => void;
-    onDoubleClick: () => void;
-    onSave: (val: string) => void;
-}) => {
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        // Prevent event propagation so it doesn't trigger other shortcuts
-        e.stopPropagation();
-    };
-
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-    // Apply initial cursor position if provided
-    useEffect(() => {
-        if (isEditing && initialCursorIndex !== undefined && textareaRef.current) {
-            textareaRef.current.setSelectionRange(initialCursorIndex, initialCursorIndex);
-        }
-    }, [isEditing, initialCursorIndex]);
-
+}>(({
+    component,
+    display,
+    isSelected,
+    onClick,
+}, ref) => {
     return (
         <div
+            ref={ref}
             id={`component-${component.id}`}
             onClick={(e) => {
                 e.stopPropagation(); // Prevent node selection
                 onClick();
             }}
-            onDoubleClick={(e) => {
-                e.stopPropagation();
-                onDoubleClick();
-            }}
-            className={`flex items-start gap-2 px-3 py-2.5 rounded-md border transition-all ${isSelected
+            className={`component-card flex items-start gap-2 px-3 py-2.5 rounded-md border transition-all ${isSelected
                 ? 'border-blue-500 bg-blue-50'
-                : 'border-gray-200'
-                } ${isEditing ? 'bg-white ring-2 ring-blue-500 border-transparent cursor-text' : 'cursor-default'}`}
+                : 'border-gray-200 bg-white hover:border-blue-300'
+                } cursor-default`}
         >
             <span className="text-gray-600 flex-shrink-0 mt-0.5">{display.icon}</span>
             <div className="flex-1 min-w-0">
-                {isEditing ? (
-                    <TextareaAutosize
-                        ref={textareaRef}
-                        defaultValue={display.detail || ''}
-                        autoFocus
-                        onBlur={(e) => onSave(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        onWheel={(e) => e.stopPropagation()}
-                        className="w-full resize-none bg-transparent outline-none text-xs text-gray-900 leading-normal font-sans nodrag nopan nowheel thin-scrollbar"
-                        minRows={1}
-                        maxRows={15}
-                    />
+                {display.detail ? (
+                    <div className="text-xs text-gray-700 whitespace-pre-wrap leading-normal font-sans break-words">
+                        {display.detail}
+                    </div>
                 ) : (
-                    display.detail && (
-                        <div className="text-xs text-gray-700 whitespace-pre-wrap leading-normal font-sans break-words">
-                            {display.detail}
-                        </div>
-                    )
-                )}
-                {!display.detail && !isEditing && (
                     <div className="text-[11px] text-gray-400">Add {display.label.toLowerCase()} text</div>
                 )}
             </div>
         </div>
     );
-};
+}));
 
-export const TurnNode = memo(({ id, data }: NodeProps<TurnNodeData>) => {
-    const isAI = data.speaker === 'ai';
-    const components = data.components || [];
+SimpleComponentCard.displayName = 'SimpleComponentCard';
+
+export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
+    const nodeId = id as string;
+    const typedData = data as unknown as TurnNodeData;
+    const isAI = typedData.speaker === 'ai';
+    const components = typedData.components || [];
 
     // Label editing state
     const [isEditingLabel, setIsEditingLabel] = useState(false);
-    const [editedLabel, setEditedLabel] = useState(data.label || '');
+    const [editedLabel, setEditedLabel] = useState(typedData.label || '');
     const labelInputRef = useRef<HTMLInputElement>(null);
 
     // Focus input when editing starts
@@ -163,8 +138,8 @@ export const TurnNode = memo(({ id, data }: NodeProps<TurnNodeData>) => {
 
 
     const handleLabelSave = () => {
-        if (editedLabel.trim() && editedLabel !== data.label) {
-            data.onLabelChange?.(editedLabel.trim());
+        if (editedLabel.trim() !== (typedData.label || '')) {
+            typedData.onLabelChange?.(editedLabel.trim());
         }
         setIsEditingLabel(false);
     };
@@ -173,7 +148,7 @@ export const TurnNode = memo(({ id, data }: NodeProps<TurnNodeData>) => {
         if (e.key === 'Enter') {
             handleLabelSave();
         } else if (e.key === 'Escape') {
-            setEditedLabel(data.label || '');
+            setEditedLabel(typedData.label || '');
             setIsEditingLabel(false);
         }
     };
@@ -183,18 +158,33 @@ export const TurnNode = memo(({ id, data }: NodeProps<TurnNodeData>) => {
     const handleNodeClick = (e: React.MouseEvent) => {
         const target = e.target as HTMLElement;
         // Only select node if clicking the header area, not input fields
-        if (!target.closest('input') && !target.closest('button') && data.onSelectNode) {
+        if (!target.closest('input') && !target.closest('button') && typedData.onSelectNode) {
+            e.stopPropagation(); // Prevent canvas from immediately deselecting
             const nodeEl = e.currentTarget as HTMLElement;
-            data.onSelectNode(id, nodeEl);
+            typedData.onSelectNode(nodeId, nodeEl);
         }
     };
 
     return (
         <div
-            id={`node-${data.label}`}
-            className={`bg-white rounded-lg border shadow-sm w-[320px] transition-colors cursor-default ${data.isSelected ? 'border-blue-500' : 'border-gray-300'
+            id={`node-${id}`}
+            className={`bg-white rounded-lg border shadow-sm w-[320px] transition-colors cursor-default relative ${selected
+                ? 'border-blue-500'
+                : `border-gray-300 hover:border-blue-300 ${isAI ? 'has-[.component-card:hover]:border-gray-300 has-[.node-label:hover]:border-gray-300' : ''}`
                 }`}
+            onClick={handleNodeClick}
         >
+            {/* Hanging Phase Tag */}
+            {typedData.phase && (
+                <div className={`absolute bottom-full left-0 mb-2 px-2.5 py-1 rounded-none text-[11px] font-bold uppercase tracking-wider border shadow-sm transition-colors ${typedData.phase === 'welcome' ? 'bg-purple-100 text-purple-700 border-purple-200' :
+                    typedData.phase === 'intent' ? 'bg-amber-100 text-amber-700 border-amber-200' :
+                        typedData.phase === 'info' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
+                            typedData.phase === 'action' ? 'bg-rose-100 text-rose-700 border-rose-200' :
+                                'bg-blue-50 text-blue-700 border-blue-100'
+                    }`}>
+                    {formatPhase(typedData.phase)}
+                </div>
+            )}
             {/* Input Handle */}
             <Handle
                 type="target"
@@ -204,8 +194,7 @@ export const TurnNode = memo(({ id, data }: NodeProps<TurnNodeData>) => {
 
             {/* Header - Now white with more padding */}
             <div
-                className="px-4 py-3 border-b border-gray-200 cursor-default"
-                onClick={handleNodeClick}
+                className="px-5 py-4 border-b border-gray-200 cursor-default"
             >
                 <div className="flex items-center gap-2">
                     {/* Speaker Icon & Label */}
@@ -231,77 +220,105 @@ export const TurnNode = memo(({ id, data }: NodeProps<TurnNodeData>) => {
                                 />
                             ) : (
                                 <div
-                                    className="w-full h-full flex items-center px-2 text-base font-semibold text-gray-900 truncate rounded transition-colors cursor-default"
+                                    className={`node-label w-full h-full flex items-center px-2 text-base font-semibold truncate rounded hover:bg-gray-100 transition-colors cursor-default ${!typedData.label ? 'text-gray-400' : 'text-gray-900'}`}
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         setIsEditingLabel(true);
                                     }}
                                     title="Click to edit"
                                 >
-                                    {data.label || 'Untitled'}
+                                    {typedData.label || 'Add name'}
                                 </div>
                             )}
                         </div>
                     </div>
 
-                    {/* Phase Badge (Display Only) */}
-                    {data.phase && (
-                        <div className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-medium flex-shrink-0">
-                            {formatPhase(data.phase)}
-                        </div>
-                    )}
-
-                    {/* Lock Icon */}
-                    {data.locked && (
-                        <span className="text-amber-500 text-xs flex-shrink-0">🔒</span>
-                    )}
                 </div>
             </div>
 
             {/* Component List - Card style with spacing */}
-            <div className="p-3 space-y-2">
-                {components.map((component) => {
+            <div className="px-5 pb-5 pt-5 space-y-3 bg-gray-50 rounded-b-lg">
+                {components.map((component: Component) => {
                     const display = getComponentDisplay(component);
-                    return (
+
+                    const card = (
                         <SimpleComponentCard
-                            key={component.id}
                             component={component}
                             display={display}
-                            isSelected={data.selectedComponentId === component.id}
-                            isEditing={data.editingComponentId === component.id}
-                            initialCursorIndex={data.initialCursorIndex}
+                            isSelected={typedData.selectedComponentId === component.id}
                             onClick={() => {
                                 const el = document.getElementById(`component-${component.id}`);
-                                if (data.onSelectComponent) {
-                                    data.onSelectComponent(id, component.id, el || document.body);
-                                }
-                            }}
-                            onDoubleClick={() => {
-                                if ((component.type === 'message' || component.type === 'prompt') && data.onSetEditingComponent) {
-                                    // Capture cursor position from current selection
-                                    let cursorIndex = undefined;
-                                    try {
-                                        const selection = window.getSelection();
-                                        if (selection && selection.anchorNode && selection.anchorNode.parentElement) {
-                                            // The anchorOffset is relative to the text node
-                                            cursorIndex = selection.anchorOffset;
-                                        }
-                                    } catch (e) {
-                                        // Ignore selection errors
-                                    }
-                                    data.onSetEditingComponent(id, component.id, cursorIndex);
-                                }
-                            }}
-                            onSave={(newText) => {
-                                if (data.onComponentUpdate && data.onSetEditingComponent) {
-                                    data.onComponentUpdate(component.id, {
-                                        content: { ...component.content, text: newText }
-                                    });
-                                    data.onSetEditingComponent(id, null);
+                                if (typedData.onSelectComponent) {
+                                    typedData.onSelectComponent(nodeId, component.id, el || document.body);
                                 }
                             }}
                         />
                     );
+
+                    // Wrap each component type with its respective editor
+                    const handleOpenChange = (open: boolean) => {
+                        if (!open && typedData.selectedComponentId === component.id) {
+                            typedData.onDeselect?.();
+                        }
+                    };
+
+                    if (component.type === 'message') {
+                        return (
+                            <MessageEditor
+                                key={component.id}
+                                component={component}
+                                onChange={(updates) => typedData.onComponentUpdate?.(component.id, { content: { ...component.content, ...updates } })}
+                                isOpen={typedData.selectedComponentId === component.id}
+                                onOpenChange={handleOpenChange}
+                            >
+                                {card}
+                            </MessageEditor>
+                        );
+                    }
+
+                    if (component.type === 'prompt') {
+                        return (
+                            <PromptEditor
+                                key={component.id}
+                                component={component}
+                                onChange={(updates) => typedData.onComponentUpdate?.(component.id, { content: { ...component.content, ...updates } })}
+                                isOpen={typedData.selectedComponentId === component.id}
+                                onOpenChange={handleOpenChange}
+                            >
+                                {card}
+                            </PromptEditor>
+                        );
+                    }
+
+                    if (component.type === 'infoMessage') {
+                        return (
+                            <InfoMessageEditor
+                                key={component.id}
+                                component={component}
+                                onChange={(updates) => typedData.onComponentUpdate?.(component.id, { content: { ...component.content, ...updates } })}
+                                isOpen={typedData.selectedComponentId === component.id}
+                                onOpenChange={handleOpenChange}
+                            >
+                                {card}
+                            </InfoMessageEditor>
+                        );
+                    }
+
+                    if (component.type === 'actionCard') {
+                        return (
+                            <ActionCardEditor
+                                key={component.id}
+                                component={component}
+                                onChange={(updates) => typedData.onComponentUpdate?.(component.id, { content: { ...component.content, ...updates } })}
+                                isOpen={typedData.selectedComponentId === component.id}
+                                onOpenChange={handleOpenChange}
+                            >
+                                {card}
+                            </ActionCardEditor>
+                        );
+                    }
+
+                    return card;
                 })}
             </div>
 
