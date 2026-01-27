@@ -4,11 +4,12 @@ import { cn } from '@/utils/cn';
 interface SidebarProps {
   children: ReactNode;
   header?: ReactNode;
+  footer?: ReactNode;
   isMobileOpen?: boolean;
   onClose?: () => void;
 }
 
-const Sidebar = ({ children, header, isMobileOpen = false, onClose }: SidebarProps) => {
+const Sidebar = ({ children, header, footer, isMobileOpen = false, onClose }: SidebarProps) => {
   // Close sidebar when clicking outside on mobile
   useEffect(() => {
     if (isMobileOpen) {
@@ -48,10 +49,17 @@ const Sidebar = ({ children, header, isMobileOpen = false, onClose }: SidebarPro
 
         <div className={cn(
           "flex-1 overflow-y-auto scrollbar-thin px-4 pb-4",
-          !header && "pt-8"
+          !header && "pt-8",
+          header && "pt-4"
         )}>
           {children}
         </div>
+
+        {footer && (
+          <div className="flex-shrink-0">
+            {footer}
+          </div>
+        )}
       </aside>
     </>
   );

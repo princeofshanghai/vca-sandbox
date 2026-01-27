@@ -816,7 +816,8 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                 onPaneClick={handleDeselect}
                 nodeTypes={nodeTypes}
                 fitView
-                className="bg-gray-100 !cursor-default"
+                fitViewOptions={{ maxZoom: 1, padding: 0.2 }}
+                className="bg-[#f2f1ee] !cursor-default"
                 panOnScroll={true}
                 panOnDrag={false}
                 selectionOnDrag={true}
@@ -829,7 +830,10 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                 onNodeDragStop={onNodeDragStop}
                 onConnect={onConnect}
             >
-                <Background />
+                <Background
+                    gap={8}
+                    color="#b4b3a8"
+                />
                 <ZoomControls />
 
                 <FloatingToolbar

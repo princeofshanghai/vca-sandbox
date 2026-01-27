@@ -71,7 +71,7 @@ const ComponentLibraryView = () => {
           Back to Dashboard
         </button>
       </div>
-      <div className="px-4 mb-6">
+      <div className="px-4">
         <div className="h-px bg-gray-200" />
       </div>
     </>
