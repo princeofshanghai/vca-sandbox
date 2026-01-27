@@ -208,7 +208,7 @@ export const DashboardView = () => {
                 </div>
 
                 <div className="flex-1 overflow-y-auto">
-                    <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20 py-10 md:py-16">
+                    <div className="max-w-7xl mx-auto px-6 md:px-20 lg:px-32 xl:px-48 py-10 md:py-16 lg:py-24">
                         {/* Header */}
                         <div className="flex items-center justify-between mb-8">
                             <div>
