@@ -52,186 +52,155 @@ export const FlowPreview = ({ flow, isPremium, isMobile }: FlowPreviewProps) => 
 };
 
 
-// Extracted content helper to avoid code duplication across viewports
+// Interactive Preview Content
 const PreviewContent = ({ flow }: { flow: Flow }) => {
-    // Use new steps[] if available, otherwise fall back to old blocks[]
-    const steps = flow.steps || [];
-    const blocks = flow.blocks || [];
+    // State to track the conversation history (visited nodes)
+    const [history, setHistory] = useState<import('./types').Step[]>([]);
 
-    // Render function for a single component
-    const renderComponent = (component: import('./types').Component, key: string) => {
-        const { type, content } = component;
+    // Initialize history with the start node
+    useEffect(() => {
+        if (!flow.steps || flow.steps.length === 0) return;
 
-        if (type === 'message') {
-            const messageContent = content as import('./types').AIMessageContent;
-            return (
-                <Message
-                    key={key}
-                    variant="ai"
-                    defaultText={<MarkdownRenderer>{messageContent.text || ''}</MarkdownRenderer>}
-                />
-            );
+        // Find start node (Welcome phase or first node)
+        const startNode = flow.steps.find(s =>
+            s.type === 'turn' && (s as import('./types').Turn).phase === 'welcome'
+        ) || flow.steps[0];
+
+        setHistory([startNode]);
+    }, [flow.steps]); // Reset when graph structure changes substantially? 
+    // actually we might want to be careful resetting on every edit. 
+    // For now, simple reset is safer to avoid invalid states.
+
+    // Helper to find the next node based on a source handle
+    const traverse = (currentNodeId: string, sourceHandle?: string) => {
+        // Find connection
+        const connection = flow.connections?.find(c =>
+            c.source === currentNodeId &&
+            (sourceHandle ? c.sourceHandle === sourceHandle : true)
+        );
+
+        if (!connection) return;
+
+        const nextNode = flow.steps?.find(s => s.id === connection.target);
+        if (!nextNode) return;
+
+        // Add the next node (User Turn)
+        const newHistory = [...history, nextNode];
+
+        // If the next node is a User Turn, it acts as a passthrough to the next AI Turn
+        // So we should try to double-jump if possible
+        if (nextNode.type === 'user-turn' || nextNode.type === 'condition') { // Conditions might need evaluation logic later
+            const nextConnection = flow.connections?.find(c => c.source === nextNode.id);
+            if (nextConnection) {
+                const destNode = flow.steps?.find(s => s.id === nextConnection.target);
+                if (destNode) {
+                    newHistory.push(destNode);
+                }
+            }
         }
 
-        if (type === 'infoMessage') {
-            const infoContent = content as import('./types').AIInfoContent;
-            return (
-                <InfoMessage
-                    key={key}
-                    title={infoContent.title}
-                    sources={infoContent.sources?.map(s => ({
-                        text: s.text,
-                        href: s.url
-                    }))}
-                    onFeedbackChange={infoContent.showFeedback !== false ? () => { } : undefined}
-                >
-                    <MarkdownRenderer>{infoContent.body || ''}</MarkdownRenderer>
-                </InfoMessage>
-            );
-        }
-
-        if (type === 'actionCard') {
-            const actionContent = content as import('./types').AIActionContent;
-            return (
-                <div key={key} className="py-2">
-                    <SimulatedAction
-                        loadingTitle={actionContent.loadingTitle}
-                        successTitle={actionContent.successTitle}
-                        successDescription={actionContent.successDescription}
-                        failureTitle={actionContent.failureTitle}
-                        failureDescription={actionContent.failureDescription}
-                    />
-                </div>
-            );
-        }
-
-        return null;
+        setHistory(newHistory);
     };
 
+    const handlePromptClick = (stepId: string, promptComponentId: string) => {
+        // Find the handle ID for this prompt
+        // In SimpleComponentCard we used `handle-${component.id}`
+        const handleId = `handle-${promptComponentId}`;
+        traverse(stepId, handleId);
+    };
+
+    // Render logic
     return (
-        <div className="space-y-4 px-4 pt-4">
+        <div className="space-y-4 px-4 pt-4 pb-20">
             {/* Disclaimer (Global) */}
             {flow.settings?.showDisclaimer && <Message variant="disclaimer" />}
 
-            {/* Render from new steps[] structure */}
-            {steps.length > 0 && steps.map((step) => {
+            {history.map((step, historyIndex) => {
+                const isLast = historyIndex === history.length - 1;
+
+                // 1. AI Turn
                 if (step.type === 'turn') {
                     const components = step.components;
-                    // Group consecutive prompts together
-                    const groupedComponents: Array<import('./types').Component | import('./types').Component[]> = [];
-                    let currentPromptGroup: import('./types').Component[] = [];
-
-                    components.forEach((component) => {
-                        if (component.type === 'prompt') {
-                            currentPromptGroup.push(component);
-                        } else {
-                            if (currentPromptGroup.length > 0) {
-                                groupedComponents.push(currentPromptGroup);
-                                currentPromptGroup = [];
-                            }
-                            groupedComponents.push(component);
-                        }
-                    });
-
-                    // Don't forget the last group if it ends with prompts
-                    if (currentPromptGroup.length > 0) {
-                        groupedComponents.push(currentPromptGroup);
-                    }
 
                     return (
-                        <div key={step.id} className="flex flex-col gap-4">
-                            {groupedComponents.map((item, index) => {
-                                // If it's an array, it's a group of prompts
-                                if (Array.isArray(item)) {
-                                    const prompts = item.map(comp => {
-                                        const promptContent = comp.content as import('./types').PromptContent;
-                                        return {
-                                            text: promptContent.text,
-                                            showAiIcon: promptContent.showAiIcon
-                                        };
-                                    });
+                        <div key={`${step.id}-${historyIndex}`} className="flex flex-col gap-4">
+                            {components.map((component) => {
+                                if (component.type === 'message') {
                                     return (
-                                        <PromptGroup
-                                            key={`prompt-group-${step.id}-${index}`}
-                                            prompts={prompts}
+                                        <Message
+                                            key={component.id}
+                                            variant="ai"
+                                            defaultText={<MarkdownRenderer>{(component.content as import('./types').AIMessageContent).text || ''}</MarkdownRenderer>}
                                         />
                                     );
                                 }
-                                // Otherwise render the single component
-                                return renderComponent(item, `${step.id}-${index}`);
+                                if (component.type === 'infoMessage') {
+                                    const info = component.content as import('./types').AIInfoContent;
+                                    return (
+                                        <InfoMessage
+                                            key={component.id}
+                                            title={info.title}
+                                            sources={info.sources?.map(s => ({ text: s.text, href: s.url }))}
+                                        >
+                                            <MarkdownRenderer>{info.body || ''}</MarkdownRenderer>
+                                        </InfoMessage>
+                                    );
+                                }
+                                if (component.type === 'actionCard') {
+                                    const actionContent = component.content as import('./types').AIActionContent;
+                                    return (
+                                        <div key={component.id} className="py-2">
+                                            <SimulatedAction
+                                                loadingTitle={actionContent.loadingTitle}
+                                                successTitle={actionContent.successTitle}
+                                                successDescription={actionContent.successDescription}
+                                                failureTitle={actionContent.failureTitle}
+                                                failureDescription={actionContent.failureDescription}
+                                            />
+                                        </div>
+                                    );
+                                }
+                                if (component.type === 'prompt') {
+                                    // Group prompts?
+                                    // For simplicity in this iteration, let's render individual prompts 
+                                    // OR better: gather them first like before.
+                                    return null; // Handled by grouping below
+                                }
+                                return null;
                             })}
-                        </div>
-                    );
-                }
-                return null;
-            })}
 
-            {/* Fallback: Render from old blocks[] structure */}
-            {steps.length === 0 && blocks.map((block) => {
-                // 1. AI Message Variants
-                if (block.type === 'ai') {
-                    const variant = block.variant;
-                    let messageContent;
+                            {/* Render Prompts Group */}
+                            {(() => {
+                                const prompts = components.filter(c => c.type === 'prompt');
+                                if (prompts.length > 0) {
+                                    // Only show prompts interactions if this is the LAST node in history
+                                    // Previous prompts should be hidden or disabled? 
+                                    // Standard chat UX: Previous prompts usually disappear or become disabled.
+                                    // Let's hide them for a clean "history" look, showing only the User's choice bubble.
+                                    if (!isLast) return null;
 
-                    if (variant === 'info') {
-                        const content = block.content as import('./types').AIInfoContent;
-                        messageContent = (
-                            <InfoMessage
-                                title={content.title}
-                                sources={content.sources?.map(s => ({
-                                    text: s.text,
-                                    href: s.url
-                                }))}
-                                onFeedbackChange={content.showFeedback !== false ? () => { } : undefined}
-                            >
-                                <MarkdownRenderer>{content.body || ''}</MarkdownRenderer>
-                            </InfoMessage>
-                        );
-                    } else if (variant === 'action') {
-                        const content = block.content as import('./types').AIActionContent;
-                        return (
-                            <div key={block.id} className="py-2">
-                                <SimulatedAction
-                                    loadingTitle={content.loadingTitle}
-                                    successTitle={content.successTitle}
-                                    successDescription={content.successDescription}
-                                    failureTitle={content.failureTitle}
-                                    failureDescription={content.failureDescription}
-                                />
-                            </div>
-                        );
-
-                    } else {
-                        // Standard Message
-                        const content = block.content as import('./types').AIMessageContent;
-                        messageContent = (
-                            <Message
-                                variant="ai"
-                                defaultText={<MarkdownRenderer>{content.text || ''}</MarkdownRenderer>}
-                            />
-                        );
-                    }
-
-                    return (
-                        <div key={block.id} className="space-y-4">
-                            {messageContent}
-                            {block.metadata?.prompts && block.metadata.prompts.length > 0 && (
-                                <PromptGroup
-                                    prompts={block.metadata.prompts.map(p => ({ text: p }))}
-                                />
-                            )}
+                                    return (
+                                        <PromptGroup
+                                            prompts={prompts.map(p => ({
+                                                text: (p.content as import('./types').PromptContent).text,
+                                                showAiIcon: (p.content as import('./types').PromptContent).showAiIcon,
+                                                onClick: () => handlePromptClick(step.id, p.id)
+                                            }))}
+                                        />
+                                    );
+                                }
+                            })()}
                         </div>
                     );
                 }
 
-                // 3. User Input
-                if (block.type === 'user') {
-                    const text = block.content;
+                // 2. User Turn
+                if (step.type === 'user-turn') {
                     return (
-                        <div key={block.id} className="flex justify-end">
+                        <div key={`${step.id}-${historyIndex}`} className="flex justify-end">
                             <Message
                                 variant="user"
-                                userText={text}
+                                userText={step.label || "Selected option"}
                             />
                         </div>
                     );
@@ -240,13 +209,8 @@ const PreviewContent = ({ flow }: { flow: Flow }) => {
                 return null;
             })}
 
-            {/* Thinking Indicator (Global) */}
-            {flow.settings?.simulateThinking && (
-                <Message
-                    variant="ai"
-                    isThinking={true}
-                />
-            )}
+            {/* Thinking Indicator */}
+            {flow.settings?.simulateThinking && <Message variant="ai" isThinking={true} />}
         </div>
     );
 };

@@ -3,19 +3,30 @@ import { Handle, Position, NodeProps } from '@xyflow/react';
 
 interface ConditionNodeData {
     label: string;
-    branches?: Array<{ id: string; label: string }>;
+    branches?: Array<{ id: string; condition: string }>;
+    onSelectNode?: (nodeId: string, anchorEl: HTMLElement) => void;
 }
 
-export const ConditionNode = memo(({ data, selected }: NodeProps) => {
+export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
     const typedData = data as unknown as ConditionNodeData;
     const branches = typedData.branches || [
-        { id: 'yes', label: 'Yes' },
-        { id: 'no', label: 'No' }
+        { id: 'yes', condition: 'Yes' },
+        { id: 'no', condition: 'No' }
     ];
 
+    const handleClick = (e: React.MouseEvent) => {
+        e.stopPropagation(); // critical for correct selection behavior in React Flow
+        if (typedData.onSelectNode) {
+            typedData.onSelectNode(id, e.currentTarget as HTMLElement);
+        }
+    };
+
     return (
-        <div className={`bg-amber-50 border-2 rounded-lg shadow-sm min-w-[200px] transition-shadow cursor-default ${selected ? 'border-blue-500 ring-1 ring-blue-500' : 'border-amber-400'
-            }`}>
+        <div
+            onClick={handleClick}
+            className={`bg-amber-50 border-2 rounded-lg shadow-sm min-w-[200px] transition-shadow cursor-default ${selected ? 'border-blue-500 ring-1 ring-blue-500' : 'border-amber-400'
+                }`}
+        >
             {/* Input Handle */}
             <Handle
                 type="target"
@@ -37,17 +48,17 @@ export const ConditionNode = memo(({ data, selected }: NodeProps) => {
 
                 {/* Branches */}
                 <div className="text-xs text-gray-600">
-                    {branches.map((branch: { id: string; label: string }) => (
+                    {branches.map((branch: { id: string; condition: string }) => (
                         <div key={branch.id} className="flex items-center gap-1">
                             <span>•</span>
-                            <span>{branch.label}</span>
+                            <span>{branch.condition}</span>
                         </div>
                     ))}
                 </div>
             </div>
 
             {/* Output Handles - one per branch */}
-            {branches.map((branch: { id: string; label: string }, index: number) => {
+            {branches.map((branch: { id: string; condition: string }, index: number) => {
                 const totalBranches = branches.length;
                 const position = totalBranches === 1
                     ? 50

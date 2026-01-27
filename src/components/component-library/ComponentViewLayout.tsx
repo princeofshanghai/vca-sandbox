@@ -6,6 +6,8 @@ type ComponentViewLayoutProps = {
   title: string;
   /** Brief description of the component */
   description: string;
+  /** Optional selectors for headings to include in the sidebar (default: 'h2, h3') */
+  headingSelectors?: string;
   /** Page content (typically DemoSection and usage examples) */
   children: ReactNode;
 };
@@ -29,6 +31,7 @@ type ComponentViewLayoutProps = {
 export const ComponentViewLayout = ({
   title,
   description,
+  headingSelectors,
   children,
 }: ComponentViewLayoutProps) => {
   return (
@@ -49,7 +52,7 @@ export const ComponentViewLayout = ({
         {/* Sidebar Column - Sticky */}
         <div className="hidden lg:block relative">
           <div className="sticky top-24 border-l border-gray-100 pl-6">
-            <OnThisPage />
+            <OnThisPage selectors={headingSelectors} />
           </div>
         </div>
 

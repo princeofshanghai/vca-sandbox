@@ -9,15 +9,15 @@ type HeadingItem = {
 
 /**
  * OnThisPage - Sticky sidebar navigation for component view pages
- * Automatically detects h2 and h3 headings and creates anchor links
+ * Automatically detects headings (default h2, h3) and creates anchor links
  */
-export const OnThisPage = () => {
+export const OnThisPage = ({ selectors = 'h2, h3' }: { selectors?: string }) => {
   const [headings, setHeadings] = useState<HeadingItem[]>([]);
   const [activeId, setActiveId] = useState<string>('');
 
   useEffect(() => {
-    // Find all h2 and h3 elements in the page
-    const headingElements = document.querySelectorAll('h2, h3');
+    // Find all matching elements based on selectors
+    const headingElements = document.querySelectorAll(selectors);
     const headingItems: HeadingItem[] = [];
 
     headingElements.forEach((heading) => {
@@ -66,7 +66,7 @@ export const OnThisPage = () => {
     return () => {
       observer.disconnect();
     };
-  }, []);
+  }, [selectors]);
 
   if (headings.length === 0) {
     return null;

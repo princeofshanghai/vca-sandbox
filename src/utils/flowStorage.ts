@@ -15,6 +15,7 @@ export interface FlowMetadata {
     title: string;
     lastModified: number;
     previewText?: string;
+    description?: string;
     folderId?: string;
 }
 
@@ -28,17 +29,45 @@ export const INITIAL_FLOW: Flow = {
         productName: 'LinkedIn'
     },
     lastModified: Date.now(),
-    blocks: [
+    steps: [
         {
-            id: '1',
-            type: 'ai',
+            id: 'welcome-1',
+            type: 'turn',
+            speaker: 'ai',
             phase: 'welcome',
-            variant: 'message',
-            content: {
-                text: 'Hi there! I can help you with your account.'
-            }
+            label: 'Welcome Message',
+            locked: true,
+            position: { x: 250, y: 50 },
+            components: [
+                {
+                    id: 'c1',
+                    type: 'message',
+                    content: { text: 'Hi there! I can help you with your account.' }
+                },
+                {
+                    id: 'c2',
+                    type: 'prompt',
+                    content: { text: 'Remove a user', showAiIcon: false }
+                }
+            ]
+        },
+        {
+            id: 'user-1',
+            type: 'user-turn',
+            label: "User selects 'Remove a user'",
+            inputType: 'prompt',
+            triggerValue: 'Remove a user',
+            position: { x: 250, y: 350 }
         }
-    ]
+    ],
+    connections: [
+        {
+            id: 'e1',
+            source: 'welcome-1',
+            target: 'user-1'
+        }
+    ],
+    blocks: [] // Legacy field kept empty
 };
 
 export const flowStorage = {

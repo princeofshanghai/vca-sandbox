@@ -53,7 +53,7 @@ export function createNewFlow(entryPoint: EntryPointId): Flow {
     return {
         id: crypto.randomUUID(),
         version: 2,
-        title: `New ${entryConfig.productName} Conversation`,
+        title: 'Untitled',
         description: '',
         settings: {
             showDisclaimer: false,

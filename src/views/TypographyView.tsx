@@ -40,6 +40,7 @@ const TypographyView = () => {
     <ComponentViewLayout
       title="Typography"
       description="Typography in VCA uses standard Mercado styles."
+      headingSelectors="h2"
     >
       <div className="space-y-20">
         {/* Font Families */}

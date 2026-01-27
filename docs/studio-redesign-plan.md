@@ -17,10 +17,10 @@
 4. Better **scalability** for complex flows with multiple conditions
 
 **Core Architecture Changes:**
-- **Turn** = One speaker's response containing multiple components
-- **Condition** = Branching node with multiple paths
-- **Step** = Union type (Turn | Condition)
-- **Canvas** = Visual graph editor using React Flow
+- **AI Turn** = AI's response (Message, Cards, Prompts)
+- **User Turn** = User's action (Typing text, Clicking prompt/button)
+- **Condition** = Backend logic/rules (Invisible to user)
+- **Canvas** = Storyboard-style graph (React Flow)
 
 ---
 
@@ -46,33 +46,43 @@ interface PromptGroupContent {
 interface Turn {
   id: string;
   type: 'turn';
-  speaker: 'user' | 'ai';
-  phase?: FlowPhase; // Optional: 'welcome' | 'intent' | 'info' | 'action'
-  label?: string; // Custom label, e.g., "Check eligibility"
-  components: Component[]; // Can contain multiple components
-  position?: { x: number; y: number }; // For canvas positioning
-  locked?: boolean; // If true, node cannot be deleted (used for Welcome node)
+  speaker: 'ai'; // AI Turns only
+  phase?: FlowPhase; 
+  label?: string; 
+  components: Component[]; 
+  position?: { x: number; y: number }; 
+  locked?: boolean; 
+}
+
+// NEW: User actions are now explicit nodes
+interface UserTurn {
+  id: string;
+  type: 'user-turn';
+  label: string; // e.g. "User selects 'Remove User'"
+  inputType: 'text' | 'prompt' | 'button'; // How they interacted
+  triggerValue?: string; // The specific value (e.g., "Remove User")
+  position?: { x: number; y: number };
 }
 
 // Condition creates branches in the flow
 interface Condition {
   id: string;
   type: 'condition';
-  label: string; // e.g., "User has Premium subscription?"
-  description?: string; // Additional context
+  label: string; // e.g., "Is User Admin?"
+  description?: string; 
   branches: Branch[];
-  position?: { x: number; y: number }; // For canvas positioning
+  position?: { x: number; y: number };
 }
 
 // Each branch represents one possible path
 interface Branch {
   id: string;
-  condition: string; // e.g., "Has Premium", "No subscription"
-  nextStepId?: string; // ID of next Step
+  condition: string; // e.g., "Yes", "No"
+  nextStepId?: string; 
 }
 
-// Step is either a Turn or Condition
-type Step = Turn | Condition;
+// Step is Union of all node types
+type Step = Turn | UserTurn | Condition;
 
 // Connection between nodes
 interface Connection {
@@ -268,536 +278,146 @@ function migrateFlowToSteps(oldFlow: OldFlow): Flow {
 
 **For Non-Technical Designers**
 
-This section walks you through exactly how you would use the new Studio to build a realistic conversation flow: "Remove a user in LinkedIn Recruiter". This example includes branching logic, permission checks, and user input collection.
+This section walks you through exactly how you would use the new Studio to build a realistic conversation flow: "Remove a user in LinkedIn Recruiter".
+
+**The "Storyboard" Philosophy:**
+We design the flow like a script or comic strip: `AI speaks` → `User responds` → `System checks logic` → `AI responds`.
 
 ### The Flow We're Building
 
 **Business Requirements:**
-- User wants to remove a team member from their Recruiter account
-- AI must check if the user has admin permissions
-- AI must ask which user to remove (by name or email)
-- AI should confirm before removing
-- AI shows status as it processes the removal
+- User wants to remove a team member from their Recruiter account (Intent)
+- AI must check if the user has admin permissions (Logic)
+- AI must ask which user to remove (Info Gathering)
+- AI confirms and removes (Action)
 
 **Flow Structure:**
 ```
-1. Welcome (with prompts)
-2. User clicks "Remove a user" prompt
-3. AI checks: Does user have admin permissions?
-   ├─ YES → Continue to collect info
-   │  ├─ AI asks: "Which user?"
-   │  ├─ User provides name/email
-   │  ├─ AI asks: "Confirm removal?"
-   │  ├─ User confirms
-   │  └─ AI removes user (ActionCard)
-   └─ NO → Show error message
+1. AI: Welcome (Start)
+2. User: Clicks "Remove a user" (Implicit or Explicit User Turn)
+3. Logic: Is User Admin? (Condition)
+   ├─ YES → AI: "Who do you want to remove?"
+   │         ↓
+   │        User: Types "John Doe" (User Turn)
+   │         ↓
+   │        AI: "Confirm removal?"
+   │
+   └─ NO → AI: "Permission Denied"
 ```
 
 ---
 
-### Step 1: Create New Flow
+### Step 1: Create New Flow & Welcome
 
 **What you do:**
-1. Click "New Flow" button on dashboard
-2. Dialog appears asking you to select an entry point
-
-**What you see:**
-```
-┌─────────────────────────────────────────┐
-│  Create New Conversation Flow           │
-├─────────────────────────────────────────┤
-│  Select Entry Point *                   │
-│                                          │
-│  ○ Admin Center                          │
-│  ○ LinkedIn Recruiter ✓ (you select)    │
-│  ○ Marketing Solutions                   │
-│  ○ Sales Navigator                       │
-│  ○ LinkedIn Learning                     │
-│  ○ Custom                                │
-│                                          │
-│  [Cancel]  [Create Flow]                │
-└─────────────────────────────────────────┘
-```
-
-**What you select:** LinkedIn Recruiter
-
-**What happens:**
-- Flow is created with title "New LinkedIn Recruiter Conversation"
-- Welcome node is automatically created
-- You're taken to the Studio Canvas view
-
----
-
-### Step 2: Customize Welcome Node
-
-**What you see on canvas:**
-```
-┌─────────────────────────┐
-│ 🤖 AI  [welcome] 🔒     │
-│ Standard welcome        │
-│ 2 components            │
-└─────────────────────────┘
-```
-
-**What you do:**
-1. Click the Welcome node
-2. Editor panel opens on the right
-
-**What you see in editor:**
-```
-┌─ Edit Turn ─────────────────────────────┐
-│                                          │
-│ Label: Standard welcome                 │
-│ Phase: [welcome ▼]                      │
-│                                          │
-│ Components:                              │
-│                                          │
-│ ┌─ Message ──────────────────────────┐  │
-│ │ Hi there. With the help of AI, I   │  │
-│ │ can answer questions about         │  │
-│ │ {{productName}} or connect you to  │  │
-│ │ our team.                           │  │
-│ └────────────────────────────────────┘  │
-│                                          │
-│ ┌─ Prompt Group ──────────────────────┐ │
-│ │ Not sure where to start?            │ │
-│ │ You can try:                        │ │
-│ │                                     │ │
-│ │ • Search for candidates             │ │
-│ │ • Manage job postings               │ │
-│ │ • View applicant pipeline           │ │
-│ │                                     │ │
-│ │ [+ Add Prompt]                      │ │
-│ └────────────────────────────────────┘  │
-│                                          │
-│ ℹ️ Welcome Best Practice                │
-│ This follows LinkedIn VCA guidelines.   │
-│ You can customize the prompts, but      │
-│ keeping {{productName}} is recommended. │
-└─────────────────────────────────────────┘
-```
-
-**What you do:**
-1. Edit the prompts to match your use case
-2. Change "Search for candidates" to "Remove a user"
-3. Keep or modify other prompts
-
-**Result:**
-```
-Prompts:
-• Remove a user
-• Add a user
-• View team members
-```
-
-> **💡 Note about User Input:**
-> 
-> You don't need to add an Input component to the Welcome node. In the real VCA product, there's **always** a text input field at the bottom of the chat. Users can:
-> - **Click a prompt** → "Remove a user" is sent
-> - **Type freely** → "I want to remove john.doe@company.com" is sent
-> 
-> Both paths work. The prompts you specify are **suggestions** to help users get started. The design tool focuses on defining these prompts, while the input field is always implicitly present in the real UI.
-
-> Both paths work. The prompts you specify are **suggestions** to help users get started. The design tool focuses on defining these prompts, while the input field is always implicitly present in the real UI.
-
----
-
-### Step 3: Connect Welcome to Flow
-
-**Understanding:**
-When you create a flow, you're designing what happens **after** the user indicates a specific intent. In this case, the intent is "Remove a user".
-
-**What you do:**
-1. The Welcome node is already created and connected to the next step automatically
-2. When you add the next node (permission check), you're defining what happens when the user's intent is understood
-
-**Conceptual flow:**
-```
-Welcome Node
-├─ User clicks "Remove a user" prompt
-└─ OR user types "I want to remove someone"
-    ↓
-   (Intent recognized: Remove User)
-    ↓
-   Next step in YOUR flow (Permission Check)
-```
-
-**Important concept:**
-- This flow you're building handles the **"Remove a user" intent specifically**
-- Other prompts ("Add a user", etc.) would link to different flows or be handled separately
-- The design tool assumes that when your flow runs, the user has already indicated they want to do this specific task
+1. Create new flow for "LinkedIn Recruiter"
+2. Customize Welcome Node prompts:
+   - "Remove a user"
+   - "Add a user"
+   - "View team members"
 
 **Visual on canvas:**
 ```
 ┌─────────────────────────┐
-│ 🤖 AI  [welcome] 🔒     │
+│ 🤖 AI  [welcome] 🔒    │
 │ Standard welcome        │
 │ Prompts:                │
-│ • Remove a user ← [this triggers this flow]
+│ • Remove a user         │
 │ • Add a user            │
-│ • View team members     │
 └──────────┬──────────────┘
-           │ (connection represents: user chose this flow)
-           ↓
-    [Next step: Permission Check]
+           │
+           ▼
 ```
-
-> **💡 Design Philosophy:**
-> 
-> Each flow you create is **intent-specific**. You're not designing all possible conversations — just the "Remove a user" conversation. Other intents would be separate flows. 
-> 
-> In the real implementation, when a user clicks "Remove a user" or types something similar, the AI routes them to this flow. You're designing what happens **once they're in this flow**.
 
 ---
 
-### Step 4: Add Permission Check Condition
+### Step 2: Define the User Trigger
 
 **What you do:**
-1. Close the editor (Welcome node is done)
-2. Click "+ Add Condition" button in the toolbar
+1. Connect from Welcome Node.
+2. Select **"User Turn"** from the menu.
+3. Label it: "User selects 'Remove a user'".
 
-**What appears on canvas:**
+**Visual on canvas:**
 ```
-┌─────────────────────────┐
-│ 🤖 AI  [welcome] 🔒     │
-│ Standard welcome        │
+           │
+┌──────────▼──────────────┐
+│ 👤 User Turn            │
+│ "Remove a user"         │
 └──────────┬──────────────┘
+           │
+           ▼
+```
+
+> **Why this matters:**
+> This node explicitly marks *why* we are in this flow. It represents the user's intent.
+
+---
+
+### Step 3: Add Logic Check (Admin Permission)
+
+**What you do:**
+1. Connect from the User Turn.
+2. Select **"Condition Node"**.
+3. Label: "Is User Admin?"
+4. Branches: "Yes", "No".
+
+**Visual on canvas:**
+```
            │
 ┌──────────▼──────────────┐
 │ ⚙️ Condition            │
-│ New condition           │
+│ Is User Admin?          │
 │ • Yes                   │
 │ • No                    │
-└─────────────────────────┘
+└─────┬──────────┬────────┘
+      │          │
 ```
+
+---
+
+### Step 4: Build the Happy Path (Yes Branch)
 
 **What you do:**
-1. Click the Condition node
-2. Editor opens on the right
+1. Connect "Yes" to a new **AI Turn**.
+2. Content: "Which user do you want to remove?"
+3. Connect that AI Turn to a new **User Turn**.
+4. Label User Turn: "User types name/email".
 
-**What you see in editor:**
+**Visual on canvas:**
 ```
-┌─ Edit Condition ────────────────────────┐
-│                                          │
-│ Condition Label:                         │
-│ [New condition_____________]             │
-│                                          │
-│ Description (optional):                  │
-│ [______________________________]         │
-│                                          │
-│ Branches:                [+ Add Branch] │
-│                                          │
-│ [Yes_____________________] 🗑️           │
-│ [No______________________] 🗑️           │
-└─────────────────────────────────────────┘
-```
-
-**What you type:**
-- **Label:** "User has admin permissions?"
-- **Description:** "Check if user has permission to remove team members"
-- Keep two branches: "Yes" and "No" (or rename to "Has permissions" / "No permissions")
-
-**Result on canvas:**
-```
-┌─────────────────────────┐
-│ 🤖 AI  [welcome] 🔒     │
-│ Standard welcome        │
+      │ (Yes)
+┌─────▼───────────────────┐
+│ 🤖 AI                   │
+│ "Which user..."         │
 └──────────┬──────────────┘
            │
 ┌──────────▼──────────────┐
-│ ⚙️ Condition            │
-│ User has admin perms?   │
-│ • Has permissions       │
-│ • No permissions        │
-└─────┬──────────┬────────┘
-      │          │
-```
-
----
-
-### Step 5: Add "No Permissions" Error Message
-
-**What you do:**
-1. Click "+ Add Turn" → AI Turn in toolbar
-2. New AI Turn node appears on canvas
-3. Drag connection from Condition's "No permissions" branch to this new turn
-
-**What you see:**
-```
-┌──────────▼──────────────┐
-│ ⚙️ Condition            │
-│ User has admin perms?   │
-│ • Has permissions       │
-│ • No permissions        │
-└─────┬──────────┬────────┘
-      │          │
-      │      ┌───▼────────────┐
-      │      │ 🤖 AI          │
-      │      │ (new turn)     │
-      │      │ 0 components   │
-      │      └────────────────┘
-```
-
-**What you do:**
-1. Click the new AI Turn
-2. Editor opens
-3. Type label: "Show permission error"
-4. Select phase: "info" (optional)
-5. Click "+ Add Component" → Info Message
-
-**What you see in component editor:**
-```
-┌─ Info Message ──────────────────────────┐
-│                                          │
-│ Title:                                   │
-│ [Permission required_________________]   │
-│                                          │
-│ Body:                                    │
-│ [You need admin permissions to remove    │
-│  users. Please contact your account      │
-│  administrator._______________________]  │
-│                                          │
-│ □ Show feedback buttons                 │
-└─────────────────────────────────────────┘
-```
-
-**Result:** This branch is complete. User will see error if they lack permissions.
-
----
-
-### Step 6: Add "Ask Which User" Turn (Happy Path)
-
-**What you do:**
-1. Click "+ Add Turn" → AI Turn
-2. Connect from Condition's "Has permissions" branch to this turn
-
-**Canvas now looks like:**
-```
-┌──────────────────────────┐
-│ 🤖 AI  [welcome] 🔒      │
-└──────────┬───────────────┘
+│ 👤 User Turn            │
+│ User types name         │
+└──────────┬──────────────┘
            │
-┌──────────▼───────────────┐
-│ ⚙️ Condition             │
-│ User has admin perms?    │
-└─────┬──────────┬─────────┘
-      │          │
-  ┌───▼──┐   ┌──▼─────────┐
-  │ YES  │   │ NO         │
-  │ path │   │ (error)    │
-  └──────┘   └────────────┘
+           ▼ (Continue to confirmation...)
 ```
-
-**What you do in the editor for the YES path turn:**
-
-1. **Label:** "Ask which user to remove"
-2. **Phase:** "info" (information gathering)
-3. **Add Component:** Message
-
-```
-┌─ Message ───────────────────────────────┐
-│ Which user would you like to remove?    │
-│ Please provide their name or email      │
-│ address.                                 │
-└─────────────────────────────────────────┘
-```
-
-4. **Add another Component:** Input
-
-```
-┌─ Input ─────────────────────────────────┐
-│ Placeholder:                             │
-│ [john.doe@company.com________________]   │
-└─────────────────────────────────────────┘
-```
-
-**Result:** This turn asks the user for input. The Input component implies a User turn (user will type the email).
 
 ---
 
-### Step 7: Add Confirmation Turn
+### Step 5: Build the Exception Path (No Branch)
 
 **What you do:**
-1. Add another AI Turn
-2. Connect from the "Ask which user" turn to this one
+1. Connect "No" to a new **AI Turn**.
+2. Content: Permission Error (InfoMessage).
 
-**What you add in editor:**
-
-1. **Label:** "Confirm removal"
-2. **Phase:** "info"
-3. **Add Component:** Message
-
+**Visual on canvas:**
 ```
-┌─ Message ───────────────────────────────┐
-│ Are you sure you want to remove         │
-│ {{userName}} from your organization?    │
-│                                          │
-│ Note: You can use {{userName}} as a     │
-│ placeholder for future variable support │
-└─────────────────────────────────────────┘
+                 │ (No)
+           ┌─────▼────────────┐
+           │ 🤖 AI            │
+           │ Permission Error │
+           │ (InfoMessage)    │
+           └──────────────────┘
 ```
 
-4. **Add Component:** Buttons
-
-```
-┌─ Buttons ───────────────────────────────┐
-│ Options:                  [+ Add]        │
-│                                          │
-│ [Yes, remove them__________] 🗑️         │
-│ [Cancel____________________] 🗑️         │
-└─────────────────────────────────────────┘
-```
-
-**Result:** User will see two buttons. Clicking "Yes, remove them" continues the flow.
-
----
-
-### Step 8: Add Action Card (Processing Removal)
-
-**What you do:**
-1. Add final AI Turn
-2. Connect from "Confirm removal" turn to this one
-
-**What you add in editor:**
-
-1. **Label:** "Remove user"
-2. **Phase:** "action"
-3. **Add Component:** Action Card
-
-**What you see in Action Card editor:**
-```
-┌─ Action Card ───────────────────────────┐
-│                                          │
-│ Loading Title: *                         │
-│ [Removing user from your organization]   │
-│                                          │
-│ ──── Success State (Default) ────       │
-│                                          │
-│ Success Title: *                         │
-│ [User removed_______________________]    │
-│                                          │
-│ Success Description:                     │
-│ [{{userName}} has been removed from      │
-│  {{organizationName}}._______________]   │
-│                                          │
-│ ──── Failure State (Scenario) ────      │
-│                                          │
-│ Failure Title:                           │
-│ [Unable to remove user______________]    │
-│                                          │
-│ Failure Description:                     │
-│ [Something went wrong. Please try        │
-│  again or contact support.__________]    │
-└─────────────────────────────────────────┘
-```
-
-**Result:** This shows a loading state, then either success or failure state.
-
----
-
-### Step 9: Review Complete Flow on Canvas
-
-**What you see (Auto-Layout applied):**
-
-```
-┌────────────────────────────────────┐
-│ 🤖 AI  [welcome] 🔒                │
-│ Standard welcome                   │
-│ • Remove a user                    │
-│ • Add a user                       │
-└────────────┬───────────────────────┘
-             │
-┌────────────▼───────────────────────┐
-│ ⚙️ Condition                       │
-│ User has admin permissions?        │
-│ • Has permissions                  │
-│ • No permissions                   │
-└────┬────────────────────┬──────────┘
-     │                    │
-     │YES              NO │
-     │                    │
-┌────▼─────────┐    ┌────▼──────────────┐
-│ 🤖 AI [info] │    │ 🤖 AI [info]      │
-│ Ask which    │    │ Permission error  │
-│ user         │    │ (InfoMessage)     │
-│ • Message    │    └───────────────────┘
-│ • Input      │
-└────┬─────────┘
-     │
-┌────▼─────────────┐
-│ 🤖 AI [info]     │
-│ Confirm removal  │
-│ • Message        │
-│ • Buttons        │
-└────┬─────────────┘
-     │
-┌────▼─────────────┐
-│ 🤖 AI [action]   │
-│ Remove user      │
-│ • ActionCard     │
-└──────────────────┘
-```
-
----
-
-### Step 10: Test in Preview
-
-**What you do:**
-Click between Canvas view and Preview to see how it works.
-
-**What the user sees in Preview:**
-
-1. **Welcome screen:**
-   ```
-   🤖 AI
-   Hi there. With the help of AI, I can answer
-   questions about LinkedIn Recruiter or connect
-   you to our team.
-   
-   Not sure where to start? You can try:
-   
-   💡 Remove a user
-   💡 Add a user
-   💡 View team members
-   ```
-
-2. **User clicks "Remove a user"** → Flow continues
-
-3. **If user has permissions:**
-   ```
-   🤖 AI
-   Which user would you like to remove?
-   Please provide their name or email address.
-   
-   ┌─────────────────────────────────────┐
-   │ john.doe@company.com                │
-   └─────────────────────────────────────┘
-   ```
-
-4. **User types email and submits** → Flow continues
-
-5. **Confirmation:**
-   ```
-   🤖 AI
-   Are you sure you want to remove john.doe@company.com
-   from your organization?
-   
-   [Yes, remove them]  [Cancel]
-   ```
-
-6. **User clicks "Yes, remove them"** → Flow continues
-
-7. **Action Card animates:**
-   ```
-   🤖 AI
-   ┌─────────────────────────────────────┐
-   │ ⏳ Removing user from your          │
-   │    organization...                  │
-   └─────────────────────────────────────┘
-   
-   (After 2 seconds, changes to:)
-   
-   ┌─────────────────────────────────────┐
    │ ✓  User removed                     │
    │                                     │
    │    john.doe@company.com has been    │
@@ -873,11 +493,9 @@ Engineers can implement this directly based on the structure.
 
 ✅ **Entry point sets context** — "LinkedIn Recruiter" determined Welcome message  
 ✅ **Welcome is always first** — Can't delete, but can customize  
-✅ **Branching is visual** — Condition node shows both paths clearly  
-✅ **User turns are implicit** — Input and Buttons components imply user action  
-✅ **Multiple components per turn** — Ask + Input in same AI response  
-✅ **Phases are optional** — Used for organization, not required  
-✅ **Variables enable reuse** — {{productName}} works across flows  
+✅ **User Turns are Explicit** — Designer sees exactly where user interacts  
+✅ **Logic is Separate** — Condition nodes handle the rules, not the conversation  
+✅ **Variables enable reuse** — {{productName}} works across flow  
 
 This flow took ~10 minutes to build. Without the tool, it would take hours in Figma and still wouldn't be interactive for testing.
 

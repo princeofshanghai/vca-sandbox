@@ -24,7 +24,7 @@ export const TurnNodeComponentList = ({
     onComponentUpdate
 }: TurnNodeComponentListProps) => {
     return (
-        <div className="px-5 pb-5 pt-5 space-y-3 bg-gray-50 rounded-b-lg">
+        <div className="px-5 pb-5 pt-5 space-y-3 bg-gray-50 rounded-b-lg overflow-visible">
             {components.map((component: Component) => {
                 const display = getComponentDisplay(component);
 

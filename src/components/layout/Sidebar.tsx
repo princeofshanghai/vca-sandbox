@@ -1,12 +1,14 @@
 import { ReactNode, useEffect } from 'react';
+import { cn } from '@/utils/cn';
 
 interface SidebarProps {
   children: ReactNode;
+  header?: ReactNode;
   isMobileOpen?: boolean;
   onClose?: () => void;
 }
 
-const Sidebar = ({ children, isMobileOpen = false, onClose }: SidebarProps) => {
+const Sidebar = ({ children, header, isMobileOpen = false, onClose }: SidebarProps) => {
   // Close sidebar when clicking outside on mobile
   useEffect(() => {
     if (isMobileOpen) {
@@ -30,21 +32,24 @@ const Sidebar = ({ children, isMobileOpen = false, onClose }: SidebarProps) => {
           aria-hidden="true"
         />
       )}
-      
+
       {/* Sidebar */}
       <aside
-        className={`
-          fixed md:static
-          top-0 left-0
-          w-[240px] h-full
-          border-r border-gray-200 bg-white
-          overflow-y-auto scrollbar-thin
-          z-50 md:z-auto
-          transform transition-transform duration-300 ease-in-out
-          ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-        `}
+        className={cn(
+          "fixed md:static top-0 left-0 w-[240px] h-full border-r border-gray-200 bg-white z-50 md:z-auto flex flex-col transform transition-transform duration-300 ease-in-out",
+          isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        )}
       >
-        <div className="px-4 pt-8 pb-4">
+        {header && (
+          <div className="flex-shrink-0">
+            {header}
+          </div>
+        )}
+
+        <div className={cn(
+          "flex-1 overflow-y-auto scrollbar-thin px-4 pb-4",
+          !header && "pt-8"
+        )}>
           {children}
         </div>
       </aside>

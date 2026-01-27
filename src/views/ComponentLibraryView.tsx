@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { Routes, Route, useLocation, Navigate, useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import Sidebar from '@/components/layout/Sidebar';
 import MainContent from '@/components/layout/MainContent';
 import CollapsibleSection from '@/components/layout/CollapsibleSection';
@@ -40,11 +41,12 @@ import HumanHandoffPatternView from './patterns/HumanHandoffPatternView';
 
 
 const ComponentLibraryView = () => {
+  const navigate = useNavigate();
   const location = useLocation();
   const { state, setMobileMenuOpen } = useApp();
   const [foundationsExpanded, setFoundationsExpanded] = useState(true);
-  const [componentsExpanded, setComponentsExpanded] = useState(true);
-  const [patternsExpanded, setPatternsExpanded] = useState(true);
+  const [componentsExpanded, setComponentsExpanded] = useState(false);
+  const [patternsExpanded, setPatternsExpanded] = useState(false);
   const prevPathnameRef = useRef(location.pathname);
 
   const isActive = (path: string) => location.pathname === path;
@@ -58,12 +60,31 @@ const ComponentLibraryView = () => {
     }
   }, [location.pathname, setMobileMenuOpen]);
 
+  const sidebarHeader = (
+    <>
+      <div className="h-14 px-4 flex items-center">
+        <button
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2 text-2xs font-medium text-gray-500 hover:text-gray-900 transition-colors"
+        >
+          <ArrowLeft size={16} />
+          Back to Dashboard
+        </button>
+      </div>
+      <div className="px-4 mb-6">
+        <div className="h-px bg-gray-200" />
+      </div>
+    </>
+  );
+
   return (
     <div className="flex h-full">
       <Sidebar
+        header={sidebarHeader}
         isMobileOpen={state.mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
       >
+
         {/* Foundations */}
         <CollapsibleSection
           title="Foundations"

@@ -105,37 +105,46 @@ export interface Component {
     content: ComponentContent;
 }
 
-// A turn is one speaker's complete response with multiple components
+// A turn is one speaker's complete response
 export interface Turn {
     id: string;
     type: 'turn';
-    speaker: 'user' | 'ai';
+    speaker: 'ai'; // AI Turns only
     phase?: FlowPhase;
-    label?: string;
-    components: Component[];
-    position?: { x: number; y: number };
-    locked?: boolean; // For Welcome node
+    label?: string; // Custom label
+    components: Component[]; // Can contain multiple components
+    position?: { x: number; y: number }; // For canvas positioning
+    locked?: boolean; // If true, node cannot be deleted (used for Welcome node)
 }
 
-// A condition creates branches in the flow
+export interface UserTurn {
+    id: string;
+    type: 'user-turn';
+    label: string;
+    inputType: 'text' | 'prompt' | 'button'; // How they interacted
+    triggerValue?: string; // The specific value (e.g., "Remove User")
+    position?: { x: number; y: number };
+}
+
+// Condition creates branches in the flow
 export interface Condition {
     id: string;
     type: 'condition';
-    label: string;
-    description?: string;
+    label: string; // e.g., "User has Premium subscription?"
+    description?: string; // Additional context
     branches: Branch[];
-    position?: { x: number; y: number };
+    position?: { x: number; y: number }; // For canvas positioning
 }
 
-// Each branch in a condition
+// Each branch represents one possible path
 export interface Branch {
     id: string;
-    label: string; // e.g., "Yes", "No", "Has Premium"
-    nextStepId?: string;
+    condition: string; // e.g., "Has Premium", "No subscription"
+    nextStepId?: string; // ID of next Step
 }
 
-// Step is either a Turn or Condition
-export type Step = Turn | Condition;
+// Step is Union of all node types
+export type Step = Turn | UserTurn | Condition;
 
 // Connection between nodes on canvas
 export interface Connection {
@@ -143,5 +152,6 @@ export interface Connection {
     source: string; // Source step ID
     sourceHandle?: string; // For conditions with multiple outputs
     target: string; // Target step ID
+    targetHandle?: string; // For future support of multi-input nodes
 }
 

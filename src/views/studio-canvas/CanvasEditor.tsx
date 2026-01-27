@@ -6,22 +6,28 @@ import {
     NodeTypes,
     Node,
     Edge,
+    useReactFlow,
+    ReactFlowProvider,
+    OnConnect,
+    MarkerType,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { TurnNode } from './nodes/TurnNode';
+import { UserTurnNode } from './nodes/UserTurnNode';
 import { ConditionNode } from './nodes/ConditionNode';
-import { Flow, Component, ComponentType, FlowPhase, Turn, ComponentContent } from '../studio/types';
+import { Flow, Component, ComponentType, FlowPhase, Turn, ComponentContent, UserTurn, Condition, Branch } from '../studio/types';
 import { useCallback, useMemo, useEffect, useState } from 'react';
 import { SelectionState } from './types';
 import { ContextToolbar } from './components/ContextToolbar';
+import { FloatingToolbar } from './components/FloatingToolbar';
 import { ZoomControls } from './components/ZoomControls';
 import { ArrowLeft, Play, Download } from 'lucide-react';
 
 
 // Register custom node types
-// Register custom node types
 const nodeTypes: NodeTypes = {
     turn: TurnNode,
+    'user-turn': UserTurnNode,
     condition: ConditionNode,
 };
 
@@ -51,7 +57,16 @@ interface CanvasEditorProps {
     isPreviewActive?: boolean;
 }
 
-export function CanvasEditor({ flow, onUpdateFlow, onBack, onPreview, isPreviewActive }: CanvasEditorProps) {
+export function CanvasEditor(props: CanvasEditorProps) {
+    return (
+        <ReactFlowProvider>
+            <CanvasEditorInner {...props} />
+        </ReactFlowProvider>
+    );
+}
+
+function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewActive }: CanvasEditorProps) {
+    const { screenToFlowPosition } = useReactFlow();
     // Selection state
     const [selection, setSelection] = useState<SelectionState | null>(null);
     const [selectionAnchorEl, setSelectionAnchorEl] = useState<HTMLElement | null>(null);
@@ -250,6 +265,34 @@ export function CanvasEditor({ flow, onUpdateFlow, onBack, onPreview, isPreviewA
                         },
                     },
                 };
+            } else if (step.type === 'user-turn') {
+                return {
+                    id: step.id,
+                    type: 'user-turn',
+                    position: step.position || { x: 250, y: 0 },
+                    data: {
+                        label: step.label,
+                        inputType: step.inputType || 'button', // Default key
+                        triggerValue: step.triggerValue,
+                        onLabelChange: (newLabel: string) => {
+                            const updatedSteps = flow.steps?.map(s =>
+                                s.id === step.id && s.type === 'user-turn'
+                                    ? { ...s, label: newLabel }
+                                    : s
+                            );
+                            onUpdateFlow({
+                                ...flow,
+                                steps: updatedSteps,
+                                lastModified: Date.now()
+                            });
+                        },
+                        onSelectNode: (nodeId: string, anchorEl: HTMLElement) => {
+                            if (selectionType === 'node' && selectionNodeId === nodeId) return;
+                            setSelection({ type: 'node', nodeId });
+                            setSelectionAnchorEl(anchorEl);
+                        }
+                    }
+                };
             } else {
                 // Condition node
                 return {
@@ -259,6 +302,11 @@ export function CanvasEditor({ flow, onUpdateFlow, onBack, onPreview, isPreviewA
                     data: {
                         label: step.label,
                         branches: step.branches,
+                        onSelectNode: (nodeId: string, anchorEl: HTMLElement) => {
+                            if (selectionType === 'node' && selectionNodeId === nodeId) return;
+                            setSelection({ type: 'node', nodeId });
+                            setSelectionAnchorEl(anchorEl);
+                        }
                     },
                 };
             }
@@ -267,6 +315,15 @@ export function CanvasEditor({ flow, onUpdateFlow, onBack, onPreview, isPreviewA
 
     // Create connections from flow.connections or generate from blocks
     const initialEdges = useMemo(() => {
+        const edgeStyle = {
+            stroke: '#94a3b8', // Slate-400
+            strokeWidth: 2,
+        };
+        const edgeMarker = {
+            type: MarkerType.ArrowClosed,
+            color: '#94a3b8',
+        };
+
         // Use new connections[] if available
         if (flow.connections && flow.connections.length > 0) {
             return flow.connections.map(conn => ({
@@ -274,7 +331,10 @@ export function CanvasEditor({ flow, onUpdateFlow, onBack, onPreview, isPreviewA
                 source: conn.source,
                 sourceHandle: conn.sourceHandle,
                 target: conn.target,
+                targetHandle: conn.targetHandle,
                 type: 'smoothstep',
+                style: edgeStyle,
+                markerEnd: edgeMarker,
             }));
         }
 
@@ -284,29 +344,113 @@ export function CanvasEditor({ flow, onUpdateFlow, onBack, onPreview, isPreviewA
             source: block.id,
             target: flow.blocks[index + 1].id,
             type: 'smoothstep',
+            style: edgeStyle,
+            markerEnd: edgeMarker,
         }));
     }, [flow.blocks, flow.connections]);
 
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes as Node[]);
-    const [edges, , onEdgesChange] = useEdgesState(initialEdges as Edge[]);
+    const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges as Edge[]);
+
+    // Sync edges when flow model changes
+    useEffect(() => {
+        setEdges(initialEdges as Edge[]);
+    }, [initialEdges, setEdges]);
 
     // Sync node data (but preserve positions) when flow changes
     useEffect(() => {
         setNodes((currentNodes) => {
-            return currentNodes.map((node) => {
-                // Find corresponding node in initialNodes
-                const updatedNode = (initialNodes as Node[]).find((n) => n.id === node.id);
-                if (updatedNode) {
+            // Create a map of current nodes for O(1) access
+            const currentNodeMap = new Map(currentNodes.map(n => [n.id, n]));
+
+            // Map over initialNodes (the source of truth) to ensure new nodes are added
+            // and removed nodes are removed
+            return (initialNodes as Node[]).map((newNode) => {
+                const existingNode = currentNodeMap.get(newNode.id);
+                if (existingNode) {
                     // Update data but keep current position
+                    // We check if the 'flow' gave us a specific new position (e.g. from onDrop)
+                    // If the position in flow differs significantly from 0,0 default or if it's a new node
+
+                    // Actually, simple logic: rely on initialNodes data, but prefer existingNode potision 
+                    // UNLESS initialNode position has changed (how to detect? tricky).
+                    // For now, let's just use existingNode.position to prevent jumpiness on data updates,
+                    // BUT if we just added it, existingNode is undefined.
                     return {
-                        ...updatedNode,
-                        position: node.position, // Preserve user's drag position
+                        ...newNode,
+                        position: existingNode.position, // Preserve user's drag position
                     };
                 }
-                return node;
+                // If not in current nodes, it's a new node! Return it as is.
+                return newNode;
             });
         });
     }, [initialNodes, setNodes]);
+
+    // Save positions when dragging stops
+    const onNodeDragStop = useCallback((_: React.MouseEvent, node: Node) => {
+        const updatedSteps = flow.steps?.map(s =>
+            s.id === node.id
+                ? { ...s, position: node.position }
+                : s
+        );
+        // Only update if changed
+        // (Optimization skipped for brevity, onUpdateFlow handles it)
+        onUpdateFlow({ ...flow, steps: updatedSteps, lastModified: Date.now() });
+    }, [flow, onUpdateFlow]);
+
+    // Connection handler
+    const onConnect: OnConnect = useCallback(
+        (connection) => {
+            // Update persistent flow model
+            const newConnection: import('../studio/types').Connection = {
+                id: `edge-${connection.source}-${connection.target}-${Date.now()}`,
+                source: connection.source,
+                sourceHandle: connection.sourceHandle || undefined,
+                target: connection.target,
+                targetHandle: connection.targetHandle || undefined
+            };
+
+            const updatedConnections = [...(flow.connections || []), newConnection];
+            let updatedSteps = flow.steps;
+
+            // SMART LINKING LOGIC:
+            // If connecting from a specific prompt handle (starts with 'handle-') to a User Turn,
+            // auto-fill the User Turn with that prompt's text.
+            if (connection.sourceHandle && connection.sourceHandle.startsWith('handle-')) {
+                const sourceNodeId = connection.source;
+                const targetNodeId = connection.target;
+                const componentId = connection.sourceHandle.replace('handle-', '');
+
+                // Find the prompt text
+                const sourceStep = flow.steps?.find(s => s.id === sourceNodeId);
+                const targetStep = flow.steps?.find(s => s.id === targetNodeId);
+
+                if (sourceStep && sourceStep.type === 'turn' && targetStep && targetStep.type === 'user-turn') {
+                    const promptComponent = sourceStep.components.find(c => c.id === componentId);
+                    if (promptComponent && promptComponent.type === 'prompt') {
+                        const promptText = (promptComponent.content as import('../studio/types').PromptContent).text;
+                        if (promptText) {
+                            // Valid link! Update the User Turn.
+                            updatedSteps = flow.steps?.map(s =>
+                                s.id === targetNodeId
+                                    ? { ...s, label: promptText, inputType: 'prompt' }
+                                    : s
+                            );
+                        }
+                    }
+                }
+            }
+
+            onUpdateFlow({
+                ...flow,
+                connections: updatedConnections,
+                steps: updatedSteps,
+                lastModified: Date.now()
+            });
+        },
+        [flow, onUpdateFlow]
+    );
 
     // Selection and toolbar handlers
     const handleDeselect = useCallback(() => {
@@ -339,6 +483,17 @@ export function CanvasEditor({ flow, onUpdateFlow, onBack, onPreview, isPreviewA
             const updatedSteps = flow.steps?.map(s =>
                 s.id === selection.nodeId && s.type === 'turn'
                     ? { ...s, phase }
+                    : s
+            );
+            onUpdateFlow({ ...flow, steps: updatedSteps, lastModified: Date.now() });
+        }
+    };
+
+    const handleChangeUserTurnInputType = (inputType: 'text' | 'prompt' | 'button') => {
+        if (selection?.type === 'node') {
+            const updatedSteps = flow.steps?.map(s =>
+                s.id === selection.nodeId && s.type === 'user-turn'
+                    ? { ...s, inputType }
                     : s
             );
             onUpdateFlow({ ...flow, steps: updatedSteps, lastModified: Date.now() });
@@ -387,6 +542,31 @@ export function CanvasEditor({ flow, onUpdateFlow, onBack, onPreview, isPreviewA
 
 
 
+    const handleDeleteNode = useCallback(() => {
+        if (selection?.type === 'node') {
+            const step = flow.steps?.find(s => s.id === selection.nodeId);
+            // Prevent deleting locked nodes (like Welcome)
+            if (step && 'locked' in step && step.locked) {
+                return;
+            }
+
+            const updatedSteps = flow.steps?.filter(s => s.id !== selection.nodeId);
+
+            // Also remove connections attached to this node
+            const updatedConnections = (flow.connections || []).filter(
+                conn => conn.source !== selection.nodeId && conn.target !== selection.nodeId
+            );
+
+            onUpdateFlow({
+                ...flow,
+                steps: updatedSteps,
+                connections: updatedConnections,
+                lastModified: Date.now()
+            });
+            handleDeselect();
+        }
+    }, [selection, flow, onUpdateFlow, handleDeselect]);
+
     const handleDeleteComponent = useCallback(() => {
         if (selection?.type === 'component') {
             const updatedSteps = flow.steps?.map(s =>
@@ -399,6 +579,14 @@ export function CanvasEditor({ flow, onUpdateFlow, onBack, onPreview, isPreviewA
         }
     }, [selection, flow, onUpdateFlow, handleDeselect]);
 
+    const handleDeleteSelection = useCallback(() => {
+        if (selection?.type === 'node') {
+            handleDeleteNode();
+        } else if (selection?.type === 'component') {
+            handleDeleteComponent();
+        }
+    }, [selection, handleDeleteNode, handleDeleteComponent]);
+
     // Keyboard shortcuts
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -409,11 +597,11 @@ export function CanvasEditor({ flow, onUpdateFlow, onBack, onPreview, isPreviewA
 
             if (e.key === 'Escape') {
                 handleDeselect();
+            } else if (e.key === 'Delete' || e.key === 'Backspace') {
+                e.preventDefault();
+                handleDeleteSelection();
             } else if (selection?.type === 'component') {
-                if (e.key === 'Delete' || e.key === 'Backspace') {
-                    e.preventDefault();
-                    handleDeleteComponent();
-                } else if (e.key === 'ArrowUp') {
+                if (e.key === 'ArrowUp') {
                     e.preventDefault();
                     handleMoveComponentUp();
                 } else if (e.key === 'ArrowDown') {
@@ -425,12 +613,104 @@ export function CanvasEditor({ flow, onUpdateFlow, onBack, onPreview, isPreviewA
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [selection, handleDeleteComponent, handleMoveComponentUp, handleMoveComponentDown, handleDeselect]);
+    }, [selection, handleDeleteSelection, handleMoveComponentUp, handleMoveComponentDown, handleDeselect]);
 
-    // Get current phase for toolbar
+    // Drag and Drop handlers
+    const onDragOver = useCallback((event: React.DragEvent) => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'move';
+    }, []);
+
+    const onDrop = useCallback(
+        (event: React.DragEvent) => {
+            event.preventDefault();
+
+            const type = event.dataTransfer.getData('application/reactflow');
+            if (typeof type === 'undefined' || !type) {
+                return;
+            }
+
+            const position = screenToFlowPosition({
+                x: event.clientX,
+                y: event.clientY,
+            });
+
+            if (type === 'turn') {
+                const newTurn: Turn = {
+                    id: crypto.randomUUID(),
+                    type: 'turn',
+                    speaker: 'ai',
+                    components: [{
+                        id: crypto.randomUUID(),
+                        type: 'message',
+                        content: getDefaultContent('message')
+                    }],
+                    position
+                };
+                onUpdateFlow({
+                    ...flow,
+                    steps: [...(flow.steps || []), newTurn],
+                    lastModified: Date.now()
+                });
+            } else if (type === 'user-turn') {
+                const newUserTurn: UserTurn = {
+                    id: crypto.randomUUID(),
+                    type: 'user-turn',
+                    label: 'User selects option',
+                    inputType: 'button',
+                    position
+                };
+                onUpdateFlow({
+                    ...flow,
+                    steps: [...(flow.steps || []), newUserTurn],
+                    lastModified: Date.now()
+                });
+            } else if (type === 'condition') {
+                const newCondition: Condition = {
+                    id: crypto.randomUUID(),
+                    type: 'condition',
+                    label: 'New Condition',
+                    branches: [
+                        { id: crypto.randomUUID(), condition: 'Yes' },
+                        { id: crypto.randomUUID(), condition: 'No' },
+                    ],
+                    position
+                };
+                onUpdateFlow({
+                    ...flow,
+                    steps: [...(flow.steps || []), newCondition],
+                    lastModified: Date.now()
+                });
+            }
+        },
+        [flow, onUpdateFlow, screenToFlowPosition]
+    );
+
+    // Get current phase for toolbar (AI Turn)
     const currentPhase = selection?.type === 'node'
         ? (flow.steps?.find(s => s.id === selection.nodeId && s.type === 'turn') as Turn | undefined)?.phase
         : undefined;
+
+    // Get current input type for toolbar (User Turn)
+    const currentUserTurnInputType = selection?.type === 'node'
+        ? (flow.steps?.find(s => s.id === selection.nodeId && s.type === 'user-turn') as UserTurn | undefined)?.inputType
+        : undefined;
+
+    // Get current branches for toolbar (Condition Node)
+    const currentBranches = selection?.type === 'node'
+        ? (flow.steps?.find(s => s.id === selection.nodeId && s.type === 'condition') as Condition | undefined)?.branches
+        : undefined;
+
+    const handleUpdateBranches = (branches: Branch[]) => {
+        if (selection?.type === 'node') {
+            const updatedSteps = flow.steps?.map(s =>
+                s.id === selection.nodeId && s.type === 'condition'
+                    ? { ...s, branches }
+                    : s
+            );
+            onUpdateFlow({ ...flow, steps: updatedSteps, lastModified: Date.now() });
+        }
+    };
 
     // Check if component can move up/down
     const canMoveUp = selection?.type === 'component' ? (() => {
@@ -544,9 +824,65 @@ export function CanvasEditor({ flow, onUpdateFlow, onBack, onPreview, isPreviewA
                 zoomOnDoubleClick={false}
                 panOnScrollSpeed={2.0} // Increased for snappier feel
                 zoomOnPinch={true}      // FigJam-like pinch to zoom
+                onDragOver={onDragOver}
+                onDrop={onDrop}
+                onNodeDragStop={onNodeDragStop}
+                onConnect={onConnect}
             >
                 <Background />
                 <ZoomControls />
+
+                <FloatingToolbar
+                    onAddAiTurn={() => {
+                        const newTurn: Turn = {
+                            id: crypto.randomUUID(),
+                            type: 'turn',
+                            speaker: 'ai',
+                            components: [{
+                                id: crypto.randomUUID(),
+                                type: 'message',
+                                content: getDefaultContent('message')
+                            }],
+                            position: { x: 100, y: 100 + (flow.steps?.length || 0) * 50 }
+                        };
+                        onUpdateFlow({
+                            ...flow,
+                            steps: [...(flow.steps || []), newTurn],
+                            lastModified: Date.now()
+                        });
+                    }}
+                    onAddUserTurn={() => {
+                        const newUserTurn: UserTurn = {
+                            id: crypto.randomUUID(),
+                            type: 'user-turn',
+                            label: 'User selects option',
+                            inputType: 'button',
+                            position: { x: 100, y: 100 + (flow.steps?.length || 0) * 50 }
+                        };
+                        onUpdateFlow({
+                            ...flow,
+                            steps: [...(flow.steps || []), newUserTurn],
+                            lastModified: Date.now()
+                        });
+                    }}
+                    onAddCondition={() => {
+                        const newCondition: Condition = {
+                            id: crypto.randomUUID(),
+                            type: 'condition',
+                            label: 'New Condition',
+                            branches: [
+                                { id: crypto.randomUUID(), condition: 'Yes' },
+                                { id: crypto.randomUUID(), condition: 'No' }
+                            ],
+                            position: { x: 100, y: 100 + (flow.steps?.length || 0) * 50 }
+                        };
+                        onUpdateFlow({
+                            ...flow,
+                            steps: [...(flow.steps || []), newCondition],
+                            lastModified: Date.now()
+                        });
+                    }}
+                />
 
 
                 {/* Context Toolbar */}
@@ -557,9 +893,13 @@ export function CanvasEditor({ flow, onUpdateFlow, onBack, onPreview, isPreviewA
                         onChangePhase={handleChangePhase}
                         onMoveUp={handleMoveComponentUp}
                         onMoveDown={handleMoveComponentDown}
-                        onDelete={handleDeleteComponent}
+                        onDelete={handleDeleteSelection}
                         anchorEl={selectionAnchorEl}
                         currentPhase={currentPhase as FlowPhase}
+                        currentUserTurnInputType={currentUserTurnInputType}
+                        onChangeUserTurnInputType={handleChangeUserTurnInputType}
+                        currentBranches={currentBranches}
+                        onUpdateBranches={handleUpdateBranches}
                         canMoveUp={canMoveUp}
                         canMoveDown={canMoveDown}
                     />
