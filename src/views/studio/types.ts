@@ -140,11 +140,22 @@ export interface Condition {
 export interface Branch {
     id: string;
     condition: string; // e.g., "Has Premium", "No subscription"
+    logic?: {
+        variable: string;
+        value: string;
+        operator: 'eq'; // For now just equality
+    };
     nextStepId?: string; // ID of next Step
 }
 
 // Step is Union of all node types
-export type Step = Turn | UserTurn | Condition;
+export type Step = Turn | UserTurn | Condition | StartNode;
+
+export interface StartNode {
+    id: string;
+    type: 'start';
+    position?: { x: number; y: number };
+}
 
 // Connection between nodes on canvas
 export interface Connection {

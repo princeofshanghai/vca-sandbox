@@ -1,4 +1,5 @@
 import { VcaIcon } from '@/components/vca-components/icons/VcaIcon';
+import { Split, UserRound } from 'lucide-react';
 
 interface FloatingToolbarProps {
     onAddAiTurn: () => void;
@@ -39,7 +40,7 @@ export function FloatingToolbar({ onAddAiTurn, onAddUserTurn, onAddCondition }: 
                 className="group relative flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 transition-colors cursor-grab active:cursor-grabbing"
                 title="Drag to add User Turn"
             >
-                <span className="text-xl">👤</span>
+                <UserRound className="text-purple-600" size={20} />
                 {/* <VcaIcon icon="user" size="md" className="text-purple-600" /> */}
                 <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                     User Turn
@@ -56,7 +57,7 @@ export function FloatingToolbar({ onAddAiTurn, onAddUserTurn, onAddCondition }: 
                 className="group relative flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 transition-colors cursor-grab active:cursor-grabbing"
                 title="Drag to add Condition"
             >
-                <span className="text-xl">⚙️</span>
+                <Split className="text-amber-500" size={20} />
                 <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                     Condition
                 </span>

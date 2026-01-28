@@ -1,5 +1,5 @@
 import { memo, useState, useRef, useEffect } from 'react';
-import { Handle, Position, NodeProps } from '@xyflow/react';
+import { Handle, Position, NodeProps, useStore } from '@xyflow/react';
 import { MessageSquare, MousePointerClick, List } from 'lucide-react';
 
 interface UserTurnNodeData {
@@ -11,7 +11,6 @@ interface UserTurnNodeData {
 }
 
 export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
-    const nodeId = id as string;
     const typedData = data as unknown as UserTurnNodeData;
 
     // Label editing state
@@ -43,15 +42,6 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
         }
     };
 
-    const handleNodeClick = (e: React.MouseEvent) => {
-        const target = e.target as HTMLElement;
-        if (!target.closest('input') && typedData.onSelectNode) {
-            e.stopPropagation();
-            const nodeEl = e.currentTarget as HTMLElement;
-            typedData.onSelectNode(nodeId, nodeEl);
-        }
-    };
-
     const getIcon = () => {
         switch (typedData.inputType) {
             case 'button':
@@ -76,6 +66,9 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
         }
     };
 
+    const zoom = useStore((s) => s.transform[2]);
+    const scale = Math.max(1, 1 / zoom);
+
     return (
         <div
             id={`node-${id}`}
@@ -83,66 +76,68 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
                 ? 'border-purple-500 ring-1 ring-purple-500'
                 : 'border-gray-300 hover:border-purple-300'
                 }`}
-            onClick={handleNodeClick}
         >
+            {/* Node Label (Figma Style) - Above the card */}
+            <div
+                className="absolute bottom-full left-0 mb-1.5 px-0.5 min-w-[100px] h-6 flex items-center gap-1.5 origin-bottom-left"
+                style={{
+                    transform: `scale(${scale})`,
+                }}
+            >
+                {/* Interaction Icon relocated from header */}
+                <div className="text-purple-600 flex-shrink-0">
+                    {getIcon()}
+                </div>
+
+                {
+                    isEditingLabel ? (
+                        <input
+                            ref={labelInputRef}
+                            type="text"
+                            value={editedLabel}
+                            onChange={(e) => setEditedLabel(e.target.value)}
+                            onBlur={handleLabelSave}
+                            onKeyDown={handleLabelKeyDown}
+                            className="w-full h-full text-xs font-medium text-gray-900 bg-transparent border border-purple-500 rounded px-1 outline-none nodrag"
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                    ) : (
+                        <div
+                            className={`w-full h-full flex items-center text-xs font-medium truncate rounded transition-colors cursor-text ${!typedData.label ? 'text-gray-400' : 'text-gray-500 hover:text-gray-900'}`}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setIsEditingLabel(true);
+                            }}
+                        >
+                            {typedData.label || 'User Turn'}
+                        </div>
+                    )}
+            </div >
+
             {/* Input Handle */}
-            <Handle
+            < Handle
                 type="target"
-                position={Position.Top}
-                className="!bg-purple-200 !w-3 !h-3 !border-2 !border-white"
+                position={Position.Left}
+                className="!bg-purple-400 !w-3 !h-3 !border-2 !border-white"
             />
 
-            {/* Header */}
-            <div className="px-4 py-3 border-b border-gray-100 cursor-default bg-purple-50/50 rounded-t-lg">
-                <div className="flex items-center gap-3">
-                    {/* User Icon */}
-                    <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0 text-purple-600">
-                        {getIcon()}
+            {/* Internal Content Wrapper for clipping rounded corners */}
+            < div className="w-full h-full overflow-hidden rounded-lg" >
+                {/* Content Body */}
+                < div className="px-4 py-2 bg-white rounded-b-lg" >
+                    <div className="text-xs text-gray-500 flex items-center gap-1.5">
+                        {getBodyText()}
                     </div>
-
-                    {/* Editable Label */}
-                    <div className="flex-1 min-w-0 h-6 flex items-center">
-                        {isEditingLabel ? (
-                            <input
-                                ref={labelInputRef}
-                                type="text"
-                                value={editedLabel}
-                                onChange={(e) => setEditedLabel(e.target.value)}
-                                onBlur={handleLabelSave}
-                                onKeyDown={handleLabelKeyDown}
-                                className="w-full h-full text-sm font-semibold text-gray-900 bg-white border border-purple-500 rounded px-1 outline-none nodrag"
-                                onClick={(e) => e.stopPropagation()}
-                            />
-                        ) : (
-                            <div
-                                className={`w-full h-full flex items-center px-1 text-sm font-semibold truncate rounded hover:bg-white/50 transition-colors cursor-default ${!typedData.label ? 'text-gray-400' : 'text-gray-900'}`}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setIsEditingLabel(true);
-                                }}
-                                title="Click to edit label"
-                            >
-                                {typedData.label || 'User Action'}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {/* Content Body */}
-            <div className="px-4 py-2 bg-white rounded-b-lg">
-                <div className="text-xs text-gray-500 flex items-center gap-1.5">
-                    {getBodyText()}
-                </div>
-            </div>
+                </div >
+            </div >
 
             {/* Output Handle */}
-            <Handle
+            < Handle
                 type="source"
-                position={Position.Bottom}
-                className="!bg-purple-200 !w-3 !h-3 !border-2 !border-white"
+                position={Position.Right}
+                className="!bg-purple-400 !w-3 !h-3 !border-2 !border-white"
             />
-        </div>
+        </div >
     );
 });
 

@@ -31,6 +31,11 @@ export const INITIAL_FLOW: Flow = {
     lastModified: Date.now(),
     steps: [
         {
+            id: 'start-1',
+            type: 'start',
+            position: { x: 50, y: 50 }
+        },
+        {
             id: 'welcome-1',
             type: 'turn',
             speaker: 'ai',
@@ -61,6 +66,11 @@ export const INITIAL_FLOW: Flow = {
         }
     ],
     connections: [
+        {
+            id: 'e-start',
+            source: 'start-1',
+            target: 'welcome-1'
+        },
         {
             id: 'e1',
             source: 'welcome-1',

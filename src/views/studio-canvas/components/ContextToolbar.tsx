@@ -71,7 +71,8 @@ export function ContextToolbar({
     onUpdateBranches,
     canMoveUp = true,
     canMoveDown = true,
-}: ContextToolbarProps) {
+    isAiTurn = false, // New prop
+}: ContextToolbarProps & { isAiTurn?: boolean }) {
     // Subscribe to viewport transform changes to update toolbar position
     useStore((state) => state.transform);
 
@@ -103,7 +104,7 @@ export function ContextToolbar({
                         // Node-specific actions
                         <>
                             {/* Add Component Popover (Only for AI Turns) */}
-                            {currentPhase !== undefined && (
+                            {isAiTurn && (
                                 <Popover.Root>
                                     <ActionTooltip content="Add component">
                                         <Popover.Trigger asChild>
@@ -198,7 +199,7 @@ export function ContextToolbar({
                             )}
 
                             {/* Only show phase picker if we have a phase (AI Turn) */}
-                            {currentPhase !== undefined && (
+                            {isAiTurn && (
                                 <Popover.Root>
                                     <ActionTooltip content="Change phase">
                                         <Popover.Trigger asChild>
@@ -241,17 +242,6 @@ export function ContextToolbar({
                                 </Popover.Root>
                             )}
 
-                            <div className="w-px h-5 bg-gray-700" />
-
-                            {/* Delete Node */}
-                            <ActionTooltip content="Delete node">
-                                <button
-                                    onClick={onDelete}
-                                    className="p-1.5 text-white hover:bg-red-600 rounded transition-colors cursor-default"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
-                            </ActionTooltip>
                         </>
                     ) : (
                         // Component-specific actions

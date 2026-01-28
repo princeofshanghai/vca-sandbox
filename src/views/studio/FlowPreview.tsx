@@ -13,9 +13,10 @@ interface FlowPreviewProps {
     flow: Flow;
     isPremium: boolean;
     isMobile: boolean;
+    variables?: Record<string, string>;
 }
 
-export const FlowPreview = ({ flow, isPremium, isMobile }: FlowPreviewProps) => {
+export const FlowPreview = ({ flow, isPremium, isMobile, variables }: FlowPreviewProps) => {
     return (
         <div className="h-full flex flex-col relative bg-white">
             <div className="flex-1 flex flex-col items-center justify-center p-4 overflow-y-auto thin-scrollbar">
@@ -30,7 +31,7 @@ export const FlowPreview = ({ flow, isPremium, isMobile }: FlowPreviewProps) => 
                                     showHeaderPremiumIcon={isPremium}
                                     showPremiumBorder={isPremium}
                                 >
-                                    <PreviewContent flow={flow} />
+                                    <PreviewContent flow={flow} variables={variables} />
                                 </Container>
                             </PhoneFrame>
                         </div>
@@ -43,7 +44,7 @@ export const FlowPreview = ({ flow, isPremium, isMobile }: FlowPreviewProps) => 
                         showHeaderPremiumIcon={isPremium}
                         showPremiumBorder={isPremium}
                     >
-                        <PreviewContent flow={flow} />
+                        <PreviewContent flow={flow} variables={variables} />
                     </Container>
                 )}
             </div>
@@ -53,53 +54,104 @@ export const FlowPreview = ({ flow, isPremium, isMobile }: FlowPreviewProps) => 
 
 
 // Interactive Preview Content
-const PreviewContent = ({ flow }: { flow: Flow }) => {
+const PreviewContent = ({ flow, variables }: { flow: Flow, variables?: Record<string, string> }) => {
     // State to track the conversation history (visited nodes)
     const [history, setHistory] = useState<import('./types').Step[]>([]);
+    const variablesString = JSON.stringify(variables);
 
     // Initialize history with the start node
     useEffect(() => {
         if (!flow.steps || flow.steps.length === 0) return;
 
-        // Find start node (Welcome phase or first node)
-        const startNode = flow.steps.find(s =>
+        // Initialize with Start Node traversal
+        const startNode = flow.steps.find(s => s.type === 'start');
+
+        if (startNode) {
+            // Find what the start node connects to
+            const connection = flow.connections?.find(c => c.source === startNode.id);
+            if (connection) {
+                const firstStep = flow.steps.find(s => s.id === connection.target);
+                if (firstStep) {
+                    setHistory([firstStep]);
+                    return;
+                }
+            }
+        }
+
+        // Fallback: Find Welcome phase or first node if no start node logic works
+        const firstTurn = flow.steps.find(s =>
             s.type === 'turn' && (s as import('./types').Turn).phase === 'welcome'
         ) || flow.steps[0];
 
-        setHistory([startNode]);
-    }, [flow.steps]); // Reset when graph structure changes substantially? 
+        if (firstTurn) {
+            setHistory([firstTurn]);
+        }
+    }, [flow.steps, flow.connections, variablesString]); // Reset when structure or context changes 
     // actually we might want to be careful resetting on every edit. 
     // For now, simple reset is safer to avoid invalid states.
 
     // Helper to find the next node based on a source handle
     const traverse = (currentNodeId: string, sourceHandle?: string) => {
-        // Find connection
-        const connection = flow.connections?.find(c =>
-            c.source === currentNodeId &&
-            (sourceHandle ? c.sourceHandle === sourceHandle : true)
-        );
+        let currentId = currentNodeId;
+        let currentHandle = sourceHandle;
+        const nodesToAdd: import('./types').Step[] = [];
 
-        if (!connection) return;
+        // Loop to traverse through "passthrough" nodes (UserTurns, Conditions)
+        // Max iterations to prevent infinite loops
+        for (let i = 0; i < 20; i++) {
+            // Find connection
+            const connection = flow.connections?.find(c =>
+                c.source === currentId &&
+                (currentHandle ? c.sourceHandle === currentHandle : true)
+            );
 
-        const nextNode = flow.steps?.find(s => s.id === connection.target);
-        if (!nextNode) return;
+            if (!connection) break;
 
-        // Add the next node (User Turn)
-        const newHistory = [...history, nextNode];
+            const nextNode = flow.steps?.find(s => s.id === connection.target);
+            if (!nextNode) break;
 
-        // If the next node is a User Turn, it acts as a passthrough to the next AI Turn
-        // So we should try to double-jump if possible
-        if (nextNode.type === 'user-turn' || nextNode.type === 'condition') { // Conditions might need evaluation logic later
-            const nextConnection = flow.connections?.find(c => c.source === nextNode.id);
-            if (nextConnection) {
-                const destNode = flow.steps?.find(s => s.id === nextConnection.target);
-                if (destNode) {
-                    newHistory.push(destNode);
+            nodesToAdd.push(nextNode);
+            currentId = nextNode.id;
+            currentHandle = undefined; // Reset handle for next hop
+
+            // Determine if we should continue traversing
+            if (nextNode.type === 'turn') {
+                // AI Turn is a stopping point (it waits for user interaction)
+                break;
+            } else if (nextNode.type === 'user-turn') {
+                // User turn is just a message bubble, continue to next
+                continue;
+            } else if (nextNode.type === 'condition') {
+                // Evaluate Condition
+                const branches = (nextNode as import('./types').Condition).branches || [];
+                let selectedBranchId = branches[0]?.id; // Default to first
+
+                // Find matching branch
+                if (variables) {
+                    for (const branch of branches) {
+                        if (branch.logic && branch.logic.variable) {
+                            const { variable, value } = branch.logic;
+
+                            const simulatedVal = String(variables[variable] || '').trim().toLowerCase();
+                            const targetVal = String(value).trim().toLowerCase();
+
+                            // Relaxed equality check (case-insensitive)
+                            if (simulatedVal === targetVal) {
+                                selectedBranchId = branch.id;
+                                break;
+                            }
+                        }
+                    }
                 }
+
+                currentHandle = selectedBranchId;
+                // Continue loop with this handle
             }
         }
 
-        setHistory(newHistory);
+        if (nodesToAdd.length > 0) {
+            setHistory(prev => [...prev, ...nodesToAdd]);
+        }
     };
 
     const handlePromptClick = (stepId: string, promptComponentId: string) => {

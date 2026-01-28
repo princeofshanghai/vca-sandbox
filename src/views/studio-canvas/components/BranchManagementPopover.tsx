@@ -26,8 +26,8 @@ export function BranchManagementContent({ branches, onChange }: BranchManagement
         onChange(branches.filter(b => b.id !== id));
     };
 
-    const handleUpdateBranch = (id: string, newLabel: string) => {
-        onChange(branches.map(b => b.id === id ? { ...b, condition: newLabel } : b));
+    const handleUpdateBranch = (id: string, updates: Partial<Branch>) => {
+        onChange(branches.map(b => b.id === id ? { ...b, ...updates } : b));
     };
 
     // Auto-focus new inputs? Maybe later.
@@ -46,24 +46,60 @@ export function BranchManagementContent({ branches, onChange }: BranchManagement
 
             <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1 thin-scrollbar">
                 {branches.map((branch) => (
-                    <div key={branch.id} className="flex items-center gap-2 group">
-                        {/* Drag handle could go here */}
-                        <div className="flex-1 relative">
-                            <input
-                                type="text"
-                                value={branch.condition}
-                                onChange={(e) => handleUpdateBranch(branch.id, e.target.value)}
-                                className="w-full bg-gray-950 border border-gray-700 rounded-md px-3 py-1.5 text-sm text-gray-200 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-600"
-                                placeholder="Condition label..."
-                            />
+                    <div key={branch.id} className="p-3 bg-gray-950/50 rounded-lg border border-gray-800 space-y-2">
+                        {/* Branch Label Row */}
+                        <div className="flex items-center gap-2">
+                            <div className="flex-1 relative">
+                                <input
+                                    type="text"
+                                    value={branch.condition}
+                                    onChange={(e) => handleUpdateBranch(branch.id, { condition: e.target.value })}
+                                    className="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-1.5 text-sm text-gray-200 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-600"
+                                    placeholder="Branch label (e.g. Yes)..."
+                                />
+                            </div>
+                            <button
+                                onClick={() => handleRemoveBranch(branch.id)}
+                                disabled={branches.length <= 1}
+                                className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-gray-800 rounded-md transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-500 cursor-default"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
                         </div>
-                        <button
-                            onClick={() => handleRemoveBranch(branch.id)}
-                            disabled={branches.length <= 1}
-                            className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-gray-800 rounded-md transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-500 cursor-default"
-                        >
-                            <X className="w-4 h-4" />
-                        </button>
+
+                        {/* Logic Row */}
+                        <div className="flex items-center gap-2 px-1">
+                            <GitBranch className="w-3 h-3 text-gray-600 shrink-0" />
+                            <div className="flex-1 flex items-center gap-2">
+                                <input
+                                    type="text"
+                                    value={branch.logic?.variable || ''}
+                                    onChange={(e) => handleUpdateBranch(branch.id, {
+                                        logic: {
+                                            variable: e.target.value,
+                                            value: branch.logic?.value || '',
+                                            operator: 'eq'
+                                        }
+                                    })}
+                                    className="w-full bg-gray-900 border border-gray-800 rounded px-2 py-1 text-xs text-blue-300 placeholder:text-gray-600 focus:border-blue-500/50 focus:outline-none"
+                                    placeholder="Variable..."
+                                />
+                                <span className="text-gray-600 text-xs font-mono">==</span>
+                                <input
+                                    type="text"
+                                    value={branch.logic?.value || ''}
+                                    onChange={(e) => handleUpdateBranch(branch.id, {
+                                        logic: {
+                                            variable: branch.logic?.variable || '',
+                                            value: e.target.value,
+                                            operator: 'eq'
+                                        }
+                                    })}
+                                    className="w-full bg-gray-900 border border-gray-800 rounded px-2 py-1 text-xs text-green-300 placeholder:text-gray-600 focus:border-green-500/50 focus:outline-none"
+                                    placeholder="Value..."
+                                />
+                            </div>
+                        </div>
                     </div>
                 ))}
             </div>
