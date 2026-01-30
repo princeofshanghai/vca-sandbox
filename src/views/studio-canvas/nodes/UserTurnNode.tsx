@@ -155,7 +155,7 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
         >
             <div
                 id={`node-${id}`}
-                className={`bg-white rounded-lg border shadow-sm w-[280px] transition-all cursor-pointer relative ${selected || isEditorOpen
+                className={`bg-white rounded-lg border shadow-sm w-[280px] transition-all cursor-pointer relative overflow-visible ${selected || isEditorOpen
                     ? 'border-purple-500 ring-1 ring-purple-500'
                     : 'border-gray-300 hover:border-purple-300 hover:shadow-md'
                     }`}
@@ -202,8 +202,9 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
                 {/* Input Handle */}
                 <Handle
                     type="target"
+                    id="user-input"
                     position={Position.Left}
-                    className="!bg-purple-400 !w-3 !h-3 !border-2 !border-white"
+                    className="!bg-purple-400 !w-3 !h-3 !border-2 !border-white !z-50"
                 />
 
                 {/* Wrapper ID for Popover to detect clicks inside */}
@@ -217,8 +218,9 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
                 {/* Output Handle */}
                 <Handle
                     type="source"
+                    id="user-output"
                     position={Position.Right}
-                    className="!bg-purple-400 !w-3 !h-3 !border-2 !border-white"
+                    className="!bg-purple-400 !w-3 !h-3 !border-2 !border-white !z-50"
                 />
             </div >
         </UserTurnEditor>

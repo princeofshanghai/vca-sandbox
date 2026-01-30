@@ -1086,6 +1086,8 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                 onConnect={onConnect}
                 onNodeClick={onNodeClick}
                 proOptions={{ hideAttribution: true }}
+                connectionLineStyle={{ stroke: '#3b82f6', strokeWidth: 2 }}
+                connectionLineContainerStyle={{ zIndex: 1000 }}
             >
                 <Background
                     gap={8}

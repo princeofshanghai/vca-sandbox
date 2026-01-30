@@ -45,7 +45,7 @@ export const SimpleComponentCard = memo(forwardRef<HTMLDivElement, SimpleCompone
                     type="source"
                     position={Position.Right}
                     id={`handle-${component.id}`}
-                    className="!bg-blue-400 !w-3 !h-3 !border-2 !border-white !-right-[26px] !top-1/2 !-translate-y-1/2"
+                    className="!bg-blue-400 !w-3 !h-3 !border-2 !border-white !-right-[26px] !top-1/2 !-translate-y-1/2 !z-30"
                 />
             )}
         </div>

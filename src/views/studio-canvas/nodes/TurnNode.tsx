@@ -67,7 +67,7 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
     return (
         <div
             id={`node-${id}`}
-            className={`bg-white rounded-lg border shadow-sm w-[320px] transition-colors cursor-default relative ${selected
+            className={`bg-white rounded-lg border shadow-sm w-[320px] transition-colors cursor-default relative overflow-visible ${selected
                 ? 'border-blue-500 ring-1 ring-blue-500'
                 : 'border-gray-300 hover:border-blue-300'
                 }`}
@@ -118,8 +118,9 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
             {/* Input Handle */}
             <Handle
                 type="target"
+                id="main-input"
                 position={Position.Left}
-                className="!bg-blue-400 !w-3 !h-3 !border-2 !border-white"
+                className="!bg-blue-400 !w-3 !h-3 !border-2 !border-white !z-50"
                 style={{ top: 19 }}
             />
 
@@ -140,8 +141,9 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
             {/* Output Handle */}
             <Handle
                 type="source"
+                id="main-output"
                 position={Position.Right}
-                className="!bg-blue-400 !w-3 !h-3 !border-2 !border-white"
+                className="!bg-blue-400 !w-3 !h-3 !border-2 !border-white !z-50"
                 style={{ top: 19 }}
             />
         </div >
