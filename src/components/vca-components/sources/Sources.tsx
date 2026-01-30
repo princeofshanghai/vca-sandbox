@@ -27,7 +27,7 @@ export const Sources = ({
   return (
     <div className={cn('flex flex-col gap-vca-s items-start', className)}>
       {/* Sources heading */}
-      <p className="font-vca-text text-vca-small-bold text-vca-text-meta w-full">
+      <p className="font-vca-text text-vca-xsmall-bold text-vca-text-meta w-full">
         Sources
       </p>
 

@@ -17,15 +17,16 @@ export interface FlowMetadata {
     previewText?: string;
     description?: string;
     folderId?: string;
+    entryPoint?: string;
 }
 
 export const INITIAL_FLOW: Flow = {
     id: 'initial',
     title: 'New Conversation',
     settings: {
-        showDisclaimer: false,
-        simulateThinking: false,
-        entryPoint: 'custom', // Default for old flows
+        showDisclaimer: true,
+        simulateThinking: true,
+        entryPoint: 'custom',
         productName: 'LinkedIn'
     },
     lastModified: Date.now(),
@@ -175,7 +176,8 @@ export const flowStorage = {
                 title: flow.title,
                 lastModified: Date.now(),
                 previewText: getPreviewText(flow.blocks[0]),
-                folderId: finalFolderId
+                folderId: finalFolderId,
+                entryPoint: flow.settings?.entryPoint
             };
 
             if (index >= 0) {

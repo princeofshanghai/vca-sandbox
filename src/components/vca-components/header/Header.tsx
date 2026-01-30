@@ -133,7 +133,7 @@ export const Header = ({
   return (
     <div
       className={cn(
-        'bg-vca-background h-[72px] w-full flex items-center justify-between px-vca-xl py-vca-xxl gap-vca-lg',
+        'bg-vca-background h-[72px] w-full flex items-center justify-between px-vca-xl gap-vca-lg',
         borderClass,
         className
       )}

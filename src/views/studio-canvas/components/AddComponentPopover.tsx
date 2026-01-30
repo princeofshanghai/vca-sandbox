@@ -18,7 +18,7 @@ interface ComponentOption {
 const componentOptions: ComponentOption[] = [
     {
         type: 'message',
-        icon: <MessageSquare className="w-5 h-5" />,
+        icon: <MessageSquare className="w-4 h-4" />,
         name: 'Message',
         description: 'Best for conversational chitchat',
         previewComponent: (
@@ -32,7 +32,7 @@ const componentOptions: ComponentOption[] = [
     },
     {
         type: 'prompt',
-        icon: <MessageCirclePlus className="w-5 h-5" />,
+        icon: <MessageCirclePlus className="w-4 h-4" />,
         name: 'Prompt',
         description: 'Suggested user actions',
         previewComponent: (
@@ -49,7 +49,7 @@ const componentOptions: ComponentOption[] = [
     },
     {
         type: 'infoMessage',
-        icon: <MessageSquareText className="w-5 h-5" />,
+        icon: <MessageSquareText className="w-4 h-4" />,
         name: 'Info Message',
         description: 'Long-form answers with sources',
         previewComponent: (
@@ -65,7 +65,7 @@ const componentOptions: ComponentOption[] = [
     },
     {
         type: 'actionCard',
-        icon: <Zap className="w-5 h-5" />,
+        icon: <Zap className="w-4 h-4" />,
         name: 'Action Card',
         description: 'Visualize tool usage or processes',
         previewComponent: (
@@ -90,47 +90,37 @@ const ComponentOptionCard = ({
     onClick: () => void;
     side: 'left' | 'right';
 }) => (
-    <HoverCard.Root openDelay={200} closeDelay={100}>
+    <HoverCard.Root openDelay={100} closeDelay={50}>
         <HoverCard.Trigger asChild>
             <button
                 onClick={onClick}
-                className="flex items-center gap-2 p-3 rounded-lg border border-gray-800 bg-gray-900/50 hover:bg-blue-600/20 hover:border-blue-500/50 transition-colors text-left w-full group cursor-default"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-gray-800 transition-colors text-left w-full group cursor-default"
             >
-                <span className="text-gray-400 group-hover:text-blue-400 transition-colors">
+                <div className="text-gray-400 group-hover:text-blue-400 transition-colors">
                     {option.icon}
-                </span>
-                <span className="text-sm font-medium text-gray-300 group-hover:text-blue-400">
+                </div>
+                <span className="text-xs font-medium text-gray-300 group-hover:text-white transition-colors">
                     {option.name}
                 </span>
             </button>
         </HoverCard.Trigger>
         <HoverCard.Portal>
             <HoverCard.Content
-                className="w-[320px] bg-gray-900 rounded-xl shadow-2xl border border-gray-800 p-0 z-[1002] animate-in fade-in zoom-in-95 overflow-hidden"
-                sideOffset={12}
+                className="w-[240px] bg-gray-900 rounded-xl shadow-2xl border border-gray-800 p-0 z-[1002] animate-in fade-in zoom-in-95 overflow-hidden"
+                sideOffset={8}
                 side={side}
             >
                 <div className="flex flex-col">
-                    {/* Header */}
-                    <div className="flex items-center justify-between px-4 py-3 bg-gray-800/50 border-b border-gray-800">
-                        <span className="text-xs font-bold text-white">
-                            {option.name}
-                        </span>
-                        <span className="text-[10px] uppercase tracking-wider font-medium text-gray-500">
-                            Preview
-                        </span>
-                    </div>
-
                     {/* Content Area */}
-                    <div className="p-4 space-y-4">
-                        {/* Scaled Preview Wrapper */}
-                        <div className="relative w-full flex justify-center py-4 min-h-[140px] items-center bg-white/5 rounded-lg border border-dashed border-gray-800">
-                            <div className="origin-center scale-[0.85] transform-gpu pointer-events-none select-none w-full flex justify-center">
+                    <div className="p-3 space-y-3">
+                        {/* Scaled Preview Wrapper - Light theme for contrast */}
+                        <div className="relative w-full flex justify-center py-3 min-h-[100px] items-center bg-white rounded-lg border border-gray-100 shadow-sm">
+                            <div className="origin-center scale-[0.7] transform-gpu pointer-events-none select-none w-full flex justify-center">
                                 {option.previewComponent}
                             </div>
                         </div>
 
-                        <p className="text-xs text-center text-gray-400 leading-relaxed px-4">
+                        <p className="text-[10px] text-center text-gray-500 leading-relaxed px-2 italic">
                             {option.description}
                         </p>
                     </div>
@@ -145,18 +135,18 @@ export function AddComponentContent({ onAdd }: { onAdd: (type: ComponentType) =>
     return (
         <Popover.Content
             side="top"
-            sideOffset={12}
+            sideOffset={8}
             align="center"
-            onOpenAutoFocus={(e) => e.preventDefault()}
-            className="bg-gray-900 border border-gray-800 rounded-xl shadow-2xl p-4 w-[380px] z-[1001] animate-in fade-in zoom-in-95 duration-200 ease-out"
+            onOpenAutoFocus={(e: Event) => e.preventDefault()}
+            className="bg-gray-900 border border-gray-800 rounded-xl shadow-2xl p-1 w-[200px] z-[1001] animate-in fade-in zoom-in-95 duration-200 ease-out"
         >
-            <div className="grid grid-cols-2 gap-2.5">
-                {componentOptions.map((option, index) => (
+            <div className="flex flex-col">
+                {componentOptions.map((option) => (
                     <ComponentOptionCard
                         key={option.type}
                         option={option}
                         onClick={() => onAdd(option.type)}
-                        side={index % 2 === 0 ? 'left' : 'right'}
+                        side="right"
                     />
                 ))}
             </div>

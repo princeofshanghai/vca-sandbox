@@ -3,6 +3,7 @@ import { FlowMetadata, flowStorage, Folder } from '@/utils/flowStorage';
 import { Trash2, MoreVertical, FolderInput } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import { ENTRY_POINTS, EntryPointId } from '@/utils/entryPoints';
 
 interface FlowCardProps {
     flow: FlowMetadata;
@@ -31,7 +32,7 @@ function getRelativeTimeString(date: number): string {
     return `Edited ${Math.floor(diffInMonths / 12)}y ago`;
 }
 
-export const FlowCard = ({ flow, folderName, onDelete }: FlowCardProps) => {
+export const FlowCard = ({ flow, onDelete }: FlowCardProps) => {
     const navigate = useNavigate();
     const [folders, setFolders] = useState<Folder[]>([]);
 
@@ -55,6 +56,10 @@ export const FlowCard = ({ flow, folderName, onDelete }: FlowCardProps) => {
         window.location.reload();
     };
 
+    const entryPointName = flow.entryPoint && flow.entryPoint in ENTRY_POINTS
+        ? ENTRY_POINTS[flow.entryPoint as EntryPointId].productName
+        : null;
+
     return (
         <div
             onClick={handleClick}
@@ -63,13 +68,18 @@ export const FlowCard = ({ flow, folderName, onDelete }: FlowCardProps) => {
             {/* Minimalist Card Design */}
             <div className="p-4 flex flex-col h-full bg-white">
                 <div className="flex items-start justify-between gap-3 mb-2">
-                    <div className="flex items-center gap-3 overflow-hidden">
+                    <div className="flex flex-col gap-0.5 overflow-hidden">
                         <h3 className="font-medium text-sm text-gray-900 truncate group-hover:text-blue-600 transition-colors">
                             {flow.title}
                         </h3>
+                        {entryPointName && (
+                            <span className="text-[13px] text-gray-500 truncate">
+                                {entryPointName}
+                            </span>
+                        )}
                     </div>
 
-                    <div onClick={e => e.stopPropagation()}>
+                    <div onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                         <DropdownMenu.Root onOpenChange={(open) => { if (open) handleLoadFolders(); }}>
                             <DropdownMenu.Trigger asChild>
                                 <button className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors opacity-0 group-hover:opacity-100">
@@ -117,24 +127,14 @@ export const FlowCard = ({ flow, folderName, onDelete }: FlowCardProps) => {
                     </div>
                 </div>
 
-                {/* Description or Preview */}
-                <div className="flex-1 min-h-0 mb-4">
-                    <p className="text-[13px] text-gray-500 line-clamp-2 leading-snug">
-                        {flow.previewText || flow.description || ""}
-                    </p>
-                </div>
+                {/* Spacer */}
+                <div className="flex-1 min-h-0 mb-2" />
 
                 {/* Footer Metadata */}
                 <div className="flex items-center gap-3 text-[13px] text-gray-500 pt-3 border-t border-gray-50 mt-auto">
                     <span>
                         {getRelativeTimeString(flow.lastModified)}
                     </span>
-                    {folderName && (
-                        <span className="flex items-center gap-1 bg-gray-50 px-1.5 py-0.5 rounded">
-                            <FolderInput size={10} />
-                            <span className="max-w-[80px] truncate">{folderName}</span>
-                        </span>
-                    )}
                 </div>
             </div>
         </div>

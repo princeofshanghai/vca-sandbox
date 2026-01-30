@@ -2,6 +2,13 @@
 // Each entry point has a product name and default prompts
 
 export const ENTRY_POINTS = {
+    'flagship': {
+        productName: 'Flagship',
+        defaultPrompts: [
+            'What features are offered with my Premium subscription?',
+            'How can I manage my Premium account?'
+        ]
+    },
     'admin-center': {
         productName: 'Admin Center',
         defaultPrompts: [
@@ -11,15 +18,15 @@ export const ENTRY_POINTS = {
         ]
     },
     'recruiter': {
-        productName: 'LinkedIn Recruiter',
+        productName: 'Recruiter',
         defaultPrompts: [
             'Search for candidates',
             'Manage job postings',
             'View applicant pipeline'
         ]
     },
-    'marketing': {
-        productName: 'LinkedIn Marketing Solutions',
+    'campaign-manager': {
+        productName: 'Campaign Manager',
         defaultPrompts: [
             'Create a campaign',
             'View analytics',
@@ -40,14 +47,6 @@ export const ENTRY_POINTS = {
             'Find a course',
             'Track learning progress',
             'Get recommendations'
-        ]
-    },
-    'custom': {
-        productName: 'LinkedIn',
-        defaultPrompts: [
-            'Get started',
-            'Learn more',
-            'Contact support'
         ]
     }
 } as const;

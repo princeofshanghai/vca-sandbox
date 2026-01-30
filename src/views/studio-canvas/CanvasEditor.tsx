@@ -10,13 +10,15 @@ import {
     ReactFlowProvider,
     OnConnect,
     MarkerType,
+    SelectionMode,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { TurnNode } from './nodes/TurnNode';
 import { UserTurnNode } from './nodes/UserTurnNode';
 import { ConditionNode } from './nodes/ConditionNode';
 import { StartNode } from './nodes/StartNode';
-import { Flow, Component, ComponentType, FlowPhase, Turn, ComponentContent, UserTurn, Condition, Branch } from '../studio/types';
+import { NoteNode } from './nodes/NoteNode';
+import { Flow, Component, ComponentType, FlowPhase, Turn, ComponentContent, UserTurn, Condition, Branch, Note } from '../studio/types';
 import { useCallback, useMemo, useEffect, useState, useRef } from 'react';
 import { SelectionState } from './types';
 import { ContextToolbar } from './components/ContextToolbar';
@@ -31,6 +33,7 @@ const nodeTypes: NodeTypes = {
     'user-turn': UserTurnNode,
     condition: ConditionNode,
     start: StartNode,
+    note: NoteNode,
 };
 
 // Helper function to create default content for each component type
@@ -96,6 +99,7 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                         ? block.variant
                         : undefined,
                     componentCount: 1,
+                    entryPoint: flow.settings.entryPoint,
                     onSelectNode: (nodeId: string, anchorEl: HTMLElement) => {
                         if (selectionType === 'node' && selectionNodeId === nodeId) return;
                         setSelection({ type: 'node', nodeId });
@@ -129,6 +133,7 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                         label: step.label,
                         componentCount: step.components.length,
                         components: step.components,
+                        entryPoint: flow.settings.entryPoint,
                         selectedComponentId: selectionType === 'component' && selectionNodeId === step.id ? selectionComponentId : undefined,
                         onSelectComponent: (nodeId: string, componentId: string, anchorEl: HTMLElement) => {
                             // Allow re-clicking to toggle popover off
@@ -283,6 +288,18 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                                 lastModified: Date.now()
                             });
                         },
+                        onUpdate: (updates: Partial<typeof step>) => {
+                            const updatedSteps = flow.steps?.map(s =>
+                                s.id === step.id && s.type === 'user-turn'
+                                    ? { ...s, ...updates }
+                                    : s
+                            );
+                            onUpdateFlow({
+                                ...flow,
+                                steps: updatedSteps,
+                                lastModified: Date.now()
+                            });
+                        }
                     }
                 };
             } else if (step.type === 'condition') {
@@ -298,6 +315,52 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                             const updatedSteps = flow.steps?.map(s =>
                                 s.id === step.id && s.type === 'condition'
                                     ? { ...s, label: newLabel }
+                                    : s
+                            );
+                            onUpdateFlow({
+                                ...flow,
+                                steps: updatedSteps,
+                                lastModified: Date.now()
+                            });
+                        },
+                        onUpdateBranches: (branches: import('../studio/types').Branch[]) => {
+                            const updatedSteps = flow.steps?.map(s =>
+                                s.id === step.id && s.type === 'condition'
+                                    ? { ...s, branches }
+                                    : s
+                            );
+                            onUpdateFlow({
+                                ...flow,
+                                steps: updatedSteps,
+                                lastModified: Date.now()
+                            });
+                        }
+                    },
+                };
+            } else if (step.type === 'note') {
+                return {
+                    id: step.id,
+                    type: 'note',
+                    position: step.position || { x: 250, y: 0 },
+                    data: {
+                        label: step.label,
+                        content: step.content,
+                        onLabelChange: (newLabel: string) => {
+                            const updatedSteps = flow.steps?.map(s =>
+                                s.id === step.id && s.type === 'note'
+                                    ? { ...s, label: newLabel }
+                                    : s
+                            );
+                            onUpdateFlow({
+                                ...flow,
+                                steps: updatedSteps,
+                                lastModified: Date.now()
+                            });
+                        },
+                        onContentChange: (newContent: string) => {
+                            const updatedSteps = flow.steps?.map(s =>
+                                s.id === step.id && s.type === 'note'
+                                    ? { ...s, content: newContent }
                                     : s
                             );
                             onUpdateFlow({
@@ -323,10 +386,6 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
 
     // Create connections from flow.connections or generate from blocks
     const initialEdges = useMemo(() => {
-        const edgeStyle = {
-            stroke: '#94a3b8', // Slate-400
-            strokeWidth: 2,
-        };
         const edgeMarker = {
             type: MarkerType.ArrowClosed,
             color: '#94a3b8',
@@ -341,7 +400,6 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                 target: conn.target,
                 targetHandle: conn.targetHandle,
                 type: 'default', // Bezier curve
-                style: edgeStyle,
                 markerEnd: edgeMarker,
             }));
         }
@@ -352,7 +410,6 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
             source: block.id,
             target: flow.blocks[index + 1].id,
             type: 'default', // Bezier curve
-            style: edgeStyle,
             markerEnd: edgeMarker,
         }));
     }, [flow.blocks, flow.connections]);
@@ -443,10 +500,10 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                     if (promptComponent && promptComponent.type === 'prompt') {
                         const promptText = (promptComponent.content as import('../studio/types').PromptContent).text;
                         if (promptText) {
-                            // Valid link! Update the User Turn.
+                            // Valid link! Update the User Turn input type.
                             updatedSteps = flow.steps?.map(s =>
                                 s.id === targetNodeId
-                                    ? { ...s, label: promptText, inputType: 'prompt' }
+                                    ? { ...s, inputType: 'prompt' }
                                     : s
                             );
                         }
@@ -600,6 +657,22 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
             handleDeselect();
         }
     }, [onUpdateFlow, handleDeselect]); // flowRef used inside
+
+    const onEdgesDelete = useCallback((deletedEdges: Edge[]) => {
+        const currentFlow = flowRef.current;
+        const deletedIds = new Set(deletedEdges.map(e => e.id));
+
+        const updatedConnections = (currentFlow.connections || []).filter(
+            conn => !deletedIds.has(conn.id)
+        );
+
+        onUpdateFlow({
+            ...currentFlow,
+            connections: updatedConnections,
+            lastModified: Date.now()
+        });
+    }, [onUpdateFlow]);
+
 
     const handleDeleteComponent = useCallback(() => {
         const currentSelection = selectionRef.current;
@@ -810,13 +883,27 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                     steps: [...(flow.steps || []), newTurn],
                     lastModified: Date.now()
                 });
+            } else if (type === 'note') {
+                const noteCount = (flow.steps?.filter(s => s.type === 'note').length || 0) + 1;
+                const newNote: Note = {
+                    id: crypto.randomUUID(),
+                    type: 'note',
+                    label: `Sticky note ${noteCount}`,
+                    content: '',
+                    position
+                };
+                onUpdateFlow({
+                    ...flow,
+                    steps: [...(flow.steps || []), newNote],
+                    lastModified: Date.now()
+                });
             } else if (type === 'user-turn') {
                 const userTurnCount = (flow.steps?.filter(s => s.type === 'user-turn').length || 0) + 1;
                 const newUserTurn: UserTurn = {
                     id: crypto.randomUUID(),
                     type: 'user-turn',
                     label: `User Turn ${userTurnCount}`,
-                    inputType: 'button',
+                    inputType: 'text',
                     position
                 };
                 onUpdateFlow({
@@ -987,6 +1074,7 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                 selectionOnDrag={true}
                 zoomOnScroll={false}
                 zoomOnDoubleClick={false}
+                selectionMode={SelectionMode.Partial}
                 panOnScrollSpeed={2.0} // Increased for snappier feel
                 zoomOnPinch={true}      // FigJam-like pinch to zoom
                 onDragOver={onDragOver}
@@ -994,8 +1082,10 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                 onNodeDragStart={onNodeDragStart}
                 onNodeDragStop={onNodeDragStop}
                 onNodesDelete={onNodesDelete}
+                onEdgesDelete={onEdgesDelete}
                 onConnect={onConnect}
                 onNodeClick={onNodeClick}
+                proOptions={{ hideAttribution: true }}
             >
                 <Background
                     gap={8}
@@ -1030,7 +1120,7 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                             id: crypto.randomUUID(),
                             type: 'user-turn',
                             label: `User Turn ${userTurnCount}`,
-                            inputType: 'button',
+                            inputType: 'text',
                             position: { x: 100, y: 100 + (flow.steps?.length || 0) * 50 }
                         };
                         onUpdateFlow({
@@ -1054,6 +1144,21 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                         onUpdateFlow({
                             ...flow,
                             steps: [...(flow.steps || []), newCondition],
+                            lastModified: Date.now()
+                        });
+                    }}
+                    onAddNote={() => {
+                        const noteCount = (flow.steps?.filter(s => s.type === 'note').length || 0) + 1;
+                        const newNote: Note = {
+                            id: crypto.randomUUID(),
+                            type: 'note',
+                            label: `Sticky note ${noteCount}`,
+                            content: '',
+                            position: { x: 100, y: 100 + (flow.steps?.length || 0) * 50 }
+                        };
+                        onUpdateFlow({
+                            ...flow,
+                            steps: [...(flow.steps || []), newNote],
                             lastModified: Date.now()
                         });
                     }}

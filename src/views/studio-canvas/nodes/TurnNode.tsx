@@ -12,6 +12,7 @@ interface TurnNodeData {
     componentCount?: number;
     components?: Component[];
     selectedComponentId?: string;
+    entryPoint?: string;
 
     onSelectComponent?: (nodeId: string, componentId: string, anchorEl: HTMLElement) => void;
     onDeselect?: () => void;
@@ -115,30 +116,33 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
             </div >
 
             {/* Input Handle */}
-            < Handle
+            <Handle
                 type="target"
                 position={Position.Left}
                 className="!bg-blue-400 !w-3 !h-3 !border-2 !border-white"
+                style={{ top: 19 }}
             />
 
             {/* Internal Content Wrapper for clipping rounded corners */}
-            < div className="w-full h-full overflow-hidden rounded-lg" >
+            <div className="w-full h-full rounded-lg">
                 {/* Component List */}
-                < TurnNodeComponentList
+                <TurnNodeComponentList
                     nodeId={nodeId}
                     components={components}
                     selectedComponentId={typedData.selectedComponentId}
+                    entryPoint={typedData.entryPoint}
                     onSelectComponent={typedData.onSelectComponent}
                     onDeselect={typedData.onDeselect}
                     onComponentUpdate={typedData.onComponentUpdate}
                 />
-            </div >
+            </div>
 
             {/* Output Handle */}
-            < Handle
+            <Handle
                 type="source"
                 position={Position.Right}
                 className="!bg-blue-400 !w-3 !h-3 !border-2 !border-white"
+                style={{ top: 19 }}
             />
         </div >
     );

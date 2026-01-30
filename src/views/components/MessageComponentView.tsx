@@ -66,7 +66,7 @@ const MessageComponentView = () => {
             </div>
           }
         >
-          <div className="w-[352px] mx-auto px-vca-xxl">
+          <div className="w-[352px] mx-auto">
             <Message
               variant={variant}
               {...getTextProps()}
@@ -84,7 +84,7 @@ const MessageComponentView = () => {
               <h3 className="mb-4">AI message</h3>
               <p className="mb-3">Messages sent by AI are basic with minimal styling.</p>
               <div className="bg-white border border-gray-200 rounded-lg p-4">
-                <div className="px-vca-xxl">
+                <div className="">
                   <Message variant="ai" defaultText="Hi there. With the help of AI, I can answer questions about administration or connect you to someone who can." />
                 </div>
               </div>
@@ -94,7 +94,7 @@ const MessageComponentView = () => {
               <h3 className="mb-4">User message</h3>
               <p className="mb-3">User-submitted messages are displayed on the right, with a subtle beige background.</p>
               <div className="bg-white border border-gray-200 rounded-lg p-4">
-                <div className="px-vca-xxl">
+                <div className="">
                   <Message variant="user" userText="Why was my contest campaign rejected if it falls within Linkedin Contest guidelines? I need that campaign to be running." />
                 </div>
               </div>
@@ -104,7 +104,7 @@ const MessageComponentView = () => {
               <h3 className="mb-4">User message with error</h3>
               <p className="mb-3">Failed user messages can be re-submitted inline.</p>
               <div className="bg-white border border-gray-200 rounded-lg p-4">
-                <div className="px-vca-xxl">
+                <div className="">
                   <Message variant="user" userText="This message failed to send" errorFeedback={true} />
                 </div>
               </div>
@@ -114,7 +114,7 @@ const MessageComponentView = () => {
               <h3 className="mb-4">Human agent message</h3>
               <p className="mb-3">Live human agent messages are displayed with a subtle blue background, along with avatar, name, and timestamp.</p>
               <div className="bg-white border border-gray-200 rounded-lg p-4">
-                <div className="px-vca-xxl">
+                <div className="">
                   <Message variant="human-agent" humanAgentText="Hi Nick, how can I help?" />
                 </div>
               </div>

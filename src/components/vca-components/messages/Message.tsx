@@ -92,7 +92,7 @@ export const Message = ({
         {isThinking ? (
           <ThinkingIndicator />
         ) : (
-          <div className="font-vca-text text-vca-small-open text-vca-text w-full [&_p]:text-vca-small-open [&_ul]:text-vca-small-open [&_ol]:text-vca-small-open [&_li]:text-vca-small-open">
+          <div className="text-vca-text text-vca-small-open w-full">
             {defaultText}
           </div>
         )}

@@ -52,7 +52,7 @@ export const InfoMessage = ({
   return (
     <div className={cn('flex flex-col items-start w-full', className)}>
       {/* Title and Message */}
-      <div className="flex flex-col gap-vca-lg items-start w-full">
+      <div className="flex flex-col gap-vca-s items-start w-full">
         {/* Optional Title */}
         {title && (
           <div className="flex flex-col justify-center min-w-full">
@@ -64,7 +64,7 @@ export const InfoMessage = ({
 
         {/* Message Content (children) */}
         {children && (
-          <div className="font-vca-text text-vca-small-open text-vca-text">
+          <div className="text-vca-text text-vca-small-open">
             {children}
           </div>
         )}

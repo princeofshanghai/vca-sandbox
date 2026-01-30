@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { AIActionContent } from './types';
-import { MarkdownEditor } from './MarkdownEditor';
+import { MarkdownEditor } from '../studio-canvas/components/MarkdownEditor';
 import { cn } from '@/utils/cn';
 
 export const ActionBlockEditor = ({ content, onChange }: { content: AIActionContent, onChange: (c: AIActionContent) => void }) => {

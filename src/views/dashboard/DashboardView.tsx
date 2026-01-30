@@ -61,7 +61,7 @@ export const DashboardView = () => {
 
     const handleDeleteFolder = (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        if (confirm('Delete folder? Flows inside will be moved to "All conversations".')) {
+        if (confirm('Delete folder? Flows inside will be moved to "All chats".')) {
             flowStorage.deleteFolder(id);
             if (activeFolderId === id) setActiveFolderId(null);
             loadData();
@@ -120,7 +120,7 @@ export const DashboardView = () => {
                 onClose={() => setMobileMenuOpen(false)}
             >
                 <div className="flex items-center justify-between mb-2 px-1">
-                    <h2 className="text-2xs font-medium text-gray-900">Conversations</h2>
+                    <h2 className="text-2xs font-medium text-gray-900">Chats</h2>
                 </div>
 
                 <div className="space-y-1">
@@ -239,24 +239,25 @@ export const DashboardView = () => {
                                 ))}
                             </div>
                         ) : (
-                            <div className="flex flex-col items-center justify-center py-32 text-center max-w-sm mx-auto">
-                                <div className="w-20 h-20 bg-white border border-gray-100 rounded-2xl shadow-sm flex items-center justify-center mb-6">
-                                    <FolderPlus className="text-blue-500" size={32} strokeWidth={1.5} />
+                            <div className="flex flex-col items-center justify-center py-24 text-center max-w-sm mx-auto">
+                                <div className="w-16 h-16 bg-white border border-gray-100 rounded-xl shadow-sm flex items-center justify-center mb-5">
+                                    <FolderPlus className="text-blue-500" size={24} strokeWidth={1.5} />
                                 </div>
-                                <h3 className="text-xl font-medium text-gray-900 mb-2 tracking-tight">
-                                    {activeFolderId ? "This folder is empty" : "No conversations yet"}
+                                <h3 className="text-lg font-medium text-gray-900 mb-1.5 tracking-tight">
+                                    {activeFolderId ? "This folder is empty" : "No chats yet"}
                                 </h3>
-                                <p className="text-gray-500 text-base mb-8 leading-relaxed px-4">
+                                <p className="text-gray-500 text-sm mb-6 leading-relaxed px-4">
                                     {activeFolderId
-                                        ? "There are no conversations in this folder. Move one here or start a new one."
-                                        : "Start building your first conversation flow to see it appear here in the dashboard."}
+                                        ? "There are no chats in this folder. Move one here or start a new one."
+                                        : "Start building your first chat flow to see it appear here in the dashboard."}
                                 </p>
                                 <Button
                                     onClick={() => setShowNewFlowDialog(true)}
-                                    className="bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg transition-all px-8 py-5 h-auto text-base rounded-xl font-medium"
+                                    size="sm"
+                                    className="bg-blue-600 text-white hover:bg-blue-700 gap-2"
                                 >
-                                    <Plus className="mr-2" size={20} />
-                                    Create new flow
+                                    <Plus size={16} />
+                                    New
                                 </Button>
                             </div>
                         )}

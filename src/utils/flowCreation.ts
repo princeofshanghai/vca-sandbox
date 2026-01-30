@@ -17,7 +17,7 @@ export function createNewFlow(entryPoint: EntryPointId): Flow {
             id: crypto.randomUUID(),
             type: 'message',
             content: {
-                text: `Hi there. With the help of AI, I can answer questions about ${entryConfig.productName} or connect you to our team.`
+                text: `Hi there. With the help of AI, I can answer questions about ${entryPoint === 'flagship' ? 'your Premium account' : entryConfig.productName} or connect you to our team.`
             }
         },
         // Title/intro message for prompts
@@ -45,7 +45,7 @@ export function createNewFlow(entryPoint: EntryPointId): Flow {
         type: 'turn',
         speaker: 'ai',
         phase: 'welcome',
-        label: 'Standard welcome',
+        label: 'AI Turn 1',
         components,
         position: { x: 250, y: 50 }
     };
@@ -56,8 +56,8 @@ export function createNewFlow(entryPoint: EntryPointId): Flow {
         title: 'Untitled',
         description: '',
         settings: {
-            showDisclaimer: false,
-            simulateThinking: false,
+            showDisclaimer: true,
+            simulateThinking: true,
             entryPoint,
             productName: entryConfig.productName
         },

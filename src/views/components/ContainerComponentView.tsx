@@ -23,7 +23,7 @@ const ContainerComponentView = () => {
 
     if (contentType === 'simple') {
       return (
-        <div className="px-vca-xxl space-y-vca-lg">
+        <div className="space-y-vca-lg">
           <Message
             variant="ai"
             defaultText="Hi there. With the help of AI, I can answer questions about administration or connect you to someone who can."
@@ -34,7 +34,7 @@ const ContainerComponentView = () => {
 
     // full
     return (
-      <div className="px-vca-xxl space-y-vca-lg">
+      <div className="space-y-vca-lg">
         <Message variant="disclaimer" />
         <Message
           variant="ai"
@@ -204,7 +204,7 @@ const ContainerComponentView = () => {
                   showHeaderAction={false}
                   showPremiumBorder={true}
                 >
-                  <div className="px-vca-xxl space-y-vca-lg">
+                  <div className="space-y-vca-lg">
                     <Message
                       variant="ai"
                       defaultText="Welcome! How can I help you today?"
@@ -242,7 +242,7 @@ const ContainerComponentView = () => {
                   showHeaderAction={true}
                   showPremiumBorder={true}
                 >
-                  <div className="px-vca-xxl space-y-vca-xxl">
+                  <div className="space-y-vca-xxl">
                     <Message variant="disclaimer" />
                     <Message
                       variant="ai"

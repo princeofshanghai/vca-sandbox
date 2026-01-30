@@ -71,7 +71,7 @@ const AgentBannerComponentView = () => {
 
                     {/* Scrollable content area - empty to focus on header and banner */}
                     <div className="flex-1 overflow-y-auto flex flex-col justify-end">
-                      <div className="px-vca-xxl space-y-vca-lg pb-vca-lg">
+                      <div className="px-vca-xl space-y-vca-lg pb-vca-lg">
                         {/* Empty - focus is on showing header + banner positioning */}
                       </div>
                     </div>

@@ -110,7 +110,7 @@ export const Container = ({
       )}
 
       {/* Content Area - Scrollable */}
-      <div ref={contentRef} className="flex-1 bg-vca-background overflow-y-auto overflow-x-hidden">
+      <div ref={contentRef} className="flex-1 bg-vca-background overflow-y-auto overflow-x-hidden px-vca-xl">
         <div className="flex flex-col min-h-full py-vca-lg">
           {children}
         </div>

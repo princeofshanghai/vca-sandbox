@@ -1,24 +1,30 @@
 import { memo, useState, useEffect, useRef } from 'react';
 import { Handle, Position, NodeProps, useStore } from '@xyflow/react';
 import { Split } from 'lucide-react';
+import { ConditionBranchEditor } from '../components/ConditionBranchEditor';
+import { Branch } from '../../studio/types';
 
 interface ConditionNodeData {
     label: string;
-    branches?: Array<{ id: string; condition: string }>;
+    branches?: Branch[];
     onLabelChange?: (newLabel: string) => void;
+    onUpdateBranches?: (branches: Branch[]) => void;
 }
 
-export const ConditionNode = memo(({ data, selected }: NodeProps) => {
+export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
     const typedData = data as unknown as ConditionNodeData;
     const branches = typedData.branches || [
         { id: 'yes', condition: 'Yes' },
         { id: 'no', condition: 'No' }
-    ];
+    ] as Branch[];
 
     // Label editing state
     const [isEditingLabel, setIsEditingLabel] = useState(false);
     const [editedLabel, setEditedLabel] = useState(typedData.label || '');
     const labelInputRef = useRef<HTMLInputElement>(null);
+
+    // Branch selection state
+    const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
 
     // Focus input when editing starts
     useEffect(() => {
@@ -42,6 +48,18 @@ export const ConditionNode = memo(({ data, selected }: NodeProps) => {
             setEditedLabel(typedData.label || '');
             setIsEditingLabel(false);
         }
+    };
+
+    const handleBranchUpdate = (branchId: string, updates: Partial<Branch>) => {
+        const newBranches = branches.map(b =>
+            b.id === branchId ? { ...b, ...updates } : b
+        );
+        typedData.onUpdateBranches?.(newBranches);
+    };
+
+    const handleBranchDelete = (branchId: string) => {
+        const newBranches = branches.filter(b => b.id !== branchId);
+        typedData.onUpdateBranches?.(newBranches);
     };
 
     const zoom = useStore((s) => s.transform[2]);
@@ -94,54 +112,66 @@ export const ConditionNode = memo(({ data, selected }: NodeProps) => {
                 className="!bg-amber-400 !w-3 !h-3 !border-2 !border-white"
             />
 
-            {/* Internal Content Wrapper for clipping rounded corners */}
-            <div className="w-full h-full overflow-hidden rounded-lg">
-                {/* Node Content */}
-                <div className="p-3">
-                    {/* Header removed from inside */}
-                    <div className="hidden">
-                        <span className="text-amber-700">⚙️ Condition</span>
-                    </div>
-
-                    {/* Label */}
-                    {/* Label removed from inside */}
-                    <div className="hidden">
-                        {typedData.label}
-                    </div>
-
-                    {/* Branches */}
-                    <div className="text-xs text-gray-600">
-                        {branches.map((branch: { id: string; condition: string }) => (
-                            <div key={branch.id} className="flex items-center gap-1">
-                                <span>•</span>
-                                <span>{branch.condition}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-
-            {/* Output Handles - one per branch, stacked on right */}
-            {branches.map((branch: { id: string; condition: string }, index: number) => {
-                // Calculate position for vertical stacking
-                // Start from top 20px, space by 24px (example)
-                // Or better: Distribute evenly along the height using percentages
-                const totalBranches = branches.length;
-                const position = totalBranches === 1
-                    ? 50
-                    : 20 + ((index / (totalBranches - 1)) * 60); // Spread across middle 60% of height
-
-                return (
-                    <Handle
+            {/* Wrapper for branch rows */}
+            <div className="w-full h-full p-5 space-y-2 bg-amber-50/30 rounded-lg">
+                {branches.map((branch) => (
+                    <ConditionBranchEditor
                         key={branch.id}
-                        type="source"
-                        position={Position.Right}
-                        id={branch.id}
-                        className="!bg-amber-400 !w-3 !h-3 !border-2 !border-white"
-                        style={{ top: `${position}%` }}
-                    />
-                );
-            })}
+                        nodeId={id}
+                        branchId={branch.id}
+                        condition={branch.condition}
+                        logic={branch.logic}
+                        isDefault={branch.isDefault}
+                        onChange={(u) => handleBranchUpdate(branch.id, u)}
+                        onDelete={() => handleBranchDelete(branch.id)}
+                        isOpen={selectedBranchId === branch.id}
+                        onOpenChange={(open) => !open && setSelectedBranchId(null)}
+                    >
+                        <div
+                            id={`component-${branch.id}`}
+                            className={`group flex items-center justify-between px-3 py-2 bg-white border rounded-md transition-all cursor-pointer relative nodrag ${selectedBranchId === branch.id
+                                ? 'border-amber-500 shadow-sm'
+                                : 'border-gray-200 hover:border-amber-300 hover:shadow-sm'
+                                }`}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedBranchId(branch.id);
+                            }}
+                        >
+                            <div className="flex-1 min-w-0 mr-2 flex flex-col gap-0.5">
+                                <span className="text-xs font-medium text-gray-700 truncate">{branch.condition}</span>
+                                {branch.isDefault ? (
+                                    <div className="flex items-center gap-1 mt-1">
+                                        <span className="text-[9px] text-gray-500 font-medium bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 uppercase tracking-wide">
+                                            Else
+                                        </span>
+                                    </div>
+                                ) : branch.logic?.variable && (
+                                    <div className="flex flex-wrap gap-1 mt-2">
+                                        <span className="text-[9px] text-cyan-700 font-mono bg-cyan-50 px-1 py-0 rounded border border-cyan-100 truncate max-w-[120px]" title={branch.logic.variable}>
+                                            {branch.logic.variable}
+                                        </span>
+                                        <span className="text-[9px] text-gray-400 font-mono bg-gray-100 px-1 py-0 rounded border border-gray-200 shrink-0">
+                                            =
+                                        </span>
+                                        <span className="text-[9px] text-cyan-700 font-mono bg-cyan-50 px-1 py-0 rounded border border-cyan-100 truncate max-w-[120px]" title={String(branch.logic.value)}>
+                                            {String(branch.logic.value)}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Embedded Output Handle */}
+                            <Handle
+                                type="source"
+                                position={Position.Right}
+                                id={branch.id}
+                                className="!bg-amber-400 !w-3 !h-3 !border-2 !border-white !-right-[18px]"
+                            />
+                        </div>
+                    </ConditionBranchEditor>
+                ))}
+            </div>
         </div>
     );
 });

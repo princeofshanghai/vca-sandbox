@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
 import { PreviewDrawer } from './PreviewDrawer';
 import { CanvasEditor } from '../studio-canvas/CanvasEditor';
 import { useStudioFlow } from './hooks/useStudioFlow';
+import { useFlowHistory } from './hooks/useFlowHistory';
 
 export const StudioView = () => {
     const { id } = useParams<{ id: string }>();
@@ -11,6 +12,24 @@ export const StudioView = () => {
 
     // Custom hook handles loading and persistence
     const { flow, setFlow, isLoading } = useStudioFlow(id);
+    const { setFlowWithHistory, undo, redo } = useFlowHistory(flow, setFlow);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+                if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+                e.preventDefault();
+                if (e.shiftKey) {
+                    redo();
+                } else {
+                    undo();
+                }
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [undo, redo]);
 
     const [isPremium, setIsPremium] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
@@ -30,7 +49,7 @@ export const StudioView = () => {
             <div className="flex-1 overflow-hidden bg-white">
                 <CanvasEditor
                     flow={flow}
-                    onUpdateFlow={setFlow}
+                    onUpdateFlow={setFlowWithHistory}
                     onBack={handleBack}
                     onPreview={() => setIsPreviewOpen(!isPreviewOpen)}
                     isPreviewActive={isPreviewOpen}
@@ -41,7 +60,7 @@ export const StudioView = () => {
             <PreviewDrawer
                 isOpen={isPreviewOpen}
                 flow={flow}
-                onUpdateFlow={setFlow}
+                onUpdateFlow={setFlowWithHistory}
                 isPremium={isPremium}
                 isMobile={isMobile}
                 onTogglePremium={() => setIsPremium(!isPremium)}

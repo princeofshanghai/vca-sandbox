@@ -145,11 +145,21 @@ export interface Branch {
         value: string;
         operator: 'eq'; // For now just equality
     };
+    isDefault?: boolean; // If true, this branch matches if no others do
     nextStepId?: string; // ID of next Step
 }
 
+// Sticky Note for annotations
+export interface Note {
+    id: string;
+    type: 'note';
+    label?: string;
+    content: string;
+    position?: { x: number; y: number };
+}
+
 // Step is Union of all node types
-export type Step = Turn | UserTurn | Condition | StartNode;
+export type Step = Turn | UserTurn | Condition | StartNode | Note;
 
 export interface StartNode {
     id: string;

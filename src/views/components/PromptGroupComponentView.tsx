@@ -78,7 +78,7 @@ const PromptGroupComponentView = () => {
             </div>
           }
         >
-          <div className="px-vca-xxl">
+          <div className="">
             <PromptGroup prompts={getPrompts()} />
           </div>
         </DemoSection>
@@ -95,7 +95,7 @@ const PromptGroupComponentView = () => {
               <h3 className="mb-2">Group prompts</h3>
               <p className="mb-3">Show multiple prompts at once.</p>
               <div className="bg-white border border-gray-200 rounded-lg p-4">
-                <div className="px-vca-xxl">
+                <div className="">
                   <PromptGroup
                     prompts={[
                       { text: 'How can I assign a seat to a user?', showAiIcon: false },
@@ -112,7 +112,7 @@ const PromptGroupComponentView = () => {
               <h3 className="mb-2">In context</h3>
               <p className="mb-3">Example showing prompt group after an AI message.</p>
               <div className="bg-white border border-gray-200 rounded-lg p-4">
-                <div className="px-vca-xxl space-y-4">
+                <div className="space-y-4">
                   <p className="font-vca-text text-[14px] leading-[21px] text-vca-text">
                     Hi there. With the help of AI, I can answer questions about administration or connect you to someone who can.
                   </p>
@@ -140,7 +140,7 @@ const PromptGroupComponentView = () => {
                   <div className="bg-vca-background border border-vca-border-faint rounded-b-vca-md overflow-hidden flex flex-col h-[480px] -mt-1">
                     {/* Scrollable content area */}
                     <div className="flex-1 overflow-y-auto flex flex-col justify-end">
-                      <div className="px-vca-xxl space-y-vca-lg pb-vca-lg">
+                      <div className="px-vca-xl space-y-vca-lg pb-vca-lg">
                         {/* AI Message with prompt group */}
                         <Message
                           variant="ai"

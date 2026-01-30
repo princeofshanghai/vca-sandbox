@@ -132,3 +132,23 @@
   }
 }
 
+/* React Flow Edge Styling Overrides */
+.react-flow__edge-path {
+  stroke: #9ca3af; /* Gray-400 default */
+  stroke-width: 1.5px;
+  transition: stroke 0.2s, stroke-width 0.2s;
+  cursor: pointer;
+}
+
+/* Hover State: Darker Gray + Thicker */
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke: #4b5563; /* Gray-600 */
+  stroke-width: 2px;
+}
+
+/* Selected State: VCA Blue + Thicker */
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: #2563eb; /* Blue-600 */
+  stroke-width: 2.5px;
+}
+

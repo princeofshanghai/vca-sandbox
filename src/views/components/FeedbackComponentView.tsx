@@ -57,7 +57,7 @@ const FeedbackComponentView = () => {
               <h3 className="mb-2">Default</h3>
               <p className="mb-3">Both thumbs up and thumbs down buttons are visible when no selection is made.</p>
               <div className="bg-white border border-gray-200 rounded-lg p-4">
-                <div className="px-vca-xxl">
+                <div className="">
                   <Feedback value={null} />
                 </div>
               </div>
@@ -68,7 +68,7 @@ const FeedbackComponentView = () => {
               <h3 className="mb-2">Thumbs up selected</h3>
               <p className="mb-3">When thumbs up is selected, thumbs down button disappears.</p>
               <div className="bg-white border border-gray-200 rounded-lg p-4">
-                <div className="px-vca-xxl">
+                <div className="">
                   <Feedback value="up" />
                 </div>
               </div>
@@ -79,7 +79,7 @@ const FeedbackComponentView = () => {
               <h3 className="mb-2">Thumbs down selected</h3>
               <p className="mb-3">When thumbs down is selected, thumbs up button disappears.</p>
               <div className="bg-white border border-gray-200 rounded-lg p-4">
-                <div className="px-vca-xxl">
+                <div className="">
                   <Feedback value="down" />
                 </div>
               </div>
@@ -90,7 +90,7 @@ const FeedbackComponentView = () => {
               <h3 className="mb-2">Disabled</h3>
               <p className="mb-3">Feedback component in disabled state.</p>
               <div className="bg-white border border-gray-200 rounded-lg p-4">
-                <div className="px-vca-xxl">
+                <div className="">
                   <Feedback disabled />
                 </div>
               </div>
@@ -106,7 +106,7 @@ const FeedbackComponentView = () => {
                     variant="ai"
                     defaultText="Based on recent data, implementing seat assignments can increase team productivity by up to 45% and improve user engagement significantly."
                   />
-                  <div className="mt-vca-s px-vca-lg">
+                  <div className="mt-vca-s">
                     <Feedback value={null} />
                   </div>
                 </div>

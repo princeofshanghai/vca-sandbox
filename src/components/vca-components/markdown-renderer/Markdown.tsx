@@ -18,29 +18,29 @@ export const MarkdownRenderer = ({ children, className }: MarkdownRendererProps)
         <div className={cn(className)}>
             <ReactMarkdown
                 components={{
-                    // Paragraphs - inherit parent typography, minimal margin
+                    // Paragraphs - use text-vca-small-open to override global p styles
                     p: ({ node: _node, ...props }) => (
-                        <p className="my-1" {...props} />
+                        <p className="text-vca-small-open my-1" {...props} />
                     ),
-                    // Bold - use semibold weight within VCA system (600)
+                    // Bold - use text-vca-small-bold-open weight within VCA system
                     strong: ({ node: _node, ...props }) => (
-                        <strong className="font-semibold" {...props} />
+                        <strong className="text-vca-small-bold-open" {...props} />
                     ),
                     // Italic - use italic style with inherited VCA font
                     em: ({ node: _node, ...props }) => (
                         <em {...props} />
                     ),
-                    // Unordered lists - use VCA spacing, inherit text sizing
+                    // Unordered lists - use VCA spacing and typography
                     ul: ({ node: _node, ...props }) => (
-                        <ul className="list-disc pl-4 space-y-1 my-2" {...props} />
+                        <ul className="text-vca-small-open list-disc pl-2 space-y-1 my-2" {...props} />
                     ),
-                    // Ordered lists - use VCA spacing, inherit text sizing
+                    // Ordered lists - use VCA spacing and typography
                     ol: ({ node: _node, ...props }) => (
-                        <ol className="list-decimal pl-4 space-y-1 my-2" {...props} />
+                        <ol className="text-vca-small-open list-decimal pl-2 space-y-1 my-2" {...props} />
                     ),
                     // List items - inherit VCA typography
                     li: ({ node: _node, ...props }) => (
-                        <li {...props} />
+                        <li className="text-vca-small-open" {...props} />
                     ),
                     // Links - use VCA link color tokens with hover underline
                     a: ({ node: _node, ...props }) => (

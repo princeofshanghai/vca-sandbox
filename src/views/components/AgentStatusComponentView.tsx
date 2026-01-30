@@ -189,7 +189,7 @@ const AgentStatusComponentView = () => {
                   <div className="bg-vca-background border border-vca-border-faint rounded-b-vca-md overflow-hidden flex flex-col h-[480px] -mt-1">
                     {/* Scrollable content area */}
                     <div className="flex-1 overflow-y-auto flex flex-col justify-end">
-                      <div className="px-vca-xxl space-y-vca-lg pb-vca-lg">
+                      <div className="px-vca-xl space-y-vca-lg pb-vca-lg">
                         {/* User message */}
                         <div className="flex justify-end">
                           <Message

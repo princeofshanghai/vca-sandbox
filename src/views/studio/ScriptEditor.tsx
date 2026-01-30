@@ -7,7 +7,7 @@ import {
     useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { MarkdownEditor } from './MarkdownEditor';
+import { MarkdownEditor } from '../studio-canvas/components/MarkdownEditor';
 import { ActionBlockEditor } from './ActionBlockEditor';
 import { VariantButton } from './VariantButton';
 import { LifecycleCanvas } from './LifecycleCanvas';

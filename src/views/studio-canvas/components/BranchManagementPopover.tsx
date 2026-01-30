@@ -41,7 +41,7 @@ export function BranchManagementContent({ branches, onChange }: BranchManagement
         >
             <div className="flex items-center gap-2 mb-3 text-gray-400 px-1">
                 <GitBranch className="w-4 h-4" />
-                <span className="text-xs font-semibold uppercase tracking-wider">Condition Branches</span>
+                <span className="text-xs font-medium text-gray-400">Condition branches</span>
             </div>
 
             <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1 thin-scrollbar">

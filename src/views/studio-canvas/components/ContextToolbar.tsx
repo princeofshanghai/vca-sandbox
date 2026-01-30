@@ -1,12 +1,11 @@
 import { createPortal } from 'react-dom';
-import { Plus, Tag, ArrowUp, ArrowDown, Component, Trash2, MousePointerClick, MessageSquare, List, GitBranch } from 'lucide-react';
+import { Plus, Tag, ArrowUp, ArrowDown, Component, Trash2, MousePointerClick, GitBranch, ALargeSmall, MessageCirclePlus, ChevronDown } from 'lucide-react';
 import { useStore } from '@xyflow/react';
 import { FlowPhase } from '../../studio/types';
 import { SelectionState } from '../types';
 import * as Popover from '@radix-ui/react-popover';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { AddComponentContent } from './AddComponentPopover';
-import { BranchManagementContent } from './BranchManagementPopover';
 import { Branch } from '../../studio/types'; // Import Branch type
 
 interface ContextToolbarProps {
@@ -111,7 +110,7 @@ export function ContextToolbar({
                                             <button
                                                 className="flex items-center gap-1.5 px-3 py-1.5 text-white hover:bg-gray-800 rounded transition-colors text-sm cursor-default"
                                             >
-                                                <Plus className="w-4 h-4" />
+                                                <Plus className="w-3 h-3 text-gray-400" />
                                                 <Component className="w-4 h-4" />
                                             </button>
                                         </Popover.Trigger>
@@ -122,7 +121,7 @@ export function ContextToolbar({
                                 </Popover.Root>
                             )}
 
-                            <div className="w-px h-5 bg-gray-700" />
+                            {isAiTurn && <div className="w-px h-5 bg-gray-700" />}
 
 
 
@@ -134,44 +133,42 @@ export function ContextToolbar({
                                             <button
                                                 className="flex items-center gap-1.5 px-3 py-1.5 text-white hover:bg-gray-800 rounded transition-colors text-sm cursor-default"
                                             >
-                                                {currentUserTurnInputType === 'text' && <MessageSquare className="w-4 h-4" />}
+                                                {currentUserTurnInputType === 'text' && <ALargeSmall className="w-4 h-4" />}
                                                 {currentUserTurnInputType === 'button' && <MousePointerClick className="w-4 h-4" />}
-                                                {currentUserTurnInputType === 'prompt' && <List className="w-4 h-4" />}
+                                                {currentUserTurnInputType === 'prompt' && <MessageCirclePlus className="w-4 h-4" />}
+                                                <ChevronDown className="w-3 h-3 text-gray-400" />
                                             </button>
                                         </Popover.Trigger>
                                     </ActionTooltip>
                                     <Popover.Portal>
                                         <Popover.Content
                                             side="top"
-                                            sideOffset={12}
+                                            sideOffset={8}
                                             align="center"
-                                            className="bg-gray-900 border border-gray-700 rounded-lg shadow-xl py-2 z-[1001] min-w-[160px] animate-in fade-in zoom-in-95 duration-200 ease-out"
+                                            className="bg-gray-900 border border-gray-800 rounded-lg shadow-xl p-1 z-[1001] min-w-[140px] animate-in fade-in zoom-in-95 duration-200 ease-out"
                                         >
-                                            <div className="px-3 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
-                                                Input Type
-                                            </div>
                                             <button
-                                                className={`w-full px-3 py-2 text-sm text-left hover:bg-gray-800 transition-colors cursor-default flex items-center gap-2 ${currentUserTurnInputType === 'text' ? 'bg-purple-900/40 text-purple-400 font-medium' : 'text-gray-300'}`}
+                                                className={`w-full px-2 py-1.5 text-xs text-left hover:bg-gray-800 rounded transition-colors cursor-default flex items-center gap-2 ${currentUserTurnInputType === 'text' ? 'bg-purple-900/40 text-purple-400 font-medium' : 'text-gray-300'}`}
                                                 onClick={() => onChangeUserTurnInputType('text')}
                                             >
-                                                <MessageSquare className="w-4 h-4" />
-                                                <span>Text Input</span>
+                                                <ALargeSmall className="w-3.5 h-3.5" />
+                                                <span>User message</span>
                                             </button>
                                             <button
-                                                className={`w-full px-3 py-2 text-sm text-left hover:bg-gray-800 transition-colors cursor-default flex items-center gap-2 ${currentUserTurnInputType === 'button' ? 'bg-purple-900/40 text-purple-400 font-medium' : 'text-gray-300'}`}
+                                                className={`w-full px-2 py-1.5 text-xs text-left hover:bg-gray-800 rounded transition-colors cursor-default flex items-center gap-2 ${currentUserTurnInputType === 'button' ? 'bg-purple-900/40 text-purple-400 font-medium' : 'text-gray-300'}`}
                                                 onClick={() => onChangeUserTurnInputType('button')}
                                             >
-                                                <MousePointerClick className="w-4 h-4" />
-                                                <span>Button Click</span>
+                                                <MousePointerClick className="w-3.5 h-3.5" />
+                                                <span>Click button</span>
                                             </button>
                                             <button
-                                                className={`w-full px-3 py-2 text-sm text-left hover:bg-gray-800 transition-colors cursor-default flex items-center gap-2 ${currentUserTurnInputType === 'prompt' ? 'bg-purple-900/40 text-purple-400 font-medium' : 'text-gray-300'}`}
+                                                className={`w-full px-2 py-1.5 text-xs text-left hover:bg-gray-800 rounded transition-colors cursor-default flex items-center gap-2 ${currentUserTurnInputType === 'prompt' ? 'bg-purple-900/40 text-purple-400 font-medium' : 'text-gray-300'}`}
                                                 onClick={() => onChangeUserTurnInputType('prompt')}
                                             >
-                                                <List className="w-4 h-4" />
-                                                <span>Select Prompt</span>
+                                                <MessageCirclePlus className="w-3.5 h-3.5" />
+                                                <span>Click prompt</span>
                                             </button>
-                                            <Popover.Arrow className="fill-gray-900" />
+                                            <Popover.Arrow className="fill-gray-900 stroke-gray-800" />
                                         </Popover.Content>
                                     </Popover.Portal>
                                 </Popover.Root>
@@ -179,23 +176,18 @@ export function ContextToolbar({
 
                             {/* Condition Branch Management */}
                             {currentBranches && onUpdateBranches && (
-                                <Popover.Root>
-                                    <ActionTooltip content="Manage branches">
-                                        <Popover.Trigger asChild>
-                                            <button
-                                                className="flex items-center gap-1.5 px-3 py-1.5 text-white hover:bg-gray-800 rounded transition-colors text-sm cursor-default"
-                                            >
-                                                <GitBranch className="w-4 h-4" />
-                                            </button>
-                                        </Popover.Trigger>
-                                    </ActionTooltip>
-                                    <Popover.Portal>
-                                        <BranchManagementContent
-                                            branches={currentBranches}
-                                            onChange={onUpdateBranches}
-                                        />
-                                    </Popover.Portal>
-                                </Popover.Root>
+                                <ActionTooltip content="Add branch">
+                                    <button
+                                        onClick={() => {
+                                            const newBranch = { id: `branch-${Date.now()}`, condition: 'New Option' };
+                                            onUpdateBranches([...currentBranches, newBranch]);
+                                        }}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 text-white hover:bg-gray-800 rounded transition-colors text-sm cursor-default"
+                                    >
+                                        <Plus className="w-3 h-3 text-gray-400" />
+                                        <GitBranch className="w-4 h-4" />
+                                    </button>
+                                </ActionTooltip>
                             )}
 
                             {/* Only show phase picker if we have a phase (AI Turn) */}
@@ -207,36 +199,37 @@ export function ContextToolbar({
                                                 className="flex items-center gap-1.5 px-3 py-1.5 text-white hover:bg-gray-800 rounded transition-colors text-sm cursor-default"
                                             >
                                                 <Tag className="w-4 h-4" />
+                                                <ChevronDown className="w-3 h-3 text-gray-400" />
                                             </button>
                                         </Popover.Trigger>
                                     </ActionTooltip>
                                     <Popover.Portal>
                                         <Popover.Content
                                             side="top"
-                                            sideOffset={12}
+                                            sideOffset={8}
                                             align="center"
-                                            className="bg-gray-900 border border-gray-700 rounded-lg shadow-xl py-2 z-[1001] min-w-[160px] animate-in fade-in zoom-in-95 duration-200 ease-out"
+                                            className="bg-gray-900 border border-gray-800 rounded-lg shadow-xl p-1 z-[1001] min-w-[140px] animate-in fade-in zoom-in-95 duration-200 ease-out"
                                         >
                                             {phaseOptions.map((option) => (
                                                 <button
                                                     key={option.value ?? 'none'}
-                                                    className={`w-full px-3 py-2 text-sm text-left hover:bg-gray-800 transition-colors cursor-default flex items-center gap-2 ${currentPhase === option.value ? 'bg-blue-900/40 text-blue-400 font-medium' : 'text-gray-300'
+                                                    className={`w-full px-2 py-1.5 text-xs text-left hover:bg-gray-800 rounded transition-colors cursor-default flex items-center gap-2 ${currentPhase === option.value ? 'bg-blue-900/40 text-blue-400 font-medium' : 'text-gray-300'
                                                         }`}
                                                     onClick={() => handlePhaseSelect(option.value)}
                                                 >
                                                     {option.value && (
-                                                        <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${option.value === 'welcome' ? 'bg-purple-400' :
+                                                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${option.value === 'welcome' ? 'bg-purple-400' :
                                                             option.value === 'intent' ? 'bg-amber-400' :
                                                                 option.value === 'info' ? 'bg-emerald-400' :
                                                                     option.value === 'action' ? 'bg-rose-400' :
                                                                         'bg-blue-400'
                                                             }`} />
                                                     )}
-                                                    {!option.value && <div className="w-2.5 h-2.5 rounded-full border border-gray-600 flex-shrink-0" />}
+                                                    {!option.value && <div className="w-2 h-2 rounded-full border border-gray-600 flex-shrink-0" />}
                                                     <span className="flex-1">{option.label}</span>
                                                 </button>
                                             ))}
-                                            <Popover.Arrow className="fill-gray-900" />
+                                            <Popover.Arrow className="fill-gray-900 stroke-gray-800" />
                                         </Popover.Content>
                                     </Popover.Portal>
                                 </Popover.Root>

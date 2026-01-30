@@ -21,6 +21,7 @@ export const StartNode = () => {
                 type="source"
                 position={Position.Right}
                 className="!w-3 !h-3 !bg-emerald-400 !border-2 !border-white"
+                style={{ top: 19 }}
             />
         </div>
     );

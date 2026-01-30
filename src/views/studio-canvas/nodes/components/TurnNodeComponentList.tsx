@@ -10,6 +10,7 @@ interface TurnNodeComponentListProps {
     nodeId: string;
     components: Component[];
     selectedComponentId?: string;
+    entryPoint?: string;
     onSelectComponent?: (nodeId: string, componentId: string, anchorEl: HTMLElement) => void;
     onDeselect?: () => void;
     onComponentUpdate?: (componentId: string, updates: Partial<Component>) => void;
@@ -19,12 +20,13 @@ export const TurnNodeComponentList = ({
     nodeId,
     components,
     selectedComponentId,
+    entryPoint,
     onSelectComponent,
     onDeselect,
     onComponentUpdate
 }: TurnNodeComponentListProps) => {
     return (
-        <div className="px-5 pb-5 pt-5 space-y-3 bg-gray-50 rounded-b-lg overflow-visible">
+        <div className="px-5 pb-5 pt-5 space-y-3 bg-gray-50 rounded-lg overflow-visible">
             {components.map((component: Component) => {
                 const display = getComponentDisplay(component);
 
@@ -68,6 +70,7 @@ export const TurnNodeComponentList = ({
                         <PromptEditor
                             key={component.id}
                             component={component}
+                            entryPoint={entryPoint}
                             onChange={(updates) => onComponentUpdate?.(component.id, { content: { ...component.content, ...updates } })}
                             isOpen={selectedComponentId === component.id}
                             onOpenChange={handleOpenChange}

@@ -47,7 +47,7 @@ const SourceLinkComponentView = () => {
             </div>
           }
         >
-          <div className="px-vca-xxl">
+          <div className="">
             <SourceLink
               status={status}
               text={text}
@@ -68,7 +68,7 @@ const SourceLinkComponentView = () => {
               <h3 className="mb-2">Enabled</h3>
               <p className="mb-3">Default state with gray text and underline.</p>
               <div className="bg-white border border-gray-200 rounded-lg p-4">
-                <div className="px-vca-xxl">
+                <div className="">
                   <SourceLink
                     status="enabled"
                     text="This is title of link"
@@ -83,7 +83,7 @@ const SourceLinkComponentView = () => {
               <h3 className="mb-2">Hover</h3>
               <p className="mb-3">Interactive state when user hovers over the link.</p>
               <div className="bg-white border border-gray-200 rounded-lg p-4">
-                <div className="px-vca-xxl">
+                <div className="">
                   <SourceLink
                     status="hover"
                     text="This is title of link"
@@ -97,7 +97,7 @@ const SourceLinkComponentView = () => {
               <h3 className="mb-2">Active</h3>
               <p className="mb-3">State when user clicks/presses the link.</p>
               <div className="bg-white border border-gray-200 rounded-lg p-4">
-                <div className="px-vca-xxl">
+                <div className="">
                   <SourceLink
                     status="active"
                     text="This is title of link"
@@ -111,7 +111,7 @@ const SourceLinkComponentView = () => {
               <h3 className="mb-2">Visited</h3>
               <p className="mb-3">State for previously visited links (purple).</p>
               <div className="bg-white border border-gray-200 rounded-lg p-4">
-                <div className="px-vca-xxl">
+                <div className="">
                   <SourceLink
                     status="visited"
                     text="This is title of link"
@@ -125,8 +125,8 @@ const SourceLinkComponentView = () => {
               <h3 className="mb-2">In context</h3>
               <p className="mb-3">Example showing how source links appear within text content.</p>
               <div className="bg-white border border-gray-200 rounded-lg p-4">
-                <div className="px-vca-xxl">
-                  <p className="font-vca-text text-[14px] leading-[21px] text-vca-text">
+                <div className="">
+                  <p className="vca-small-open text-vca-text">
                     According to recent research, user engagement increased by 45% after implementing AI recommendations.{' '}
                     <SourceLink
                       status="enabled"
@@ -143,8 +143,8 @@ const SourceLinkComponentView = () => {
               <h3 className="mb-2">Multiple sources</h3>
               <p className="mb-3">Example with multiple source citations in a single paragraph.</p>
               <div className="bg-white border border-gray-200 rounded-lg p-4">
-                <div className="px-vca-xxl">
-                  <p className="font-vca-text text-[14px] leading-[21px] text-vca-text">
+                <div className="">
+                  <p className="vca-small-open text-vca-text">
                     The data shows significant improvements in productivity (
                     <SourceLink
                       status="enabled"

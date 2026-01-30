@@ -70,7 +70,7 @@ const PromptComponentView = () => {
             </div>
           }
         >
-          <div className="px-vca-xxl">
+          <div className="">
             <Prompt
               showAiIcon={showAiIcon}
               onClick={() => alert('Prompt clicked!')}
@@ -104,7 +104,7 @@ const PromptComponentView = () => {
                   <div className="bg-vca-background border border-vca-border-faint rounded-b-vca-md overflow-hidden flex flex-col h-[480px] -mt-1">
                     {/* Scrollable content area */}
                     <div className="flex-1 overflow-y-auto flex flex-col justify-end">
-                      <div className="px-vca-xxl space-y-vca-lg pb-vca-lg">
+                      <div className="px-vca-xl space-y-vca-lg pb-vca-lg">
                         {/* AI Message with intro text */}
                         <Message
                           variant="ai"
@@ -158,7 +158,7 @@ const PromptComponentView = () => {
                   <div className="bg-vca-background border border-vca-border-faint rounded-b-vca-md overflow-hidden flex flex-col h-[480px] -mt-1">
                     {/* Scrollable content area */}
                     <div className="flex-1 overflow-y-auto flex flex-col justify-end">
-                      <div className="px-vca-xxl space-y-vca-lg pb-vca-lg">
+                      <div className="px-vca-xl space-y-vca-lg pb-vca-lg">
                         {/* AI Message with prompts */}
                         <Message
                           variant="ai"
