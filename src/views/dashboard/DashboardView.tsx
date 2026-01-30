@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Folder, FolderPlus, Trash2, Grid2x2, Component } from 'lucide-react';
 import VcaLogo from '@/components/VcaLogo';
@@ -24,16 +24,37 @@ export const DashboardView = () => {
     const [showNewFlowDialog, setShowNewFlowDialog] = useState(false);
     const { state, setMobileMenuOpen } = useApp();
 
-    useEffect(() => {
-        loadData();
-    }, []);
-
-    const loadData = () => {
+    const loadData = useCallback(() => {
         const items = flowStorage.getAllFlows();
         items.sort((a, b) => b.lastModified - a.lastModified);
         setFlows(items);
         setFolders(flowStorage.getAllFolders());
-    };
+    }, []);
+
+    const seedDemoData = useCallback(async () => {
+        const { createNewFlow } = await import('@/utils/flowCreation');
+
+        // Create 2 demo flows
+        const demo1 = createNewFlow('flagship');
+        demo1.title = 'Demo: Premium Account Help';
+
+        const demo2 = createNewFlow('admin-center');
+        demo2.title = 'Demo: Admin Support';
+
+        flowStorage.saveFlow(demo1);
+        flowStorage.saveFlow(demo2);
+
+        loadData();
+    }, [loadData]);
+
+    useEffect(() => {
+        const existingFlows = flowStorage.getAllFlows();
+        if (existingFlows.length === 0) {
+            seedDemoData();
+        } else {
+            loadData();
+        }
+    }, [seedDemoData, loadData]);
 
     const handleCreateFlow = (flow: Flow) => {
         // Save flow with folder if active

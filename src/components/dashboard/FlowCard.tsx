@@ -63,10 +63,22 @@ export const FlowCard = ({ flow, onDelete }: FlowCardProps) => {
     return (
         <div
             onClick={handleClick}
-            className="group relative flex flex-col bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-blue-400 hover:shadow-md transition-all cursor-pointer h-40"
+            className="group relative flex flex-col bg-white border border-gray-200/80 rounded-xl overflow-hidden hover:border-blue-400/40 transition-all duration-500 cursor-pointer h-40"
         >
-            {/* Minimalist Card Design */}
-            <div className="p-4 flex flex-col h-full bg-white">
+            {/* Swirling Premium Gradient Layers */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                {/* Primary Swirl */}
+                <div className="absolute -inset-[50%] bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.08),transparent_70%)] group-hover:bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.15),transparent_70%)] transition-all duration-700 blur-3xl opacity-60" />
+
+                {/* Accent Swirl */}
+                <div className="absolute -top-1/2 -right-1/4 w-full h-full bg-[radial-gradient(circle_at_center,rgba(139,92,246,0.06),transparent_60%)] group-hover:rotate-12 group-hover:scale-110 transition-all duration-1000 blur-2xl" />
+
+                {/* Secondary Accent */}
+                <div className="absolute -bottom-1/2 -left-1/4 w-full h-full bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.04),transparent_60%)] group-hover:-rotate-12 transition-all duration-1000 blur-2xl" />
+            </div>
+
+            {/* Content Container */}
+            <div className="p-6 flex flex-col h-full bg-white/40 backdrop-blur-[2px] relative z-10 transition-colors duration-500 group-hover:bg-white/20">
                 <div className="flex items-start justify-between gap-3 mb-2">
                     <div className="flex flex-col gap-0.5 overflow-hidden">
                         <h3 className="font-medium text-sm text-gray-900 truncate group-hover:text-blue-600 transition-colors">
