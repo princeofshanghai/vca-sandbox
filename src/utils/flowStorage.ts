@@ -83,9 +83,13 @@ export const INITIAL_FLOW: Flow = {
 // Async Storage Service
 export const flowStorage = {
     getAllFolders: async (): Promise<Folder[]> => {
+        const user = (await supabase.auth.getUser()).data.user;
+        if (!user) return [];
+
         const { data, error } = await supabase
             .from('folders')
             .select('*')
+            .eq('user_id', user.id)
             .order('created_at', { ascending: false });
 
         if (error) {
@@ -144,9 +148,13 @@ export const flowStorage = {
     },
 
     getAllFlows: async (): Promise<FlowMetadata[]> => {
+        const user = (await supabase.auth.getUser()).data.user;
+        if (!user) return [];
+
         const { data, error } = await supabase
             .from('flows')
             .select('id, title, updated_at, folder_id, metadata, is_public')
+            .eq('user_id', user.id)
             .order('updated_at', { ascending: false });
 
         if (error) {
