@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Folder, FolderPlus, Trash2, Grid2x2, Component } from 'lucide-react';
+import { Plus, Search, Folder, FolderPlus, Trash2, Grid2x2, Component, Pencil, Loader2 } from 'lucide-react';
 import VcaLogo from '@/components/VcaLogo';
 import { flowStorage, FlowMetadata, Folder as FolderType } from '@/utils/flowStorage';
 import { FlowCard } from '@/components/dashboard/FlowCard';
@@ -12,6 +12,7 @@ import { Flow } from '@/views/studio/types';
 import Sidebar from '@/components/layout/Sidebar';
 import { useApp } from '@/contexts/AppContext';
 import { Menu } from 'lucide-react';
+import { UserMenu } from '@/components/layout/UserMenu';
 
 export const DashboardView = () => {
     const navigate = useNavigate();
@@ -21,70 +22,83 @@ export const DashboardView = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [isCreatingFolder, setIsCreatingFolder] = useState(false);
     const [newFolderName, setNewFolderName] = useState('');
+    const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
+    const [editingFolderName, setEditingFolderName] = useState('');
     const [showNewFlowDialog, setShowNewFlowDialog] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
     const { state, setMobileMenuOpen } = useApp();
 
-    const loadData = useCallback(() => {
-        const items = flowStorage.getAllFlows();
-        items.sort((a, b) => b.lastModified - a.lastModified);
-        setFlows(items);
-        setFolders(flowStorage.getAllFolders());
+    const loadData = useCallback(async () => {
+        setIsLoading(true);
+        const [loadedFlows, loadedFolders] = await Promise.all([
+            flowStorage.getAllFlows(),
+            flowStorage.getAllFolders()
+        ]);
+
+        loadedFlows.sort((a, b) => b.lastModified - a.lastModified);
+        setFlows(loadedFlows);
+        setFolders(loadedFolders);
+        setIsLoading(false);
     }, []);
 
-    const seedDemoData = useCallback(async () => {
-        const { createNewFlow } = await import('@/utils/flowCreation');
 
-        // Create 2 demo flows
-        const demo1 = createNewFlow('flagship');
-        demo1.title = 'Demo: Premium Account Help';
-
-        const demo2 = createNewFlow('admin-center');
-        demo2.title = 'Demo: Admin Support';
-
-        flowStorage.saveFlow(demo1);
-        flowStorage.saveFlow(demo2);
-
+    useEffect(() => {
         loadData();
     }, [loadData]);
 
-    useEffect(() => {
-        const existingFlows = flowStorage.getAllFlows();
-        if (existingFlows.length === 0) {
-            seedDemoData();
-        } else {
-            loadData();
-        }
-    }, [seedDemoData, loadData]);
-
-    const handleCreateFlow = (flow: Flow) => {
+    const handleCreateFlow = async (flow: Flow) => {
         // Save flow with folder if active
         if (activeFolderId) {
-            flowStorage.saveFlow({ ...flow, folderId: activeFolderId });
+            await flowStorage.saveFlow({ ...flow, folderId: activeFolderId });
         } else {
-            flowStorage.saveFlow(flow);
+            await flowStorage.saveFlow(flow);
         }
         navigate(`/studio/${flow.id}`);
     };
 
 
-    const handleDeleteFlow = (id: string) => {
-        flowStorage.deleteFlow(id);
+    const handleDeleteFlow = async (id: string) => {
+        await flowStorage.deleteFlow(id);
         loadData();
     };
 
-    const handleCreateFolder = () => {
+    const handleCreateFolder = async () => {
         if (!newFolderName.trim()) return;
-        flowStorage.createFolder(newFolderName.trim());
+        await flowStorage.createFolder(newFolderName.trim());
         setNewFolderName('');
         setIsCreatingFolder(false);
         loadData();
     };
 
-    const handleDeleteFolder = (id: string, e: React.MouseEvent) => {
+    const handleDeleteFolder = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
         if (confirm('Delete folder? Flows inside will be moved to "All chats".')) {
-            flowStorage.deleteFolder(id);
+            await flowStorage.deleteFolder(id);
             if (activeFolderId === id) setActiveFolderId(null);
+            loadData();
+        }
+    };
+
+    const handleStartRenameFolder = (folder: FolderType, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setEditingFolderId(folder.id);
+        setEditingFolderName(folder.name);
+    };
+
+    const handleRenameFolder = async () => {
+        if (editingFolderId && editingFolderName.trim()) {
+            await flowStorage.renameFolder(editingFolderId, editingFolderName.trim());
+            setEditingFolderId(null);
+            loadData();
+        } else {
+            setEditingFolderId(null);
+        }
+    };
+
+    const handleRenameFlow = async (id: string, newTitle: string) => {
+        const fullFlow = await flowStorage.getFlow(id);
+        if (fullFlow) {
+            await flowStorage.saveFlow({ ...fullFlow, title: newTitle });
             loadData();
         }
     };
@@ -97,9 +111,12 @@ export const DashboardView = () => {
 
     const sidebarHeader = (
         <>
-            <div className="h-14 px-4 flex items-center gap-2">
-                <VcaLogo className="h-5" />
-                <span className="font-medium text-lg text-gray-700 tracking-tight">Sandbox</span>
+            <div className="h-14 px-4 flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                    <VcaLogo className="h-5" />
+                    <span className="font-medium text-lg text-gray-700 tracking-tight">Sandbox</span>
+                </div>
+                <UserMenu />
             </div>
             <div className="px-4">
                 <div className="h-px bg-gray-200" />
@@ -121,7 +138,7 @@ export const DashboardView = () => {
     );
 
     const sidebarFooter = (
-        <div className="p-4 bg-gray-50/50">
+        <div className="p-4 bg-white">
             <div className="h-px bg-gray-200 mb-4" />
             <NavLink to="/foundations/typography">
                 <div className="flex items-center gap-2">
@@ -176,30 +193,55 @@ export const DashboardView = () => {
                     )}
 
                     {folders.map(folder => (
-                        <div
-                            key={folder.id}
-                            onClick={() => {
-                                setActiveFolderId(folder.id);
-                                setMobileMenuOpen(false);
-                            }}
-                            className={cn(
-                                "group flex items-center justify-between px-3 py-2 rounded text-2xs cursor-pointer transition-colors",
-                                activeFolderId === folder.id
-                                    ? "bg-gray-100 text-gray-900"
-                                    : "text-gray-700 hover:bg-gray-50"
-                            )}
-                        >
-                            <div className="flex items-center gap-2 overflow-hidden">
-                                <Folder size={16} strokeWidth={1.5} className={cn("shrink-0", activeFolderId === folder.id ? "fill-gray-400 text-gray-400" : "fill-gray-100 text-gray-400")} />
-                                <span className="truncate">{folder.name}</span>
+                        editingFolderId === folder.id ? (
+                            <div key={folder.id} className="px-2 py-1 mb-2">
+                                <input
+                                    autoFocus
+                                    className="w-full text-xs px-2 py-1 rounded border border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                                    value={editingFolderName}
+                                    onChange={(e) => setEditingFolderName(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') handleRenameFolder();
+                                        if (e.key === 'Escape') setEditingFolderId(null);
+                                    }}
+                                    onBlur={handleRenameFolder}
+                                    onClick={(e) => e.stopPropagation()}
+                                />
                             </div>
-                            <button
-                                onClick={(e) => handleDeleteFolder(folder.id, e)}
-                                className="opacity-0 group-hover:opacity-100 p-1 hover:text-red-500 rounded transition-all"
+                        ) : (
+                            <div
+                                key={folder.id}
+                                onClick={() => {
+                                    setActiveFolderId(folder.id);
+                                    setMobileMenuOpen(false);
+                                }}
+                                className={cn(
+                                    "group flex items-center justify-between px-3 py-2 rounded text-2xs cursor-pointer transition-colors",
+                                    activeFolderId === folder.id
+                                        ? "bg-gray-100 text-gray-900"
+                                        : "text-gray-700 hover:bg-gray-50"
+                                )}
                             >
-                                <Trash2 size={12} />
-                            </button>
-                        </div>
+                                <div className="flex items-center gap-2 overflow-hidden">
+                                    <Folder size={16} strokeWidth={1.5} className={cn("shrink-0", activeFolderId === folder.id ? "fill-gray-400 text-gray-400" : "fill-gray-100 text-gray-400")} />
+                                    <span className="truncate">{folder.name}</span>
+                                </div>
+                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button
+                                        onClick={(e) => handleStartRenameFolder(folder, e)}
+                                        className="p-1 hover:bg-gray-200 text-gray-400 hover:text-gray-700 rounded transition-all"
+                                    >
+                                        <Pencil size={12} />
+                                    </button>
+                                    <button
+                                        onClick={(e) => handleDeleteFolder(folder.id, e)}
+                                        className="p-1 hover:bg-red-100 text-gray-400 hover:text-red-500 rounded transition-all"
+                                    >
+                                        <Trash2 size={12} />
+                                    </button>
+                                </div>
+                            </div>
+                        )
                     ))}
 
                     <button
@@ -247,8 +289,13 @@ export const DashboardView = () => {
                             </Button>
                         </div>
 
+
                         {/* Grid */}
-                        {filteredFlows.length > 0 ? (
+                        {isLoading ? (
+                            <div className="flex justify-center py-20">
+                                <Loader2 className="animate-spin text-gray-400" size={32} />
+                            </div>
+                        ) : filteredFlows.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                 {filteredFlows.map(flow => (
                                     <FlowCard
@@ -256,6 +303,7 @@ export const DashboardView = () => {
                                         flow={flow}
                                         folderName={folders.find(f => f.id === flow.folderId)?.name}
                                         onDelete={handleDeleteFlow}
+                                        onRename={handleRenameFlow}
                                     />
                                 ))}
                             </div>

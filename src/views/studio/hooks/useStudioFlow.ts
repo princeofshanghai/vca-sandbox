@@ -8,52 +8,59 @@ export const useStudioFlow = (id?: string) => {
 
     // Load Flow
     useEffect(() => {
-        if (id) {
-            const loaded = flowStorage.getFlow(id);
-            if (loaded) {
-                // Migration: Ensure Start Node exists for V4 flows
-                if (loaded.steps && !loaded.steps.find(s => s.type === 'start')) {
-                    const startNode: import('../types').StartNode = {
-                        id: 'start-node-' + Date.now(),
-                        type: 'start',
-                        position: { x: 50, y: 50 }
-                    };
+        const loadFlow = async () => {
+            if (id) {
+                const loaded = await flowStorage.getFlow(id);
+                if (loaded) {
+                    // Migration: Ensure Start Node exists for V4 flows
+                    if (loaded.steps && !loaded.steps.find(s => s.type === 'start')) {
+                        const startNode: import('../types').StartNode = {
+                            id: 'start-node-' + Date.now(),
+                            type: 'start',
+                            position: { x: 50, y: 50 }
+                        };
 
-                    // Connect to the first node (likely the welcome node or first in list)
-                    const firstStep = loaded.steps.find(s => s.type === 'turn' && s.phase === 'welcome') || loaded.steps[0];
-                    let newConnections = loaded.connections || [];
+                        // Connect to the first node (likely the welcome node or first in list)
+                        const firstStep = loaded.steps.find(s => s.type === 'turn' && s.phase === 'welcome') || loaded.steps[0];
+                        let newConnections = loaded.connections || [];
 
-                    if (firstStep) {
-                        newConnections = [
-                            {
-                                id: 'edge-start-' + Date.now(),
-                                source: startNode.id,
-                                target: firstStep.id
-                            },
-                            ...newConnections
-                        ];
+                        if (firstStep) {
+                            newConnections = [
+                                {
+                                    id: 'edge-start-' + Date.now(),
+                                    source: startNode.id,
+                                    target: firstStep.id
+                                },
+                                ...newConnections
+                            ];
+                        }
+
+                        setFlow({
+                            ...loaded,
+                            steps: [startNode, ...loaded.steps],
+                            connections: newConnections
+                        });
+                    } else {
+                        setFlow(loaded);
                     }
-
-                    setFlow({
-                        ...loaded,
-                        steps: [startNode, ...loaded.steps],
-                        connections: newConnections
-                    });
                 } else {
-                    setFlow(loaded);
+                    console.warn(`Flow ${id} not found, initializing empty.`);
+                    setFlow({ ...INITIAL_FLOW, id });
                 }
-            } else {
-                console.warn(`Flow ${id} not found, initializing empty.`);
-                setFlow({ ...INITIAL_FLOW, id });
             }
-        }
-        setIsLoading(false);
+            setIsLoading(false);
+        };
+        loadFlow();
     }, [id]);
 
     // Persistence
     useEffect(() => {
-        if (!isLoading && flow.id) {
-            flowStorage.saveFlow(flow);
+        if (!isLoading && flow.id && flow.id !== 'initial') {
+            const saveDebounce = setTimeout(() => {
+                flowStorage.saveFlow(flow);
+            }, 1000); // 1s auto-save debounce
+
+            return () => clearTimeout(saveDebounce);
         }
     }, [flow, isLoading]);
 

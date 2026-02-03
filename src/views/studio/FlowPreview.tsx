@@ -8,156 +8,27 @@ import { ActionCard } from '@/components/vca-components/action-card/ActionCard';
 import { PromptGroup } from '@/components/vca-components/prompt-group/PromptGroup';
 import { PhoneFrame } from '@/components/component-library/PhoneFrame';
 import { MarkdownRenderer } from '@/components/vca-components/markdown-renderer/Markdown';
-import { Settings, Check } from 'lucide-react';
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { Button } from '@/components/ui/button';
+
+
 
 interface FlowPreviewProps {
     flow: Flow;
-    onUpdateFlow: (flow: Flow) => void;
     isPremium: boolean;
     isMobile: boolean;
-    onTogglePremium: () => void;
-    onToggleMobile: () => void;
     variables: Record<string, string>;
-    updateVariable: (key: string, value: string) => void;
-    usedVariables: string[];
+    desktopPosition?: 'center' | 'bottom-right';
 }
 
 export const FlowPreview = ({
     flow,
-    onUpdateFlow,
     isPremium,
     isMobile,
-    onTogglePremium,
-    onToggleMobile,
     variables,
-    updateVariable,
-    usedVariables
+    desktopPosition = 'center'
 }: FlowPreviewProps) => {
     // Shared composer state
     const [composerValue, setComposerValue] = useState('');
     const [handleSendRef, setHandleSendRef] = useState<(() => void) | undefined>(undefined);
-
-    const settings = flow.settings || { showDisclaimer: true, simulateThinking: true };
-
-    const toggleSetting = (key: 'showDisclaimer' | 'simulateThinking') => {
-        const currentSettings = flow.settings || { showDisclaimer: true, simulateThinking: true };
-        onUpdateFlow({
-            ...flow,
-            settings: {
-                ...currentSettings,
-                [key]: !currentSettings[key]
-            }
-        });
-    };
-
-    const displaySettingsButton = (
-        <DropdownMenu.Root>
-            <DropdownMenu.Trigger asChild>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    className="bg-white border-gray-200 text-gray-600 hover:text-gray-900 shadow-sm transition-all flex items-center gap-2 pointer-events-auto"
-                >
-                    <Settings size={16} strokeWidth={2} />
-                    Display
-                </Button>
-            </DropdownMenu.Trigger>
-
-            <DropdownMenu.Portal>
-                <DropdownMenu.Content
-                    align="start"
-                    sideOffset={8}
-                    className="min-w-[260px] bg-white rounded-lg shadow-lg border border-gray-200 p-2 z-[1001] animate-in fade-in-0 zoom-in-95 cursor-default"
-                >
-                    <DropdownMenu.Label className="text-xs font-semibold text-gray-400 px-2 py-1 mb-1">
-                        Preview mode
-                    </DropdownMenu.Label>
-
-                    {/* Desktop Option */}
-                    <DropdownMenu.CheckboxItem
-                        className="flex items-center justify-between gap-4 px-2 py-2 text-sm text-gray-700 rounded hover:bg-gray-100 cursor-default outline-none"
-                        checked={!isMobile}
-                        onCheckedChange={() => !isMobile || onToggleMobile()}
-                    >
-                        <span>Desktop</span>
-                        {!isMobile && <Check size={14} className="text-blue-600 shrink-0" />}
-                    </DropdownMenu.CheckboxItem>
-
-                    {/* Mobile Option */}
-                    <DropdownMenu.CheckboxItem
-                        className="flex items-center justify-between gap-4 px-2 py-2 text-sm text-gray-700 rounded hover:bg-gray-100 cursor-default outline-none"
-                        checked={isMobile}
-                        onCheckedChange={() => isMobile || onToggleMobile()}
-                    >
-                        <span>Mobile</span>
-                        {isMobile && <Check size={14} className="text-blue-600 shrink-0" />}
-                    </DropdownMenu.CheckboxItem>
-
-                    <div className="h-px bg-gray-100 my-1"></div>
-
-                    {/* Premium Branding */}
-                    <DropdownMenu.CheckboxItem
-                        className="flex items-center justify-between gap-4 px-2 py-2 text-sm text-gray-700 rounded hover:bg-gray-100 cursor-default outline-none"
-                        checked={isPremium}
-                        onCheckedChange={onTogglePremium}
-                    >
-                        <span>LinkedIn Premium branding</span>
-                        {isPremium && <Check size={14} className="text-blue-600 shrink-0" />}
-                    </DropdownMenu.CheckboxItem>
-
-                    {/* Show Disclaimer */}
-                    <DropdownMenu.CheckboxItem
-                        className="flex items-center justify-between gap-4 px-2 py-2 text-sm text-gray-700 rounded hover:bg-gray-100 cursor-default outline-none"
-                        checked={settings.showDisclaimer}
-                        onCheckedChange={() => toggleSetting('showDisclaimer')}
-                    >
-                        <span>Show disclaimer</span>
-                        {settings.showDisclaimer && <Check size={14} className="text-blue-600 shrink-0" />}
-                    </DropdownMenu.CheckboxItem>
-
-                    {/* Simulate Thinking */}
-                    <DropdownMenu.CheckboxItem
-                        className="flex items-center justify-between gap-4 px-2 py-2 text-sm text-gray-700 rounded hover:bg-gray-100 cursor-default outline-none"
-                        checked={settings.simulateThinking}
-                        onCheckedChange={() => toggleSetting('simulateThinking')}
-                    >
-                        <span>Simulate thinking</span>
-                        {settings.simulateThinking && <Check size={14} className="text-blue-600 shrink-0" />}
-                    </DropdownMenu.CheckboxItem>
-                    {/* Simulation Variables Section */}
-                    <>
-                        <div className="h-px bg-gray-100 my-1"></div>
-                        <DropdownMenu.Label className="text-xs font-semibold text-gray-400 px-2 py-1 mb-1 mt-1">
-                            Simulation Context
-                        </DropdownMenu.Label>
-                        {usedVariables.length === 0 ? (
-                            <div className="px-2 py-2 text-xs text-gray-500 italic text-center bg-gray-50 rounded mx-2 border border-dashed border-gray-200">
-                                No variables defined in logic
-                            </div>
-                        ) : (
-                            usedVariables.map(variable => (
-                                <div key={variable} className="px-2 py-1">
-                                    <div className="text-[10px] text-gray-500 mb-0.5 ml-1">{variable}</div>
-                                    <input
-                                        type="text"
-                                        value={variables[variable] || ''}
-                                        onChange={(e) => updateVariable(variable, e.target.value)}
-                                        className="w-full text-xs bg-gray-50 border border-gray-200 rounded px-2 py-1 focus:border-blue-500 focus:outline-none placeholder:italic"
-                                        placeholder="Value..."
-                                        onClick={(e) => e.stopPropagation()} // Prevent menu closing
-                                        onKeyDown={(e) => e.stopPropagation()}
-                                    />
-                                </div>
-                            ))
-                        )}
-                    </>
-
-                </DropdownMenu.Content>
-            </DropdownMenu.Portal>
-        </DropdownMenu.Root>
-    );
 
     return (
         <div className="h-full w-full flex flex-col relative bg-transparent pointer-events-none">
@@ -179,13 +50,11 @@ export const FlowPreview = ({
                     animation: shimmer 2s infinite linear;
                 }
             `}</style>
-            <div className="flex-1 flex flex-col items-end justify-center p-4 pr-6 overflow-y-auto thin-scrollbar">
+            <div className={`flex-1 flex flex-col overflow-y-auto thin-scrollbar ${isMobile || desktopPosition === 'center' ? 'items-center justify-center p-4' : 'items-end justify-end p-6'}`}>
                 {isMobile ? (
                     <div className="relative w-[334px] h-[726px] shrink-0 flex items-center justify-center mt-8 pointer-events-auto">
                         {/* Option B: Unscaled button above scaled phone */}
-                        <div className="absolute -top-12 left-0 z-10">
-                            {displaySettingsButton}
-                        </div>
+
                         <div className="scale-[0.85] origin-right">
                             <PhoneFrame showStatusBar={true} dimBackground={false}>
                                 <Container
@@ -211,9 +80,7 @@ export const FlowPreview = ({
                     </div>
                 ) : (
                     <div className="relative pointer-events-auto">
-                        <div className="absolute -top-12 left-0 z-10">
-                            {displaySettingsButton}
-                        </div>
+
                         <Container
                             headerTitle="Help"
                             className="shadow-xl bg-white"
@@ -273,6 +140,7 @@ const PreviewContent = ({
         historyRef.current = history;
     }, [history]);
 
+
     // Initialize history with the start node
     useEffect(() => {
         if (!flow.steps || flow.steps.length === 0) return;
@@ -282,7 +150,7 @@ const PreviewContent = ({
         currentRunId.current = newRunId;
         setIsProcessingQueue(false); // Reset lock for new run
 
-        // Reset all states when flow changes (if needed) - or just initialize
+        // Find starting point
         const startNode = flow.steps.find(s => s.type === 'start');
         let initialHistory: import('./types').Step[] = [];
 
@@ -296,6 +164,7 @@ const PreviewContent = ({
             }
         }
 
+        // Fallback if no start node
         if (initialHistory.length === 0) {
             const firstTurn = flow.steps.find(s =>
                 s.type === 'turn' && (s as import('./types').Turn).phase === 'welcome'
@@ -319,6 +188,7 @@ const PreviewContent = ({
             setVisibleComponentIds(allIds);
         }
     }, [flow.steps, flow.connections, variablesString, simulateThinking]);
+
 
     // --- DELIVERY ENGINE ---
     useEffect(() => {
@@ -659,6 +529,7 @@ const PreviewContent = ({
                 }, delay);
             }
         });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [composerValue, history, flow.connections, flow.steps, simulateThinking]);
 
 
@@ -677,7 +548,7 @@ const PreviewContent = ({
 
                     return (
                         <div key={`${step.id}-${historyIndex}`} className="flex flex-col gap-4">
-                            {components.map((component) => {
+                            {components.map((component, idx) => {
                                 // Respect Visibility
                                 if (!visibleComponentIds.has(component.id)) return null;
 
@@ -739,44 +610,39 @@ const PreviewContent = ({
                                         </div>
                                     );
                                 }
-                                return null;
-                            })}
-
-                            {/* Render Prompts Group */}
-                            {(() => {
-                                // 1. Gather Explicit Prompts
-                                const explicitPrompts = components.filter(c => c.type === 'prompt' && visibleComponentIds.has(c.id)).map(p => ({
-                                    id: p.id,
-                                    text: (p.content as import('./types').PromptContent).text,
-                                    showAiIcon: (p.content as import('./types').PromptContent).showAiIcon,
-                                    isSmart: false,
-                                    onClick: () => handlePromptClick(step.id, p.id, (p.content as import('./types').PromptContent).text)
-                                }));
-
-                                const promptsToRender = explicitPrompts;
-
-                                // 2. Smart Suggestions (Lookahead) - DISABLED for now
-                                /*
-                                if (isLast && explicitPrompts.length === 0) {
-                                    // ...
-                                }
-                                */
-
-                                if (promptsToRender.length > 0) {
-                                    // Hide history prompts unless they are the last one (standard chat behavior)
+                                if (component.type === 'prompt') {
+                                    // Hide prompts in history (only show on last turn)
                                     if (!isLast) return null;
+
+                                    // Check if this is the start of a consecutive prompt group
+                                    const isStartOfGroup = idx === 0 || components[idx - 1].type !== 'prompt';
+                                    if (!isStartOfGroup) return null; // Skip if already rendered in a group
+
+                                    // Gather consecutive prompts
+                                    const promptGroup = [];
+                                    for (let i = idx; i < components.length; i++) {
+                                        if (components[i].type === 'prompt' && visibleComponentIds.has(components[i].id)) {
+                                            promptGroup.push(components[i]);
+                                        } else {
+                                            break;
+                                        }
+                                    }
 
                                     return (
                                         <PromptGroup
-                                            prompts={promptsToRender.map(p => ({
-                                                text: p.text || (<div className="w-20 h-2.5 rounded-sm skeleton-shimmer-prompt" /> as unknown as string),
-                                                showAiIcon: p.showAiIcon,
-                                                onClick: p.onClick
+                                            key={`prompt-group-${component.id}`}
+                                            prompts={promptGroup.map(p => ({
+                                                text: (p.content as import('./types').PromptContent).text || (<div className="w-20 h-2.5 rounded-sm skeleton-shimmer-prompt" /> as unknown as string),
+                                                showAiIcon: (p.content as import('./types').PromptContent).showAiIcon,
+                                                onClick: () => handlePromptClick(step.id, p.id, (p.content as import('./types').PromptContent).text)
                                             }))}
                                         />
                                     );
                                 }
-                            })()}
+                                return null;
+                            })}
+
+
                         </div>
                     );
                 }
@@ -865,9 +731,7 @@ const SimulatedAction = ({
             status={status === 'in-progress' ? 'in-progress' : (status === 'success' ? 'success' : 'failure')}
             title={title}
         >
-            {description ? <MarkdownRenderer>{description}</MarkdownRenderer> : (
-                status !== 'in-progress' ? <div className="w-40 h-3 rounded skeleton-shimmer" /> : ''
-            )}
+            {description ? <MarkdownRenderer>{description}</MarkdownRenderer> : null}
         </ActionCard>
     );
 };

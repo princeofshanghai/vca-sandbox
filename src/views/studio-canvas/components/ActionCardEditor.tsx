@@ -49,7 +49,7 @@ export function ActionCardEditor({ component, onChange, children, isOpen, onOpen
             const el = document.querySelector('input[placeholder="e.g., Removing user..."]') as HTMLInputElement;
             if (el) el.focus();
         }
-    }, [isOpen]);
+    }, [isOpen, localSuccessTitle, localLoadingTitle]);
 
     const handleLoadingTitleChange = (value: string) => {
         setLocalLoadingTitle(value);

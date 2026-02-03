@@ -71,6 +71,7 @@ export interface Flow {
     blocks: Block[]; // OLD: Keep for backward compatibility
     settings: GlobalSettings; // Required in new flows
     lastModified: number;
+    is_public?: boolean; // Controls public access
 
     // NEW: Turn-based model
     steps?: Step[]; // New turn/condition-based structure

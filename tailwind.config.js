@@ -272,6 +272,15 @@ export default {
         "100%": { width: "100%", opacity: "0" },
       },
     },
+    animation: {
+      "accordion-down": "accordion-down 0.2s ease-out",
+      "accordion-up": "accordion-up 0.2s ease-out",
+      "thinking-dot": "thinking-dot 1.4s ease-in-out infinite",
+      "pop-spin": "pop-spin 2s ease-in-out infinite",
+      "progress-load": "progress-load 2s ease-in-out infinite",
+      "spin-slow": "spin 8s linear infinite",
+      "pulse-slow": "pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+    },
   },
   plugins: [require("tailwindcss-animate")],
 }

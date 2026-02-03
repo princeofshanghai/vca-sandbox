@@ -4,8 +4,8 @@ import { useStore } from '@xyflow/react';
 import { FlowPhase } from '../../studio/types';
 import { SelectionState } from '../types';
 import * as Popover from '@radix-ui/react-popover';
-import * as Tooltip from '@radix-ui/react-tooltip';
 import { AddComponentContent } from './AddComponentPopover';
+import { ActionTooltip } from './ActionTooltip';
 import { Branch } from '../../studio/types'; // Import Branch type
 
 interface ContextToolbarProps {
@@ -33,27 +33,7 @@ const phaseOptions: Array<{ value: FlowPhase | undefined; label: string }> = [
     { value: undefined, label: 'No phase' },
 ];
 
-function ActionTooltip({ children, content }: { children: React.ReactNode; content: string }) {
-    return (
-        <Tooltip.Provider delayDuration={100}>
-            <Tooltip.Root>
-                <Tooltip.Trigger asChild>
-                    {children}
-                </Tooltip.Trigger>
-                <Tooltip.Portal>
-                    <Tooltip.Content
-                        side="top"
-                        sideOffset={8}
-                        className="bg-gray-800 text-white text-[11px] px-2 py-1 rounded shadow-lg animate-in fade-in zoom-in-95 duration-150 z-[1100]"
-                    >
-                        {content}
-                        <Tooltip.Arrow className="fill-gray-800" />
-                    </Tooltip.Content>
-                </Tooltip.Portal>
-            </Tooltip.Root>
-        </Tooltip.Provider>
-    );
-}
+
 
 export function ContextToolbar({
     selection,
@@ -98,7 +78,7 @@ export function ContextToolbar({
     return createPortal(
         <div id="context-toolbar" style={getToolbarStyle()}>
             <div className="animate-in fade-in zoom-in-95 duration-200 ease-out">
-                <div className="bg-gray-900 rounded-lg shadow-2xl px-2 py-1.5 flex items-center gap-1">
+                <div className="bg-gray-900 rounded-xl shadow-2xl px-2 py-1.5 flex items-center gap-1">
                     {selection.type === 'node' ? (
                         // Node-specific actions
                         <>

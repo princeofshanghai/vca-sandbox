@@ -47,7 +47,7 @@ export const ActionCard = ({
             `}</style>
             <div className="flex gap-vca-s p-vca-lg items-start">
                 {/* Icon */}
-                <div className="shrink-0">
+                <div className="shrink-0 h-6 flex items-center">
                     {status === 'in-progress' && (
                         <div className="animate-ai-pulse-custom origin-center text-vca-brand-logo-brand">
                             <VcaIcon icon="signal-ai" size="md" />

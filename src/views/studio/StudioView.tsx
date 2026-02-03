@@ -42,7 +42,7 @@ export const StudioView = () => {
     if (isLoading) return <div className="h-full flex items-center justify-center">Loading...</div>;
 
     return (
-        <div className="flex h-full overflow-hidden flex-col bg-white">
+        <div className="flex h-screen overflow-hidden flex-col bg-white">
 
 
             {/* Canvas Editor - Full Width */}
@@ -59,6 +59,7 @@ export const StudioView = () => {
             {/* Preview Drawer */}
             <PreviewDrawer
                 isOpen={isPreviewOpen}
+                onClose={() => setIsPreviewOpen(false)}
                 flow={flow}
                 onUpdateFlow={setFlowWithHistory}
                 isPremium={isPremium}

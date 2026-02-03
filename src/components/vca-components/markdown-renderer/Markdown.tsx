@@ -45,7 +45,7 @@ export const MarkdownRenderer = ({ children, className }: MarkdownRendererProps)
                     // Links - use VCA link color tokens with hover underline
                     a: ({ node: _node, ...props }) => (
                         <a
-                            className="text-vca-link hover:underline font-semibold no-underline"
+                            className="text-vca-link hover:text-vca-link-hover active:text-vca-link-active hover:underline font-semibold no-underline"
                             target="_blank"
                             rel="noopener noreferrer"
                             {...props}

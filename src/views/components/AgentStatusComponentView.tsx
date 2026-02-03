@@ -26,7 +26,7 @@ const AgentStatusComponentView = () => {
   useEffect(() => {
     if (demoStep === 'idle') return;
 
-    let timer: number;
+    let timer: ReturnType<typeof setTimeout>;
 
     if (demoStep === 'connecting') {
       // After 2 seconds, show connected state

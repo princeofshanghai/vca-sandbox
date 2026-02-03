@@ -15,7 +15,7 @@ export function FloatingToolbar({ onAddAiTurn, onAddUserTurn, onAddCondition, on
     };
 
     return (
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 p-1.5 bg-white rounded-full shadow-xl border border-gray-200/80 backdrop-blur-sm">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 p-1.5 bg-white rounded-xl shadow-xl border border-gray-200/80 backdrop-blur-sm">
 
             {/* Group 1: Logic Nodes */}
             <div className="flex items-center gap-1">
@@ -24,7 +24,7 @@ export function FloatingToolbar({ onAddAiTurn, onAddUserTurn, onAddCondition, on
                     onClick={onAddAiTurn}
                     draggable
                     onDragStart={(e) => onDragStart(e, 'turn')}
-                    className="group relative flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 transition-colors tooltip-trigger cursor-grab active:cursor-grabbing"
+                    className="group relative flex items-center justify-center w-10 h-10 rounded-md hover:bg-gray-100 transition-colors tooltip-trigger cursor-grab active:cursor-grabbing"
                     title="Drag to add AI Turn"
                 >
                     <VcaIcon icon="signal-ai" size="md" className="text-blue-600" />
@@ -38,7 +38,7 @@ export function FloatingToolbar({ onAddAiTurn, onAddUserTurn, onAddCondition, on
                     onClick={onAddUserTurn}
                     draggable
                     onDragStart={(e) => onDragStart(e, 'user-turn')}
-                    className="group relative flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 transition-colors cursor-grab active:cursor-grabbing"
+                    className="group relative flex items-center justify-center w-10 h-10 rounded-md hover:bg-gray-100 transition-colors cursor-grab active:cursor-grabbing"
                     title="Drag to add User Turn"
                 >
                     <UserRound className="text-purple-600" size={20} />
@@ -52,7 +52,7 @@ export function FloatingToolbar({ onAddAiTurn, onAddUserTurn, onAddCondition, on
                     onClick={onAddCondition}
                     draggable
                     onDragStart={(e) => onDragStart(e, 'condition')}
-                    className="group relative flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 transition-colors cursor-grab active:cursor-grabbing"
+                    className="group relative flex items-center justify-center w-10 h-10 rounded-md hover:bg-gray-100 transition-colors cursor-grab active:cursor-grabbing"
                     title="Drag to add Condition"
                 >
                     <Split className="text-amber-500" size={20} />
@@ -71,7 +71,7 @@ export function FloatingToolbar({ onAddAiTurn, onAddUserTurn, onAddCondition, on
                 draggable
                 onDragStart={(e) => onDragStart(e, 'note')}
                 onClick={onAddNote}
-                className="group relative flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 transition-colors text-gray-400 tooltip-trigger cursor-grab active:cursor-grabbing"
+                className="group relative flex items-center justify-center w-10 h-10 rounded-md hover:bg-gray-100 transition-colors text-gray-400 tooltip-trigger cursor-grab active:cursor-grabbing"
                 title="Drag to add Sticky Note"
             >
                 <StickyNote className="text-yellow-500/80" size={20} fill="currentColor" />

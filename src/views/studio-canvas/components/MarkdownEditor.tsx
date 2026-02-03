@@ -44,7 +44,7 @@ export const MarkdownEditor = ({
             // Handle Italic (*)
             .replace(/\*(.*?)\*/g, '<em>$1</em>')
             // Handle Links
-            .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" class="text-blue-600 font-semibold" target="_blank">$1</a>');
+            .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" class="text-vca-link hover:text-vca-link-hover font-semibold" target="_blank">$1</a>');
 
         // Handle lists
         const lines = html.split('\n');
@@ -172,8 +172,30 @@ export const MarkdownEditor = ({
         }
     };
 
+
+    // --- Selection Management ---
+    const selectionRef = useRef<Range | null>(null);
+
+    const saveSelection = () => {
+        const selection = window.getSelection();
+        if (selection && selection.rangeCount > 0) {
+            selectionRef.current = selection.getRangeAt(0);
+        }
+    };
+
+    const restoreSelection = () => {
+        if (selectionRef.current) {
+            const selection = window.getSelection();
+            if (selection) {
+                selection.removeAllRanges();
+                selection.addRange(selectionRef.current);
+            }
+        }
+    };
+
     const handleCreateLink = (e: React.FormEvent) => {
         e.preventDefault();
+        restoreSelection(); // Restore selection before applying command
         applyCommand('createLink', linkUrl);
         setShowLinkInput(false);
         setLinkUrl('');
@@ -185,14 +207,14 @@ export const MarkdownEditor = ({
             className
         )}>
             {/* 1. Persistent Toolbar */}
-            <div className="flex items-center gap-1 px-2 py-1.5 border-b border-gray-100 bg-gray-50/50">
+            <div id="markdown-toolbar" className="flex items-center gap-1 px-2 py-1.5 border-b border-gray-100 bg-gray-50/50">
                 {!showLinkInput ? (
                     <>
                         {/* Minimalist Controls */}
                         <ToolbarButton icon={Bold} onClick={() => applyCommand('bold')} label="Bold (Cmd+B)" />
                         <ToolbarButton icon={Italic} onClick={() => applyCommand('italic')} label="Italic (Cmd+I)" />
                         <div className="w-px h-4 bg-gray-200 mx-1" />
-                        <ToolbarButton icon={Link} onClick={() => setShowLinkInput(true)} label="Link (Cmd+K)" />
+                        <ToolbarButton icon={Link} onClick={() => { saveSelection(); setShowLinkInput(true); }} label="Link (Cmd+K)" />
                         <ToolbarButton icon={List} onClick={() => applyCommand('insertUnorderedList')} label="Bullet List" />
                         <ToolbarButton icon={ListOrdered} onClick={() => applyCommand('insertOrderedList')} label="Numbered List" />
                     </>
@@ -209,6 +231,7 @@ export const MarkdownEditor = ({
                                     setShowLinkInput(false);
                                     e.stopPropagation(); // Prevent parent closing
                                 }
+                                // Allow 'Enter' to submit form naturally
                             }}
                         />
                         <button type="submit" className="text-[10px] bg-blue-600 text-white hover:bg-blue-700 px-2.5 py-1 rounded font-medium">Add</button>
@@ -229,7 +252,7 @@ export const MarkdownEditor = ({
                 contentEditable
                 onInput={handleInput}
                 onKeyDown={handleKeyDown}
-                className="w-full p-4 min-h-[100px] outline-none text-xs text-gray-800 leading-relaxed cursor-text [&_p]:mb-1 [&_p]:text-xs [&_ul]:list-disc [&_ul]:pl-2 [&_ul]:mb-1 [&_ul]:text-xs [&_ol]:list-decimal [&_ol]:pl-2 [&_ol]:mb-1 [&_ol]:text-xs [&_li]:mb-0.5 [&_li]:text-xs [&_a]:text-blue-600 [&_a]:font-semibold"
+                className="w-full p-4 min-h-[100px] outline-none text-xs text-gray-800 leading-relaxed cursor-text [&_p]:mb-1 [&_p]:text-xs [&_ul]:list-disc [&_ul]:pl-2 [&_ul]:mb-1 [&_ul]:text-xs [&_ol]:list-decimal [&_ol]:pl-2 [&_ol]:mb-1 [&_ol]:text-xs [&_li]:mb-0.5 [&_li]:text-xs [&_a]:text-vca-link [&_a]:hover:text-vca-link-hover [&_a]:font-semibold"
             />
 
             {(!value || value.trim() === '') && (

@@ -10,6 +10,7 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ children, header, footer, isMobileOpen = false, onClose }: SidebarProps) => {
+
   // Close sidebar when clicking outside on mobile
   useEffect(() => {
     if (isMobileOpen) {
@@ -55,11 +56,9 @@ const Sidebar = ({ children, header, footer, isMobileOpen = false, onClose }: Si
           {children}
         </div>
 
-        {footer && (
-          <div className="flex-shrink-0">
-            {footer}
-          </div>
-        )}
+        <div className="flex-shrink-0 bg-white">
+          {footer}
+        </div>
       </aside>
     </>
   );

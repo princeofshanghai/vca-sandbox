@@ -24,7 +24,17 @@ import { SelectionState } from './types';
 import { ContextToolbar } from './components/ContextToolbar';
 import { FloatingToolbar } from './components/FloatingToolbar';
 import { ZoomControls } from './components/ZoomControls';
-import { ArrowLeft, Play, Download } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ActionTooltip } from './components/ActionTooltip';
+import { ShareDialog } from '../studio/components/ShareDialog';
+import { ArrowLeft, Play, PanelRightOpen, ExternalLink } from 'lucide-react';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+    DropdownMenuSeparator
+} from '@/components/ui/dropdown-menu';
 
 
 // Register custom node types
@@ -60,6 +70,7 @@ interface CanvasEditorProps {
     onBack: () => void;
     onPreview: () => void;
     isPreviewActive?: boolean;
+    header?: React.ReactNode;
 }
 
 export function CanvasEditor(props: CanvasEditorProps) {
@@ -72,14 +83,15 @@ export function CanvasEditor(props: CanvasEditorProps) {
 
 function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewActive }: CanvasEditorProps) {
     const { screenToFlowPosition } = useReactFlow();
+
     // Selection state
     const [selection, setSelection] = useState<SelectionState | null>(null);
     const [selectionAnchorEl, setSelectionAnchorEl] = useState<HTMLElement | null>(null);
 
-
     const selectionType = selection?.type;
     const selectionNodeId = selection?.nodeId;
     const selectionComponentId = selection?.type === 'component' ? selection.componentId : undefined;
+
 
     // Convert flow steps to React Flow nodes
     const initialNodes = useMemo(() => {
@@ -149,7 +161,6 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                             setSelection(null);
                             setSelectionAnchorEl(null);
                         },
-
                         onLabelChange: (newLabel: string) => {
                             // Update the turn label
                             const updatedSteps = flow.steps?.map(s =>
@@ -742,17 +753,6 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
         };
     }, [handleDeleteSelection, handleMoveComponentUp, handleMoveComponentDown, handleDeselect]);
 
-    // Auto-naming helper
-    const getIncrementedLabel = (label: string): string => {
-        const match = label.match(/^(.*?)(\d+)$/);
-        if (match) {
-            const prefix = match[1];
-            const number = parseInt(match[2], 10);
-            return `${prefix}${number + 1}`;
-        }
-        return `${label} 2`;
-    };
-
     // Node Cloning Logic
     const onNodeDragStart = useCallback((event: React.MouseEvent, node: Node) => {
         if (event.altKey) {
@@ -802,42 +802,34 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                     target: conn.target === node.id ? newOriginalId : conn.target,
                 }));
 
-            // 3. Update Node A (The "Duplicate" that moves)
-            // It loses edges (by not including old edges involving it) and gets a new name
-            // Note: We don't need to explicitly delete edges, just returning a filtered list effectively removes them for Node A
-            // BUT, for the connections array, we want to KEEP the edges for Node B, and REMOVE the edges for Node A.
-            const edgesWithoutMovingNode = currentEdges.filter(conn => conn.source !== node.id && conn.target !== node.id);
-            const finalConnections = [...edgesWithoutMovingNode, ...newEdgesForStaticOriginal];
+            const finalConnections = [...currentEdges, ...newEdgesForStaticOriginal];
 
-            const newLabel = getIncrementedLabel(originalStep.label || 'Copy');
+            // 3. Update flow
+            // - Add Node B (Static Original)
+            // - Rename Node A (Dragging) - happens via React Flow dragging? 
+            //   No, we should update the label of the *dragged* node (originalStep) to indicate it's new?
+            //   Actually, let's just mark the dragged one as "Copy".
 
-            const updatedSteps = flow.steps?.map(s => {
-                if (s.id === node.id) {
-                    // Update the Mover (Node A)
-                    if (s.type === 'turn') {
-                        return {
-                            ...s,
-                            label: newLabel,
-                            components: s.components.map(c => ({ ...c, id: crypto.randomUUID() })), // Deep clone components for the mover too!
-                        };
-                    } else if (s.type === 'condition') {
-                        return {
-                            ...s,
-                            label: newLabel,
-                            branches: s.branches.map(b => ({ ...b, id: crypto.randomUUID() })),
-                        };
-                    }
-                    return { ...s, label: newLabel };
+            const updatedSteps = [...(flow.steps || [])];
+
+            // Rename the dragged node (original ID)
+            const draggedNodeIndex = updatedSteps.findIndex(s => s.id === node.id);
+            if (draggedNodeIndex !== -1) {
+                const nodeToUpdate = updatedSteps[draggedNodeIndex];
+                if (nodeToUpdate.type !== 'start' && 'label' in nodeToUpdate) {
+                    updatedSteps[draggedNodeIndex] = {
+                        ...nodeToUpdate,
+                        label: `${nodeToUpdate.label} (Copy)`
+                    };
                 }
-                return s;
-            });
+            }
 
-            // Add the Static Original (Node B)
-            const finalSteps = [...(updatedSteps || []), staticOriginalClone];
+            // Add the static original
+            updatedSteps.push(staticOriginalClone);
 
             onUpdateFlow({
                 ...flow,
-                steps: finalSteps,
+                steps: updatedSteps,
                 connections: finalConnections,
                 lastModified: Date.now()
             });
@@ -978,220 +970,222 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
         return false;
     })() : false;
 
-    const handleDownload = () => {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(flow, null, 2));
-        const downloadAnchorNode = document.createElement('a');
-        downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", `${flow.title || 'conversation'}.json`);
-        document.body.appendChild(downloadAnchorNode);
-        downloadAnchorNode.click();
-        downloadAnchorNode.remove();
-    };
 
     return (
-        <div className={`w-full h-full relative ${isAltPressed ? 'is-alt-pressed' : ''}`}>
-            {/* Top Left Floating Pill */}
-            <div className="absolute top-3 left-3 z-50 flex items-center bg-white rounded-full shadow-lg border border-gray-200 p-1">
+        <div className="w-full h-full flex flex-col relative bg-[#F5F5F7]">
+            {/* Header */}
+            {/* Top Left Pill: Back & Title */}
+            <div className="absolute top-4 left-4 z-50 flex items-center h-11 gap-1.5 bg-white px-2 rounded-xl shadow-sm border border-gray-200/80 backdrop-blur-sm">
                 <button
                     onClick={onBack}
-                    className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-full transition-colors cursor-default"
-                    title="Back"
+                    className="flex items-center justify-center p-2 text-gray-500 hover:text-gray-900 transition-colors rounded-md hover:bg-gray-100"
                 >
                     <ArrowLeft size={18} />
                 </button>
-                <div className="w-px h-6 bg-gray-200 mx-1" />
-                <div className="relative flex items-center min-w-[128px] max-w-[400px]">
-                    {/* Ghost span for auto-sizing */}
-                    <span className="px-3 py-1 text-sm font-semibold invisible whitespace-pre">
-                        {flow.title || "Untitled Conversation"}
+                <div className="h-5 w-px bg-gray-200" />
+                <div className="relative inline-grid items-center min-w-[60px] max-w-[320px]">
+                    <span className="invisible px-3 py-1 text-sm font-medium whitespace-pre border border-transparent col-start-1 row-start-1">
+                        {flow.title || "Untitled flow"}
                     </span>
                     <input
                         value={flow.title}
-                        onChange={(e) => onUpdateFlow({ ...flow, title: e.target.value })}
-                        className="absolute inset-0 px-3 py-1 text-sm font-semibold text-gray-800 bg-transparent border-none focus:ring-0 truncate w-full"
-                        placeholder="Untitled Conversation"
+                        onChange={(e) => onUpdateFlow({ ...flow, title: e.target.value, lastModified: Date.now() })}
+                        className="absolute inset-0 w-full h-full font-medium text-sm text-gray-900 bg-transparent hover:bg-gray-50 focus:bg-white border border-transparent focus:border-blue-300 rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all truncate placeholder-gray-400"
+                        placeholder="Untitled flow"
                     />
                 </div>
             </div>
 
-            {/* Top Right Floating Pill */}
-            <div className="absolute top-3 right-3 z-50 flex items-center bg-white rounded-full shadow-lg border border-gray-200 p-1">
-                <button
-                    onClick={handleDownload}
-                    className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-full transition-colors cursor-default"
-                    title="Download JSON"
-                >
-                    <Download size={18} />
-                </button>
-                <div className="w-px h-6 bg-gray-200 mx-1" />
-                <button
-                    onClick={onPreview}
-                    className={`flex items-center gap-2 pl-3 pr-4 py-1.5 rounded-full transition-colors text-sm font-medium cursor-default ${isPreviewActive
-                        ? 'bg-blue-600 text-white hover:bg-blue-700'
-                        : 'text-blue-600 hover:bg-blue-50'
-                        }`}
-                >
-                    <Play size={16} className="fill-current" />
-                    <span>Preview</span>
-                </button>
+            {/* Top Right Pill: Run & Share */}
+            <div className="absolute top-4 right-4 z-50 flex items-center h-11 gap-2 bg-white px-1.5 rounded-xl shadow-sm border border-gray-200/80 backdrop-blur-sm">
+                <DropdownMenu>
+                    <ActionTooltip content="Run options">
+                        <DropdownMenuTrigger asChild>
+                            <button
+                                className={`flex items-center justify-center w-8 h-8 rounded-md transition-all group ${isPreviewActive
+                                    ? "text-blue-600 bg-blue-50 ring-1 ring-blue-200"
+                                    : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+                                    }`}
+                            >
+                                <Play size={16} fill={isPreviewActive ? "currentColor" : "none"} className="mr-[1px]" />
+                            </button>
+                        </DropdownMenuTrigger>
+                    </ActionTooltip>
+                    <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem onClick={onPreview} className="gap-2 text-[13px] font-medium">
+                            <PanelRightOpen size={14} className="text-gray-500" />
+                            Preview in canvas
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                            onClick={() => window.open(`/share/${flow.id}`, '_blank')}
+                            className="gap-2 text-[13px] font-medium"
+                        >
+                            <ExternalLink size={14} className="text-gray-500" />
+                            Open prototype
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+
+                <ShareDialog flow={flow}>
+                    <Button
+                        size="sm"
+                        className="bg-blue-600 text-white hover:bg-blue-700 border-0"
+                    >
+                        Share
+                    </Button>
+                </ShareDialog>
             </div>
-            <style>{`
-                .react-flow__pane, 
-                .react-flow__selection-pane,
-                .cursor-default {
-                    cursor: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23FFF' stroke='%23000' stroke-width='2' d='M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87a.5.5 0 0 0 .35-.85L6.35 2.85a.5.5 0 0 0-.85.35Z'%3E%3C/path%3E%3C/svg%3E") 6 3, auto !important;
-                }
-                .is-alt-pressed .react-flow__node:hover,
-                .is-alt-pressed .react-flow__node:hover * {
-                    cursor: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23FFF' stroke='%23000' stroke-width='2' d='M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87a.5.5 0 0 0 .35-.85L6.35 2.85a.5.5 0 0 0-.85.35Z'%3E%3Cpath fill='%23000' stroke='%23FFF' stroke-width='1.5' d='M16 12a4 4 0 1 1 0 8 4 4 0 0 1 0-8Zm0 1.5a.5.5 0 0 0-.5.5v1.5H14a.5.5 0 0 0 0 1h1.5V18a.5.5 0 0 0 1 0v-1.5H18a.5.5 0 0 0 0-1h-1.5V14a.5.5 0 0 0-.5-.5Z'/%3E%3C/svg%3E") 6 3, copy !important;
-                }
-                .thin-scrollbar::-webkit-scrollbar {
-                    width: 6px;
-                }
-                .thin-scrollbar::-webkit-scrollbar-track {
-                    background: transparent;
-                }
-                .thin-scrollbar::-webkit-scrollbar-thumb {
-                    background-color: #cbd5e1;
-                    border-radius: 3px;
-                }
-                .thin-scrollbar::-webkit-scrollbar-thumb:hover {
-                    background-color: #94a3b8;
-                }
-            `}</style>
-            <ReactFlow
-                nodes={nodes}
-                edges={edges}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
-                onPaneClick={handleDeselect}
-                nodeTypes={nodeTypes}
-                fitView
-                fitViewOptions={{ maxZoom: 1, padding: 0.2 }}
-                className="bg-[#f2f1ee] !cursor-default"
-                panOnScroll={true}
-                panOnDrag={false}
-                selectionOnDrag={true}
-                zoomOnScroll={false}
-                zoomOnDoubleClick={false}
-                selectionMode={SelectionMode.Partial}
-                panOnScrollSpeed={2.0} // Increased for snappier feel
-                zoomOnPinch={true}      // FigJam-like pinch to zoom
-                onDragOver={onDragOver}
-                onDrop={onDrop}
-                onNodeDragStart={onNodeDragStart}
-                onNodeDragStop={onNodeDragStop}
-                onNodesDelete={onNodesDelete}
-                onEdgesDelete={onEdgesDelete}
-                onConnect={onConnect}
-                onNodeClick={onNodeClick}
-                proOptions={{ hideAttribution: true }}
-                connectionLineStyle={{ stroke: '#3b82f6', strokeWidth: 2 }}
-                connectionLineContainerStyle={{ zIndex: 1000 }}
-            >
-                <Background
-                    gap={8}
-                    color="#b4b3a8"
-                />
-                <ZoomControls />
 
-                <FloatingToolbar
-                    onAddAiTurn={() => {
-                        const aiTurnCount = (flow.steps?.filter(s => s.type === 'turn').length || 0) + 1;
-                        const newTurn: Turn = {
-                            id: crypto.randomUUID(),
-                            type: 'turn',
-                            speaker: 'ai',
-                            label: `AI Turn ${aiTurnCount}`,
-                            components: [{
+            {/* Canvas Area */}
+            <div className="flex-1 w-full relative overflow-hidden h-full">
+                <style>{`
+                    .react-flow__pane, 
+                    .react-flow__selection-pane,
+                    .cursor-default {
+                        cursor: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23FFF' stroke='%23000' stroke-width='2' d='M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87a.5.5 0 0 0 .35-.85L6.35 2.85a.5.5 0 0 0-.85.35Z'%3E%3C/path%3E%3C/svg%3E") 6 3, auto !important;
+                    }
+                    .is-alt-pressed .react-flow__node:hover,
+                    .is-alt-pressed .react-flow__node:hover * {
+                        cursor: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23FFF' stroke='%23000' stroke-width='2' d='M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87a.5.5 0 0 0 .35-.85L6.35 2.85a.5.5 0 0 0-.85.35Z'%3E%3Cpath fill='%23000' stroke='%23FFF' stroke-width='1.5' d='M16 12a4 4 0 1 1 0 8 4 4 0 0 1 0-8Zm0 1.5a.5.5 0 0 0-.5.5v1.5H14a.5.5 0 0 0 0 1h1.5V18a.5.5 0 0 0 1 0v-1.5H18a.5.5 0 0 0 0-1h-1.5V14a.5.5 0 0 0-.5-.5Z'/%3E%3C/svg%3E") 6 3, copy !important;
+                    }
+                    .thin-scrollbar::-webkit-scrollbar {
+                        width: 6px;
+                    }
+                    .thin-scrollbar::-webkit-scrollbar-track {
+                        background: transparent;
+                    }
+                    .thin-scrollbar::-webkit-scrollbar-thumb {
+                        background-color: #cbd5e1;
+                        border-radius: 3px;
+                    }
+                    .thin-scrollbar::-webkit-scrollbar-thumb:hover {
+                        background-color: #94a3b8;
+                    }
+                `}</style>
+                <ReactFlow
+                    nodes={nodes}
+                    edges={edges}
+                    nodeTypes={nodeTypes}
+                    onNodesChange={onNodesChange}
+                    onEdgesChange={onEdgesChange}
+                    onConnect={onConnect}
+                    onNodeClick={onNodeClick}
+                    onNodeDragStart={onNodeDragStart}
+                    onNodesDelete={onNodesDelete}
+                    onEdgesDelete={onEdgesDelete}
+                    onNodeDragStop={onNodeDragStop}
+                    onPaneClick={handleDeselect}
+                    panOnScroll
+                    selectionOnDrag
+                    selectionMode={SelectionMode.Partial}
+                    multiSelectionKeyCode={null}
+                    panOnDrag={isAltPressed}
+                    zoomOnScroll={!isAltPressed}
+                    deleteKeyCode={['Delete', 'Backspace']}
+                    proOptions={{ hideAttribution: true }}
+                    minZoom={0.1}
+                    maxZoom={2}
+                    defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+                    onDragOver={onDragOver}
+                    onDrop={onDrop}
+                    className={`bg-[#f2f1ee] !cursor-default ${isAltPressed ? 'is-alt-pressed' : ''}`}
+                >
+                    <Background color="#b4b3a8" gap={20} size={2} />
+                    {selection && (
+                        <ContextToolbar
+                            selection={selection}
+                            anchorEl={selectionAnchorEl}
+                            onAddComponent={(type: ComponentType) => handleComponentAdd(type)}
+                            onChangePhase={handleChangePhase}
+                            onChangeUserTurnInputType={handleChangeUserTurnInputType}
+                            onMoveUp={handleMoveComponentUp}
+                            onMoveDown={handleMoveComponentDown}
+                            onDelete={handleDeleteComponent}
+                            currentPhase={currentPhase as FlowPhase}
+                            currentUserTurnInputType={currentUserTurnInputType}
+                            currentBranches={currentBranches}
+                            onUpdateBranches={handleUpdateBranches}
+                            canMoveUp={canMoveUp}
+                            canMoveDown={canMoveDown}
+                            isAiTurn={selection?.type === 'node' && flow.steps?.some(s => s.id === selection.nodeId && s.type === 'turn')}
+                        />
+                    )}
+
+                    <FloatingToolbar
+                        // FloatingToolbar as seen in Step 72 accepts specific callbacks
+                        onAddAiTurn={() => {
+                            const aiTurnCount = (flow.steps?.filter(s => s.type === 'turn').length || 0) + 1;
+                            const newTurn: Turn = {
                                 id: crypto.randomUUID(),
-                                type: 'message',
-                                content: getDefaultContent('message')
-                            }],
-                            position: { x: 100, y: 100 + (flow.steps?.length || 0) * 50 }
-                        };
-                        onUpdateFlow({
-                            ...flow,
-                            steps: [...(flow.steps || []), newTurn],
-                            lastModified: Date.now()
-                        });
-                    }}
-                    onAddUserTurn={() => {
-                        const userTurnCount = (flow.steps?.filter(s => s.type === 'user-turn').length || 0) + 1;
-                        const newUserTurn: UserTurn = {
-                            id: crypto.randomUUID(),
-                            type: 'user-turn',
-                            label: `User Turn ${userTurnCount}`,
-                            inputType: 'text',
-                            position: { x: 100, y: 100 + (flow.steps?.length || 0) * 50 }
-                        };
-                        onUpdateFlow({
-                            ...flow,
-                            steps: [...(flow.steps || []), newUserTurn],
-                            lastModified: Date.now()
-                        });
-                    }}
-                    onAddCondition={() => {
-                        const conditionCount = (flow.steps?.filter(s => s.type === 'condition').length || 0) + 1;
-                        const newCondition: Condition = {
-                            id: crypto.randomUUID(),
-                            type: 'condition',
-                            label: `Condition ${conditionCount}`,
-                            branches: [
-                                { id: crypto.randomUUID(), condition: 'Yes' },
-                                { id: crypto.randomUUID(), condition: 'No' }
-                            ],
-                            position: { x: 100, y: 100 + (flow.steps?.length || 0) * 50 }
-                        };
-                        onUpdateFlow({
-                            ...flow,
-                            steps: [...(flow.steps || []), newCondition],
-                            lastModified: Date.now()
-                        });
-                    }}
-                    onAddNote={() => {
-                        const noteCount = (flow.steps?.filter(s => s.type === 'note').length || 0) + 1;
-                        const newNote: Note = {
-                            id: crypto.randomUUID(),
-                            type: 'note',
-                            label: `Sticky note ${noteCount}`,
-                            content: '',
-                            position: { x: 100, y: 100 + (flow.steps?.length || 0) * 50 }
-                        };
-                        onUpdateFlow({
-                            ...flow,
-                            steps: [...(flow.steps || []), newNote],
-                            lastModified: Date.now()
-                        });
-                    }}
-                />
-
-
-                {/* Context Toolbar */}
-                {selection && selectionAnchorEl && (
-                    <ContextToolbar
-                        selection={selection}
-                        onAddComponent={handleComponentAdd}
-                        onChangePhase={handleChangePhase}
-                        onMoveUp={handleMoveComponentUp}
-                        onMoveDown={handleMoveComponentDown}
-                        onDelete={handleDeleteSelection}
-                        anchorEl={selectionAnchorEl}
-                        currentPhase={currentPhase as FlowPhase}
-                        currentUserTurnInputType={currentUserTurnInputType}
-                        onChangeUserTurnInputType={handleChangeUserTurnInputType}
-                        currentBranches={currentBranches}
-                        onUpdateBranches={handleUpdateBranches}
-                        canMoveUp={canMoveUp}
-                        canMoveDown={canMoveDown}
-                        isAiTurn={selection?.type === 'node' && flow.steps?.some(s => s.id === selection.nodeId && s.type === 'turn')}
+                                type: 'turn',
+                                speaker: 'ai',
+                                label: `AI Turn ${aiTurnCount}`,
+                                components: [{
+                                    id: crypto.randomUUID(),
+                                    type: 'message',
+                                    content: getDefaultContent('message')
+                                }],
+                                position: { x: 100, y: 100 + (flow.steps?.length || 0) * 50 }
+                            };
+                            onUpdateFlow({
+                                ...flow,
+                                steps: [...(flow.steps || []), newTurn],
+                                lastModified: Date.now()
+                            });
+                        }}
+                        onAddUserTurn={() => {
+                            const userTurnCount = (flow.steps?.filter(s => s.type === 'user-turn').length || 0) + 1;
+                            const newUserTurn: UserTurn = {
+                                id: crypto.randomUUID(),
+                                type: 'user-turn',
+                                label: `User Turn ${userTurnCount}`,
+                                inputType: 'text',
+                                position: { x: 100, y: 100 + (flow.steps?.length || 0) * 50 }
+                            };
+                            onUpdateFlow({
+                                ...flow,
+                                steps: [...(flow.steps || []), newUserTurn],
+                                lastModified: Date.now()
+                            });
+                        }}
+                        onAddCondition={() => {
+                            const conditionCount = (flow.steps?.filter(s => s.type === 'condition').length || 0) + 1;
+                            const newCondition: Condition = {
+                                id: crypto.randomUUID(),
+                                type: 'condition',
+                                label: `Condition ${conditionCount}`,
+                                branches: [
+                                    { id: crypto.randomUUID(), condition: 'Yes' },
+                                    { id: crypto.randomUUID(), condition: 'No' }
+                                ],
+                                position: { x: 100, y: 100 + (flow.steps?.length || 0) * 50 }
+                            };
+                            onUpdateFlow({
+                                ...flow,
+                                steps: [...(flow.steps || []), newCondition],
+                                lastModified: Date.now()
+                            });
+                        }}
+                        onAddNote={() => {
+                            const noteCount = (flow.steps?.filter(s => s.type === 'note').length || 0) + 1;
+                            const newNote: Note = {
+                                id: crypto.randomUUID(),
+                                type: 'note',
+                                label: `Sticky note ${noteCount}`,
+                                content: '',
+                                position: { x: 100, y: 100 + (flow.steps?.length || 0) * 50 }
+                            };
+                            onUpdateFlow({
+                                ...flow,
+                                steps: [...(flow.steps || []), newNote],
+                                lastModified: Date.now()
+                            });
+                        }}
                     />
-                )}
-
-
-
-
-            </ReactFlow>
+                    <ZoomControls />
+                </ReactFlow>
+            </div>
         </div>
     );
 }

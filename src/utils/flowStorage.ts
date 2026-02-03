@@ -1,9 +1,7 @@
-import { Flow } from '../views/studio/types';
+import { Flow, Block } from '../views/studio/types';
+import { supabase } from '@/lib/supabase';
 
-const METADATA_KEY = 'vca-flows-metadata';
-const FOLDERS_KEY = 'vca-folders';
-const FLOW_PREFIX = 'vca-flow-';
-
+// Types remain mostly the same
 export interface Folder {
     id: string;
     name: string;
@@ -18,6 +16,7 @@ export interface FlowMetadata {
     description?: string;
     folderId?: string;
     entryPoint?: string;
+    isPublic?: boolean;
 }
 
 export const INITIAL_FLOW: Flow = {
@@ -78,160 +77,209 @@ export const INITIAL_FLOW: Flow = {
             target: 'user-1'
         }
     ],
-    blocks: [] // Legacy field kept empty
+    blocks: []
 };
 
+// Async Storage Service
 export const flowStorage = {
-    getAllFolders: (): Folder[] => {
-        try {
-            const stored = localStorage.getItem(FOLDERS_KEY);
-            return stored ? JSON.parse(stored) : [];
-        } catch (e) {
-            console.error('Failed to load folders', e);
+    getAllFolders: async (): Promise<Folder[]> => {
+        const { data, error } = await supabase
+            .from('folders')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching folders:', error);
             return [];
         }
+
+        return data.map(d => ({
+            id: d.id,
+            name: d.name,
+            createdAt: new Date(d.created_at).getTime()
+        }));
     },
 
-    createFolder: (name: string) => {
-        const folders = flowStorage.getAllFolders();
-        const newFolder: Folder = {
-            id: crypto.randomUUID(),
-            name,
-            createdAt: Date.now()
-        };
-        folders.push(newFolder);
-        localStorage.setItem(FOLDERS_KEY, JSON.stringify(folders));
-        return newFolder;
-    },
+    createFolder: async (name: string): Promise<Folder | null> => {
+        const user = (await supabase.auth.getUser()).data.user;
+        if (!user) return null;
 
-    deleteFolder: (id: string) => {
-        // 1. Delete folder
-        const folders = flowStorage.getAllFolders();
-        const filtered = folders.filter(f => f.id !== id);
-        localStorage.setItem(FOLDERS_KEY, JSON.stringify(filtered));
+        const { data, error } = await supabase
+            .from('folders')
+            .insert({ name, user_id: user.id })
+            .select()
+            .single();
 
-        // 2. Move contents to root (remove folderId)
-        const flows = flowStorage.getAllFlows();
-        let changed = false;
-        flows.forEach(f => {
-            if (f.folderId === id) {
-                delete f.folderId;
-                changed = true;
-            }
-        });
-        if (changed) {
-            localStorage.setItem(METADATA_KEY, JSON.stringify(flows));
-        }
-    },
-
-    getAllFlows: (): FlowMetadata[] => {
-        try {
-            const stored = localStorage.getItem(METADATA_KEY);
-            return stored ? JSON.parse(stored) : [];
-        } catch (e) {
-            console.error('Failed to load flows metadata', e);
-            return [];
-        }
-    },
-
-    getFlow: (id: string): Flow | null => {
-        try {
-            const stored = localStorage.getItem(`${FLOW_PREFIX}${id}`);
-            if (!stored) return null;
-
-            const flow = JSON.parse(stored) as Flow;
-
-            // Simple Migration: Ensure all blocks have a phase
-            // If strictly missing, default to 'action' (safe catch-all)
-            // In a real app we might try to infer based on position, but this is safe.
-            if (flow.blocks) {
-                flow.blocks = flow.blocks.map(b => ({
-                    ...b,
-                    phase: b.phase || 'action'
-                }));
-            }
-
-            return flow;
-        } catch (e) {
-            console.error(`Failed to load flow ${id}`, e);
+        if (error || !data) {
+            console.error('Error creating folder:', error);
             return null;
         }
-    },
 
-    saveFlow: (flow: Flow & { folderId?: string }) => {
-        try {
-            const metadata = flowStorage.getAllFlows();
-            const index = metadata.findIndex(m => m.id === flow.id);
-
-            // Preserve existing folderId if not specified in update, or update it if provided
-            const existingMeta = index >= 0 ? metadata[index] : null;
-
-            let finalFolderId = existingMeta?.folderId;
-            if (flow.folderId !== undefined) {
-                finalFolderId = flow.folderId;
-            }
-
-            const newMeta: FlowMetadata = {
-                id: flow.id,
-                title: flow.title,
-                lastModified: Date.now(),
-                previewText: getPreviewText(flow.blocks[0]),
-                folderId: finalFolderId,
-                entryPoint: flow.settings?.entryPoint
-            };
-
-            if (index >= 0) {
-                metadata[index] = newMeta;
-            } else {
-                metadata.push(newMeta);
-            }
-
-            localStorage.setItem(METADATA_KEY, JSON.stringify(metadata));
-            localStorage.setItem(`${FLOW_PREFIX}${flow.id}`, JSON.stringify(flow));
-        } catch (e) {
-            console.error('Failed to save flow', e);
-        }
-    },
-
-    moveFlowToFolder: (flowId: string, folderId?: string) => {
-        const flows = flowStorage.getAllFlows();
-        const flow = flows.find(f => f.id === flowId);
-        if (flow) {
-            if (folderId) {
-                flow.folderId = folderId;
-            } else {
-                delete flow.folderId;
-            }
-            localStorage.setItem(METADATA_KEY, JSON.stringify(flows));
-        }
-    },
-
-    createFlow: (folderId?: string): string => {
-        const id = crypto.randomUUID();
-        const newFlow: Flow & { folderId?: string } = {
-            ...INITIAL_FLOW,
-            id,
-            title: 'Untitled Conversation',
-            lastModified: Date.now(),
-            folderId
+        return {
+            id: data.id,
+            name: data.name,
+            createdAt: new Date(data.created_at).getTime()
         };
-        flowStorage.saveFlow(newFlow);
-        return id;
     },
 
-    deleteFlow: (id: string) => {
-        const metadata = flowStorage.getAllFlows();
-        const filtered = metadata.filter(m => m.id !== id);
-        localStorage.setItem(METADATA_KEY, JSON.stringify(filtered));
-        localStorage.removeItem(`${FLOW_PREFIX}${id}`);
+    deleteFolder: async (id: string) => {
+        // First, update flows to remove folder_id (Supabase might handle this with cascade or set null, but explicit is safe)
+        // Actually, let's just delete the folder. If we didn't set up ON DELETE CASCADE, flows might error or stick around.
+        // We will assume "orphan" flows just become "All" flows (folder_id = null).
+        // Let's manually set folder_id to null for contained flows first.
+        await supabase.from('flows').update({ folder_id: null }).eq('folder_id', id);
+
+        const { error } = await supabase.from('folders').delete().eq('id', id);
+        if (error) console.error('Error deleting folder:', error);
+    },
+
+    renameFolder: async (id: string, newName: string) => {
+        const { error } = await supabase.from('folders').update({ name: newName }).eq('id', id);
+        if (error) console.error('Error renaming folder:', error);
+    },
+
+    moveFlowToFolder: async (flowId: string, folderId: string | null) => {
+        const { error } = await supabase.from('flows').update({ folder_id: folderId }).eq('id', flowId);
+        if (error) console.error('Error moving flow to folder:', error);
+    },
+
+    getAllFlows: async (): Promise<FlowMetadata[]> => {
+        const { data, error } = await supabase
+            .from('flows')
+            .select('id, title, updated_at, folder_id, metadata, is_public')
+            .order('updated_at', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching flows:', error);
+            return [];
+        }
+
+        return data.map(d => ({
+            id: d.id,
+            title: d.title,
+            lastModified: new Date(d.updated_at).getTime(),
+            folderId: d.folder_id,
+            previewText: d.metadata?.previewText,
+            entryPoint: d.metadata?.entryPoint,
+            isPublic: d.is_public
+        }));
+    },
+
+    getFlow: async (id: string): Promise<Flow | null> => {
+        const { data, error } = await supabase
+            .from('flows')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (error || !data) {
+            console.error(`Error fetching flow ${id}:`, error);
+            return null;
+        }
+
+        // Merge content and metadata back into Flow object
+        const flow: Flow = {
+            id: data.id,
+            title: data.title,
+            lastModified: new Date(data.updated_at).getTime(),
+            settings: data.content?.settings || INITIAL_FLOW.settings,
+            steps: data.content?.steps || [],
+            connections: data.content?.connections || [],
+            blocks: data.content?.blocks || []
+        };
+
+        // Migration: Ensure phase exists on blocks (same logic as before)
+        if (flow.blocks) {
+            flow.blocks = flow.blocks.map(b => ({
+                ...b,
+                phase: b.phase || 'action'
+            }));
+        }
+
+        return flow;
+    },
+
+    saveFlow: async (flow: Flow & { folderId?: string }) => {
+        const user = (await supabase.auth.getUser()).data.user;
+        if (!user) {
+            console.error('Cannot save flow: User not logged in');
+            return;
+        }
+
+        // Prepare data for DB
+        const content = {
+            settings: flow.settings,
+            steps: flow.steps,
+            connections: flow.connections,
+            blocks: flow.blocks
+        };
+
+        const metadata = {
+            previewText: getPreviewText(flow.blocks?.[0]),
+            entryPoint: flow.settings?.entryPoint
+        };
+
+        const payload = {
+            title: flow.title,
+            content,
+            metadata,
+            updated_at: new Date().toISOString(),
+            user_id: user.id,
+        };
+
+
+        const finalPayload = { ...payload, folder_id: flow.folderId };
+
+        // Upsert
+        const { error } = await supabase
+            .from('flows')
+            .upsert({ id: flow.id, ...finalPayload })
+            .select();
+
+        if (error) console.error('Error saving flow:', error);
+    },
+
+    createFlow: async (folderId?: string): Promise<string | null> => {
+        const user = (await supabase.auth.getUser()).data.user;
+        if (!user) return null;
+
+        const newFlowContent = {
+            settings: INITIAL_FLOW.settings,
+            steps: INITIAL_FLOW.steps,
+            connections: INITIAL_FLOW.connections,
+            blocks: []
+        };
+
+        const { data, error } = await supabase
+            .from('flows')
+            .insert({
+                title: 'Untitled Conversation',
+                user_id: user.id,
+                folder_id: folderId || null,
+                content: newFlowContent,
+                metadata: { previewText: 'System Message' }
+            })
+            .select()
+            .single();
+
+        if (error || !data) {
+            console.error('Error creating flow:', error);
+            return null;
+        }
+
+        return data.id;
+    },
+
+    deleteFlow: async (id: string) => {
+        const { error } = await supabase.from('flows').delete().eq('id', id);
+        if (error) console.error('Error deleting flow:', error);
     }
 };
 
-function getPreviewText(block?: import('../views/studio/types').Block): string | undefined {
+function getPreviewText(block?: Block): string | undefined {
     if (!block) return undefined;
     if (block.type === 'ai') {
         const content = block.content;
-        // Determine preview based on variant using type guards or loose checks
         if ('text' in content) return content.text;
         if ('title' in content) return content.title;
         if ('loadingTitle' in content) return content.loadingTitle;
