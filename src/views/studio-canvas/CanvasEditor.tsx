@@ -26,6 +26,7 @@ import { FloatingToolbar } from './components/FloatingToolbar';
 import { ZoomControls } from './components/ZoomControls';
 import { Button } from '@/components/ui/button';
 import { ActionTooltip } from './components/ActionTooltip';
+import { ConnectionLine } from './components/ConnectionLine';
 import { ShareDialog } from '../studio/components/ShareDialog';
 import { ArrowLeft, Play, PanelRightOpen, ExternalLink } from 'lucide-react';
 import {
@@ -1089,8 +1090,10 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                     defaultViewport={{ x: 0, y: 0, zoom: 1 }}
                     onDragOver={onDragOver}
                     onDrop={onDrop}
+                    connectionLineComponent={ConnectionLine}
                     className={`bg-[#f2f1ee] !cursor-default ${isAltPressed ? 'is-alt-pressed' : ''}`}
                 >
+
                     <Background color="#b4b3a8" gap={20} size={2} />
                     {selection && (
                         <ContextToolbar
