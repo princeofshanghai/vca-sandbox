@@ -39,7 +39,7 @@ export type InlineFeedbackProps = {
  * />
  * ```
  */
-export const InlineFeedback = ({ 
+export const InlineFeedback = ({
   type = 'positive',
   showAction = true,
   message,
@@ -47,30 +47,56 @@ export const InlineFeedback = ({
   onActionClick,
   className,
 }: InlineFeedbackProps) => {
-  
+
+  const getFeedbackStyles = () => {
+    switch (type) {
+      case 'negative':
+        return {
+          icon: 'signal-error' as const,
+          iconColor: 'text-vca-text-negative',
+          textColor: 'text-vca-text-negative',
+          defaultMessage: 'Not delivered.',
+        };
+      case 'neutral':
+        return {
+          icon: 'signal-notice' as const,
+          iconColor: 'text-vca-icon',
+          textColor: 'text-vca-text-neutral',
+          defaultMessage: 'Response stopped',
+        };
+      case 'positive':
+      default:
+        return {
+          icon: 'signal-success' as const,
+          iconColor: 'text-vca-text-positive',
+          textColor: 'text-vca-text-positive',
+          defaultMessage: 'Success',
+        };
+    }
+  };
+
+  const styles = getFeedbackStyles();
+  const displayMessage = message || styles.defaultMessage;
   const isNegative = type === 'negative';
-  const textColor = isNegative ? 'text-vca-text-negative' : 'text-vca-text-positive';
-  const defaultMessage = isNegative ? 'Not delivered.' : 'Success';
-  const displayMessage = message || defaultMessage;
-  
+
   return (
     <div className={cn('flex gap-vca-xs items-center', className)}>
       <div className="flex gap-vca-s items-center">
-        <VcaIcon 
-          icon={isNegative ? 'signal-error' : 'signal-success'} 
+        <VcaIcon
+          icon={styles.icon}
           size="sm"
-          className={textColor}
+          className={styles.iconColor}
         />
         {/* ✅ Typography pattern: template literal with color variable */}
-        <p className={`font-vca-text text-vca-xsmall-open whitespace-nowrap ${textColor}`}>
+        <p className={`font-vca-text text-vca-xsmall-open whitespace-nowrap ${styles.textColor}`}>
           {displayMessage}
         </p>
       </div>
-      
+
       {showAction && isNegative && (
         <button
           onClick={onActionClick}
-          className={`font-vca-text text-vca-xsmall-bold-open underline whitespace-nowrap ${textColor} cursor-pointer hover:opacity-80`}
+          className={`font-vca-text text-vca-xsmall-bold-open underline whitespace-nowrap ${styles.textColor} cursor-pointer hover:opacity-80`}
           type="button"
         >
           {actionText}

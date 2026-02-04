@@ -42,50 +42,50 @@ export const PreviewSettingsMenu = ({
                     sideOffset={8}
                     className="min-w-[240px] bg-white rounded-lg shadow-xl ring-1 ring-black/5 p-2 z-[1001] animate-in fade-in-0 zoom-in-95"
                 >
-                    <DropdownMenu.Label className="text-xs font-semibold text-gray-400 px-2 py-1.5 mb-1">
-                        Device Preview
+                    <DropdownMenu.Label className="text-xs font-medium text-gray-400 px-2 py-1.5 mb-1">
+                        Device preview
                     </DropdownMenu.Label>
 
                     <DropdownMenu.Item
-                        className="flex items-center justify-between gap-4 px-2 py-2 text-sm text-gray-700 rounded hover:bg-gray-100 cursor-pointer outline-none"
+                        className="flex items-center justify-between gap-4 px-2 py-1.5 text-xs text-gray-700 rounded hover:bg-gray-100 cursor-pointer outline-none"
                         onClick={() => isMobile && onToggleMobile()}
                     >
                         <div className="flex items-center gap-2">
                             <Monitor size={14} className="text-gray-400" />
-                            <span>Desktop Mode</span>
+                            <span>Desktop</span>
                         </div>
                         {!isMobile && <Check size={14} className="text-blue-600" />}
                     </DropdownMenu.Item>
 
                     <DropdownMenu.Item
-                        className="flex items-center justify-between gap-4 px-2 py-2 text-sm text-gray-700 rounded hover:bg-gray-100 cursor-pointer outline-none"
+                        className="flex items-center justify-between gap-4 px-2 py-1.5 text-xs text-gray-700 rounded hover:bg-gray-100 cursor-pointer outline-none"
                         onClick={() => !isMobile && onToggleMobile()}
                     >
                         <div className="flex items-center gap-2">
                             <Smartphone size={14} className="text-gray-400" />
-                            <span>Mobile Mode</span>
+                            <span>Mobile</span>
                         </div>
                         {isMobile && <Check size={14} className="text-blue-600" />}
                     </DropdownMenu.Item>
 
                     <div className="h-px bg-gray-100 my-1" />
-                    <DropdownMenu.Label className="text-xs font-semibold text-gray-400 px-2 py-1.5 mb-1">
+                    <DropdownMenu.Label className="text-xs font-medium text-gray-400 px-2 py-1.5 mb-1">
                         Appearance
                     </DropdownMenu.Label>
 
                     <DropdownMenu.CheckboxItem
-                        className="flex items-center justify-between gap-4 px-2 py-2 text-sm text-gray-700 rounded hover:bg-gray-100 cursor-pointer outline-none"
+                        className="flex items-center justify-between gap-4 px-2 py-1.5 text-xs text-gray-700 rounded hover:bg-gray-100 cursor-pointer outline-none"
                         checked={isPremium}
                         onCheckedChange={onTogglePremium}
                     >
-                        <span>Premium Branding</span>
+                        <span>Premium branding</span>
                         <DropdownMenu.ItemIndicator>
                             <Check size={14} className="text-blue-600" />
                         </DropdownMenu.ItemIndicator>
                     </DropdownMenu.CheckboxItem>
 
                     <DropdownMenu.CheckboxItem
-                        className="flex items-center justify-between gap-4 px-2 py-2 text-sm text-gray-700 rounded hover:bg-gray-100 cursor-pointer outline-none"
+                        className="flex items-center justify-between gap-4 px-2 py-1.5 text-xs text-gray-700 rounded hover:bg-gray-100 cursor-pointer outline-none"
                         checked={flow.settings?.showDisclaimer ?? true}
                         onCheckedChange={() => {
                             const newFlow = {
@@ -98,14 +98,14 @@ export const PreviewSettingsMenu = ({
                             onUpdateFlow(newFlow);
                         }}
                     >
-                        <span>Show Disclaimer</span>
+                        <span>Show disclaimer</span>
                         <DropdownMenu.ItemIndicator>
                             <Check size={14} className="text-blue-600" />
                         </DropdownMenu.ItemIndicator>
                     </DropdownMenu.CheckboxItem>
 
                     <DropdownMenu.CheckboxItem
-                        className="flex items-center justify-between gap-4 px-2 py-2 text-sm text-gray-700 rounded hover:bg-gray-100 cursor-pointer outline-none"
+                        className="flex items-center justify-between gap-4 px-2 py-1.5 text-xs text-gray-700 rounded hover:bg-gray-100 cursor-pointer outline-none"
                         checked={flow.settings?.simulateThinking ?? true}
                         onCheckedChange={() => {
                             const newFlow = {
@@ -118,7 +118,7 @@ export const PreviewSettingsMenu = ({
                             onUpdateFlow(newFlow);
                         }}
                     >
-                        <span>Simulate Thinking</span>
+                        <span>Simulate thinking</span>
                         <DropdownMenu.ItemIndicator>
                             <Check size={14} className="text-blue-600" />
                         </DropdownMenu.ItemIndicator>

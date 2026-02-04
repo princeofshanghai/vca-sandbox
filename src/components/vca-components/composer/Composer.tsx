@@ -40,7 +40,7 @@ export const Composer = ({
         className
       )}>
         <div className="flex flex-col gap-vca-sm items-start justify-center px-vca-xl py-[10px]">
-          <div className="flex gap-vca-xs items-center justify-end w-full">
+          <div className="flex gap-vca-xs items-center justify-end w-full min-h-[40px]">
             <button
               onClick={onStop}
               className="flex gap-vca-s items-center group cursor-pointer"

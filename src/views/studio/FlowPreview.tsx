@@ -8,6 +8,7 @@ import { ActionCard } from '@/components/vca-components/action-card/ActionCard';
 import { PromptGroup } from '@/components/vca-components/prompt-group/PromptGroup';
 import { PhoneFrame } from '@/components/component-library/PhoneFrame';
 import { MarkdownRenderer } from '@/components/vca-components/markdown-renderer/Markdown';
+import { InlineFeedback } from '@/components/vca-components/inline-feedback';
 
 
 
@@ -29,6 +30,12 @@ export const FlowPreview = ({
     // Shared composer state
     const [composerValue, setComposerValue] = useState('');
     const [handleSendRef, setHandleSendRef] = useState<(() => void) | undefined>(undefined);
+
+    // NEW: Lifted status state for Composer
+    const [statusData, setStatusData] = useState<{
+        status: 'default' | 'active' | 'stop',
+        onStop?: () => void
+    }>({ status: 'default' });
 
     return (
         <div className="h-full w-full flex flex-col relative bg-transparent pointer-events-none">
@@ -66,6 +73,9 @@ export const FlowPreview = ({
                                     composerValue={composerValue}
                                     onComposerChange={setComposerValue}
                                     onComposerSend={() => handleSendRef?.()}
+                                    // STOP LOGIC MAPPING
+                                    composerStatus={statusData.status}
+                                    onStop={statusData.onStop}
                                 >
                                     <PreviewContent
                                         flow={flow}
@@ -73,6 +83,7 @@ export const FlowPreview = ({
                                         onRegisterSend={(fn) => setHandleSendRef(() => fn)}
                                         onComposerReset={() => setComposerValue('')}
                                         composerValue={composerValue}
+                                        onStatusChange={(status, onStop) => setStatusData({ status, onStop })}
                                     />
                                 </Container>
                             </PhoneFrame>
@@ -90,6 +101,9 @@ export const FlowPreview = ({
                             composerValue={composerValue}
                             onComposerChange={setComposerValue}
                             onComposerSend={() => handleSendRef?.()}
+                            // STOP LOGIC MAPPING
+                            composerStatus={statusData.status}
+                            onStop={statusData.onStop}
                         >
                             <PreviewContent
                                 flow={flow}
@@ -97,6 +111,7 @@ export const FlowPreview = ({
                                 onRegisterSend={(fn) => setHandleSendRef(() => fn)}
                                 onComposerReset={() => setComposerValue('')}
                                 composerValue={composerValue}
+                                onStatusChange={(status, onStop) => setStatusData({ status, onStop })}
                             />
                         </Container>
                     </div>
@@ -106,6 +121,13 @@ export const FlowPreview = ({
     );
 };
 
+// Types for local history extension
+type HistoryStep = import('./types').Step | {
+    type: 'feedback',
+    id: string,
+    variant: 'neutral',
+    message: string
+};
 
 // Interactive Preview Content
 const PreviewContent = ({
@@ -113,16 +135,19 @@ const PreviewContent = ({
     variables,
     onRegisterSend,
     onComposerReset,
-    composerValue
+    composerValue,
+    // New prop to report status up
+    onStatusChange
 }: {
     flow: Flow,
     variables?: Record<string, string>,
     onRegisterSend: (fn: () => void) => void,
     onComposerReset: () => void,
-    composerValue: string
+    composerValue: string,
+    onStatusChange?: (status: 'default' | 'active' | 'stop', onStop?: () => void) => void
 }) => {
     // State to track the conversation history (visited nodes)
-    const [history, setHistory] = useState<import('./types').Step[]>([]);
+    const [history, setHistory] = useState<HistoryStep[]>([]);
 
     // NEW: Delivery Queue & Visibility
     const [deliveryQueue, setDeliveryQueue] = useState<import('./types').Step[]>([]);
@@ -136,9 +161,82 @@ const PreviewContent = ({
     const historyRef = useRef(history); // Ref to access latest history in callbacks
     const currentRunId = useRef(0); // Track active delivery run
 
+    // Track streaming text content for truncation
+    const currentStreamingTextRef = useRef<string>('');
+    const streamingComponentIdRef = useRef<string | null>(null);
+    const stopRequestedRef = useRef(false);
+
     useEffect(() => {
         historyRef.current = history;
     }, [history]);
+
+    useEffect(() => {
+        streamingComponentIdRef.current = streamingComponentId;
+    }, [streamingComponentId]);
+
+    // Report Status to Parent (Container)
+    useEffect(() => {
+        const isRunning = isThinking || isProcessingQueue || !!streamingComponentId;
+
+        if (isRunning) {
+            onStatusChange?.('stop', handleStop);
+        } else {
+            onStatusChange?.('default', undefined);
+        }
+    }, [isThinking, isProcessingQueue, streamingComponentId, onStatusChange]);
+
+    const handleStop = () => {
+        stopRequestedRef.current = true;
+
+        // 1. Cancel Queue & Thinking
+        setDeliveryQueue([]);
+        setIsThinking(false);
+        setIsProcessingQueue(false);
+
+        // 2. Handle Streaming Truncation
+        const activeId = streamingComponentIdRef.current;
+        if (activeId) {
+            setHistory(prev => {
+                // Find the step containing the streaming component
+                return prev.map(step => {
+                    if (step.type === 'turn') {
+                        // Check if this step has the streaming component
+                        const hasComponent = step.components.some(c => c.id === activeId);
+                        if (hasComponent) {
+                            // Deep clone and update
+                            const newComponents = step.components.map(c => {
+                                if (c.id === activeId) {
+                                    // Truncate content
+                                    if (c.type === 'message') {
+                                        return { ...c, content: { ...c.content, text: currentStreamingTextRef.current } };
+                                    }
+                                    if (c.type === 'infoMessage') {
+                                        return { ...c, content: { ...c.content, body: currentStreamingTextRef.current } };
+                                    }
+                                }
+                                return c;
+                            });
+                            return { ...step, components: newComponents };
+                        }
+                    }
+                    return step;
+                });
+            });
+            setStreamingComponentId(null);
+        }
+
+        // 3. Add Feedback Step
+        const feedbackStep: HistoryStep = {
+            type: 'feedback',
+            id: `feedback-${Date.now()}`,
+            variant: 'neutral',
+            message: 'Response stopped'
+        };
+        setHistory(prev => [...prev, feedbackStep]);
+
+        // 4. Force new run ID to invalidate any pending promises
+        currentRunId.current = Date.now();
+    };
 
 
     // Initialize history with the start node
@@ -207,10 +305,11 @@ const PreviewContent = ({
                 await new Promise((r) => setTimeout(r as TimerHandler, 1000));
 
                 if (currentRunId.current !== runId) return; // Abort if reset
+                stopRequestedRef.current = false; // Reset stop flag before starting components
                 setIsThinking(false);
 
                 // 2. Add to history
-                setHistory(prev => [...prev, nextStep]);
+                setHistory(prev => [...prev, nextStep as import('./types').Step]);
 
                 const components = nextStep.components;
                 const nonPromptComponents = components.filter(c => c.type !== 'prompt');
@@ -533,6 +632,18 @@ const PreviewContent = ({
     }, [composerValue, history, flow.connections, flow.steps, simulateThinking]);
 
 
+    // --- AUTO-SCROLL LOGIC ---
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    useEffect(() => {
+        // Scroll when history changes or thinking state toggles
+        scrollToBottom();
+    }, [history, isThinking, visibleComponentIds]);
+
     // Render logic
     return (
         <div className="space-y-4">
@@ -541,6 +652,19 @@ const PreviewContent = ({
 
             {history.map((step, historyIndex) => {
                 const isLast = historyIndex === history.length - 1;
+
+                // 3. Feedback Step (NEW)
+                if (step.type === 'feedback') {
+                    return (
+                        <div key={step.id} className="flex flex-col gap-2">
+                            <InlineFeedback
+                                type="neutral"
+                                message={step.message}
+                                showAction={false}
+                            />
+                        </div>
+                    );
+                }
 
                 // 1. AI Turn
                 if (step.type === 'turn') {
@@ -561,7 +685,10 @@ const PreviewContent = ({
                                             defaultText={
                                                 text ? (
                                                     streamingComponentId === component.id ? (
-                                                        <StreamingText text={text} />
+                                                        <StreamingText
+                                                            text={text}
+                                                            onProgress={(t) => currentStreamingTextRef.current = t}
+                                                        />
                                                     ) : (
                                                         <MarkdownRenderer>{text}</MarkdownRenderer>
                                                     )
@@ -584,7 +711,10 @@ const PreviewContent = ({
                                         >
                                             {info.body ? (
                                                 streamingComponentId === component.id ? (
-                                                    <StreamingText text={info.body} />
+                                                    <StreamingText
+                                                        text={info.body}
+                                                        onProgress={(t) => currentStreamingTextRef.current = t}
+                                                    />
                                                 ) : (
                                                     <MarkdownRenderer>{info.body}</MarkdownRenderer>
                                                 )
@@ -664,15 +794,23 @@ const PreviewContent = ({
 
             {/* Thinking Indicator */}
             {isThinking && <Message variant="ai" isThinking={true} />}
+
+            {/* Scroll Anchor */}
+            <div ref={messagesEndRef} />
         </div>
     );
 };
 
 // HELPERS
 
-const StreamingText = ({ text, onComplete }: { text: string; onComplete?: () => void }) => {
+const StreamingText = ({ text, onComplete, onProgress }: { text: string; onComplete?: () => void; onProgress?: (text: string) => void }) => {
     const [displayedText, setDisplayedText] = useState('');
     const [index, setIndex] = useState(0);
+
+    useEffect(() => {
+        // Report progress immediately when text updates
+        onProgress?.(displayedText);
+    }, [displayedText, onProgress]);
 
     useEffect(() => {
         // Simple word-by-word streaming for speed and logic

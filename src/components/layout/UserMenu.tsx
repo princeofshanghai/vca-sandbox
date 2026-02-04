@@ -1,14 +1,25 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { LogOut } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 export function UserMenu() {
     const { user, signOut } = useAuth();
 
     if (!user?.email) return null;
 
-    const initial = user.email.charAt(0).toUpperCase();
+    const getInitials = () => {
+        if (user.user_metadata?.full_name) {
+            const names = user.user_metadata.full_name.split(' ');
+            if (names.length >= 2) {
+                return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+            }
+            return names[0].slice(0, 2).toUpperCase();
+        }
+        return (user.email || '').slice(0, 2).toUpperCase();
+    };
+
+    const initials = getInitials();
 
     return (
         <DropdownMenu.Root>
@@ -16,9 +27,9 @@ export function UserMenu() {
                 <Tooltip.Root>
                     <Tooltip.Trigger asChild>
                         <DropdownMenu.Trigger asChild>
-                            <button className="h-9 w-9 rounded-md hover:bg-gray-100 flex items-center justify-center transition-colors outline-none cursor-pointer">
-                                <div className="h-7 w-7 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-medium text-xs">
-                                    {initial}
+                            <button className="h-8 w-8 rounded-md hover:bg-gray-100 flex items-center justify-center transition-colors outline-none cursor-pointer">
+                                <div className="h-6 w-6 rounded-full bg-gradient-to-br from-blue-600 to-violet-600 flex items-center justify-center text-white font-bold text-[9px] tracking-wide shadow-sm ring-1 ring-white/20">
+                                    {initials}
                                 </div>
                             </button>
                         </DropdownMenu.Trigger>

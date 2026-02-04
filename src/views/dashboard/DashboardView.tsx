@@ -1,18 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Folder, FolderPlus, Trash2, Grid2x2, Component, Pencil, Loader2 } from 'lucide-react';
+import { Plus, Search, Component, Loader2, Menu } from 'lucide-react';
 import VcaLogo from '@/components/VcaLogo';
 import { flowStorage, FlowMetadata, Folder as FolderType } from '@/utils/flowStorage';
 import { FlowCard } from '@/components/dashboard/FlowCard';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/utils/cn';
 import { NewFlowDialog } from '@/components/dashboard/NewFlowDialog';
 import NavLink from '@/components/layout/NavLink';
 import { Flow } from '@/views/studio/types';
-import Sidebar from '@/components/layout/Sidebar';
 import { useApp } from '@/contexts/AppContext';
-import { Menu } from 'lucide-react';
 import { UserMenu } from '@/components/layout/UserMenu';
+import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
+import { DashboardEmptyState } from '@/components/dashboard/DashboardEmptyState';
 
 export const DashboardView = () => {
     const navigate = useNavigate();
@@ -20,10 +19,6 @@ export const DashboardView = () => {
     const [folders, setFolders] = useState<FolderType[]>([]);
     const [activeFolderId, setActiveFolderId] = useState<string | null>(null); // null = All
     const [searchQuery, setSearchQuery] = useState('');
-    const [isCreatingFolder, setIsCreatingFolder] = useState(false);
-    const [newFolderName, setNewFolderName] = useState('');
-    const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
-    const [editingFolderName, setEditingFolderName] = useState('');
     const [showNewFlowDialog, setShowNewFlowDialog] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const { state, setMobileMenuOpen } = useApp();
@@ -60,39 +55,6 @@ export const DashboardView = () => {
     const handleDeleteFlow = async (id: string) => {
         await flowStorage.deleteFlow(id);
         loadData();
-    };
-
-    const handleCreateFolder = async () => {
-        if (!newFolderName.trim()) return;
-        await flowStorage.createFolder(newFolderName.trim());
-        setNewFolderName('');
-        setIsCreatingFolder(false);
-        loadData();
-    };
-
-    const handleDeleteFolder = async (id: string, e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (confirm('Delete folder? Flows inside will be moved to "All chats".')) {
-            await flowStorage.deleteFolder(id);
-            if (activeFolderId === id) setActiveFolderId(null);
-            loadData();
-        }
-    };
-
-    const handleStartRenameFolder = (folder: FolderType, e: React.MouseEvent) => {
-        e.stopPropagation();
-        setEditingFolderId(folder.id);
-        setEditingFolderName(folder.name);
-    };
-
-    const handleRenameFolder = async () => {
-        if (editingFolderId && editingFolderName.trim()) {
-            await flowStorage.renameFolder(editingFolderId, editingFolderName.trim());
-            setEditingFolderId(null);
-            loadData();
-        } else {
-            setEditingFolderId(null);
-        }
     };
 
     const handleRenameFlow = async (id: string, newTitle: string) => {
@@ -151,108 +113,16 @@ export const DashboardView = () => {
 
     return (
         <div className="flex h-full bg-white overflow-hidden">
-            <Sidebar
+            <DashboardSidebar
+                folders={folders}
+                activeFolderId={activeFolderId}
+                setActiveFolderId={setActiveFolderId}
+                onFolderUpdate={loadData}
                 header={sidebarHeader}
                 footer={sidebarFooter}
                 isMobileOpen={state.mobileMenuOpen}
-                onClose={() => setMobileMenuOpen(false)}
-            >
-                <div className="flex items-center justify-between mb-2 px-1">
-                    <h2 className="text-2xs font-medium text-gray-900">Chats</h2>
-                </div>
-
-                <div className="space-y-1">
-                    <NavLink
-                        onClick={() => {
-                            setActiveFolderId(null);
-                            setMobileMenuOpen(false);
-                        }}
-                        isActive={activeFolderId === null}
-                    >
-                        <div className="flex items-center gap-2">
-                            <Grid2x2 size={16} strokeWidth={1.5} />
-                            <span>All</span>
-                        </div>
-                    </NavLink>
-
-                    {isCreatingFolder && (
-                        <div className="px-2 py-1 mb-2">
-                            <input
-                                autoFocus
-                                className="w-full text-sm px-2 py-1 rounded border border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-100"
-                                placeholder="Folder Name"
-                                value={newFolderName}
-                                onChange={(e) => setNewFolderName(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') handleCreateFolder();
-                                    if (e.key === 'Escape') setIsCreatingFolder(false);
-                                }}
-                                onBlur={() => setIsCreatingFolder(false)}
-                            />
-                        </div>
-                    )}
-
-                    {folders.map(folder => (
-                        editingFolderId === folder.id ? (
-                            <div key={folder.id} className="px-2 py-1 mb-2">
-                                <input
-                                    autoFocus
-                                    className="w-full text-xs px-2 py-1 rounded border border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-100"
-                                    value={editingFolderName}
-                                    onChange={(e) => setEditingFolderName(e.target.value)}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') handleRenameFolder();
-                                        if (e.key === 'Escape') setEditingFolderId(null);
-                                    }}
-                                    onBlur={handleRenameFolder}
-                                    onClick={(e) => e.stopPropagation()}
-                                />
-                            </div>
-                        ) : (
-                            <div
-                                key={folder.id}
-                                onClick={() => {
-                                    setActiveFolderId(folder.id);
-                                    setMobileMenuOpen(false);
-                                }}
-                                className={cn(
-                                    "group flex items-center justify-between px-3 py-2 rounded text-2xs cursor-pointer transition-colors",
-                                    activeFolderId === folder.id
-                                        ? "bg-gray-100 text-gray-900"
-                                        : "text-gray-700 hover:bg-gray-50"
-                                )}
-                            >
-                                <div className="flex items-center gap-2 overflow-hidden">
-                                    <Folder size={16} strokeWidth={1.5} className={cn("shrink-0", activeFolderId === folder.id ? "fill-gray-400 text-gray-400" : "fill-gray-100 text-gray-400")} />
-                                    <span className="truncate">{folder.name}</span>
-                                </div>
-                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button
-                                        onClick={(e) => handleStartRenameFolder(folder, e)}
-                                        className="p-1 hover:bg-gray-200 text-gray-400 hover:text-gray-700 rounded transition-all"
-                                    >
-                                        <Pencil size={12} />
-                                    </button>
-                                    <button
-                                        onClick={(e) => handleDeleteFolder(folder.id, e)}
-                                        className="p-1 hover:bg-red-100 text-gray-400 hover:text-red-500 rounded transition-all"
-                                    >
-                                        <Trash2 size={12} />
-                                    </button>
-                                </div>
-                            </div>
-                        )
-                    ))}
-
-                    <button
-                        onClick={() => setIsCreatingFolder(true)}
-                        className="flex items-center gap-2 w-full px-3 py-2 rounded text-gray-500 hover:text-gray-900 hover:bg-gray-100/50 transition-colors text-2xs"
-                    >
-                        <Plus size={16} strokeWidth={1.5} />
-                        <span>New folder</span>
-                    </button>
-                </div>
-            </Sidebar>
+                setMobileMenuOpen={setMobileMenuOpen}
+            />
 
             {/* Main Content */}
             <div className="flex-1 flex flex-col h-full overflow-hidden bg-gray-50">
@@ -308,27 +178,10 @@ export const DashboardView = () => {
                                 ))}
                             </div>
                         ) : (
-                            <div className="flex flex-col items-center justify-center py-24 text-center max-w-sm mx-auto">
-                                <div className="w-16 h-16 bg-white border border-gray-100 rounded-xl shadow-sm flex items-center justify-center mb-5">
-                                    <FolderPlus className="text-blue-500" size={24} strokeWidth={1.5} />
-                                </div>
-                                <h3 className="text-lg font-medium text-gray-900 mb-1.5 tracking-tight">
-                                    {activeFolderId ? "This folder is empty" : "No chats yet"}
-                                </h3>
-                                <p className="text-gray-500 text-sm mb-6 leading-relaxed px-4">
-                                    {activeFolderId
-                                        ? "There are no chats in this folder. Move one here or start a new one."
-                                        : "Start building your first chat flow to see it appear here in the dashboard."}
-                                </p>
-                                <Button
-                                    onClick={() => setShowNewFlowDialog(true)}
-                                    size="sm"
-                                    className="bg-blue-600 text-white hover:bg-blue-700 gap-2"
-                                >
-                                    <Plus size={16} />
-                                    New
-                                </Button>
-                            </div>
+                            <DashboardEmptyState
+                                isFolderEmpty={!!activeFolderId}
+                                onCreateNew={() => setShowNewFlowDialog(true)}
+                            />
                         )}
                     </div>
                 </div>

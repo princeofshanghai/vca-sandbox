@@ -23,6 +23,7 @@ export type ContainerProps = {
   composerStatus?: 'default' | 'active' | 'typing' | 'multiline' | 'disabled' | 'stop';
   onComposerChange?: (value: string) => void;
   onComposerSend?: () => void;
+  onStop?: () => void;
   hideHeader?: boolean;
 };
 
@@ -48,7 +49,9 @@ export const Container = ({
   composerValue: externalComposerValue,
   composerStatus = 'default',
   onComposerChange: externalOnComposerChange,
+
   onComposerSend: externalOnComposerSend,
+  onStop: externalOnStop,
   hideHeader = false,
 }: ContainerProps) => {
   // Interactive composer state (simplified - library handles auto-resize)
@@ -122,6 +125,7 @@ export const Container = ({
         value={composerValue}
         onChange={setComposerValue}
         onSend={handleSend}
+        onStop={externalOnStop}
         onAttachment={onAttachment}
         className="shrink-0"
       />
