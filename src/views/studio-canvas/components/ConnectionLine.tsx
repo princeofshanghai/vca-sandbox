@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { ConnectionLineComponentProps, getBezierPath } from '@xyflow/react';
 
 export const ConnectionLine = ({
