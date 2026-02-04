@@ -143,6 +143,15 @@ export const LoginView = () => {
                     )}
                 </div>
 
+                {/* LinkedIn Logo */}
+                <div className="mt-8 flex justify-center opacity-40">
+                    <img
+                        src="/linkedin_logo_white.svg"
+                        alt="LinkedIn"
+                        className="h-5 w-auto"
+                    />
+                </div>
+
             </div>
         </div>
     );
