@@ -1,106 +1,260 @@
 # VCA Sandbox
 
-A lightweight web app for designers to prototype Virtual Chat Assistant (VCA) chatbot flows using pre-built UI components.
+A comprehensive web application for designers to prototype Virtual Chat Assistant (VCA) conversation flows using production-ready UI components and a visual flow builder.
 
-## Project Setup ✅
+**Owner:** Charles Hu, Staff Product Designer @ LinkedIn
+**Last Updated:** February 5, 2026
 
-The project is initialized with:
-- **React 18.3** + **TypeScript 5.4** + **Vite 5.2**
-- **Tailwind CSS 3.4** configured with VCA design tokens from Figma
-- **Project structure** ready for development
+---
 
-## Getting Started
+## 🎯 What Is This?
 
-### Install Dependencies
+VCA Sandbox is an internal design tool that helps LinkedIn designers:
+- Browse and reference standardized VCA chat components
+- Build conversation flows visually without coding
+- Preview flows in a realistic chat interface
+- Share and collaborate on conversation designs
+
+**See [docs/00-START-HERE.md](./docs/00-START-HERE.md) for a beginner-friendly introduction.**
+
+---
+
+## 📊 Current Status (February 2026)
+
+### ✅ Phase 1: Component Library — COMPLETE
+- 24+ production-ready VCA components
+- Interactive component demos with variants and states
+- Design foundations (colors, typography, spacing, radius)
+- Complete design token system (70+ VCA tokens)
+
+### ✅ Phase 2: Authentication & Dashboard — COMPLETE
+- Google authentication
+- User dashboard with flow management
+- Create, view, and manage flows
+- Protected routes and user sessions
+
+### 🚧 Phase 3: Studio (Visual Flow Builder) — IN PROGRESS
+- Node-based canvas editor (React Flow)
+- Drag-and-drop flow building
+- Live preview drawer with phone simulation
+- Script editor and action block configuration
+- Flow compilation and execution engine
+- **What's left:** Polish UI, add more node types, improve UX
+
+### 🚧 Phase 4: Sharing & Collaboration — PARTIAL
+- Share routes implemented
+- Supabase backend connected
+- **What's left:** Complete share functionality, public URLs
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 18+
+- npm or yarn
+
+### Installation
+
 ```bash
+# Install dependencies
 npm install
 ```
 
-### Run Development Server
+### Development
+
 ```bash
+# Start development server
 npm run dev
 ```
 
 Open [http://localhost:5173](http://localhost:5173) in your browser.
 
-### Build for Production
-```bash
-npm run build
-```
+### Build
 
-### Preview Production Build
 ```bash
+# Build for production
+npm run build
+
+# Preview production build
 npm run preview
 ```
 
-## Project Structure
+---
+
+## 🏗️ Project Structure
 
 ```
 vca-sandbox-6/
 ├── src/
 │   ├── components/
-│   │   ├── layout/              # TopNavigation, Sidebar, MainContent
-│   │   ├── component-library/   # Component Library view
-│   │   ├── flow-preview/        # Flow Preview view
-│   │   ├── vca-components/      # Custom VCA components from Figma
-│   │   └── ui/                  # shadcn/ui components
-│   ├── contexts/                # React Context for global state
-│   ├── data/                    # JSON files for components and flows
-│   ├── types/                   # TypeScript type definitions
-│   ├── utils/                   # Utility functions
-│   ├── App.tsx                  # Main app component
-│   ├── main.tsx                 # App entry point
-│   └── index.css                # Global styles with Tailwind
-├── docs/                        # Project documentation
-├── .cursor/rules/               # Cursor AI rules
-└── [config files]               # Vite, TypeScript, Tailwind configs
+│   │   ├── vca-components/      # 24+ VCA chat components
+│   │   ├── component-library/   # Component demo infrastructure
+│   │   ├── layout/              # App shell, navigation, sidebar
+│   │   ├── dashboard/           # Dashboard and flow management
+│   │   ├── ui/                  # Base UI components (shadcn/ui)
+│   │   └── preview/             # Flow playback components
+│   ├── views/
+│   │   ├── components/          # 24 component demo views
+│   │   ├── studio/              # Studio flow builder views
+│   │   ├── dashboard/           # Dashboard view
+│   │   ├── share/               # Share functionality
+│   │   ├── auth/                # Authentication views
+│   │   └── patterns/            # Pattern library views
+│   ├── contexts/                # React Context (Auth, App state)
+│   ├── utils/                   # Flow engine, compiler, storage
+│   ├── types/                   # TypeScript definitions
+│   └── config/                  # App configuration
+├── docs/                        # Documentation
+│   ├── 00-START-HERE.md        # Start here if you're new!
+│   ├── current/                # Active documentation
+│   ├── reference/              # Design system reference
+│   ├── setup/                  # Implementation guides
+│   └── archive/                # Historical docs
+└── public/                     # Static assets
 ```
-
-## Design System
-
-The project uses design tokens from Figma, mapped to Tailwind CSS:
-
-### Colors
-- **Action:** `#0a66c2` (LinkedIn Blue)
-- **Text:** `#000000e5`
-- **Background:** `#ffffff`
-- **Negative:** `#cb112d`
-- **Positive:** `#01754f`
-
-### Spacing
-- `xs`: 4px, `s`: 8px, `md`: 12px, `lg`: 16px, `xl`: 20px, `xxl`: 24px
-
-### Typography
-- **Font Family:** SF Pro Text / SF Pro Display
-- **Sizes:** xsmall (12px), small (14px), large (20px)
-
-### Border Radius
-- `sm`: 8px, `md`: 16px, `lg`: 24px, `round`: 360px
-
-## Development Status
-
-### Phase 1: Project Setup ✅ COMPLETE
-- [x] Initialize Vite + React + TypeScript project
-- [x] Install and configure Tailwind CSS
-- [x] Configure all VCA design tokens (70+ tokens with vca- prefix)
-- [x] Install and configure shadcn/ui
-- [x] Set up React Router
-- [x] Create basic layout components (TopNavigation, Sidebar, MainContent)
-- [x] Set up global context for state management
-- [x] Working navigation between Components and Flow Preview views
-
-### Next: Phase 2 - Component Library View
-- Build VCA components from Figma
-- Display components in Component Library
-- Add component variants and states
-
-## Documentation
-
-- [Product Requirements](./docs/Product-Requirements.md)
-- [Technical Specification](./docs/Technical-Specification.md)
-- [Development Plan](./docs/Development-Plan.md)
 
 ---
 
-**Owner:** Charles Hu, Staff Product Designer  
-**Timeline:** MVP in 2 weeks
+## 🎨 Tech Stack
+
+**Core:**
+- React 18.3 + TypeScript 5.4
+- Vite 5.2 (build tool)
+- React Router 6 (routing)
+
+**UI & Styling:**
+- Tailwind CSS 3.4
+- shadcn/ui components
+- Radix UI primitives
+- Custom VCA design tokens
+
+**Flow Builder:**
+- React Flow / XYFlow (node-based canvas)
+- dnd-kit (drag and drop)
+- elkjs (auto-layout)
+
+**Backend:**
+- Supabase (database, auth)
+
+**Other:**
+- Lucide React (icons)
+- React Markdown (markdown rendering)
+
+---
+
+## 📚 Documentation
+
+**Start Here:**
+- [00-START-HERE.md](./docs/00-START-HERE.md) — New to the project? Read this first!
+- [project-overview.md](./docs/current/project-overview.md) — Project goals and vision
+
+**Current Plans:**
+- [studio-redesign-plan.md](./docs/current/studio-redesign-plan.md) — Studio architecture
+- [vca-ui-standards.md](./docs/current/vca-ui-standards.md) — Component guidelines
+
+**Design System:**
+- [design-system-summary.md](./docs/current/design-system-summary.md) — Token overview
+- [VCA-Design-Tokens.md](./docs/reference/VCA-Design-Tokens.md) — Complete token reference
+- [Tailwind-Reference.md](./docs/reference/Tailwind-Reference.md) — Tailwind setup
+
+**Setup Guides:**
+- [google-auth-setup.md](./docs/setup/google-auth-setup.md) — Authentication setup
+
+---
+
+## 🧩 VCA Components Built
+
+All components are production-ready with variants, states, and demo pages:
+
+**Messages & Content:**
+- Message, Info Message, Action Message
+- Markdown Renderer
+- Container, Divider
+
+**Interactive Elements:**
+- Button, Button Icon, Button Link
+- Composer (text input)
+- Prompt, Prompt Group
+- Action Card
+
+**Feedback & Status:**
+- Thinking Indicator
+- Feedback (thumbs up/down)
+- Inline Feedback
+- Agent Status, Agent Timestamp
+
+**Navigation & Structure:**
+- Header
+- Agent Banner
+- Avatar, Badge
+- Source Link, Sources
+
+**Visual Elements:**
+- VCA Icons
+- Design tokens (colors, spacing, typography, radius)
+
+---
+
+## 🔧 Available Scripts
+
+```bash
+npm run dev          # Start dev server
+npm run build        # Build for production
+npm run preview      # Preview production build
+npm run lint         # Run ESLint
+npm run build:tokens # Build design tokens
+```
+
+---
+
+## 🎯 What's Next?
+
+**Short-term (Current Sprint):**
+- Polish Studio canvas UI/UX
+- Add more node types (conditions, user turns)
+- Improve flow preview experience
+- Complete sharing functionality
+
+**Medium-term (Next Quarter):**
+- Build library of 10-15 example flows
+- Add flow export for engineering handoff
+- Implement version history
+- Mobile preview improvements
+
+**Long-term (Future):**
+- Collaboration features (real-time editing)
+- Figma plugin integration
+- AI-powered flow suggestions
+- A/B testing framework
+
+---
+
+## 📝 Contributing
+
+This is an internal LinkedIn tool. If you're a LinkedIn designer or engineer interested in contributing:
+
+1. Read [00-START-HERE.md](./docs/00-START-HERE.md)
+2. Review the [current documentation](./docs/current/)
+3. Reach out to Charles Hu for access and guidance
+
+---
+
+## 🐛 Known Issues
+
+- Studio auto-layout sometimes needs manual adjustment
+- Some flows may not save correctly (Supabase schema in progress)
+- Mobile preview not fully responsive yet
+- Share links not generating correctly
+
+---
+
+## 📮 Contact
+
+**Owner:** Charles Hu (Staff Product Designer)
+**Team:** LinkedIn VCA Design Team
+**Slack:** #vca-design (internal)
+
+---
+
+**Built with ❤️ for better conversation design at LinkedIn**

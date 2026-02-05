@@ -1,5 +1,5 @@
 import { Handle, Position } from '@xyflow/react';
-import { Flag } from 'lucide-react';
+import { Play } from 'lucide-react';
 
 export const StartNode = () => {
     return (
@@ -12,7 +12,7 @@ export const StartNode = () => {
                 border-2 border-emerald-500
                 hover:shadow-md transition-all
             ">
-                <Flag size={18} className="fill-current text-emerald-600" />
+                <Play size={18} className="fill-current text-emerald-600 mr-[1px]" />
                 <span className="font-semibold text-sm tracking-wide">Start</span>
             </div>
 

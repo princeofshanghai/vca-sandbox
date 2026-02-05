@@ -1,7 +1,9 @@
 import { useRef, useEffect } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Settings2, GitBranch, ArrowRight } from 'lucide-react';
 import { ComponentEditorPopover } from './ComponentEditorPopover';
 import { EditorField } from './EditorField';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/utils';
 
 interface ConditionBranchEditorProps {
     nodeId: string;
@@ -42,80 +44,101 @@ export function ConditionBranchEditor({
     }, [isOpen]);
 
     const editorContent = (
-        <div className="flex flex-col p-4 space-y-4">
-            <EditorField
-                label="Path Name"
-                value={condition}
-                onChange={(val) => onChange({ condition: val })}
-                inputRef={inputRef}
-                placeholder={'e.g. "Yes", "No", "Admin"'}
-            />
-            <p className="px-1 text-[10px] text-gray-400 leading-normal -mt-3 mb-2">
-                Name this outcome so you can easily identify it on the canvas.
-            </p>
+        <div className="flex flex-col overflow-hidden">
+            {/* Header */}
+            <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
+                <Settings2 size={14} className="text-gray-400" />
+                <span className="text-xs font-semibold text-gray-700 uppercase tracking-wider">Branch Settings</span>
+            </div>
 
-            <div className="pt-2 border-t border-gray-100 flex flex-col gap-3">
-                <span className="text-xs font-medium text-gray-500">When does this happen?</span>
-
-                {/* Default Toggle */}
-                <label className="flex items-center gap-2 cursor-pointer group">
-                    <input
-                        type="checkbox"
-                        checked={isDefault || false}
-                        onChange={(e) => onChange({ isDefault: e.target.checked })}
-                        className="w-3 h-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            <div className="p-4 space-y-5">
+                {/* Identity Section */}
+                <div className="space-y-3">
+                    <EditorField
+                        label="Path Name"
+                        value={condition}
+                        onChange={(val) => onChange({ condition: val })}
+                        inputRef={inputRef}
+                        placeholder={'e.g. "Yes", "No", "Admin"'}
                     />
-                    <span className="text-sm text-gray-600 group-hover:text-gray-900">Default (Else) Path</span>
-                </label>
+                    <p className="text-[10px] text-gray-400 leading-normal px-0.5">
+                        The name shown on the canvas to identify this path.
+                    </p>
+                </div>
 
-                {isDefault ? (
-                    <div className="p-2 bg-gray-50 text-[11px] text-gray-500 rounded border border-gray-200 leading-relaxed">
-                        This path will be taken automatically if no other conditions are met.
+                {/* Routing Logic Section */}
+                <div className="pt-2">
+                    <div className="flex items-center gap-2 mb-3">
+                        <GitBranch size={13} className="text-gray-400" />
+                        <span className="text-[11px] font-medium text-gray-500 uppercase tracking-tight">Routing Logic</span>
                     </div>
-                ) : (
-                    <div className="grid grid-cols-1 gap-3 animate-in fade-in duration-200">
-                        <EditorField
-                            label="If Property"
-                            placeholder="e.g. IsAdmin, UserFound, Subscription"
-                            value={logic?.variable || ''}
-                            onChange={(val) => onChange({ logic: { variable: val, value: logic?.value || '', operator: 'eq' } })}
-                        />
 
-                        <div className="flex flex-col space-y-1">
-                            <label className="text-xs font-medium text-gray-500 select-none">Operator</label>
-                            <input
-                                type="text"
-                                disabled
-                                value="Equals"
-                                className="w-full text-xs text-gray-400 border border-gray-200 rounded p-1.5 bg-gray-50 cursor-not-allowed"
-                            />
-                        </div>
+                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 space-y-4">
+                        {/* Default Path Toggle */}
+                        <label className="flex items-center justify-between cursor-pointer group">
+                            <span className="text-xs text-gray-600 group-hover:text-gray-900 transition-colors">Default (Else) Path</span>
+                            <div className="relative inline-flex items-center">
+                                <input
+                                    type="checkbox"
+                                    checked={isDefault || false}
+                                    onChange={(e) => onChange({ isDefault: e.target.checked })}
+                                    className="sr-only peer"
+                                />
+                                <div className="w-7 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
+                            </div>
+                        </label>
 
-                        <EditorField
-                            label="Is Equal To"
-                            placeholder="e.g. true, false, Active"
-                            value={logic?.value || ''}
-                            onChange={(val) => onChange({ logic: { variable: logic?.variable || '', value: val, operator: 'eq' } })}
-                        />
+                        {isDefault ? (
+                            <div className="text-[10px] text-gray-500 bg-white/50 p-2 rounded border border-gray-100/50 leading-relaxed italic">
+                                This path will be taken automatically if no other conditions are met.
+                            </div>
+                        ) : (
+                            <div className="space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
+                                <EditorField
+                                    label="If Property"
+                                    placeholder="e.g. IsAdmin"
+                                    value={logic?.variable || ''}
+                                    onChange={(val) => onChange({ logic: { variable: val, value: logic?.value || '', operator: 'eq' } })}
+                                />
 
-                        {/* Helper Hint for Preview */}
-                        {logic?.variable && (
-                            <div className="p-2 bg-blue-50 text-[10px] text-blue-600 rounded border border-blue-100 leading-relaxed">
-                                Top Tip: To test this, type the expected value in the chat!
+                                <div className="flex items-center justify-center gap-2 py-1">
+                                    <div className="h-[1px] flex-1 bg-gray-200/60" />
+                                    <Badge variant="outline" className="text-[9px] font-bold text-gray-400 border-gray-200 uppercase tracking-widest py-0 px-2 h-5 bg-white">
+                                        Is Equal To
+                                    </Badge>
+                                    <div className="h-[1px] flex-1 bg-gray-200/60" />
+                                </div>
+
+                                <EditorField
+                                    label="Value"
+                                    placeholder="e.g. true"
+                                    value={logic?.value || ''}
+                                    onChange={(val) => onChange({ logic: { variable: logic?.variable || '', value: val, operator: 'eq' } })}
+                                />
+
+                                {logic?.variable && (
+                                    <div className="flex gap-2 p-2 bg-blue-50/50 rounded border border-blue-100/50">
+                                        <ArrowRight size={12} className="text-blue-400 shrink-0 mt-0.5" />
+                                        <p className="text-[10px] text-blue-600/80 leading-tight">
+                                            Test this by typing the value in the chat preview!
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
-                )}
-            </div>
+                </div>
 
-            <div className="pt-2 border-t border-gray-100">
-                <button
-                    onClick={onDelete}
-                    className="flex items-center gap-2 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 px-2 py-1.5 rounded transition-colors w-full"
-                >
-                    <Trash2 size={12} />
-                    <span>Delete Branch</span>
-                </button>
+                {/* Footer Actions */}
+                <div className="pt-2 border-t border-gray-100 flex justify-end">
+                    <button
+                        onClick={onDelete}
+                        className="flex items-center gap-1.5 text-[10px] font-medium text-gray-400 hover:text-red-500 hover:bg-red-50 px-2 py-1 rounded transition-all group"
+                    >
+                        <Trash2 size={12} className="group-hover:scale-110 transition-transform" />
+                        <span>Delete Branch</span>
+                    </button>
+                </div>
             </div>
         </div>
     );
@@ -124,7 +147,7 @@ export function ConditionBranchEditor({
         <ComponentEditorPopover
             isOpen={isOpen}
             onOpenChange={onOpenChange}
-            componentId={branchId} // Wrap branch row in id={`component-${branchId}`}
+            componentId={branchId}
             editorContent={editorContent}
             width={280}
         >
@@ -132,3 +155,4 @@ export function ConditionBranchEditor({
         </ComponentEditorPopover>
     );
 }
+
