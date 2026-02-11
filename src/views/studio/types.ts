@@ -2,9 +2,11 @@
 
 export type BlockType = 'user' | 'ai';
 
-export type AIBlockVariant = 'message' | 'info' | 'action';
+export type AICardVariant = 'status';
 
-export type FlowPhase = 'welcome' | 'intent' | 'info' | 'action';
+export type AIBlockVariant = 'message' | 'info' | AICardVariant;
+
+export type FlowPhase = 'welcome' | 'intent' | 'info' | 'status';
 
 export interface BaseBlock {
     id: string;
@@ -31,7 +33,7 @@ export interface AIInfoContent {
     showFeedback?: boolean;
 }
 
-export interface AIActionContent {
+export interface AIStatusContent {
     loadingTitle: string;
 
     // Success State (Default)
@@ -48,7 +50,7 @@ export interface AIActionContent {
 export interface AIBlock extends BaseBlock {
     type: 'ai';
     variant: AIBlockVariant;
-    content: AIMessageContent | AIInfoContent | AIActionContent;
+    content: AIMessageContent | AIInfoContent | AIStatusContent;
     metadata?: {
         prompts?: string[];
     };
@@ -84,19 +86,48 @@ export interface Flow {
 // ============================================
 
 // Component types match the old AIBlockVariant
-export type ComponentType = 'message' | 'infoMessage' | 'actionCard' | 'prompt';
+export type ComponentType = 'message' | 'infoMessage' | 'statusCard' | 'prompt' | 'selectionList' | 'checkboxGroup';
 
 // Component content union
 export type ComponentContent =
     | AIMessageContent
     | AIInfoContent
-    | AIActionContent
-    | PromptContent;
+    | AIStatusContent
+    | PromptContent
+    | SelectionListContent
+    | CheckboxGroupContent;
 
 // Individual prompt component
 export interface PromptContent {
     text: string;
     showAiIcon?: boolean;
+}
+
+// Selection List Content
+export interface SelectionListContent {
+    title?: string;
+    layout: 'list' | 'carousel' | 'grid';
+    items: {
+        id: string;
+        title: string;
+        subtitle?: string;
+        imageUrl?: string;
+        iconName?: string; // VcaIconName
+        disabled?: boolean;
+    }[];
+}
+
+// Checkbox Group Content
+export interface CheckboxGroupContent {
+    title?: string;
+    description?: string;
+    saveLabel?: string; // Button label, default "Save"
+    options: {
+        id: string;
+        label: string;
+        description?: string;
+        disabled?: boolean;
+    }[];
 }
 
 // A component is a single UI element

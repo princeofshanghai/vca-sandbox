@@ -14,8 +14,7 @@ import SpacingView from './SpacingView';
 import RadiusView from './RadiusView';
 import MessageComponentView from './components/MessageComponentView';
 import InfoMessageComponentView from './components/InfoMessageComponentView';
-import ActionMessageComponentView from './components/ActionMessageComponentView';
-import ActionCardComponentView from './components/ActionCardComponentView';
+import StatusCardComponentView from './components/StatusCardComponentView';
 import AgentStatusComponentView from './components/AgentStatusComponentView';
 import AgentTimestampComponentView from './components/AgentTimestampComponentView';
 import InlineFeedbackComponentView from './components/InlineFeedbackComponentView';
@@ -25,12 +24,15 @@ import SourcesComponentView from './components/SourcesComponentView';
 import ButtonComponentView from './components/ButtonComponentView';
 import ButtonIconComponentView from './components/ButtonIconComponentView';
 import ButtonLinkComponentView from './components/ButtonLinkComponentView';
+import CheckboxComponentView from './components/CheckboxComponentView';
+import CheckboxGroupComponentView from './components/CheckboxGroupComponentView';
 import PromptComponentView from './components/PromptComponentView';
 import PromptGroupComponentView from './components/PromptGroupComponentView';
 import ComposerComponentView from './components/ComposerComponentView';
 import AvatarComponentView from './components/AvatarComponentView';
 import BadgeComponentView from './components/BadgeComponentView';
 import HeaderComponentView from './components/HeaderComponentView';
+import RecommendationCardComponentView from './components/RecommendationCardComponentView';
 import ContainerComponentView from './components/ContainerComponentView';
 import IconsComponentView from './components/IconsComponentView';
 import AgentBannerComponentView from './components/AgentBannerComponentView';
@@ -38,6 +40,7 @@ import DividerComponentView from './components/DividerComponentView';
 import FeedbackComponentView from './components/FeedbackComponentView';
 import ConversationFlowPatternView from './patterns/ConversationFlowPatternView';
 import HumanHandoffPatternView from './patterns/HumanHandoffPatternView';
+import SelectionListComponentView from './components/SelectionListComponentView';
 
 
 const ComponentLibraryView = () => {
@@ -157,8 +160,9 @@ const ComponentLibraryView = () => {
           <Route index element={<Navigate to="/foundations/typography" replace />} />
           <Route path="message" element={<MessageComponentView />} />
           <Route path="info-message" element={<InfoMessageComponentView />} />
-          <Route path="action-message" element={<ActionMessageComponentView />} />
-          <Route path="action-card" element={<ActionCardComponentView />} />
+          <Route path="components/status-card" element={<StatusCardComponentView />} />
+          <Route path="components/recommendation-card" element={<RecommendationCardComponentView />} />
+          <Route path="components/agent-banner" element={<AgentBannerComponentView />} />
           <Route path="agent-status" element={<AgentStatusComponentView />} />
           <Route path="agent-timestamp" element={<AgentTimestampComponentView />} />
           <Route path="inline-feedback" element={<InlineFeedbackComponentView />} />
@@ -175,9 +179,12 @@ const ComponentLibraryView = () => {
           <Route path="button" element={<ButtonComponentView />} />
           <Route path="button-icon" element={<ButtonIconComponentView />} />
           <Route path="button-link" element={<ButtonLinkComponentView />} />
+          <Route path="checkbox" element={<CheckboxComponentView />} />
+          <Route path="checkbox-group" element={<CheckboxGroupComponentView />} />
           <Route path="feedback" element={<FeedbackComponentView />} />
           <Route path="prompt" element={<PromptComponentView />} />
           <Route path="prompt-group" element={<PromptGroupComponentView />} />
+          <Route path="selection-list" element={<SelectionListComponentView />} />
         </Routes>
       </MainContent>
     </div>

@@ -1,20 +1,20 @@
 import { useEffect, useState } from 'react';
-import { Component, AIActionContent } from '../../studio/types';
+import { Component, AIStatusContent } from '../../studio/types';
 import { ComponentEditorPopover } from './ComponentEditorPopover';
 import { MarkdownEditor } from './MarkdownEditor';
 import { Plus, X } from 'lucide-react';
 import { EditorField } from './EditorField';
 
-interface ActionCardEditorProps {
+interface StatusCardEditorProps {
     component: Component;
-    onChange: (updates: Partial<AIActionContent>) => void;
+    onChange: (updates: Partial<AIStatusContent>) => void;
     children: React.ReactNode;
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
 }
 
-export function ActionCardEditor({ component, onChange, children, isOpen, onOpenChange }: ActionCardEditorProps) {
-    const content = component.content as AIActionContent;
+export function StatusCardEditor({ component, onChange, children, isOpen, onOpenChange }: StatusCardEditorProps) {
+    const content = component.content as AIStatusContent;
     // Local state for all fields
     const [localLoadingTitle, setLocalLoadingTitle] = useState(content.loadingTitle || '');
     const [localSuccessTitle, setLocalSuccessTitle] = useState(content.successTitle || '');

@@ -17,7 +17,6 @@ export interface FlowMetadata {
     folderId?: string;
     entryPoint?: string;
     isPublic?: boolean;
-    deletedAt?: number | null;
 }
 
 export const INITIAL_FLOW: Flow = {
@@ -154,7 +153,7 @@ export const flowStorage = {
 
         const { data, error } = await supabase
             .from('flows')
-            .select('id, title, updated_at, folder_id, metadata, is_public, deleted_at')
+            .select('id, title, updated_at, folder_id, metadata, is_public')
             .eq('user_id', user.id)
             .order('updated_at', { ascending: false });
 
@@ -170,8 +169,7 @@ export const flowStorage = {
             folderId: d.folder_id,
             previewText: d.metadata?.previewText,
             entryPoint: d.metadata?.entryPoint,
-            isPublic: d.is_public,
-            deletedAt: d.deleted_at ? new Date(d.deleted_at).getTime() : null
+            isPublic: d.is_public
         }));
     },
 
@@ -280,25 +278,9 @@ export const flowStorage = {
         return data.id;
     },
 
-    deleteFlow: async (id: string, permanent: boolean = false) => {
-        if (permanent) {
-            const { error } = await supabase.from('flows').delete().eq('id', id);
-            if (error) console.error('Error permanently deleting flow:', error);
-        } else {
-            const { error } = await supabase
-                .from('flows')
-                .update({ deleted_at: new Date().toISOString() })
-                .eq('id', id);
-            if (error) console.error('Error soft deleting flow:', error);
-        }
-    },
-
-    restoreFlow: async (id: string) => {
-        const { error } = await supabase
-            .from('flows')
-            .update({ deleted_at: null })
-            .eq('id', id);
-        if (error) console.error('Error restoring flow:', error);
+    deleteFlow: async (id: string) => {
+        const { error } = await supabase.from('flows').delete().eq('id', id);
+        if (error) console.error('Error deleting flow:', error);
     }
 };
 

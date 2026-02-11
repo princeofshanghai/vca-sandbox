@@ -35,8 +35,13 @@ export function ComponentEditorPopover({
                     side="right"
                     sideOffset={16}
                     align="start"
+                    collisionPadding={20}
                     className="bg-white rounded-xl shadow-2xl border border-gray-200 p-0 z-[1001]"
-                    style={{ width: `${width}px` }}
+                    style={{
+                        width: `${width}px`,
+                        maxHeight: 'calc(100vh - 40px)',
+                        overflowY: 'auto'
+                    }}
                     onOpenAutoFocus={(e) => e.preventDefault()}
                     onPointerDownOutside={(e) => {
                         // Prevent closing when clicking the trigger element, contextual toolbar, or markdown toolbar

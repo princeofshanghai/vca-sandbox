@@ -1,4 +1,4 @@
-import { Flow, Block, BlockType, AIBlock, AIBlockVariant, AIMessageContent, AIInfoContent, AIActionContent, FlowPhase } from './types';
+import { Flow, Block, BlockType, AIBlock, AIBlockVariant, AIMessageContent, AIInfoContent, AIStatusContent, FlowPhase } from './types';
 import { VcaIcon } from '@/components/vca-components/icons/VcaIcon';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Trash2, User, GripVertical, Plus } from 'lucide-react';
@@ -34,7 +34,7 @@ export const ScriptEditor = ({ flow, onUpdateFlow }: ScriptEditorProps) => {
             // Set initial content based on variant
             if (newBlock.variant === 'message') newBlock.content = { text: '' };
             if (newBlock.variant === 'info') newBlock.content = { title: '', body: '', sources: [], showFeedback: true };
-            if (newBlock.variant === 'action') newBlock.content = { loadingTitle: '', successTitle: '' };
+            if (newBlock.variant === 'status') newBlock.content = { loadingTitle: '', successTitle: '' };
         } else {
             newBlock.content = ''; // User content
         }
@@ -146,7 +146,7 @@ const BlockEditor = ({ block, index, onUpdate, onDelete }: {
         let defaultContent = {};
         if (variant === 'message') defaultContent = { text: '' };
         if (variant === 'info') defaultContent = { title: '', body: '', sources: [], showFeedback: true };
-        if (variant === 'action') defaultContent = { loadingTitle: '', successTitle: '' };
+        if (variant === 'status') defaultContent = { loadingTitle: '', successTitle: '' };
 
 
         onUpdate({
@@ -181,7 +181,7 @@ const BlockEditor = ({ block, index, onUpdate, onDelete }: {
                 {/* Variant Switcher for AI Blocks */}
                 {isAI && (
                     <div className="flex gap-2 mb-3 pb-3 border-b border-gray-50 overflow-x-auto">
-                        {(['message', 'info', 'action'] as const).map(variant => (
+                        {(['message', 'info', 'status'] as const).map(variant => (
                             <VariantButton
                                 key={variant}
                                 variant={variant}
@@ -312,11 +312,13 @@ const BlockEditor = ({ block, index, onUpdate, onDelete }: {
                 )}
 
                 {/* 4. AI Action (Simulated) */}
-                {block.type === 'ai' && block.variant === 'action' && (
-                    <ActionBlockEditor
-                        content={block.content as AIActionContent}
-                        onChange={(newContent) => onUpdate({ content: newContent })}
-                    />
+                {block.type === 'ai' && block.variant === 'status' && (
+                    <div className="p-3 border rounded-lg bg-gray-50">
+                        <ActionBlockEditor
+                            content={block.content as AIStatusContent}
+                            onChange={(newContent) => onUpdate({ content: newContent })}
+                        />
+                    </div>
                 )}
             </div>
 

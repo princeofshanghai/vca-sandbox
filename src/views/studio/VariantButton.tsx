@@ -3,7 +3,7 @@ import { cn } from '@/utils/cn';
 import * as HoverCard from '@radix-ui/react-hover-card';
 import { Message } from '@/components/vca-components/messages/Message';
 import { InfoMessage } from '@/components/vca-components/info-message/InfoMessage';
-import { ActionCard } from '@/components/vca-components/action-card/ActionCard';
+import { StatusCard } from '@/components/vca-components/status-card/StatusCard';
 
 interface VariantButtonProps {
     variant: AIBlockVariant;
@@ -26,7 +26,7 @@ export const VariantButton = ({ variant, isSelected, onClick }: VariantButtonPro
                 >
                     <span className="capitalize">
                         {variant === 'info' ? 'Info message' :
-                            variant === 'action' ? 'Action card' :
+                            variant === 'status' ? 'Status card' :
                                 variant}
                     </span>
                 </button>
@@ -43,7 +43,7 @@ export const VariantButton = ({ variant, isSelected, onClick }: VariantButtonPro
                             <span className="text-xs font-bold text-gray-900 capitalize">
                                 {variant === 'message' && "Message"}
                                 {variant === 'info' && "InfoMessage"}
-                                {variant === 'action' && "ActionCard"}
+                                {variant === 'status' && "StatusCard"}
                             </span>
                             <span className="text-[10px] uppercase tracking-wider font-medium text-gray-400">Preview</span>
                         </div>
@@ -74,14 +74,14 @@ export const VariantButton = ({ variant, isSelected, onClick }: VariantButtonPro
                                             </InfoMessage>
                                         </div>
                                     )}
-                                    {variant === 'action' && (
+                                    {variant === 'status' && (
                                         <div className="w-[300px]">
-                                            <ActionCard
+                                            <StatusCard
                                                 status="success"
                                                 title="Action Completed"
                                             >
                                                 Additional context about the action.
-                                            </ActionCard>
+                                            </StatusCard>
                                         </div>
                                     )}
                                 </div>
@@ -90,7 +90,7 @@ export const VariantButton = ({ variant, isSelected, onClick }: VariantButtonPro
                             <p className="text-xs text-center text-gray-500 leading-relaxed px-4">
                                 {variant === 'message' && "Best for conversational chitchat."}
                                 {variant === 'info' && "Best for long-form answers, context, and sources."}
-                                {variant === 'action' && "Visualize tool usage or background processes."}
+                                {variant === 'status' && "Visualize process status or outcomes."}
                             </p>
                         </div>
                     </div>

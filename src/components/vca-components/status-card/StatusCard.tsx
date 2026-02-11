@@ -2,7 +2,7 @@ import React from 'react';
 import { cn } from '@/utils';
 import { VcaIcon } from '../icons';
 
-export type ActionCardProps = {
+export type StatusCardProps = {
     status: 'in-progress' | 'complete' | 'success' | 'failure';
     title: string;
     children?: React.ReactNode;
@@ -11,14 +11,14 @@ export type ActionCardProps = {
     className?: string;
 };
 
-export const ActionCard = ({
+export const StatusCard = ({
     status,
     title,
     children,
     actionLabel,
     onActionClick,
     className,
-}: ActionCardProps) => {
+}: StatusCardProps) => {
     return (
         <div
             className={cn(

@@ -3,7 +3,6 @@ import { Trash2, Settings2, GitBranch, ArrowRight } from 'lucide-react';
 import { ComponentEditorPopover } from './ComponentEditorPopover';
 import { EditorField } from './EditorField';
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/utils';
 
 interface ConditionBranchEditorProps {
     nodeId: string;

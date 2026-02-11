@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { PatternPage, PatternSection, GuidelineGrid, ExampleShowcase } from './components';
 import { Message } from '@/components/vca-components/messages';
-import { ActionCard } from '@/components/vca-components/action-card/ActionCard';
+import { StatusCard } from '@/components/vca-components/status-card/StatusCard';
 import { Container } from '@/components/vca-components/container/Container';
 import { PromptGroup } from '@/components/vca-components/prompt-group/PromptGroup';
 import { InfoMessage } from '@/components/vca-components/info-message/InfoMessage';
@@ -15,7 +15,7 @@ const ConversationFlowPatternView = () => {
             relatedComponents={[
                 { label: 'Message', path: '/components/message' },
                 { label: 'Prompt Group', path: '/components/prompt-group' },
-                { label: 'Action Card', path: '/components/action-card' },
+                { label: 'Status Card', path: '/components/status-card' },
                 { label: 'Container', path: '/components/container' }
             ]}
         >
@@ -624,7 +624,7 @@ const RemovingUserExample = () => {
 
                     {/* Dynamic Action Status */}
                     <div className="mt-2 transition-all duration-300">
-                        <ActionCard
+                        <StatusCard
                             status={status}
                             title={status === 'in-progress' ? "Removing user..." : "User removed from Flexis Recruiter"}
                         >
@@ -633,7 +633,7 @@ const RemovingUserExample = () => {
                                     You can view the updates in the <a href="#">Users & License Management</a> tab in Admin Center.
                                 </span>
                             )}
-                        </ActionCard>
+                        </StatusCard>
                     </div>
                 </div>
             </Container>
@@ -657,14 +657,14 @@ const FollowUpExample = () => {
             <div className="space-y-vca-lg px-4 pt-4">
                 {/* Previous Context: Action Completed */}
                 <div className="mt-2">
-                    <ActionCard
+                    <StatusCard
                         status="complete"
                         title="User removed from Flexis Recruiter"
                     >
                         <span>
                             You can view the updates in the <a href="#">Users & License Management</a> tab in Admin Center.
                         </span>
-                    </ActionCard>
+                    </StatusCard>
                 </div>
 
                 {/* AI Follow Up */}

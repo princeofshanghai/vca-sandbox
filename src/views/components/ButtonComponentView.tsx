@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/vca-components/buttons';
-import { ActionMessage } from '@/components/vca-components/action-message';
+import { RecommendationCard } from '@/components/vca-components/recommendation-card';
 import { ComponentViewLayout } from '@/components/component-library/ComponentViewLayout';
 import { DemoSection } from '@/components/component-library/DemoSection';
 import { ToggleButtons, FormCheckbox } from '@/components/component-library/DemoControls';
@@ -86,13 +86,13 @@ const ButtonComponentView = () => {
               <p className="mb-4">Used in recommendation cards to apply or dismiss AI suggestions.</p>
               <div className="bg-white border border-gray-200 rounded-lg p-4">
                 <div className="w-[352px] mx-auto">
-                  <ActionMessage
+                  <RecommendationCard
                     status="default"
                     title="Your campaign is underperforming"
                     impactText="impact"
                   >
                     'Campaign A' is currently trailing behind competitors with 2.9% fewer impressions among your target audience.
-                  </ActionMessage>
+                  </RecommendationCard>
                 </div>
               </div>
             </div>

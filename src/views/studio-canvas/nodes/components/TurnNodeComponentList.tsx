@@ -4,7 +4,9 @@ import { getComponentDisplay } from '../utils/turnNodeUtils';
 import { MessageEditor } from '../../components/MessageEditor';
 import { PromptEditor } from '../../components/PromptEditor';
 import { InfoMessageEditor } from '../../components/InfoMessageEditor';
-import { ActionCardEditor } from '../../components/ActionCardEditor';
+import { StatusCardEditor } from '../../components/StatusCardEditor';
+import { SelectionListEditor } from '../../components/SelectionListEditor';
+import { CheckboxGroupEditor } from '../../components/CheckboxGroupEditor';
 
 interface TurnNodeComponentListProps {
     nodeId: string;
@@ -94,9 +96,9 @@ export const TurnNodeComponentList = ({
                     );
                 }
 
-                if (component.type === 'actionCard') {
+                if (component.type === 'statusCard') {
                     return (
-                        <ActionCardEditor
+                        <StatusCardEditor
                             key={component.id}
                             component={component}
                             onChange={(updates) => onComponentUpdate?.(component.id, { content: { ...component.content, ...updates } })}
@@ -104,7 +106,35 @@ export const TurnNodeComponentList = ({
                             onOpenChange={handleOpenChange}
                         >
                             {card}
-                        </ActionCardEditor>
+                        </StatusCardEditor>
+                    );
+                }
+
+                if (component.type === 'selectionList') {
+                    return (
+                        <SelectionListEditor
+                            key={component.id}
+                            component={component}
+                            onChange={(updates) => onComponentUpdate?.(component.id, { content: { ...component.content, ...updates } })}
+                            isOpen={selectedComponentId === component.id}
+                            onOpenChange={handleOpenChange}
+                        >
+                            {card}
+                        </SelectionListEditor>
+                    );
+                }
+
+                if (component.type === 'checkboxGroup') {
+                    return (
+                        <CheckboxGroupEditor
+                            key={component.id}
+                            component={component}
+                            onChange={(updates) => onComponentUpdate?.(component.id, { content: { ...component.content, ...updates } })}
+                            isOpen={selectedComponentId === component.id}
+                            onOpenChange={handleOpenChange}
+                        >
+                            {card}
+                        </CheckboxGroupEditor>
                     );
                 }
 

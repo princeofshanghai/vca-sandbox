@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { ActionCard } from '@/components/vca-components/action-card/ActionCard';
+import { StatusCard } from '@/components/vca-components/status-card/StatusCard';
 import { ComponentViewLayout } from '@/components/component-library/ComponentViewLayout';
 import { DemoSection } from '@/components/component-library/DemoSection';
 import { ToggleButtons, FormInput, FormTextarea } from '@/components/component-library/DemoControls';
 
-const ActionCardComponentView = () => {
+const StatusCardComponentView = () => {
     // Interactive demo state
     const [status, setStatus] = useState<'in-progress' | 'complete'>('in-progress');
     const [title, setTitle] = useState('User removed from Flexis Recruiter');
@@ -13,7 +13,7 @@ const ActionCardComponentView = () => {
 
     return (
         <ComponentViewLayout
-            title="Action Card"
+            title="Status Card"
             description="Displays the real-time progress and outcome of an AI-driven action. Used to provide visual feedback during long-running tasks."
         >
             {/* Demo Section */}
@@ -62,14 +62,14 @@ const ActionCardComponentView = () => {
                         </div>
                     }
                 >
-                    <ActionCard
+                    <StatusCard
                         status={status}
                         title={title}
                         actionLabel={actionLabel}
                         onActionClick={() => alert('Action clicked')}
                     >
                         {description}
-                    </ActionCard>
+                    </StatusCard>
                 </DemoSection>
 
                 {/* Usage Section */}
@@ -81,7 +81,7 @@ const ActionCardComponentView = () => {
                             <h3 className="mb-4">In Progress</h3>
                             <p className="mb-3 text-gray-600">Shows a spinning sparkle animation and a looping progress bar.</p>
                             <div className="bg-white border border-gray-200 rounded-lg p-6">
-                                <ActionCard
+                                <StatusCard
                                     status="in-progress"
                                     title="Removing user..."
                                 />
@@ -93,14 +93,14 @@ const ActionCardComponentView = () => {
                             <h3 className="mb-4">Complete (Rich Content)</h3>
                             <p className="mb-3 text-gray-600">Shows a success checkmark and can contain rich text descriptions and links.</p>
                             <div className="bg-white border border-gray-200 rounded-lg p-6">
-                                <ActionCard
+                                <StatusCard
                                     status="complete"
                                     title="User removed from Flexis Recruiter"
                                 >
                                     <span>
                                         You can view the updates in the <a href="#">Users & License Management</a> tab in Admin Center.
                                     </span>
-                                </ActionCard>
+                                </StatusCard>
                             </div>
                         </div>
                     </div>
@@ -111,4 +111,4 @@ const ActionCardComponentView = () => {
     );
 };
 
-export default ActionCardComponentView;
+export default StatusCardComponentView;

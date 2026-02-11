@@ -3,10 +3,10 @@ import { VcaIcon } from '../icons';
 import { Button } from '../buttons';
 import { cn } from '@/utils';
 
-export type ActionMessageState = 'default' | 'applied' | 'dismissed';
+export type RecommendationCardState = 'default' | 'applied' | 'dismissed';
 
-export type ActionMessageProps = {
-  status?: ActionMessageState;
+export type RecommendationCardProps = {
+  status?: RecommendationCardState;
   title?: string;
   impactText?: string;
   children?: React.ReactNode;
@@ -16,11 +16,11 @@ export type ActionMessageProps = {
 };
 
 /**
- * ActionMessage - AI-powered action suggestion component
+ * RecommendationCard - AI-powered action suggestion component
  * Shows recommended actions with impact, supporting default/applied/dismissed states
  * Note: No built-in horizontal padding or width - parent container controls spacing
  */
-export const ActionMessage = ({
+export const RecommendationCard = ({
   status = 'default',
   title = 'Recommended action',
   impactText = 'impact',
@@ -28,7 +28,7 @@ export const ActionMessage = ({
   onApply,
   onDismiss,
   className,
-}: ActionMessageProps) => {
+}: RecommendationCardProps) => {
 
   return (
     <div className={cn('flex flex-col gap-vca-lg items-start', className)}>

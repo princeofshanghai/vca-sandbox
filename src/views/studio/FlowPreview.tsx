@@ -4,11 +4,14 @@ import { Flow } from './types';
 import { Container } from '@/components/vca-components/container/Container';
 import { Message } from '@/components/vca-components/messages';
 import { InfoMessage } from '@/components/vca-components/info-message/InfoMessage';
-import { ActionCard } from '@/components/vca-components/action-card/ActionCard';
+import { StatusCard } from '@/components/vca-components/status-card/StatusCard';
 import { PromptGroup } from '@/components/vca-components/prompt-group/PromptGroup';
 import { PhoneFrame } from '@/components/component-library/PhoneFrame';
 import { MarkdownRenderer } from '@/components/vca-components/markdown-renderer/Markdown';
 import { InlineFeedback } from '@/components/vca-components/inline-feedback';
+import { SelectionList } from '@/components/vca-components/selection-list/SelectionList';
+import { CheckboxGroup } from '@/components/vca-components/checkbox-group/CheckboxGroup';
+import { ContextInterceptorMessage } from './components/ContextInterceptorMessage';
 
 
 
@@ -17,6 +20,7 @@ interface FlowPreviewProps {
     isPremium: boolean;
     isMobile: boolean;
     variables: Record<string, string>;
+    onVariableUpdate?: (key: string, value: string) => void;
     desktopPosition?: 'center' | 'bottom-right';
 }
 
@@ -25,6 +29,7 @@ export const FlowPreview = ({
     isPremium,
     isMobile,
     variables,
+    onVariableUpdate,
     desktopPosition = 'center'
 }: FlowPreviewProps) => {
     // Shared composer state
@@ -39,24 +44,7 @@ export const FlowPreview = ({
 
     return (
         <div className="h-full w-full flex flex-col relative bg-transparent pointer-events-none">
-            <style>{`
-                @keyframes shimmer {
-                    0% { background-position: -200% 0; }
-                    100% { background-position: 200% 0; }
-                }
-                .skeleton-shimmer {
-                    background: #e5e7eb;
-                    background-image: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
-                    background-size: 200% 100%;
-                    animation: shimmer 2s infinite linear;
-                }
-                .skeleton-shimmer-prompt {
-                    background: rgba(255, 255, 255, 0.2);
-                    background-image: linear-gradient(90deg, rgba(255, 255, 255, 0.2) 25%, rgba(255, 255, 255, 0.4) 50%, rgba(255, 255, 255, 0.2) 75%);
-                    background-size: 200% 100%;
-                    animation: shimmer 2s infinite linear;
-                }
-            `}</style>
+
             <div className={`flex-1 flex flex-col overflow-y-auto thin-scrollbar ${isMobile || desktopPosition === 'center' ? 'items-center justify-center p-4' : 'items-end justify-end p-6'}`}>
                 {isMobile ? (
                     <div className="relative w-[334px] h-[726px] shrink-0 flex items-center justify-center mt-8 pointer-events-auto">
@@ -108,6 +96,7 @@ export const FlowPreview = ({
                             <PreviewContent
                                 flow={flow}
                                 variables={variables}
+                                onVariableUpdate={onVariableUpdate}
                                 onRegisterSend={(fn) => setHandleSendRef(() => fn)}
                                 onComposerReset={() => setComposerValue('')}
                                 composerValue={composerValue}
@@ -127,12 +116,19 @@ type HistoryStep = import('./types').Step | {
     id: string,
     variant: 'neutral',
     message: string
+} | {
+    type: 'interceptor',
+    id: string,
+    variableName: string,
+    branches: import('./types').Branch[],
+    stepId: string // To resume from
 };
 
 // Interactive Preview Content
 const PreviewContent = ({
     flow,
     variables,
+    onVariableUpdate,
     onRegisterSend,
     onComposerReset,
     composerValue,
@@ -141,6 +137,7 @@ const PreviewContent = ({
 }: {
     flow: Flow,
     variables?: Record<string, string>,
+    onVariableUpdate?: (key: string, value: string) => void,
     onRegisterSend: (fn: () => void) => void,
     onComposerReset: () => void,
     composerValue: string,
@@ -150,7 +147,7 @@ const PreviewContent = ({
     const [history, setHistory] = useState<HistoryStep[]>([]);
 
     // NEW: Delivery Queue & Visibility
-    const [deliveryQueue, setDeliveryQueue] = useState<import('./types').Step[]>([]);
+    const [deliveryQueue, setDeliveryQueue] = useState<HistoryStep[]>([]);
     const [visibleComponentIds, setVisibleComponentIds] = useState<Set<string>>(new Set());
     const [isThinking, setIsThinking] = useState(false);
     const [isProcessingQueue, setIsProcessingQueue] = useState(false);
@@ -240,50 +237,91 @@ const PreviewContent = ({
 
 
     // Initialize history with the start node
+    const isInitializedRef = useRef(false);
+    const flowRef = useRef(flow); // Track previous flow for diffing
+
     useEffect(() => {
-        if (!flow.steps || flow.steps.length === 0) return;
+        flowRef.current = flow;
+    }, [flow]);
 
-        // Start a new run
-        const newRunId = Date.now();
-        currentRunId.current = newRunId;
-        setIsProcessingQueue(false); // Reset lock for new run
+    // PRESERVE HISTORY ON UPDATE
+    useEffect(() => {
+        if (!isInitializedRef.current) {
+            // First run logic (same as before)
+            if (!flow.steps || flow.steps.length === 0) return;
 
-        // Find starting point
-        const startNode = flow.steps.find(s => s.type === 'start');
-        let initialHistory: import('./types').Step[] = [];
+            isInitializedRef.current = true;
+            // Start a new run
+            const newRunId = Date.now();
+            currentRunId.current = newRunId;
+            setIsProcessingQueue(false);
 
-        if (startNode) {
-            const connection = flow.connections?.find(c => c.source === startNode.id);
-            if (connection) {
-                const firstStep = flow.steps.find(s => s.id === connection.target);
-                if (firstStep) {
-                    initialHistory = [firstStep];
+            // Find starting point
+            const startNode = flow.steps.find(s => s.type === 'start');
+            let initialHistory: import('./types').Step[] = [];
+
+            if (startNode) {
+                const connection = flow.connections?.find(c => c.source === startNode.id);
+                if (connection) {
+                    const firstStep = flow.steps.find(s => s.id === connection.target);
+                    if (firstStep) {
+                        initialHistory = [firstStep];
+                    }
                 }
             }
-        }
 
-        // Fallback if no start node
-        if (initialHistory.length === 0) {
-            const firstTurn = flow.steps.find(s =>
-                s.type === 'turn' && (s as import('./types').Turn).phase === 'welcome'
-            ) || flow.steps[0];
-            if (firstTurn) initialHistory = [firstTurn];
-        }
+            // Fallback if no start node
+            if (initialHistory.length === 0) {
+                const firstTurn = flow.steps.find(s =>
+                    s.type === 'turn' && (s as import('./types').Turn).phase === 'welcome'
+                ) || flow.steps[0];
+                if (firstTurn) initialHistory = [firstTurn];
+            }
 
-        if (simulateThinking) {
-            // Queue them instead of direct history
-            setDeliveryQueue(initialHistory);
-            setHistory([]);
-            setVisibleComponentIds(new Set());
+            if (simulateThinking) {
+                setDeliveryQueue(initialHistory);
+                setHistory([]);
+                setVisibleComponentIds(new Set());
+            } else {
+                setHistory(initialHistory);
+                const allIds = new Set<string>();
+                initialHistory.forEach(step => {
+                    if (step.type === 'turn') step.components.forEach(c => allIds.add(c.id));
+                });
+                setVisibleComponentIds(allIds);
+            }
         } else {
-            // Instant delivery
-            setHistory(initialHistory);
-            // All components visible
-            const allIds = new Set<string>();
-            initialHistory.forEach(step => {
-                if (step.type === 'turn') step.components.forEach(c => allIds.add(c.id));
+            // UPDATE LOGIC: Patch existing history with new flow data
+            setHistory(prevHistory => {
+                // Map over existing history items and try to find their up-to-date versions in the new flow
+                const updatedHistory = prevHistory.map(step => {
+                    // Feedback items don't exist in the flow, preserve them
+                    if (step.type === 'feedback') return step;
+
+                    // User turns (generated on fly) don't exist in flow steps usually (unless hardcoded), allow preservation
+                    if (step.type === 'user-turn') {
+                        // If it corresponds to a real node, try to find it, otherwise keep as is
+                        const realNode = flow.steps?.find(s => s.id === step.id);
+                        return realNode ? realNode as import('./types').Step : step;
+                    }
+
+                    // For AI turns and others, find by ID
+                    const updatedNode = flow.steps?.find(s => s.id === step.id);
+
+                    // If node still exists, return new version. If not, return null (to be filtered)
+                    // Note: We'll filter nulls afterwards
+                    return updatedNode ? (updatedNode as import('./types').Step) : null;
+                }).filter(Boolean) as HistoryStep[]; // remove nulls
+
+                // If history got truncated because a node was deleted, that's fine.
+                // If the flow structure changed significantly (e.g. connections rewired), 
+                // the existing history might be "impossible" now, but for a preview during editing,
+                // showing the "ghost" of the previous path with updated content is usually better than a full reset.
+                // Ideally, we could check if the path is still valid, but that's complex.
+                // Simple patching is usually enough for "Modify text -> See update" workflow.
+
+                return updatedHistory;
             });
-            setVisibleComponentIds(allIds);
         }
     }, [flow.steps, flow.connections, variablesString, simulateThinking]);
 
@@ -461,7 +499,7 @@ const PreviewContent = ({
         let currentId = currentNodeId;
         let currentHandle = sourceHandle;
         const inputForBinding = simulatedInput; // Persist input for logic evaluation
-        const nodesToAdd: import('./types').Step[] = [];
+        const nodesToAdd: HistoryStep[] = [];
 
         // Max iterations to prevent infinite loops
         for (let i = 0; i < 20; i++) {
@@ -519,46 +557,31 @@ const PreviewContent = ({
             } else if (nextNode.type === 'condition') {
                 // Evaluate Condition
                 const branches = (nextNode as import('./types').Condition).branches || [];
-                let selectedBranchId = null;
 
-                // 1. Check for specific matches
-                for (const branch of branches) {
-                    // Skip the "Else" branch during specific value matching
-                    // (It should only be taken as a fallback if no other rules match)
-                    if (branch.isDefault) continue;
-
-                    if (branch.logic && branch.logic.variable) {
-                        const { variable, value } = branch.logic;
-
-                        // PRIORITY: Variable Map > Simulated Input (User Text)
-                        // Smart Binding: If variable not in map, assume input maps to this variable
-                        let simulatedVal = variables?.[variable];
-                        if (simulatedVal === undefined && inputForBinding !== undefined) {
-                            simulatedVal = inputForBinding;
-                        }
-
-                        if (simulatedVal !== undefined) {
-                            simulatedVal = String(simulatedVal).trim().toLowerCase();
-                            const targetVal = String(value).trim().toLowerCase();
-                            // Relaxed equality check (case-insensitive)
-                            if (simulatedVal === targetVal) {
-                                selectedBranchId = branch.id;
-                                break;
-                            }
-                        }
+                // CHECK: Do any branches reference a variable that's undefined?
+                const undefinedVariable = branches.find(b => {
+                    if (b.isDefault) return false; // Skip ELSE branches
+                    if (b.logic?.variable && variables?.[b.logic.variable] === undefined) {
+                        return true;
                     }
+                    return false;
+                });
+
+                if (undefinedVariable?.logic?.variable) {
+                    // PAUSE: Trigger Interceptor
+                    const interceptorStep: HistoryStep = {
+                        id: `interceptor-${nextNode.id}`,
+                        type: 'interceptor',
+                        variableName: undefinedVariable.logic.variable,
+                        branches: branches,
+                        stepId: nextNode.id,
+                    };
+                    nodesToAdd.push(interceptorStep);
+                    break; // Stop traversal until user resolves
                 }
 
-                // 2. Fallback to Default (Else) or First
-                if (!selectedBranchId) {
-                    const defaultBranch = branches.find(b => b.isDefault);
-                    if (defaultBranch) {
-                        selectedBranchId = defaultBranch.id;
-                    } else {
-                        // Legacy: Default to first if no specific default
-                        selectedBranchId = branches[0]?.id;
-                    }
-                }
+                // No undefined variables, proceed normally
+                const selectedBranchId = getConditionBranch(branches, variables || {}, inputForBinding);
 
                 currentHandle = selectedBranchId || undefined;
                 // Continue loop with this handle
@@ -580,6 +603,47 @@ const PreviewContent = ({
                 });
             }
         }
+    };
+
+    // Helper for Condition Logic
+    const getConditionBranch = (branches: import('./types').Branch[], vars: Record<string, string>, input?: string) => {
+        let selectedBranchId = null;
+
+        // 1. Check for specific matches
+        for (const branch of branches) {
+            if (branch.isDefault) continue;
+
+            if (branch.logic && branch.logic.variable) {
+                const { variable, value } = branch.logic;
+
+                // PRIORITY: Variable Map > Simulated Input (User Text)
+                let simulatedVal = vars[variable];
+
+                // Note: Interceptor check happens in traverse loop purely based on undefined check
+                // Here we assume we have values or are just checking what matches.
+
+                if (simulatedVal === undefined && input !== undefined) {
+                    simulatedVal = input;
+                }
+
+                if (simulatedVal !== undefined) {
+                    simulatedVal = String(simulatedVal).trim().toLowerCase();
+                    const targetVal = String(value).trim().toLowerCase();
+                    if (simulatedVal === targetVal) {
+                        selectedBranchId = branch.id;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // 2. Fallback
+        if (!selectedBranchId) {
+            const defaultBranch = branches.find(b => b.isDefault);
+            selectedBranchId = defaultBranch ? defaultBranch.id : branches[0]?.id;
+        }
+
+        return selectedBranchId;
     };
 
     const handlePromptClick = (stepId: string, promptComponentId: string, text?: string) => {
@@ -666,6 +730,58 @@ const PreviewContent = ({
                     );
                 }
 
+                // 4. Interceptor Step (NEW)
+                if (step.type === 'interceptor') {
+                    // Force cast for TS ease
+                    const interceptor = step as unknown as {
+                        variableName: string,
+                        branches: import('./types').Branch[],
+                        stepId: string
+                    };
+
+                    return (
+                        <ContextInterceptorMessage
+                            key={step.id}
+                            variableName={interceptor.variableName}
+                            branches={interceptor.branches}
+                            onResolve={(value) => {
+                                // 1. Handle "Use Default" special case
+                                if (value === '__USE_DEFAULT__') {
+                                    // Don't save this to variables, just pick the default branch
+                                    // Remove interceptor from history
+                                    setHistory(prev => prev.filter(s => s.id !== step.id));
+
+                                    // Find and use the default/ELSE branch
+                                    const defaultBranch = interceptor.branches.find(b => b.isDefault);
+                                    const selectedBranch = defaultBranch?.id || interceptor.branches[0]?.id;
+
+                                    // Resume without setting the variable
+                                    setTimeout(() => {
+                                        traverse(interceptor.stepId, selectedBranch || undefined);
+                                    }, 50);
+                                    return;
+                                }
+
+                                // 2. Normal case: Set the variable with the provided value
+                                onVariableUpdate?.(interceptor.variableName, value);
+
+                                // 3. Remove this interceptor from history
+                                setHistory(prev => prev.filter(s => s.id !== step.id));
+
+                                // 4. Smart Resume
+                                // Determine which branch to take based on the NEW value
+                                const tempVars = { ...(variables || {}), [interceptor.variableName]: value };
+                                const selectedBranch = getConditionBranch(interceptor.branches, tempVars);
+
+                                // Resume Traversal from the Condition Node's ID, but forcing the specific branch handle
+                                setTimeout(() => {
+                                    traverse(interceptor.stepId, selectedBranch || undefined);
+                                }, 50);
+                            }}
+                        />
+                    );
+                }
+
                 // 1. AI Turn
                 if (step.type === 'turn') {
                     const components = step.components;
@@ -683,16 +799,14 @@ const PreviewContent = ({
                                             key={component.id}
                                             variant="ai"
                                             defaultText={
-                                                text ? (
-                                                    streamingComponentId === component.id ? (
-                                                        <StreamingText
-                                                            text={text}
-                                                            onProgress={(t) => currentStreamingTextRef.current = t}
-                                                        />
-                                                    ) : (
-                                                        <MarkdownRenderer>{text}</MarkdownRenderer>
-                                                    )
-                                                ) : <div className="w-48 h-3 rounded my-1 skeleton-shimmer" />
+                                                text && streamingComponentId === component.id ? (
+                                                    <StreamingText
+                                                        text={text}
+                                                        onProgress={(t) => currentStreamingTextRef.current = t}
+                                                    />
+                                                ) : text ? (
+                                                    <MarkdownRenderer>{text}</MarkdownRenderer>
+                                                ) : undefined
                                             }
                                         />
                                     );
@@ -702,33 +816,29 @@ const PreviewContent = ({
                                     return (
                                         <InfoMessage
                                             key={component.id}
-                                            title={info.title || (<div className="w-32 h-4 rounded skeleton-shimmer" /> as unknown as string)}
-                                            sources={info.sources?.map((s: { text?: string; url?: string }) => ({
-                                                text: s.text || ((<div className="w-24 h-2.5 rounded inline-block skeleton-shimmer" />) as unknown as string),
+                                            title={info.title || ''}
+                                            sources={info.sources?.filter(s => s.text).map((s: { text?: string; url?: string }) => ({
+                                                text: s.text!,
                                                 href: s.url
                                             }))}
                                             onFeedbackChange={() => { }}
                                         >
-                                            {info.body ? (
-                                                streamingComponentId === component.id ? (
-                                                    <StreamingText
-                                                        text={info.body}
-                                                        onProgress={(t) => currentStreamingTextRef.current = t}
-                                                    />
-                                                ) : (
-                                                    <MarkdownRenderer>{info.body}</MarkdownRenderer>
-                                                )
-                                            ) : (
-                                                <div className="w-full h-16 rounded skeleton-shimmer" />
-                                            )}
+                                            {info.body && streamingComponentId === component.id ? (
+                                                <StreamingText
+                                                    text={info.body}
+                                                    onProgress={(t) => currentStreamingTextRef.current = t}
+                                                />
+                                            ) : info.body ? (
+                                                <MarkdownRenderer>{info.body}</MarkdownRenderer>
+                                            ) : null}
                                         </InfoMessage>
                                     );
                                 }
-                                if (component.type === 'actionCard') {
-                                    const actionContent = component.content as import('./types').AIActionContent;
+                                if (component.type === 'statusCard') {
+                                    const actionContent = component.content as import('./types').AIStatusContent;
                                     return (
                                         <div key={component.id} className="py-2">
-                                            <SimulatedAction
+                                            <SimulatedStatusCard
                                                 loadingTitle={actionContent.loadingTitle}
                                                 successTitle={actionContent.successTitle}
                                                 successDescription={actionContent.successDescription}
@@ -736,6 +846,94 @@ const PreviewContent = ({
                                                 failureDescription={actionContent.failureDescription}
                                             // If we are currently "deliver-streaming" this action card, we can skip the artificial delay?
                                             // Or better, let it do its thing.
+                                            />
+                                        </div>
+                                    );
+                                }
+                                if (component.type === 'selectionList') {
+                                    // Cast to correct type
+                                    const selectionContent = component.content as import('./types').SelectionListContent;
+
+                                    // Check if this component has already been "interacted" with in history?
+                                    // For now, we allow re-selection. Interaction adds a new user step which pushes new history.
+
+                                    return (
+                                        <div key={component.id} className="py-2 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                                            {selectionContent.title && (
+                                                <div className="mb-2 text-sm font-medium text-gray-900">
+                                                    {selectionContent.title}
+                                                </div>
+                                            )}
+                                            <SelectionList
+                                                items={selectionContent.items.map(item => ({
+                                                    id: item.id,
+                                                    title: item.title,
+                                                    subtitle: item.subtitle,
+                                                    imageUrl: item.imageUrl,
+                                                    iconName: item.iconName as import('@/components/vca-components/icons').VcaIconName,
+                                                    disabled: item.disabled || !isLast // Disable if not last step
+                                                }))}
+                                                layout={selectionContent.layout}
+                                                onSelect={(item) => {
+                                                    // Simulate user clicking this item
+                                                    if (isLast) {
+                                                        const handleId = `handle-${component.id}-${item.id}`;
+
+                                                        // 1. Visual: Add User Bubble
+                                                        const mockUserStep: import('./types').UserTurn = {
+                                                            id: `temp-${Date.now()}`,
+                                                            type: 'user-turn',
+                                                            label: item.title,
+                                                            inputType: 'button'
+                                                        };
+                                                        setHistory(prev => [...prev, mockUserStep]);
+
+                                                        // 2. Traverse
+                                                        traverse(step.id, handleId, item.title);
+                                                    }
+                                                }}
+                                            />
+                                        </div>
+                                    );
+                                }
+                                if (component.type === 'checkboxGroup') {
+                                    const groupContent = component.content as import('./types').CheckboxGroupContent;
+
+                                    return (
+                                        <div key={component.id} className="py-2 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                                            <CheckboxGroup
+                                                title={groupContent.title}
+                                                description={groupContent.description}
+                                                options={groupContent.options.map((opt) => ({
+                                                    ...opt,
+                                                    disabled: opt.disabled || !isLast
+                                                }))}
+                                                saveLabel={groupContent.saveLabel}
+                                                onSave={(selectedIds) => {
+                                                    if (!isLast) return;
+
+                                                    // 1. Visual: Add User Bubble
+                                                    const selectedLabels = groupContent.options
+                                                        .filter((o) => selectedIds.includes(o.id))
+                                                        .map((o) => o.label)
+                                                        .join(', ');
+
+                                                    const text = selectedLabels
+                                                        ? `Selected: ${selectedLabels}`
+                                                        : 'Saved with no selection';
+
+                                                    const mockUserStep: import('./types').UserTurn = {
+                                                        id: `temp-${Date.now()}`,
+                                                        type: 'user-turn',
+                                                        label: text,
+                                                        inputType: 'button'
+                                                    };
+                                                    setHistory(prev => [...prev, mockUserStep]);
+
+                                                    // 2. Traversal
+                                                    // Pass the single submit handle
+                                                    traverse(step.id, `handle-${component.id}`);
+                                                }}
                                             />
                                         </div>
                                     );
@@ -761,11 +959,13 @@ const PreviewContent = ({
                                     return (
                                         <PromptGroup
                                             key={`prompt-group-${component.id}`}
-                                            prompts={promptGroup.map(p => ({
-                                                text: (p.content as import('./types').PromptContent).text || (<div className="w-20 h-2.5 rounded-sm skeleton-shimmer-prompt" /> as unknown as string),
-                                                showAiIcon: (p.content as import('./types').PromptContent).showAiIcon,
-                                                onClick: () => handlePromptClick(step.id, p.id, (p.content as import('./types').PromptContent).text)
-                                            }))}
+                                            prompts={promptGroup
+                                                .filter(p => (p.content as import('./types').PromptContent).text)
+                                                .map(p => ({
+                                                    text: (p.content as import('./types').PromptContent).text!,
+                                                    showAiIcon: (p.content as import('./types').PromptContent).showAiIcon,
+                                                    onClick: () => handlePromptClick(step.id, p.id, (p.content as import('./types').PromptContent).text)
+                                                }))}
                                         />
                                     );
                                 }
@@ -830,7 +1030,7 @@ const StreamingText = ({ text, onComplete, onProgress }: { text: string; onCompl
 };
 
 // Simulated Action Component
-const SimulatedAction = ({
+const SimulatedStatusCard = ({
     loadingTitle,
     successTitle,
     successDescription,
@@ -865,11 +1065,11 @@ const SimulatedAction = ({
             : undefined;
 
     return (
-        <ActionCard
-            status={status === 'in-progress' ? 'in-progress' : (status === 'success' ? 'success' : 'failure')}
+        <StatusCard
+            status={status === 'in-progress' ? 'in-progress' : (status === 'success' ? 'complete' : 'failure')}
             title={title}
         >
             {description ? <MarkdownRenderer>{description}</MarkdownRenderer> : null}
-        </ActionCard>
+        </StatusCard>
     );
 };

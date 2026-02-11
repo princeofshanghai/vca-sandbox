@@ -1,10 +1,10 @@
 
 import { useState } from 'react';
-import { AIActionContent } from './types';
+import { AIStatusContent } from './types';
 import { MarkdownEditor } from '../studio-canvas/components/MarkdownEditor';
 import { cn } from '@/utils/cn';
 
-export const ActionBlockEditor = ({ content, onChange }: { content: AIActionContent, onChange: (c: AIActionContent) => void }) => {
+export const ActionBlockEditor = ({ content, onChange }: { content: AIStatusContent, onChange: (c: AIStatusContent) => void }) => {
     const [tab, setTab] = useState<'success' | 'failure'>('success');
 
     return (

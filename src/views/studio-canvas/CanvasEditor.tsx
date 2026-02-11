@@ -28,7 +28,7 @@ import { Button } from '@/components/ui/button';
 import { ActionTooltip } from './components/ActionTooltip';
 import { ConnectionLine } from './components/ConnectionLine';
 import { ShareDialog } from '../studio/components/ShareDialog';
-import { ArrowLeft, Play, PanelRightOpen, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Play, PanelRightOpen, ExternalLink, Download, Upload, FileJson } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -56,8 +56,28 @@ const getDefaultContent = (type: ComponentType): ComponentContent => {
             return { text: '', showAiIcon: false };
         case 'infoMessage':
             return { title: '', body: '', sources: [], showFeedback: true };
-        case 'actionCard':
+        case 'statusCard':
             return { loadingTitle: '', successTitle: '', successDescription: '' };
+        case 'selectionList':
+            return {
+                title: 'Select an option',
+                layout: 'list',
+                items: [
+                    { id: '1', title: 'Option 1', subtitle: 'Description' },
+                    { id: '2', title: 'Option 2', subtitle: 'Description' }
+                ]
+            };
+        case 'checkboxGroup':
+            return {
+                title: 'Which options apply?',
+                description: 'Select all that apply.',
+                saveLabel: 'Save',
+                options: [
+                    { id: '1', label: 'Option 1' },
+                    { id: '2', label: 'Option 2' },
+                    { id: '3', label: 'Option 3' }
+                ]
+            };
         default: {
             const exhaustiveCheck: never = type;
             throw new Error(`Unhandled component type: ${exhaustiveCheck}`);
@@ -88,6 +108,89 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
     // Selection state
     const [selection, setSelection] = useState<SelectionState | null>(null);
     const [selectionAnchorEl, setSelectionAnchorEl] = useState<HTMLElement | null>(null);
+
+    // Export/Import handlers
+    const handleExportJSON = () => {
+        // Create clean JSON export
+        const exportData = {
+            version: 1,
+            id: flow.id,
+            title: flow.title,
+            description: flow.description,
+            settings: flow.settings,
+            steps: flow.steps,
+            connections: flow.connections,
+            metadata: {
+                exportedAt: new Date().toISOString(),
+                exportedBy: 'VCA Sandbox Studio',
+            }
+        };
+
+        // Convert to JSON string
+        const jsonString = JSON.stringify(exportData, null, 2);
+
+        // Create blob and download
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+
+        // Generate filename: flow-title-YYYY-MM-DD.json
+        const date = new Date().toISOString().split('T')[0];
+        const safeTitle = (flow.title || 'untitled-flow').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        link.download = `${safeTitle}-${date}.json`;
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
+    const handleImportJSON = () => {
+        // Create file input
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'application/json,.json';
+
+        input.onchange = (e) => {
+            const file = (e.target as HTMLInputElement).files?.[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const importedData = JSON.parse(event.target?.result as string);
+
+                    // Validate basic structure
+                    if (!importedData.steps || !importedData.settings) {
+                        alert('Invalid flow file format. Missing required fields.');
+                        return;
+                    }
+
+                    // Update flow with imported data
+                    const updatedFlow: Flow = {
+                        ...flow,
+                        title: importedData.title || flow.title,
+                        description: importedData.description,
+                        settings: importedData.settings,
+                        steps: importedData.steps,
+                        connections: importedData.connections || [],
+                        lastModified: Date.now(),
+                    };
+
+                    onUpdateFlow(updatedFlow);
+
+                } catch (error) {
+                    console.error('Error importing flow:', error);
+                    alert('Failed to import flow. Please check the file format.');
+                }
+            };
+
+            reader.readAsText(file);
+        };
+
+        input.click();
+    };
 
     const selectionType = selection?.type;
     const selectionNodeId = selection?.nodeId;
@@ -469,14 +572,20 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
     }, [initialNodes, setNodes]);
 
     // Save positions when dragging stops
-    const onNodeDragStop = useCallback((_: React.MouseEvent, node: Node) => {
-        const updatedSteps = flow.steps?.map(s =>
-            s.id === node.id
-                ? { ...s, position: node.position }
-                : s
-        );
-        // Only update if changed
-        // (Optimization skipped for brevity, onUpdateFlow handles it)
+    const onNodeDragStop = useCallback((_: React.MouseEvent, _node: Node, nodes: Node[]) => {
+        // Handle both single and multi-selection dragging by updating all dragged nodes
+        // nodes array contains all nodes that serve as the drag selection
+        const draggedNodes = nodes && nodes.length > 0 ? nodes : [_node];
+        const draggedNodeMap = new Map(draggedNodes.map(n => [n.id, n]));
+
+        const updatedSteps = flow.steps?.map(s => {
+            const movedNode = draggedNodeMap.get(s.id);
+            if (movedNode) {
+                return { ...s, position: movedNode.position };
+            }
+            return s;
+        });
+
         onUpdateFlow({ ...flow, steps: updatedSteps, lastModified: Date.now() });
     }, [flow, onUpdateFlow]);
 
@@ -498,24 +607,48 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
             // SMART LINKING LOGIC:
             // If connecting from a specific prompt handle (starts with 'handle-') to a User Turn,
             // auto-fill the User Turn with that prompt's text.
+            // auto-fill the User Turn with that prompt's text or selection item's title.
             if (connection.sourceHandle && connection.sourceHandle.startsWith('handle-')) {
                 const sourceNodeId = connection.source;
                 const targetNodeId = connection.target;
-                const componentId = connection.sourceHandle.replace('handle-', '');
+                const handleId = connection.sourceHandle;
 
-                // Find the prompt text
+                // Parse component ID from handle
+                // Format: handle-{componentId} OR handle-{componentId}-{itemId}
+                // We know componentId usually starts with 'component-'
+
                 const sourceStep = flow.steps?.find(s => s.id === sourceNodeId);
                 const targetStep = flow.steps?.find(s => s.id === targetNodeId);
 
                 if (sourceStep && sourceStep.type === 'turn' && targetStep && targetStep.type === 'user-turn') {
-                    const promptComponent = sourceStep.components.find(c => c.id === componentId);
-                    if (promptComponent && promptComponent.type === 'prompt') {
-                        const promptText = (promptComponent.content as import('../studio/types').PromptContent).text;
-                        if (promptText) {
+                    // Try to find matching component
+                    const component = sourceStep.components.find(c => handleId.includes(c.id));
+
+                    if (component) {
+                        let textToFill = '';
+
+                        if (component.type === 'prompt') {
+                            textToFill = (component.content as import('../studio/types').PromptContent).text;
+                        } else if (component.type === 'selectionList') {
+                            const listContent = component.content as import('../studio/types').SelectionListContent;
+                            // Extract item ID from handle: handle-{componentId}-{itemId}
+                            // The itemId is the suffix after componentId-
+                            const itemId = handleId.split(`${component.id}-`)[1];
+                            const item = listContent.items.find(i => i.id === itemId);
+                            if (item) {
+                                textToFill = item.title;
+                            }
+                        }
+
+                        if (textToFill) {
                             // Valid link! Update the User Turn input type.
                             updatedSteps = flow.steps?.map(s =>
                                 s.id === targetNodeId
-                                    ? { ...s, inputType: 'prompt' }
+                                    ? {
+                                        ...s,
+                                        label: textToFill, // Auto-fill label
+                                        inputType: component.type === 'prompt' ? 'prompt' : 'button' // Selection acts like button? or text?
+                                    }
                                     : s
                             );
                         }
@@ -568,17 +701,6 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                 );
                 onUpdateFlow({ ...flow, steps: updatedSteps, lastModified: Date.now() });
             }
-        }
-    };
-
-    const handleChangePhase = (phase: FlowPhase | undefined) => {
-        if (selection?.type === 'node') {
-            const updatedSteps = flow.steps?.map(s =>
-                s.id === selection.nodeId && s.type === 'turn'
-                    ? { ...s, phase }
-                    : s
-            );
-            onUpdateFlow({ ...flow, steps: updatedSteps, lastModified: Date.now() });
         }
     };
 
@@ -926,11 +1048,6 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
         [flow, onUpdateFlow, screenToFlowPosition]
     );
 
-    // Get current phase for toolbar (AI Turn)
-    const currentPhase = selection?.type === 'node'
-        ? (flow.steps?.find(s => s.id === selection.nodeId && s.type === 'turn') as Turn | undefined)?.phase
-        : undefined;
-
     // Get current input type for toolbar (User Turn)
     const currentUserTurnInputType = selection?.type === 'node'
         ? (flow.steps?.find(s => s.id === selection.nodeId && s.type === 'user-turn') as UserTurn | undefined)?.inputType
@@ -977,12 +1094,14 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
             {/* Header */}
             {/* Top Left Pill: Back & Title */}
             <div className="absolute top-4 left-4 z-50 flex items-center h-11 gap-1.5 bg-white px-2 rounded-xl shadow-sm border border-gray-200/80 backdrop-blur-sm">
-                <button
-                    onClick={onBack}
-                    className="flex items-center justify-center p-2 text-gray-500 hover:text-gray-900 transition-colors rounded-md hover:bg-gray-100"
-                >
-                    <ArrowLeft size={18} />
-                </button>
+                <ActionTooltip content="Back to dashboard">
+                    <button
+                        onClick={onBack}
+                        className="flex items-center justify-center p-2 text-gray-500 hover:text-gray-900 transition-colors rounded-md hover:bg-gray-100"
+                    >
+                        <ArrowLeft size={18} />
+                    </button>
+                </ActionTooltip>
                 <div className="h-5 w-px bg-gray-200" />
                 <div className="relative inline-grid items-center min-w-[60px] max-w-[320px]">
                     <span className="invisible px-3 py-1 text-sm font-medium whitespace-pre border border-transparent col-start-1 row-start-1">
@@ -997,10 +1116,36 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                 </div>
             </div>
 
-            {/* Top Right Pill: Run & Share */}
+            {/* Top Right Pill: File, Run & Share */}
             <div className="absolute top-4 right-4 z-50 flex items-center h-11 gap-2 bg-white px-1.5 rounded-xl shadow-sm border border-gray-200/80 backdrop-blur-sm">
+                {/* File Menu (Export/Import) */}
                 <DropdownMenu>
-                    <ActionTooltip content="Run options">
+                    <ActionTooltip content="File options">
+                        <DropdownMenuTrigger asChild>
+                            <button
+                                className="flex items-center justify-center w-8 h-8 rounded-md transition-all text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+                            >
+                                <FileJson size={16} />
+                            </button>
+                        </DropdownMenuTrigger>
+                    </ActionTooltip>
+                    <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem onClick={handleExportJSON} className="gap-2">
+                            <Download size={14} className="text-gray-500" />
+                            Export JSON
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleImportJSON} className="gap-2">
+                            <Upload size={14} className="text-gray-500" />
+                            Import JSON
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+
+                <div className="h-5 w-px bg-gray-200" />
+
+                {/* Run Menu */}
+                <DropdownMenu>
+                    <ActionTooltip content="Play prototype">
                         <DropdownMenuTrigger asChild>
                             <button
                                 className={`flex items-center justify-center w-8 h-8 rounded-md transition-all group ${isPreviewActive
@@ -1013,14 +1158,14 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                         </DropdownMenuTrigger>
                     </ActionTooltip>
                     <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuItem onClick={onPreview} className="gap-2 text-[13px] font-medium">
+                        <DropdownMenuItem onClick={onPreview} className="gap-2">
                             <PanelRightOpen size={14} className="text-gray-500" />
                             Preview in canvas
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                             onClick={() => window.open(`/share/${flow.id}`, '_blank')}
-                            className="gap-2 text-[13px] font-medium"
+                            className="gap-2"
                         >
                             <ExternalLink size={14} className="text-gray-500" />
                             Open prototype
@@ -1100,12 +1245,10 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                             selection={selection}
                             anchorEl={selectionAnchorEl}
                             onAddComponent={(type: ComponentType) => handleComponentAdd(type)}
-                            onChangePhase={handleChangePhase}
                             onChangeUserTurnInputType={handleChangeUserTurnInputType}
                             onMoveUp={handleMoveComponentUp}
                             onMoveDown={handleMoveComponentDown}
                             onDelete={handleDeleteComponent}
-                            currentPhase={currentPhase as FlowPhase}
                             currentUserTurnInputType={currentUserTurnInputType}
                             currentBranches={currentBranches}
                             onUpdateBranches={handleUpdateBranches}

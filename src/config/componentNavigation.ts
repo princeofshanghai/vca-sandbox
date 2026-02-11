@@ -59,31 +59,28 @@ const rawNavigation: NavigationConfig = {
   // Components Section (organized by category)
   // Add new components anywhere - they'll be auto-sorted A-Z!
   components: [
-    // Actions Category
-    {
-      label: 'Actions',
-      items: [
-        { path: '/components/button', label: 'Button' },
-        { path: '/components/button-icon', label: 'Button Icon' },
-        { path: '/components/button-link', label: 'Button Link' },
-        { path: '/components/feedback', label: 'Feedback' },
-        { path: '/components/prompt', label: 'Prompt' },
-        { path: '/components/prompt-group', label: 'Prompt Group' },
-      ],
-    },
-
     // Display Category
     {
       label: 'Display',
       items: [
-        { path: '/components/action-card', label: 'Action Card' },
-        { path: '/components/agent-banner', label: 'Agent Banner' },
-        { path: '/components/agent-status', label: 'Agent Status' },
-        { path: '/components/agent-timestamp', label: 'Agent Timestamp' },
-        { path: '/components/avatar', label: 'Avatar' },
-        { path: '/components/badge', label: 'Badge' },
         { path: '/components/divider', label: 'Divider' },
+        { path: '/components/sources', label: 'Sources' },
+        { path: '/components/status-card', label: 'Status Card' },
+        { path: '/components/thinking-indicator', label: 'Thinking Indicator' },
+      ],
+    },
+
+    // Input Category
+    {
+      label: 'Input',
+      items: [
+        { path: '/components/button', label: 'Button' },
+        { path: '/components/button-icon', label: 'Button Icon' },
+        { path: '/components/button-link', label: 'Button Link' },
+        { path: '/components/checkbox-group', label: 'Checkbox Group (WIP)' },
+        { path: '/components/feedback', label: 'Feedback' },
         { path: '/components/inline-feedback', label: 'Inline Feedback' },
+        { path: '/components/selection-list', label: 'Selection List (WIP)' },
       ],
     },
 
@@ -97,16 +94,34 @@ const rawNavigation: NavigationConfig = {
       ],
     },
 
+    // Actions Category
+    {
+      label: 'Actions',
+      items: [
+        { path: '/components/recommendation-card', label: 'Recommendation Card' },
+        { path: '/components/prompt', label: 'Prompt' },
+        { path: '/components/prompt-group', label: 'Prompt Group' },
+      ],
+    },
+
+    // Live Agent Category
+    {
+      label: 'Live Agent',
+      items: [
+        { path: '/components/agent-banner', label: 'Agent Banner' },
+        { path: '/components/agent-status', label: 'Agent Status' },
+        { path: '/components/agent-timestamp', label: 'Agent Timestamp' },
+        { path: '/components/avatar', label: 'Avatar' },
+        { path: '/components/badge', label: 'Badge' },
+      ],
+    },
+
     // Messages Category
     {
       label: 'Messages',
       items: [
-        { path: '/components/action-message', label: 'Action Message' },
         { path: '/components/info-message', label: 'Info Message' },
         { path: '/components/message', label: 'Message' },
-        { path: '/components/source-link', label: 'Source Link' },
-        { path: '/components/sources', label: 'Sources' },
-        { path: '/components/thinking-indicator', label: 'Thinking Indicator' },
       ],
     },
   ],

@@ -59,7 +59,7 @@ export const LifecycleCanvas = ({ flow, onUpdateFlow, renderBlock, onAddBlock }:
         welcome: flow.blocks.filter(b => b.phase === 'welcome'),
         intent: flow.blocks.filter(b => b.phase === 'intent'),
         info: flow.blocks.filter(b => b.phase === 'info'),
-        action: flow.blocks.filter(b => b.phase === 'action'),
+        status: flow.blocks.filter(b => b.phase === 'status'),
     };
 
     const handleDragStart = (event: DragStartEvent) => {
@@ -131,7 +131,7 @@ export const LifecycleCanvas = ({ flow, onUpdateFlow, renderBlock, onAddBlock }:
                 onDragEnd={handleDragEnd}
             >
                 <div className="max-w-2xl mx-auto py-8 px-4">
-                    {(['welcome', 'intent', 'info', 'action'] as FlowPhase[]).map(phase => (
+                    {(['welcome', 'intent', 'info', 'status'] as FlowPhase[]).map(phase => (
                         <PhaseSection
                             key={phase}
                             id={phase}

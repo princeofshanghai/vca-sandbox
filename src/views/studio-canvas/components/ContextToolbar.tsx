@@ -1,7 +1,6 @@
 import { createPortal } from 'react-dom';
-import { Plus, Tag, ArrowUp, ArrowDown, Component, Trash2, MousePointerClick, GitBranch, ALargeSmall, MessageCirclePlus, ChevronDown } from 'lucide-react';
+import { Plus, ArrowUp, ArrowDown, Component, Trash2, MousePointerClick, GitBranch, ALargeSmall, MessageCirclePlus, ChevronDown } from 'lucide-react';
 import { useStore } from '@xyflow/react';
-import { FlowPhase } from '../../studio/types';
 import { SelectionState } from '../types';
 import * as Popover from '@radix-ui/react-popover';
 import { AddComponentContent } from './AddComponentPopover';
@@ -11,12 +10,10 @@ import { Branch } from '../../studio/types'; // Import Branch type
 interface ContextToolbarProps {
     selection: SelectionState;
     onAddComponent: (type: import('../../studio/types').ComponentType) => void;
-    onChangePhase: (phase: FlowPhase | undefined) => void;
     onMoveUp: () => void;
     onMoveDown: () => void;
     onDelete: () => void;
     anchorEl: HTMLElement | null;
-    currentPhase?: FlowPhase;
     currentUserTurnInputType?: 'text' | 'prompt' | 'button';
     onChangeUserTurnInputType?: (type: 'text' | 'prompt' | 'button') => void;
     currentBranches?: Branch[];
@@ -25,25 +22,15 @@ interface ContextToolbarProps {
     canMoveDown?: boolean;
 }
 
-const phaseOptions: Array<{ value: FlowPhase | undefined; label: string }> = [
-    { value: 'welcome', label: 'Welcome' },
-    { value: 'intent', label: 'Intent recognition' },
-    { value: 'info', label: 'Info gathering' },
-    { value: 'action', label: 'Action' },
-    { value: undefined, label: 'No phase' },
-];
-
 
 
 export function ContextToolbar({
     selection,
     onAddComponent,
-    onChangePhase,
     onMoveUp,
     onMoveDown,
     onDelete,
     anchorEl,
-    currentPhase,
     currentUserTurnInputType,
     onChangeUserTurnInputType,
     currentBranches,
@@ -71,9 +58,18 @@ export function ContextToolbar({
         };
     };
 
-    const handlePhaseSelect = (phase: FlowPhase | undefined) => {
-        onChangePhase(phase);
-    };
+    // Check if we have any actions to render
+    const hasNodeActions = selection.type === 'node' && (
+        isAiTurn ||
+        (currentUserTurnInputType && onChangeUserTurnInputType) ||
+        (currentBranches && onUpdateBranches)
+    );
+
+    const hasComponentActions = selection.type === 'component'; // Components always have delete/move
+
+    if (!hasNodeActions && !hasComponentActions) {
+        return null;
+    }
 
     return createPortal(
         <div id="context-toolbar" style={getToolbarStyle()}>
@@ -101,7 +97,7 @@ export function ContextToolbar({
                                 </Popover.Root>
                             )}
 
-                            {isAiTurn && <div className="w-px h-5 bg-gray-700" />}
+
 
 
 
@@ -168,51 +164,6 @@ export function ContextToolbar({
                                         <GitBranch className="w-4 h-4" />
                                     </button>
                                 </ActionTooltip>
-                            )}
-
-                            {/* Only show phase picker if we have a phase (AI Turn) */}
-                            {isAiTurn && (
-                                <Popover.Root>
-                                    <ActionTooltip content="Change phase">
-                                        <Popover.Trigger asChild>
-                                            <button
-                                                className="flex items-center gap-1.5 px-3 py-1.5 text-white hover:bg-gray-800 rounded transition-colors text-sm cursor-default"
-                                            >
-                                                <Tag className="w-4 h-4" />
-                                                <ChevronDown className="w-3 h-3 text-gray-400" />
-                                            </button>
-                                        </Popover.Trigger>
-                                    </ActionTooltip>
-                                    <Popover.Portal>
-                                        <Popover.Content
-                                            side="top"
-                                            sideOffset={8}
-                                            align="center"
-                                            className="bg-gray-900 border border-gray-800 rounded-lg shadow-xl p-1 z-[1001] min-w-[140px] animate-in fade-in zoom-in-95 duration-200 ease-out"
-                                        >
-                                            {phaseOptions.map((option) => (
-                                                <button
-                                                    key={option.value ?? 'none'}
-                                                    className={`w-full px-2 py-1.5 text-xs text-left hover:bg-gray-800 rounded transition-colors cursor-default flex items-center gap-2 ${currentPhase === option.value ? 'bg-blue-900/40 text-blue-400 font-medium' : 'text-gray-300'
-                                                        }`}
-                                                    onClick={() => handlePhaseSelect(option.value)}
-                                                >
-                                                    {option.value && (
-                                                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${option.value === 'welcome' ? 'bg-purple-400' :
-                                                            option.value === 'intent' ? 'bg-amber-400' :
-                                                                option.value === 'info' ? 'bg-emerald-400' :
-                                                                    option.value === 'action' ? 'bg-rose-400' :
-                                                                        'bg-blue-400'
-                                                            }`} />
-                                                    )}
-                                                    {!option.value && <div className="w-2 h-2 rounded-full border border-gray-600 flex-shrink-0" />}
-                                                    <span className="flex-1">{option.label}</span>
-                                                </button>
-                                            ))}
-                                            <Popover.Arrow className="fill-gray-900 stroke-gray-800" />
-                                        </Popover.Content>
-                                    </Popover.Portal>
-                                </Popover.Root>
                             )}
 
                         </>

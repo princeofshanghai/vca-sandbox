@@ -64,9 +64,9 @@ export const IntentPicker = ({ onSelect, onClose, position }: IntentPickerProps)
                 />
                 <Option
                     icon={<Zap size={16} />}
-                    label="Action"
+                    label="Status"
                     description="Execute a task or check"
-                    onClick={() => onSelect('ai', 'action')}
+                    onClick={() => onSelect('ai', 'status')}
                 />
             </div>
         </div>

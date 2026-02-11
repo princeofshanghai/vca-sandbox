@@ -1,5 +1,5 @@
-import { MessageSquare, MessageCirclePlus, MessageSquareText, Zap } from 'lucide-react';
-import { Component, AIMessageContent, PromptContent, AIInfoContent, AIActionContent } from '../../../studio/types';
+import { MessageSquare, MessageCirclePlus, MessageSquareText, Zap, LayoutList, CheckSquare } from 'lucide-react';
+import { Component, AIMessageContent, PromptContent, AIInfoContent, AIStatusContent, SelectionListContent, CheckboxGroupContent } from '../../../studio/types';
 
 // Capitalize phase for display
 export const formatPhase = (phase?: string): string => {
@@ -36,12 +36,28 @@ export const getComponentDisplay = (component: Component): { icon: JSX.Element; 
                 detail: infoContent.title || infoContent.body || ''
             };
         }
-        case 'actionCard': {
-            const actionContent = component.content as AIActionContent;
+        case 'statusCard': {
+            const actionContent = component.content as AIStatusContent;
             return {
                 icon: <Zap className="w-3 h-3" />,
-                label: 'Action Card',
+                label: 'Status Card',
                 detail: actionContent.loadingTitle || actionContent.successTitle || ''
+            };
+        }
+        case 'selectionList': {
+            const listContent = component.content as SelectionListContent;
+            return {
+                icon: <LayoutList className="w-3 h-3" />,
+                label: 'Selection List',
+                detail: listContent.title || `${listContent.items?.length || 0} items`
+            };
+        }
+        case 'checkboxGroup': {
+            const groupContent = component.content as CheckboxGroupContent;
+            return {
+                icon: <CheckSquare className="w-3 h-3" />,
+                label: 'Checkbox Group',
+                detail: groupContent.title || `${groupContent.options?.length || 0} options`
             };
         }
         default:

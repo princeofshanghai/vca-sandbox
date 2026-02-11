@@ -44,20 +44,40 @@ export const NoteNode = memo(({ id: _id, data, selected }: NodeProps) => {
         }
     }, [localContent]); // Depend on localContent now
 
+    // Timeout ref for debouncing
+    const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
     const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const newValue = e.target.value;
         setLocalContent(newValue);
 
-        // Debounce update to parent
-        const timeoutId = setTimeout(() => {
-            typedData.onContentChange?.(newValue);
-        }, 500);
+        // Clear existing timeout
+        if (debounceTimeoutRef.current) {
+            clearTimeout(debounceTimeoutRef.current);
+        }
 
-        return () => clearTimeout(timeoutId);
+        // Set new timeout
+        debounceTimeoutRef.current = setTimeout(() => {
+            typedData.onContentChange?.(newValue);
+            debounceTimeoutRef.current = null;
+        }, 500);
     };
 
-    // Commit on blur
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            if (debounceTimeoutRef.current) {
+                clearTimeout(debounceTimeoutRef.current);
+            }
+        };
+    }, []);
+
+    // Commit on blur (and clear pending debounce to avoid double update)
     const handleContentBlur = () => {
+        if (debounceTimeoutRef.current) {
+            clearTimeout(debounceTimeoutRef.current);
+            debounceTimeoutRef.current = null;
+        }
         if (localContent !== typedData.content) {
             typedData.onContentChange?.(localContent);
         }

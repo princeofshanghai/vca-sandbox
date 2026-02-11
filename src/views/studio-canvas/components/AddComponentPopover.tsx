@@ -1,11 +1,11 @@
 import * as HoverCard from '@radix-ui/react-hover-card';
 import * as Popover from '@radix-ui/react-popover';
-import { MessageSquare, MessageCirclePlus, MessageSquareText, Zap } from 'lucide-react';
+import { MessageSquare, MessageCirclePlus, MessageSquareText, Zap, LayoutList, CheckSquare } from 'lucide-react';
 import type { ComponentType } from '../../studio/types';
 import { Message } from '@/components/vca-components/messages/Message';
 import { PromptGroup } from '@/components/vca-components/prompt-group/PromptGroup';
 import { InfoMessage } from '@/components/vca-components/info-message/InfoMessage';
-import { ActionCard } from '@/components/vca-components/action-card/ActionCard';
+import { StatusCard } from '@/components/vca-components/status-card/StatusCard';
 
 interface ComponentOption {
     type: ComponentType;
@@ -64,18 +64,58 @@ const componentOptions: ComponentOption[] = [
         ),
     },
     {
-        type: 'actionCard',
+        type: 'statusCard',
         icon: <Zap className="w-4 h-4" />,
-        name: 'Action Card',
+        name: 'Status Card',
         description: 'Visualize tool usage or processes',
         previewComponent: (
             <div className="w-[300px]">
-                <ActionCard
+                <StatusCard
                     status="success"
                     title="Action Completed"
                 >
                     Additional context about the action.
-                </ActionCard>
+                </StatusCard>
+            </div>
+        ),
+    },
+    {
+        type: 'selectionList',
+        icon: <LayoutList className="w-4 h-4" />,
+        name: 'Selection List',
+        description: 'User selection from a list (users, accounts)',
+        previewComponent: (
+            <div className="w-[300px] flex flex-col gap-2 p-2">
+                <div className="flex items-center gap-2 p-2 rounded border bg-white">
+                    <div className="w-6 h-6 rounded-full bg-gray-100" />
+                    <div className="flex-1 h-2 bg-gray-100 rounded w-2/3" />
+                </div>
+                <div className="flex items-center gap-2 p-2 rounded border bg-white">
+                    <div className="w-6 h-6 rounded-full bg-gray-100" />
+                    <div className="flex-1 h-2 bg-gray-100 rounded w-2/3" />
+                </div>
+            </div>
+        ),
+    },
+    {
+        type: 'checkboxGroup',
+        icon: <CheckSquare className="w-4 h-4" />,
+        name: 'Checkbox Group',
+        description: 'Multiple selection (e.g. "Select all that apply")',
+        previewComponent: (
+            <div className="w-[300px] flex flex-col gap-2 p-2">
+                <div className="text-xs font-bold mb-1">Select topics:</div>
+                <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 border border-gray-300 rounded-[2px]" />
+                    <div className="text-xs text-gray-500">Option 1</div>
+                </div>
+                <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 border border-gray-300 rounded-[2px] bg-blue-500 border-blue-500" />
+                    <div className="text-xs text-gray-900">Option 2</div>
+                </div>
+                <div className="w-16 h-6 bg-blue-600 rounded text-center text-[10px] text-white flex items-center justify-center mt-2">
+                    Save
+                </div>
             </div>
         ),
     },

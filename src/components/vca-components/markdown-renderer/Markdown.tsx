@@ -1,4 +1,5 @@
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { cn } from '@/utils';
 
 interface MarkdownRendererProps {
@@ -17,6 +18,7 @@ export const MarkdownRenderer = ({ children, className }: MarkdownRendererProps)
     return (
         <div className={cn(className)}>
             <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
                 components={{
                     // Paragraphs - use text-vca-small-open to override global p styles
                     p: ({ node: _node, ...props }) => (
@@ -58,3 +60,4 @@ export const MarkdownRenderer = ({ children, className }: MarkdownRendererProps)
         </div>
     );
 };
+

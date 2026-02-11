@@ -1,22 +1,20 @@
 import { useState } from 'react';
-import { ActionMessage } from '@/components/vca-components/action-message';
-import type { ActionMessageState } from '@/components/vca-components/action-message/ActionMessage';
+import { RecommendationCard } from '@/components/vca-components/recommendation-card';
 import { ComponentViewLayout } from '@/components/component-library/ComponentViewLayout';
 import { DemoSection } from '@/components/component-library/DemoSection';
-import { ToggleButtons, FormInput, FormTextarea, FormCheckbox } from '@/components/component-library/DemoControls';
+import { ToggleButtons, FormInput, FormTextarea } from '@/components/component-library/DemoControls';
 
-const ActionMessageComponentView = () => {
+const RecommendationCardComponentView = () => {
   // Interactive demo state
-  const [status, setStatus] = useState<ActionMessageState>('default');
+  const [status, setStatus] = useState<'default' | 'applied' | 'dismissed'>('default');
   const [title, setTitle] = useState('Add seat assignments');
   const [impactText, setImpactText] = useState('+25% engagement');
-  const [showImpact, setShowImpact] = useState(true);
   const [description, setDescription] = useState('Assign seats to all pending users in your organization. This will improve team collaboration and product adoption.');
 
   return (
     <ComponentViewLayout
-      title="Action Message"
-      description="Provides recommended actions for the user to take."
+      title="Recommendation Card"
+      description="AI-powered suggestions that prompt users to take specific actions based on insights."
     >
       {/* Demo Section */}
       <div className="space-y-20">
@@ -30,6 +28,7 @@ const ActionMessageComponentView = () => {
                 onChange={setStatus}
               />
 
+              {/* Spacer for grid consistency */}
               <div></div>
 
               <FormInput
@@ -42,17 +41,10 @@ const ActionMessageComponentView = () => {
 
               <FormInput
                 id="impactText"
-                label="Impact text"
+                label="Impact text (optional)"
                 value={impactText}
                 onChange={(e) => setImpactText(e.target.value)}
-                placeholder="Enter impact..."
-              />
-
-              <FormCheckbox
-                id="showImpact"
-                label="Show impact"
-                checked={showImpact}
-                onCheckedChange={setShowImpact}
+                placeholder="e.g. High impact"
               />
 
               <FormTextarea
@@ -61,22 +53,22 @@ const ActionMessageComponentView = () => {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Enter description..."
-                rows={3}
+                rows={2}
                 className="col-span-2"
               />
             </div>
           }
         >
-          <div className="w-[352px] mx-auto">
-            <ActionMessage
+          <div className="w-full max-w-md mx-auto">
+            <RecommendationCard
               status={status}
               title={title}
-              impactText={showImpact ? impactText : undefined}
-              onApply={() => alert('Apply clicked!')}
-              onDismiss={() => alert('Dismiss clicked!')}
+              impactText={impactText}
+              onApply={() => setStatus('applied')}
+              onDismiss={() => setStatus('dismissed')}
             >
               {description}
-            </ActionMessage>
+            </RecommendationCard>
           </div>
         </DemoSection>
 
@@ -96,13 +88,13 @@ const ActionMessageComponentView = () => {
             <p className="mb-3">Recommendation with impact metric displayed to show expected benefit.</p>
             <div className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="w-[352px] mx-auto">
-                <ActionMessage
+                <RecommendationCard
                   status="default"
                   title="Your campaign is underperforming"
-                  impactText={undefined}
+                  impactText="impact"
                 >
                   'Campaign A' is currently trailing behind competitors with 2.9% fewer impressions among your target audience.
-                </ActionMessage>
+                </RecommendationCard>
               </div>
             </div>
           </div>
@@ -113,5 +105,5 @@ const ActionMessageComponentView = () => {
   );
 };
 
-export default ActionMessageComponentView;
+export default RecommendationCardComponentView;
 

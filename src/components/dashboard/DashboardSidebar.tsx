@@ -165,6 +165,24 @@ export const DashboardSidebar = ({
                     <Plus size={16} strokeWidth={1.5} />
                     <span>New folder</span>
                 </button>
+
+                <div className="pt-2 mt-2 border-t border-gray-100">
+                    <div
+                        onClick={() => {
+                            setActiveFolderId('trash');
+                            setMobileMenuOpen(false);
+                        }}
+                        className={cn(
+                            "group flex items-center gap-2 px-3 py-2 rounded text-2xs cursor-pointer transition-colors",
+                            activeFolderId === 'trash'
+                                ? "bg-red-50 text-red-700"
+                                : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+                        )}
+                    >
+                        <Trash2 size={16} strokeWidth={1.5} className={cn("shrink-0", activeFolderId === 'trash' ? "text-red-500" : "text-gray-400 group-hover:text-gray-500")} />
+                        <span>Trash</span>
+                    </div>
+                </div>
             </div>
         </Sidebar>
     );
