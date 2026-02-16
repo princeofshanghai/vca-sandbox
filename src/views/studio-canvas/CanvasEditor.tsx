@@ -1145,7 +1145,7 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
 
                 {/* Run Menu */}
                 <DropdownMenu>
-                    <ActionTooltip content="Play prototype">
+                    <ActionTooltip content="Play prototype" disabled={isPreviewActive}>
                         <DropdownMenuTrigger asChild>
                             <button
                                 className={`flex items-center justify-center w-8 h-8 rounded-md transition-all group ${isPreviewActive

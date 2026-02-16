@@ -5,9 +5,14 @@ interface ActionTooltipProps {
     children: React.ReactNode;
     content: string;
     side?: 'top' | 'right' | 'bottom' | 'left';
+    disabled?: boolean;
 }
 
-export function ActionTooltip({ children, content, side = 'top' }: ActionTooltipProps) {
+export function ActionTooltip({ children, content, side = 'top', disabled }: ActionTooltipProps) {
+    if (disabled) {
+        return <>{children}</>;
+    }
+
     return (
         <Tooltip.Provider delayDuration={100}>
             <Tooltip.Root>

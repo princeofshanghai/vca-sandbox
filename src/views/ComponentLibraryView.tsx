@@ -160,9 +160,9 @@ const ComponentLibraryView = () => {
           <Route index element={<Navigate to="/foundations/typography" replace />} />
           <Route path="message" element={<MessageComponentView />} />
           <Route path="info-message" element={<InfoMessageComponentView />} />
-          <Route path="components/status-card" element={<StatusCardComponentView />} />
-          <Route path="components/recommendation-card" element={<RecommendationCardComponentView />} />
-          <Route path="components/agent-banner" element={<AgentBannerComponentView />} />
+          <Route path="status-card" element={<StatusCardComponentView />} />
+          <Route path="recommendation-card" element={<RecommendationCardComponentView />} />
+          <Route path="agent-banner" element={<AgentBannerComponentView />} />
           <Route path="agent-status" element={<AgentStatusComponentView />} />
           <Route path="agent-timestamp" element={<AgentTimestampComponentView />} />
           <Route path="inline-feedback" element={<InlineFeedbackComponentView />} />

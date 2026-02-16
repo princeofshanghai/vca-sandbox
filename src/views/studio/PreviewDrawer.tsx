@@ -1,13 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/utils/cn';
 import { FlowPreview } from './FlowPreview';
 import { Flow } from './types';
 import { Button } from '@/components/ui/button';
 import { PreviewSettingsMenu } from './PreviewSettingsMenu';
 import { ShareDialog } from './components/ShareDialog';
-import { RotateCcw, Split, X } from 'lucide-react';
+import { RotateCcw, Split, X, Monitor, Smartphone } from 'lucide-react';
 import { SimulationContextPanel } from './components/SimulationContextPanel';
 import { ActionTooltip } from '../studio-canvas/components/ActionTooltip';
+import { ToolbarPill } from '@/components/ui/toolbar-pill';
 
 interface PreviewDrawerProps {
     isOpen: boolean;
@@ -36,17 +37,31 @@ export function PreviewDrawer({
     const [showContextPanel, setShowContextPanel] = useState(false);
     const [simulationVariables, setSimulationVariables] = useState<Record<string, string>>({});
 
+    const debounceTimerRef = useRef<NodeJS.Timeout | undefined>(undefined);
+
     const handleRestart = () => {
+        // 1. Cancel any pending debounce updates to prevent race conditions
+        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+
+        // 2. Sync immediately to latest data
+        setActiveFlow(flow);
+
+        // 3. Trigger reset
         setResetKey(prev => prev + 1);
     };
 
     // Debounced auto-sync: Update preview 1 second after editing stops
     useEffect(() => {
-        const timer = setTimeout(() => {
+        // Clear any existing timer
+        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+
+        debounceTimerRef.current = setTimeout(() => {
             setActiveFlow(flow);
         }, 1000);
 
-        return () => clearTimeout(timer);
+        return () => {
+            if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+        };
     }, [flow]);
 
     useEffect(() => {
@@ -62,7 +77,7 @@ export function PreviewDrawer({
 
     return (
         <div className={cn(
-            "fixed inset-0 z-50 pointer-events-none flex justify-end",
+            "fixed inset-0 z-[100] pointer-events-none flex justify-end",
             isOpen ? "visible" : "invisible"
         )}>
 
@@ -88,73 +103,102 @@ export function PreviewDrawer({
                 {/* 2. The Main Preview Drawer */}
                 <div className="w-[480px] h-full bg-slate-50 shadow-2xl flex flex-col border-l border-white/20">
                     {/* Compact Header */}
-                    <div className="h-14 bg-white border-b flex items-center justify-between px-4 shrink-0 z-20 sticky top-0">
-                        <div className="flex items-center gap-3">
-                            <h2 className="font-semibold text-sm text-gray-900">Preview</h2>
-                        </div>
-
-                        <div className="flex items-center gap-1">
-                            {/* Restart */}
-                            <ActionTooltip content="Restart prototype" side="bottom">
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 text-gray-500 hover:text-gray-900 hover:bg-gray-100"
-                                    onClick={handleRestart}
-                                >
-                                    <RotateCcw size={16} />
+                    <div className="h-14 bg-white border-b flex items-center justify-between pl-2 pr-4 shrink-0 z-20 sticky top-0">
+                        <div className="flex items-center gap-2">
+                            {/* Close Button */}
+                            <ActionTooltip content="Close preview" side="bottom">
+                                <Button variant="ghost" size="icon" className="h-9 w-9 text-gray-500 hover:text-gray-900 hover:bg-gray-100" onClick={onClose}>
+                                    <X size={20} />
                                 </Button>
                             </ActionTooltip>
 
-                            {/* Context Toggle (Sidecar) */}
-                            <ActionTooltip content="Choose path" side="bottom">
-                                <Button
-                                    variant={showContextPanel ? "secondary" : "ghost"}
-                                    size="icon"
-                                    className={cn(
-                                        "h-8 w-8 transition-all relative",
-                                        showContextPanel ? "bg-amber-50 text-amber-600" : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"
-                                    )}
-                                    onClick={() => setShowContextPanel(!showContextPanel)}
-                                >
-                                    <Split size={16} className={showContextPanel ? "rotate-90" : ""} />
-                                    {/* Dot indicator if variables set */}
-                                    {Object.keys(simulationVariables).length > 0 && (
-                                        <span className="absolute top-2 right-2 flex h-1.5 w-1.5 rounded-full bg-blue-600" />
-                                    )}
-                                </Button>
-                            </ActionTooltip>
+                            {/* Control Pill */}
+                            <ToolbarPill>
+                                <ActionTooltip content="Restart prototype" side="bottom">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-full transition-all"
+                                        onClick={handleRestart}
+                                    >
+                                        <RotateCcw size={16} />
+                                    </Button>
+                                </ActionTooltip>
 
-                            {/* Settings (Icon Only) */}
-                            <ActionTooltip content="Display settings" side="bottom">
+                                <ActionTooltip content="Choose path" side="bottom">
+                                    <Button
+                                        variant={showContextPanel ? "secondary" : "ghost"}
+                                        size="icon"
+                                        className={cn(
+                                            "h-8 w-8 transition-all relative border-transparent rounded-full",
+                                            showContextPanel
+                                                ? "bg-blue-50 text-blue-600 shadow-sm border-blue-100"
+                                                : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
+                                        )}
+                                        onClick={() => setShowContextPanel(!showContextPanel)}
+                                    >
+                                        <Split size={16} className={showContextPanel ? "rotate-90" : ""} />
+                                        {Object.keys(simulationVariables).length > 0 && (
+                                            <span className="absolute top-2 right-2 flex h-1.5 w-1.5 rounded-full bg-blue-600" />
+                                        )}
+                                    </Button>
+                                </ActionTooltip>
+                            </ToolbarPill>
+
+                            {/* Display Pill */}
+                            <ToolbarPill>
+                                <ActionTooltip content="Desktop preview" side="bottom">
+                                    <Button
+                                        variant={!isMobile ? "secondary" : "ghost"}
+                                        size="icon"
+                                        className={cn(
+                                            "h-8 w-8 transition-all rounded-full border-transparent",
+                                            !isMobile
+                                                ? "bg-blue-50 text-blue-600 shadow-sm border-blue-100"
+                                                : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
+                                        )}
+                                        onClick={() => isMobile && onToggleMobile()}
+                                    >
+                                        <Monitor size={16} />
+                                    </Button>
+                                </ActionTooltip>
+
+                                <ActionTooltip content="Mobile preview" side="bottom">
+                                    <Button
+                                        variant={isMobile ? "secondary" : "ghost"}
+                                        size="icon"
+                                        className={cn(
+                                            "h-8 w-8 transition-all rounded-full border-transparent",
+                                            isMobile
+                                                ? "bg-blue-50 text-blue-600 shadow-sm border-blue-100"
+                                                : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
+                                        )}
+                                        onClick={() => !isMobile && onToggleMobile()}
+                                    >
+                                        <Smartphone size={16} />
+                                    </Button>
+                                </ActionTooltip>
+
                                 <div className="flex">
                                     <PreviewSettingsMenu
                                         flow={flow}
                                         onUpdateFlow={onUpdateFlow}
                                         isPremium={isPremium}
                                         onTogglePremium={onTogglePremium}
-                                        isMobile={isMobile}
-                                        onToggleMobile={onToggleMobile}
                                         iconOnly={true}
+                                        rounded={true}
                                     />
                                 </div>
-                            </ActionTooltip>
+                            </ToolbarPill>
+                        </div>
 
-                            <div className="w-px h-4 bg-gray-200 mx-1" />
-
+                        <div className="flex items-center gap-1">
                             {/* Share Button */}
                             <ShareDialog flow={activeFlow}>
                                 <Button size="sm" className="h-8 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-3">
                                     Share
                                 </Button>
                             </ShareDialog>
-
-                            {/* Close Button */}
-                            <ActionTooltip content="Close preview" side="bottom">
-                                <Button variant="ghost" size="icon" className="h-8 w-8 ml-1 text-gray-400 hover:text-gray-800" onClick={onClose}>
-                                    <X size={18} />
-                                </Button>
-                            </ActionTooltip>
                         </div>
                     </div>
 

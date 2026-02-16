@@ -73,7 +73,7 @@ export function ContextToolbar({
 
     return createPortal(
         <div id="context-toolbar" style={getToolbarStyle()}>
-            <div className="animate-in fade-in zoom-in-95 duration-200 ease-out">
+            <div className="animate-in fade-in zoom-in-98 duration-100 ease-out">
                 <div className="bg-gray-900 rounded-xl shadow-2xl px-2 py-1.5 flex items-center gap-1">
                     {selection.type === 'node' ? (
                         // Node-specific actions
@@ -121,7 +121,7 @@ export function ContextToolbar({
                                             side="top"
                                             sideOffset={8}
                                             align="center"
-                                            className="bg-gray-900 border border-gray-800 rounded-lg shadow-xl p-1 z-[1001] min-w-[140px] animate-in fade-in zoom-in-95 duration-200 ease-out"
+                                            className="bg-gray-900 border border-gray-800 rounded-lg shadow-xl p-1 z-[1001] min-w-[140px] animate-in fade-in zoom-in-98 duration-100 ease-out"
                                         >
                                             <button
                                                 className={`w-full px-2 py-1.5 text-xs text-left hover:bg-gray-800 rounded transition-colors cursor-default flex items-center gap-2 ${currentUserTurnInputType === 'text' ? 'bg-purple-900/40 text-purple-400 font-medium' : 'text-gray-300'}`}

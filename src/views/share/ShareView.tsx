@@ -16,7 +16,7 @@ export const ShareView = () => {
     const [error, setError] = useState<string | null>(null);
 
     // Display State
-    const [isMobile, setIsMobile] = useState(false);
+    const [isMobile] = useState(false);
     const [isPremium, setIsPremium] = useState(false);
     const [resetKey, setResetKey] = useState(0);
 
@@ -115,8 +115,7 @@ export const ShareView = () => {
                         onUpdateFlow={setFlow}
                         isPremium={isPremium}
                         onTogglePremium={() => setIsPremium(!isPremium)}
-                        isMobile={isMobile}
-                        onToggleMobile={() => setIsMobile(!isMobile)}
+
                         darkTheme={true}
                     />
 

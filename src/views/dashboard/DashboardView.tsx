@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Component, Loader2, Menu, X } from 'lucide-react';
+import { Plus, Search, Component, Menu, X } from 'lucide-react';
 import VcaLogo from '@/components/VcaLogo';
 import { cn } from '@/utils/cn';
 import { flowStorage, FlowMetadata, Folder as FolderType } from '@/utils/flowStorage';
 import { FlowCard } from '@/components/dashboard/FlowCard';
 import { Button } from '@/components/ui/button';
 import { NewFlowDialog } from '@/components/dashboard/NewFlowDialog';
+import { LoadingScreen } from '@/components/ui/loading-screen';
 import NavLink from '@/components/layout/NavLink';
 import { Flow } from '@/views/studio/types';
 import { useApp } from '@/contexts/AppContext';
@@ -216,11 +217,9 @@ export const DashboardView = () => {
 
                         {/* Grid */}
                         {isLoading ? (
-                            <div className="flex justify-center py-20">
-                                <Loader2 className="animate-spin text-gray-400" size={32} />
-                            </div>
+                            <LoadingScreen className="py-20 bg-transparent" />
                         ) : filteredFlows.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {filteredFlows.map(flow => (
                                     <FlowCard
                                         key={flow.id}

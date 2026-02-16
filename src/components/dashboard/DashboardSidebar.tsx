@@ -176,10 +176,10 @@ export const DashboardSidebar = ({
                             "group flex items-center gap-2 px-3 py-2 rounded text-2xs cursor-pointer transition-colors",
                             activeFolderId === 'trash'
                                 ? "bg-red-50 text-red-700"
-                                : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+                                : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                         )}
                     >
-                        <Trash2 size={16} strokeWidth={1.5} className={cn("shrink-0", activeFolderId === 'trash' ? "text-red-500" : "text-gray-400 group-hover:text-gray-500")} />
+                        <Trash2 size={16} strokeWidth={1.5} className={cn("shrink-0", activeFolderId === 'trash' ? "text-red-500" : "text-gray-700")} />
                         <span>Trash</span>
                     </div>
                 </div>

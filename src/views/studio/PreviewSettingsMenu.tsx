@@ -1,13 +1,14 @@
+import { useState } from 'react';
 import { Flow } from './types';
-import { Settings, Smartphone, Monitor, Check } from 'lucide-react';
+import { cn } from '@/utils';
+import { MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ActionTooltip } from '../studio-canvas/components/ActionTooltip';
 import {
     DropdownMenu,
     DropdownMenuContent,
-    DropdownMenuItem,
     DropdownMenuCheckboxItem,
     DropdownMenuLabel,
-    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
@@ -16,10 +17,9 @@ interface PreviewSettingsMenuProps {
     onUpdateFlow: (flow: Flow) => void;
     isPremium: boolean;
     onTogglePremium: () => void;
-    isMobile: boolean;
-    onToggleMobile: () => void;
     darkTheme?: boolean;
     iconOnly?: boolean;
+    rounded?: boolean;
 }
 
 export const PreviewSettingsMenu = ({
@@ -27,56 +27,34 @@ export const PreviewSettingsMenu = ({
     onUpdateFlow,
     isPremium,
     onTogglePremium,
-    isMobile,
-    onToggleMobile,
     darkTheme = false,
-    iconOnly = false
+    iconOnly = false,
+    rounded = false
 }: PreviewSettingsMenuProps) => {
+
+    const [isOpen, setIsOpen] = useState(false);
 
     const triggerClass = darkTheme
         ? "h-7 gap-2 px-3 text-xs font-medium bg-transparent border border-white/20 text-gray-300 hover:text-white hover:border-white/40 hover:bg-white/5 rounded-md transition-colors"
         : iconOnly
-            ? "h-8 w-8 text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+            ? cn(
+                "h-8 w-8 text-gray-500 hover:text-gray-900 hover:bg-gray-50 hover:shadow-sm transition-all",
+                rounded ? "rounded-full" : "rounded-md"
+            )
             : "h-8 gap-2 px-3 text-xs font-medium bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-gray-900 shadow-sm rounded-md transition-all";
 
     return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className={triggerClass}>
-                    <Settings size={14} />
-                    {!iconOnly && <span>Display</span>}
-                </Button>
-            </DropdownMenuTrigger>
+        <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+            <ActionTooltip content="More options" side="bottom" disabled={isOpen}>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className={triggerClass}>
+                        <MoreHorizontal size={16} />
+                        {!iconOnly && <span>Options</span>}
+                    </Button>
+                </DropdownMenuTrigger>
+            </ActionTooltip>
 
-            <DropdownMenuContent align="end" className="w-[240px]">
-                <DropdownMenuLabel>
-                    Device preview
-                </DropdownMenuLabel>
-
-                <DropdownMenuItem
-                    className="justify-between"
-                    onClick={() => isMobile && onToggleMobile()}
-                >
-                    <div className="flex items-center gap-2">
-                        <Monitor size={14} className="text-gray-500" />
-                        <span>Desktop</span>
-                    </div>
-                    {!isMobile && <Check size={14} className="text-blue-600" />}
-                </DropdownMenuItem>
-
-                <DropdownMenuItem
-                    className="justify-between"
-                    onClick={() => !isMobile && onToggleMobile()}
-                >
-                    <div className="flex items-center gap-2">
-                        <Smartphone size={14} className="text-gray-500" />
-                        <span>Mobile</span>
-                    </div>
-                    {isMobile && <Check size={14} className="text-blue-600" />}
-                </DropdownMenuItem>
-
-                <DropdownMenuSeparator />
-
+            <DropdownMenuContent align="end" className="w-[180px]">
                 <DropdownMenuLabel>
                     Appearance
                 </DropdownMenuLabel>

@@ -5,6 +5,7 @@ import { PreviewDrawer } from './PreviewDrawer';
 import { CanvasEditor } from '../studio-canvas/CanvasEditor';
 import { useStudioFlow } from './hooks/useStudioFlow';
 import { useFlowHistory } from './hooks/useFlowHistory';
+import { LoadingScreen } from '@/components/ui/loading-screen';
 
 export const StudioView = () => {
     const { id } = useParams<{ id: string }>();
@@ -39,7 +40,7 @@ export const StudioView = () => {
         navigate('/');
     };
 
-    if (isLoading) return <div className="h-full flex items-center justify-center">Loading...</div>;
+    if (isLoading) return <LoadingScreen fullScreen />;
 
     return (
         <div className="flex h-screen overflow-hidden flex-col bg-white">

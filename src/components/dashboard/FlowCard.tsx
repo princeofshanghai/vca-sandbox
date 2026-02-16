@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { FlowMetadata, flowStorage, Folder } from '@/utils/flowStorage';
-import { Trash2, MoreVertical, FolderInput, Pencil } from 'lucide-react';
+import { MoreVertical } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ENTRY_POINTS, EntryPointId } from '@/utils/entryPoints';
 import {
@@ -155,7 +155,6 @@ export const FlowCard = ({ flow, onDelete, onRename, isTrash, onRestore, onPerma
                                             className="gap-2"
                                             onClick={handleRestore}
                                         >
-                                            <FolderInput size={14} className="text-gray-500" />
                                             <span>Restore</span>
                                         </DropdownMenuItem>
                                         <DropdownMenuSeparator />
@@ -164,7 +163,6 @@ export const FlowCard = ({ flow, onDelete, onRename, isTrash, onRestore, onPerma
                                             className="gap-2 whitespace-nowrap"
                                             onClick={handlePermanentDelete}
                                         >
-                                            <Trash2 size={14} />
                                             <span>Delete permanently</span>
                                         </DropdownMenuItem>
                                     </>
@@ -178,7 +176,6 @@ export const FlowCard = ({ flow, onDelete, onRename, isTrash, onRestore, onPerma
                                             className="gap-2"
                                             onClick={() => handleMoveToFolder(undefined)}
                                         >
-                                            <FolderInput size={14} className="text-gray-500" />
                                             <span>All Conversations</span>
                                         </DropdownMenuItem>
 
@@ -188,7 +185,6 @@ export const FlowCard = ({ flow, onDelete, onRename, isTrash, onRestore, onPerma
                                                 className="gap-2"
                                                 onClick={() => handleMoveToFolder(folder.id)}
                                             >
-                                                <FolderInput size={14} className="text-gray-500" />
                                                 <span>{folder.name}</span>
                                             </DropdownMenuItem>
                                         ))}
@@ -202,7 +198,6 @@ export const FlowCard = ({ flow, onDelete, onRename, isTrash, onRestore, onPerma
                                                 setIsRenaming(true);
                                             }}
                                         >
-                                            <Pencil size={14} className="text-gray-500" />
                                             <span>Rename</span>
                                         </DropdownMenuItem>
 
@@ -211,7 +206,6 @@ export const FlowCard = ({ flow, onDelete, onRename, isTrash, onRestore, onPerma
                                             className="gap-2"
                                             onClick={handleDelete}
                                         >
-                                            <Trash2 size={14} />
                                             <span>Delete</span>
                                         </DropdownMenuItem>
                                     </>

@@ -1,4 +1,3 @@
-import { LogOut } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import {
     DropdownMenu,
@@ -32,7 +31,7 @@ export function UserMenu() {
             <ActionTooltip content={user.email} side="bottom">
                 <DropdownMenuTrigger asChild>
                     <button className="h-8 w-8 rounded-md hover:bg-gray-100 flex items-center justify-center transition-colors outline-none cursor-pointer">
-                        <div className="h-6 w-6 rounded-full bg-gradient-to-br from-blue-600 to-violet-600 flex items-center justify-center text-white font-bold text-[9px] tracking-wide shadow-sm ring-1 ring-white/20">
+                        <div className="h-6 w-6 rounded-full bg-gradient-to-br from-blue-200 via-indigo-100 to-purple-200 flex items-center justify-center text-gray-900 font-bold text-[9px] tracking-wide shadow-sm">
                             {initials}
                         </div>
                     </button>
@@ -52,7 +51,6 @@ export function UserMenu() {
                     className="gap-2"
                     onClick={signOut}
                 >
-                    <LogOut size={14} />
                     <span>Sign out</span>
                 </DropdownMenuItem>
             </DropdownMenuContent>
