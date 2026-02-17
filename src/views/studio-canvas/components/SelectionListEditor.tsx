@@ -3,7 +3,11 @@ import { Plus, X, GripVertical, Wand2, LayoutList, LayoutGrid, GalleryHorizontal
 import { Component, SelectionListContent } from '../../studio/types';
 import { ComponentEditorPopover } from './ComponentEditorPopover';
 
-import { EditorField } from './EditorField';
+import { EditorRoot } from './editor-ui/EditorRoot';
+import { EditorHeader } from './editor-ui/EditorHeader';
+import { EditorContent } from './editor-ui/EditorContent';
+import { EditorSection } from './editor-ui/EditorSection';
+import { EditorField } from './editor-ui/EditorField';
 
 interface SelectionListEditorProps {
     component: Component;
@@ -81,145 +85,147 @@ export function SelectionListEditor({ component, onChange, children, isOpen, onO
     };
 
     const editorContent = (
-        <div className="flex flex-col p-5 space-y-6 max-h-[60vh] overflow-y-auto thin-scrollbar">
+        <EditorRoot>
+            <EditorHeader
+                icon={LayoutList}
+                title="Selection List"
+                onClose={() => onOpenChange(false)}
+            />
 
-            {/* 1. Layout & Presets */}
-            <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                    <label className="text-xs font-medium text-gray-500">Layout</label>
+            <EditorContent>
+                {/* 1. Header (Title) */}
+                <EditorSection>
+                    <EditorField
+                        label="Heading (Optional)"
+                        value={localTitle}
+                        onChange={handleTitleChange}
+                        placeholder="e.g., Select an account..."
+                    />
+                </EditorSection>
 
-                    {/* Magic Presets Dropdown */}
-                    <div className="relative group">
-                        <button className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors">
-                            <Wand2 className="w-3.5 h-3.5" />
-                            <span>Load Preset</span>
-                        </button>
-                        <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-1 hidden group-hover:block z-50">
-                            <button onClick={() => applyPreset('users')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-gray-700">
-                                Users (Avatars)
-                            </button>
-                            <button onClick={() => applyPreset('accounts')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-gray-700">
-                                Accounts (Icons)
-                            </button>
-                            <button onClick={() => applyPreset('licenses')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-gray-700">
-                                Simple (Text only)
-                            </button>
+                {/* 2. Layout & Presets */}
+                <EditorSection title="Layout">
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs text-gray-500">Display Style</span>
+
+                            {/* Magic Presets Dropdown */}
+                            <div className="relative group">
+                                <button className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors">
+                                    <Wand2 className="w-3.5 h-3.5" />
+                                    <span>Load Preset</span>
+                                </button>
+                                <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-1 hidden group-hover:block z-50">
+                                    <button onClick={() => applyPreset('users')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-gray-700">
+                                        Users (Avatars)
+                                    </button>
+                                    <button onClick={() => applyPreset('accounts')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-gray-700">
+                                        Accounts (Icons)
+                                    </button>
+                                    <button onClick={() => applyPreset('licenses')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-gray-700">
+                                        Simple (Text only)
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-2">
+                            {[
+                                { id: 'list', icon: LayoutList, label: 'List' },
+                                { id: 'grid', icon: LayoutGrid, label: 'Grid' },
+                                { id: 'carousel', icon: GalleryHorizontal, label: 'Carousel' }
+                            ].map(opt => (
+                                <button
+                                    key={opt.id}
+                                    onClick={() => handleLayoutChange(opt.id)}
+                                    className={`flex flex-col items-center justify-center gap-1.5 p-2 rounded-lg border transition-all ${content.layout === opt.id
+                                        ? 'bg-blue-50 border-blue-200 text-blue-700'
+                                        : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
+                                        }`}
+                                >
+                                    <opt.icon className="w-4 h-4" />
+                                    <span className="text-[10px] font-medium">{opt.label}</span>
+                                </button>
+                            ))}
                         </div>
                     </div>
-                </div>
+                </EditorSection>
 
-                <div className="grid grid-cols-3 gap-2">
-                    {[
-                        { id: 'list', icon: LayoutList, label: 'List' },
-                        { id: 'grid', icon: LayoutGrid, label: 'Grid' },
-                        { id: 'carousel', icon: GalleryHorizontal, label: 'Carousel' }
-                    ].map(opt => (
-                        <button
-                            key={opt.id}
-                            onClick={() => handleLayoutChange(opt.id)}
-                            className={`flex flex-col items-center justify-center gap-1.5 p-2 rounded-lg border transition-all ${content.layout === opt.id
-                                ? 'bg-blue-50 border-blue-200 text-blue-700'
-                                : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
-                                }`}
-                        >
-                            <opt.icon className="w-4 h-4" />
-                            <span className="text-[10px] font-medium">{opt.label}</span>
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            {/* 2. Header (Optional) */}
-            <div className="space-y-1.5">
-                <EditorField
-                    label="Title (Optional)"
-                    value={localTitle}
-                    onChange={handleTitleChange}
-                    placeholder="e.g., Select an account..."
-                />
-            </div>
-
-            {/* 3. Items List */}
-            <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                    <label className="text-xs font-medium text-gray-500">
-                        Items ({content.items?.length || 0})
-                    </label>
-                </div>
-
-                <div className="space-y-2">
-                    {content.items?.map((item, idx) => (
-                        <div key={item.id} className="group border border-gray-200 rounded-lg bg-white overflow-hidden transition-all hover:border-gray-300">
-                            {/* Item Header / Summary */}
-                            <div
-                                className="flex items-center gap-3 p-2 cursor-pointer bg-gray-50/50 hover:bg-gray-50 transition-colors"
-                                onClick={() => setExpandedItemId(expandedItemId === item.id ? null : item.id)}
-                            >
-                                <div className="text-gray-400 cursor-grab active:cursor-grabbing">
-                                    <GripVertical className="w-4 h-4" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="text-xs font-medium text-gray-900 truncate">
-                                        {item.title || 'Untitled'}
-                                    </div>
-                                    <div className="text-[10px] text-gray-500 truncate">
-                                        {item.subtitle}
-                                    </div>
-                                </div>
-                                <div className="w-6 h-6 rounded overflow-hidden bg-gray-100 flex-shrink-0">
-                                    {item.imageUrl && (
-                                        <img src={item.imageUrl} className="w-full h-full object-cover" />
-                                    )}
-                                </div>
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); deleteItem(idx); }}
-                                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-all opacity-0 group-hover:opacity-100"
+                {/* 3. Items List */}
+                <EditorSection title={`Items (${content.items?.length || 0})`}>
+                    <div className="space-y-2">
+                        {content.items?.map((item, idx) => (
+                            <div key={item.id} className="group border border-gray-200 rounded-lg bg-white overflow-hidden transition-all hover:border-gray-300">
+                                {/* Item Header / Summary */}
+                                <div
+                                    className="flex items-center gap-3 p-2 cursor-pointer bg-gray-50/50 hover:bg-gray-50 transition-colors"
+                                    onClick={() => setExpandedItemId(expandedItemId === item.id ? null : item.id)}
                                 >
-                                    <X className="w-3.5 h-3.5" />
-                                </button>
-                            </div>
-
-                            {/* Expanded Editor */}
-                            {expandedItemId === item.id && (
-                                <div className="p-3 border-t border-gray-100 bg-white space-y-3 animate-in fade-in slide-in-from-top-1">
-                                    <EditorField
-                                        label="Title"
-                                        value={item.title}
-                                        onChange={(val) => updateItem(idx, { title: val })}
-                                    />
-                                    <EditorField
-                                        label="Subtitle"
-                                        value={item.subtitle || ''}
-                                        onChange={(val) => updateItem(idx, { subtitle: val })}
-                                    />
-                                    <EditorField
-                                        label="Image URL"
-                                        value={item.imageUrl || ''}
-                                        onChange={(val) => updateItem(idx, { imageUrl: val })}
-                                        placeholder="https://..."
-                                    />
-                                    <EditorField
-                                        label="Icon Name (if no image)"
-                                        value={item.iconName || ''}
-                                        onChange={(val) => updateItem(idx, { iconName: val })}
-                                        placeholder="e.g. building, user..."
-                                    />
+                                    <div className="text-gray-400 cursor-grab active:cursor-grabbing">
+                                        <GripVertical className="w-4 h-4" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="text-xs font-medium text-gray-900 truncate">
+                                            {item.title || 'Untitled'}
+                                        </div>
+                                        <div className="text-[10px] text-gray-500 truncate">
+                                            {item.subtitle}
+                                        </div>
+                                    </div>
+                                    <div className="w-6 h-6 rounded overflow-hidden bg-gray-100 flex-shrink-0">
+                                        {item.imageUrl && (
+                                            <img src={item.imageUrl} className="w-full h-full object-cover" />
+                                        )}
+                                    </div>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); deleteItem(idx); }}
+                                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-all opacity-0 group-hover:opacity-100"
+                                    >
+                                        <X className="w-3.5 h-3.5" />
+                                    </button>
                                 </div>
-                            )}
-                        </div>
-                    ))}
-                </div>
 
-                <button
-                    onClick={addItem}
-                    className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg border border-dashed border-gray-300 text-gray-500 text-xs font-medium hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/50 transition-all"
-                >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Add Item</span>
-                </button>
-            </div>
+                                {/* Expanded Editor */}
+                                {expandedItemId === item.id && (
+                                    <div className="p-3 border-t border-gray-100 bg-white space-y-3 animate-in fade-in slide-in-from-top-1">
+                                        <EditorField
+                                            label="Title"
+                                            value={item.title}
+                                            onChange={(val) => updateItem(idx, { title: val })}
+                                        />
+                                        <EditorField
+                                            label="Subtitle"
+                                            value={item.subtitle || ''}
+                                            onChange={(val) => updateItem(idx, { subtitle: val })}
+                                        />
+                                        <EditorField
+                                            label="Image URL"
+                                            value={item.imageUrl || ''}
+                                            onChange={(val) => updateItem(idx, { imageUrl: val })}
+                                            placeholder="https://..."
+                                        />
+                                        <EditorField
+                                            label="Icon Name (if no image)"
+                                            value={item.iconName || ''}
+                                            onChange={(val) => updateItem(idx, { iconName: val })}
+                                            placeholder="e.g. building, user..."
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
 
-        </div>
+                    <button
+                        onClick={addItem}
+                        className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg border border-dashed border-gray-300 text-gray-500 text-xs font-medium hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/50 transition-all"
+                    >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add Item</span>
+                    </button>
+                </EditorSection>
+            </EditorContent>
+        </EditorRoot>
     );
 
     return (
@@ -228,7 +234,7 @@ export function SelectionListEditor({ component, onChange, children, isOpen, onO
             onOpenChange={onOpenChange}
             componentId={component.id}
             editorContent={editorContent}
-            width={360}
+            width={400}
         >
             {children}
         </ComponentEditorPopover>

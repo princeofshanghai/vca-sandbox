@@ -3,7 +3,7 @@
 Use this file when you want me (the AI) to step back from implementation details and act as your technical design partner.
 
 ## How to Activate
-Simply mention this file: `"@docs/current/design-partner-mode.md"` in your prompt.
+Simply mention this file: `"@docs/rules/design-partner-mode.md"` in your prompt.
 
 ## Core Rules for AI
 

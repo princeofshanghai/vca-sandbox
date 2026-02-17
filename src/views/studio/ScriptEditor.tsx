@@ -7,7 +7,7 @@ import {
     useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { MarkdownEditor } from '../studio-canvas/components/MarkdownEditor';
+import { RichTextEditor } from '../studio-canvas/components/RichTextEditor';
 import { ActionBlockEditor } from './ActionBlockEditor';
 import { VariantButton } from './VariantButton';
 import { LifecycleCanvas } from './LifecycleCanvas';
@@ -197,7 +197,7 @@ const BlockEditor = ({ block, index, onUpdate, onDelete }: {
 
                 {/* 1. User Input */}
                 {block.type === 'user' && (
-                    <MarkdownEditor
+                    <RichTextEditor
                         value={block.content}
                         onChange={(value) => onUpdate({ content: value })}
                         placeholder="Enter what the user says..."
@@ -208,7 +208,7 @@ const BlockEditor = ({ block, index, onUpdate, onDelete }: {
                 {block.type === 'ai' && block.variant === 'message' && (
                     <div className="space-y-2">
                         <label className="text-xs font-medium text-gray-500">Message</label>
-                        <MarkdownEditor
+                        <RichTextEditor
                             value={(block.content as AIMessageContent).text || ''}
                             onChange={(value) => onUpdate({ content: { ...(block.content as AIMessageContent), text: value } })}
                             placeholder="Enter what the AI should say..."
@@ -230,7 +230,7 @@ const BlockEditor = ({ block, index, onUpdate, onDelete }: {
                         </div>
                         <div className="space-y-2">
                             <label className="text-xs font-medium text-gray-500">Message</label>
-                            <MarkdownEditor
+                            <RichTextEditor
                                 value={(block.content as AIInfoContent).body || ''}
                                 onChange={(value) => onUpdate({ content: { ...block.content, body: value } })}
                                 placeholder="Ex. To park a license in LinkedIn Recruiter..."

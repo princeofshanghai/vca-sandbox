@@ -1,7 +1,11 @@
-import { useRef, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { MessageCirclePlus } from 'lucide-react';
 import { Component, PromptContent } from '../../studio/types';
 import { ComponentEditorPopover } from './ComponentEditorPopover';
-import { EditorField } from './EditorField';
+import { EditorRoot } from './editor-ui/EditorRoot';
+import { EditorHeader } from './editor-ui/EditorHeader';
+import { EditorContent } from './editor-ui/EditorContent';
+import { EditorField } from './editor-ui/EditorField';
 
 interface PromptEditorProps {
     component: Component;
@@ -14,7 +18,6 @@ interface PromptEditorProps {
 
 export function PromptEditor({ component, entryPoint, onChange, children, isOpen, onOpenChange }: PromptEditorProps) {
     const content = component.content as PromptContent;
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     // Local state to prevent cursor jumping
     const [localText, setLocalText] = useState(content.text || '');
@@ -24,19 +27,6 @@ export function PromptEditor({ component, entryPoint, onChange, children, isOpen
         setLocalText(content.text || '');
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [component.id]);
-
-    // Focus handling
-    useEffect(() => {
-        if (isOpen && textareaRef.current) {
-            const el = textareaRef.current;
-            el.focus();
-            // Small timeout to ensure cursor is placed at the end after browser's default focus behavior
-            setTimeout(() => {
-                const length = el.value.length;
-                el.setSelectionRange(length, length);
-            }, 0);
-        }
-    }, [isOpen]);
 
     const handleTextChange = (value: string) => {
         setLocalText(value);
@@ -63,17 +53,25 @@ export function PromptEditor({ component, entryPoint, onChange, children, isOpen
     };
 
     const editorContent = (
-        <div className="flex flex-col p-5 space-y-3">
-            <EditorField
-                label="Prompt text"
-                value={localText}
-                onChange={handleTextChange}
-                placeholder={getPlaceholder()}
-                type="textarea"
-                minRows={2}
-                inputRef={textareaRef}
+        <EditorRoot>
+            <EditorHeader
+                icon={MessageCirclePlus}
+                title="Prompt"
+                onClose={() => onOpenChange(false)}
             />
-        </div>
+            <EditorContent>
+                <EditorField
+                    label="Prompt Instructions"
+                    value={localText}
+                    onChange={handleTextChange}
+                    placeholder={getPlaceholder()}
+                    type="textarea"
+                    minRows={6}
+                    autoFocus={true}
+                    hint="Instructions for how the AI should behave in this turn."
+                />
+            </EditorContent>
+        </EditorRoot>
     );
 
     return (
@@ -82,7 +80,7 @@ export function PromptEditor({ component, entryPoint, onChange, children, isOpen
             onOpenChange={onOpenChange}
             componentId={component.id}
             editorContent={editorContent}
-            width={360}
+            width={400}
         >
             {children}
         </ComponentEditorPopover>

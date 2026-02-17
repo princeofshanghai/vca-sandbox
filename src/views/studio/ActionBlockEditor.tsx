@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { AIStatusContent } from './types';
-import { MarkdownEditor } from '../studio-canvas/components/MarkdownEditor';
+import { RichTextEditor } from '../studio-canvas/components/RichTextEditor';
 import { cn } from '@/utils/cn';
 
 export const ActionBlockEditor = ({ content, onChange }: { content: AIStatusContent, onChange: (c: AIStatusContent) => void }) => {
@@ -56,7 +56,7 @@ export const ActionBlockEditor = ({ content, onChange }: { content: AIStatusCont
                         </div>
                         <div className="space-y-2">
                             <label className="text-xs font-medium text-gray-500">Message</label>
-                            <MarkdownEditor
+                            <RichTextEditor
                                 value={content.successDescription || ''}
                                 onChange={(value) => onChange({ ...content, successDescription: value })}
                                 placeholder="Extra details..."
@@ -77,7 +77,7 @@ export const ActionBlockEditor = ({ content, onChange }: { content: AIStatusCont
                         </div>
                         <div className="space-y-2">
                             <label className="text-xs font-medium text-gray-500">Error Message</label>
-                            <MarkdownEditor
+                            <RichTextEditor
                                 value={content.failureDescription || ''}
                                 onChange={(value) => onChange({ ...content, failureDescription: value })}
                                 placeholder="Explain what went wrong..."

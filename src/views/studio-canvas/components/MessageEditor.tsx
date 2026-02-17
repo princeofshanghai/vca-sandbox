@@ -1,7 +1,11 @@
-import { useRef, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { MessageSquare } from 'lucide-react';
 import { Component, AIMessageContent } from '../../studio/types';
 import { ComponentEditorPopover } from './ComponentEditorPopover';
-import { MarkdownEditor } from './MarkdownEditor';
+import { EditorRoot } from './editor-ui/EditorRoot';
+import { EditorHeader } from './editor-ui/EditorHeader';
+import { EditorContent } from './editor-ui/EditorContent';
+import { RichTextEditor } from './RichTextEditor';
 
 interface MessageEditorProps {
     component: Component;
@@ -13,7 +17,6 @@ interface MessageEditorProps {
 
 export function MessageEditor({ component, onChange, children, isOpen, onOpenChange }: MessageEditorProps) {
     const content = component.content as AIMessageContent;
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     // Local state to prevent cursor jumping
     const [localText, setLocalText] = useState(content.text || '');
@@ -24,37 +27,32 @@ export function MessageEditor({ component, onChange, children, isOpen, onOpenCha
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [component.id]);
 
-    // Focus handling
-    useEffect(() => {
-        if (isOpen && textareaRef.current) {
-            const el = textareaRef.current;
-            el.focus();
-            // Small timeout to ensure cursor is placed at the end after browser's default focus behavior
-            setTimeout(() => {
-                const length = el.value.length;
-                el.setSelectionRange(length, length);
-            }, 0);
-        }
-    }, [isOpen]);
-
     const handleTextChange = (value: string) => {
         setLocalText(value);
         onChange({ ...content, text: value });
     };
 
     const editorContent = (
-        <div className="flex flex-col p-5 space-y-3">
-            <div className="flex flex-col gap-1.5 w-full">
-                <label className="text-xs font-medium text-gray-500">
-                    Message
-                </label>
-                <MarkdownEditor
-                    value={localText}
-                    onChange={handleTextChange}
-                    placeholder="Type your message here..."
-                />
-            </div>
-        </div>
+        <EditorRoot>
+            <EditorHeader
+                icon={MessageSquare}
+                title="AI Message"
+                onClose={() => onOpenChange(false)}
+            />
+            <EditorContent>
+                <div className="flex flex-col gap-1.5 w-full">
+                    <label className="text-xs font-medium text-gray-700">
+                        Message Content
+                    </label>
+                    <RichTextEditor
+                        value={localText}
+                        onChange={handleTextChange}
+                        placeholder="Type your message here..."
+                        autoFocus={true}
+                    />
+                </div>
+            </EditorContent>
+        </EditorRoot>
     );
 
     return (
@@ -63,7 +61,7 @@ export function MessageEditor({ component, onChange, children, isOpen, onOpenCha
             onOpenChange={onOpenChange}
             componentId={component.id}
             editorContent={editorContent}
-            width={360}
+            width={400} // Increased width for better writing experience
         >
             {children}
         </ComponentEditorPopover>

@@ -15,15 +15,15 @@ export const getComponentDisplay = (component: Component): { icon: JSX.Element; 
         case 'message': {
             const messageContent = component.content as AIMessageContent;
             return {
-                icon: <MessageSquare className="w-3 h-3" />,
-                label: 'Message',
+                icon: <MessageSquare className="w-4 h-4" />,
+                label: 'AI Message',
                 detail: messageContent.text || ''
             };
         }
         case 'prompt': {
             const promptContent = component.content as PromptContent;
             return {
-                icon: <MessageCirclePlus className="w-3 h-3" />,
+                icon: <MessageCirclePlus className="w-4 h-4" />,
                 label: 'Prompt',
                 detail: promptContent.text || ''
             };
@@ -31,7 +31,7 @@ export const getComponentDisplay = (component: Component): { icon: JSX.Element; 
         case 'infoMessage': {
             const infoContent = component.content as AIInfoContent;
             return {
-                icon: <MessageSquareText className="w-3 h-3" />,
+                icon: <MessageSquareText className="w-4 h-4" />,
                 label: 'Info Message',
                 detail: infoContent.title || infoContent.body || ''
             };
@@ -39,7 +39,7 @@ export const getComponentDisplay = (component: Component): { icon: JSX.Element; 
         case 'statusCard': {
             const actionContent = component.content as AIStatusContent;
             return {
-                icon: <Zap className="w-3 h-3" />,
+                icon: <Zap className="w-4 h-4" />,
                 label: 'Status Card',
                 detail: actionContent.loadingTitle || actionContent.successTitle || ''
             };
@@ -47,7 +47,7 @@ export const getComponentDisplay = (component: Component): { icon: JSX.Element; 
         case 'selectionList': {
             const listContent = component.content as SelectionListContent;
             return {
-                icon: <LayoutList className="w-3 h-3" />,
+                icon: <LayoutList className="w-4 h-4" />,
                 label: 'Selection List',
                 detail: listContent.title || `${listContent.items?.length || 0} items`
             };
@@ -55,12 +55,12 @@ export const getComponentDisplay = (component: Component): { icon: JSX.Element; 
         case 'checkboxGroup': {
             const groupContent = component.content as CheckboxGroupContent;
             return {
-                icon: <CheckSquare className="w-3 h-3" />,
+                icon: <CheckSquare className="w-4 h-4" />,
                 label: 'Checkbox Group',
                 detail: groupContent.title || `${groupContent.options?.length || 0} options`
             };
         }
         default:
-            return { icon: <MessageSquare className="w-3 h-3" />, label: 'Component' };
+            return { icon: <MessageSquare className="w-4 h-4" />, label: 'Component' };
     }
 };

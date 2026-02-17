@@ -1,7 +1,11 @@
 import { useRef, useEffect } from 'react';
-import { Trash2, Settings2, GitBranch, ArrowRight } from 'lucide-react';
+import { Trash2, Settings2, ArrowRight } from 'lucide-react';
 import { ComponentEditorPopover } from './ComponentEditorPopover';
-import { EditorField } from './EditorField';
+import { EditorRoot } from './editor-ui/EditorRoot';
+import { EditorHeader } from './editor-ui/EditorHeader';
+import { EditorContent } from './editor-ui/EditorContent';
+import { EditorSection } from './editor-ui/EditorSection';
+import { EditorField } from './editor-ui/EditorField';
 import { Badge } from '@/components/ui/badge';
 
 interface ConditionBranchEditorProps {
@@ -30,7 +34,7 @@ export function ConditionBranchEditor({
 }: ConditionBranchEditorProps) {
     const inputRef = useRef<HTMLInputElement>(null);
 
-    // Focus handling
+    // Focus handling handled by autoFocus in EditorField or we can keep it here if we want specific selection range behavior
     useEffect(() => {
         if (isOpen && inputRef.current) {
             const el = inputRef.current;
@@ -43,38 +47,30 @@ export function ConditionBranchEditor({
     }, [isOpen]);
 
     const editorContent = (
-        <div className="flex flex-col overflow-hidden">
-            {/* Header */}
-            <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
-                <Settings2 size={14} className="text-gray-400" />
-                <span className="text-xs font-semibold text-gray-700 uppercase tracking-wider">Branch Settings</span>
-            </div>
-
-            <div className="p-4 space-y-5">
+        <EditorRoot>
+            <EditorHeader
+                icon={Settings2}
+                title="Branch Settings"
+                onClose={() => onOpenChange(false)}
+            />
+            <EditorContent>
                 {/* Identity Section */}
-                <div className="space-y-3">
+                <EditorSection title="Identity">
                     <EditorField
                         label="Path Name"
                         value={condition}
                         onChange={(val) => onChange({ condition: val })}
                         inputRef={inputRef}
                         placeholder={'e.g. "Yes", "No", "Admin"'}
+                        hint="The name shown on the canvas to identify this path."
                     />
-                    <p className="text-[10px] text-gray-400 leading-normal px-0.5">
-                        The name shown on the canvas to identify this path.
-                    </p>
-                </div>
+                </EditorSection>
 
                 {/* Routing Logic Section */}
-                <div className="pt-2">
-                    <div className="flex items-center gap-2 mb-3">
-                        <GitBranch size={13} className="text-gray-400" />
-                        <span className="text-[11px] font-medium text-gray-500 uppercase tracking-tight">Routing Logic</span>
-                    </div>
-
-                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 space-y-4">
+                <EditorSection title="Routing Logic">
+                    <div className="space-y-4">
                         {/* Default Path Toggle */}
-                        <label className="flex items-center justify-between cursor-pointer group">
+                        <label className="flex items-center justify-between cursor-pointer group p-1">
                             <span className="text-xs text-gray-600 group-hover:text-gray-900 transition-colors">Default (Else) Path</span>
                             <div className="relative inline-flex items-center">
                                 <input
@@ -92,7 +88,7 @@ export function ConditionBranchEditor({
                                 This path will be taken automatically if no other conditions are met.
                             </div>
                         ) : (
-                            <div className="space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
+                            <div className="space-y-4 animate-in fade-in slide-in-from-top-1 duration-200 pt-2 border-t border-gray-100">
                                 <EditorField
                                     label="If Property"
                                     placeholder="e.g. IsAdmin"
@@ -126,10 +122,10 @@ export function ConditionBranchEditor({
                             </div>
                         )}
                     </div>
-                </div>
+                </EditorSection>
 
                 {/* Footer Actions */}
-                <div className="pt-2 border-t border-gray-100 flex justify-end">
+                <div className="pt-4 flex justify-end">
                     <button
                         onClick={onDelete}
                         className="flex items-center gap-1.5 text-[10px] font-medium text-gray-400 hover:text-red-500 hover:bg-red-50 px-2 py-1 rounded transition-all group"
@@ -138,8 +134,8 @@ export function ConditionBranchEditor({
                         <span>Delete Branch</span>
                     </button>
                 </div>
-            </div>
-        </div>
+            </EditorContent>
+        </EditorRoot>
     );
 
     return (
@@ -148,7 +144,7 @@ export function ConditionBranchEditor({
             onOpenChange={onOpenChange}
             componentId={branchId}
             editorContent={editorContent}
-            width={280}
+            width={320}
         >
             {children}
         </ComponentEditorPopover>

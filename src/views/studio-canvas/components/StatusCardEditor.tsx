@@ -1,9 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Component, AIStatusContent } from '../../studio/types';
 import { ComponentEditorPopover } from './ComponentEditorPopover';
-import { MarkdownEditor } from './MarkdownEditor';
-import { Plus, X } from 'lucide-react';
-import { EditorField } from './EditorField';
+import { Plus, X, Zap } from 'lucide-react';
+
+import { EditorRoot } from './editor-ui/EditorRoot';
+import { EditorHeader } from './editor-ui/EditorHeader';
+import { EditorContent } from './editor-ui/EditorContent';
+import { EditorSection } from './editor-ui/EditorSection';
+import { EditorField } from './editor-ui/EditorField';
+import { RichTextEditor } from './RichTextEditor';
 
 interface StatusCardEditorProps {
     component: Component;
@@ -42,15 +47,6 @@ export function StatusCardEditor({ component, onChange, children, isOpen, onOpen
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [component.id]);
 
-    // Handle initial focus on open
-    useEffect(() => {
-        if (isOpen && !localSuccessTitle && !localLoadingTitle) {
-            // Focus loading title if it's a new component
-            const el = document.querySelector('input[placeholder="e.g., Removing user..."]') as HTMLInputElement;
-            if (el) el.focus();
-        }
-    }, [isOpen, localSuccessTitle, localLoadingTitle]);
-
     const handleLoadingTitleChange = (value: string) => {
         setLocalLoadingTitle(value);
         onChange({ ...content, loadingTitle: value });
@@ -77,18 +73,26 @@ export function StatusCardEditor({ component, onChange, children, isOpen, onOpen
     };
 
     const editorContent = (
-        <div className="flex flex-col p-5 space-y-5 max-h-[85vh] overflow-y-auto thin-scrollbar">
-            {/* Loading State */}
-            <EditorField
-                label="Loading label"
-                value={localLoadingTitle}
-                onChange={handleLoadingTitleChange}
-                placeholder="e.g., Removing user..."
+        <EditorRoot>
+            <EditorHeader
+                icon={Zap}
+                title="Status Card"
+                onClose={() => onOpenChange(false)}
             />
 
-            {/* Success State */}
-            <div className="space-y-4">
-                <div className="space-y-3">
+            <EditorContent>
+                {/* 1. Loading State */}
+                <EditorSection title="Loading State">
+                    <EditorField
+                        label="Loading label"
+                        value={localLoadingTitle}
+                        onChange={handleLoadingTitleChange}
+                        placeholder="e.g., Removing user..."
+                    />
+                </EditorSection>
+
+                {/* 2. Success State */}
+                <EditorSection title="Success State">
                     <EditorField
                         label="Success label"
                         value={localSuccessTitle}
@@ -97,27 +101,28 @@ export function StatusCardEditor({ component, onChange, children, isOpen, onOpen
                     />
 
                     {showSuccessDesc ? (
-                        <div className="group/desc relative animate-in fade-in slide-in-from-top-1 duration-200">
-                            <div className="flex flex-col gap-1.5 w-full">
+                        <div className="group/desc relative animate-in fade-in slide-in-from-top-1 duration-200 pt-2">
+                            <div className="flex justify-between items-baseline mb-1.5">
                                 <label className="text-[11px] font-medium text-gray-500">
-                                    Success description (optional)
+                                    Success description
                                 </label>
-                                <MarkdownEditor
-                                    value={localSuccessDesc}
-                                    onChange={handleSuccessDescChange}
-                                    placeholder="Provide additional context or next steps..."
-                                />
+                                <button
+                                    onClick={() => {
+                                        handleSuccessDescChange('');
+                                        setShowSuccessDesc(false);
+                                    }}
+                                    className="text-gray-400 hover:text-red-500 transition-colors"
+                                    title="Remove description"
+                                >
+                                    <X size={12} />
+                                </button>
                             </div>
-                            <button
-                                onClick={() => {
-                                    handleSuccessDescChange('');
-                                    setShowSuccessDesc(false);
-                                }}
-                                className="absolute top-0 right-0 p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-all opacity-0 group-hover/desc:opacity-100"
-                                title="Remove description"
-                            >
-                                <X className="w-3.5 h-3.5" />
-                            </button>
+
+                            <RichTextEditor
+                                value={localSuccessDesc}
+                                onChange={handleSuccessDescChange}
+                                placeholder="Provide additional context or next steps..."
+                            />
                         </div>
                     ) : (
                         <button
@@ -128,33 +133,39 @@ export function StatusCardEditor({ component, onChange, children, isOpen, onOpen
                             Add success description
                         </button>
                     )}
-                </div>
-            </div>
+                </EditorSection>
 
-            {/* Error State */}
-            <div className="space-y-4 border-t border-gray-100 pt-4">
-                {showErrorState ? (
-                    <div className="space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
-                        <div className="flex items-center justify-between">
-                            <label className="text-xs font-medium text-gray-500">
-                                Error label
-                            </label>
+                {/* 3. Error State */}
+                <EditorSection title="Error State" collapsible defaultOpen={showErrorState}>
+                    {!showErrorState ? (
+                        <div className="pt-2">
                             <button
-                                onClick={() => {
-                                    handleFailureTitleChange('');
-                                    handleFailureDescChange('');
-                                    setShowErrorState(false);
-                                    setShowErrorDesc(false);
-                                }}
-                                className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-all"
-                                title="Remove error state"
+                                onClick={() => setShowErrorState(true)}
+                                className="flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors w-fit rounded hover:bg-blue-50"
                             >
-                                <X className="w-4 h-4" />
+                                <Plus className="w-3.5 h-3.5" />
+                                Add error state
                             </button>
                         </div>
+                    ) : (
+                        <div className="space-y-4 animate-in fade-in slide-in-from-top-1">
+                            <div className="flex justify-end">
+                                <button
+                                    onClick={() => {
+                                        handleFailureTitleChange('');
+                                        handleFailureDescChange('');
+                                        setShowErrorState(false);
+                                        setShowErrorDesc(false);
+                                    }}
+                                    className="flex items-center gap-1 text-[10px] text-red-500 hover:text-red-600 hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                                >
+                                    <X className="w-3 h-3" />
+                                    Remove state
+                                </button>
+                            </div>
 
-                        <div className="space-y-3">
                             <EditorField
+                                label="Error label"
                                 value={localFailureTitle}
                                 onChange={handleFailureTitleChange}
                                 placeholder="e.g., Unable to remove user"
@@ -162,26 +173,26 @@ export function StatusCardEditor({ component, onChange, children, isOpen, onOpen
 
                             {showErrorDesc ? (
                                 <div className="group/errdesc relative animate-in fade-in slide-in-from-top-1 duration-200">
-                                    <div className="flex flex-col gap-1.5 w-full">
+                                    <div className="flex justify-between items-baseline mb-1.5">
                                         <label className="text-[11px] font-medium text-gray-500">
-                                            Error description (optional)
+                                            Error description
                                         </label>
-                                        <MarkdownEditor
-                                            value={localFailureDesc}
-                                            onChange={handleFailureDescChange}
-                                            placeholder="Explain what went wrong..."
-                                        />
+                                        <button
+                                            onClick={() => {
+                                                handleFailureDescChange('');
+                                                setShowErrorDesc(false);
+                                            }}
+                                            className="text-gray-400 hover:text-red-500 transition-colors"
+                                            title="Remove description"
+                                        >
+                                            <X size={12} />
+                                        </button>
                                     </div>
-                                    <button
-                                        onClick={() => {
-                                            handleFailureDescChange('');
-                                            setShowErrorDesc(false);
-                                        }}
-                                        className="absolute top-0 right-0 p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-all opacity-0 group-hover/errdesc:opacity-100"
-                                        title="Remove description"
-                                    >
-                                        <X className="w-3.5 h-3.5" />
-                                    </button>
+                                    <RichTextEditor
+                                        value={localFailureDesc}
+                                        onChange={handleFailureDescChange}
+                                        placeholder="Explain what went wrong..."
+                                    />
                                 </div>
                             ) : (
                                 <button
@@ -193,18 +204,10 @@ export function StatusCardEditor({ component, onChange, children, isOpen, onOpen
                                 </button>
                             )}
                         </div>
-                    </div>
-                ) : (
-                    <button
-                        onClick={() => setShowErrorState(true)}
-                        className="flex items-center gap-1.5 text-[11px] font-medium text-blue-600 hover:text-blue-700 transition-colors w-fit px-1 py-0.5 -ml-1 rounded hover:bg-blue-50"
-                    >
-                        <Plus className="w-3 h-3" />
-                        Add error state
-                    </button>
-                )}
-            </div>
-        </div>
+                    )}
+                </EditorSection>
+            </EditorContent>
+        </EditorRoot>
     );
 
     return (

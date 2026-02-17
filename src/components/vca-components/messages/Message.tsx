@@ -2,6 +2,7 @@ import { cn } from '@/utils';
 import { AgentTimestamp } from '../agent-timestamp';
 import { InlineFeedback } from '../inline-feedback';
 import { ThinkingIndicator } from '../thinking-indicator/ThinkingIndicator';
+import { MarkdownRenderer } from '../markdown-renderer/MarkdownRenderer';
 
 // ============================================================
 // Main Message Component
@@ -93,7 +94,11 @@ export const Message = ({
           <ThinkingIndicator />
         ) : (
           <div className="text-vca-text text-vca-small-open w-full">
-            {defaultText}
+            {typeof defaultText === 'string' ? (
+              <MarkdownRenderer content={defaultText} />
+            ) : (
+              defaultText
+            )}
           </div>
         )}
       </div>

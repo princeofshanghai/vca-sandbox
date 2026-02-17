@@ -3,6 +3,7 @@ import { VcaIcon } from '../icons';
 import { Feedback, FeedbackValue } from '../feedback';
 import { Sources } from '../sources';
 import { cn } from '@/utils';
+import { MarkdownRenderer } from '../markdown-renderer/MarkdownRenderer';
 
 export type InfoMessageProps = {
 
@@ -65,7 +66,11 @@ export const InfoMessage = ({
         {/* Message Content (children) */}
         {children && (
           <div className="text-vca-text text-vca-small-open">
-            {children}
+            {typeof children === 'string' ? (
+              <MarkdownRenderer content={children} />
+            ) : (
+              children
+            )}
           </div>
         )}
       </div>

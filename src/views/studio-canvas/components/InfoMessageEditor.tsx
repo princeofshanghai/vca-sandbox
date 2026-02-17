@@ -1,9 +1,13 @@
-import { useRef, useEffect, useState } from 'react';
-import { Plus, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { MessageSquareText, Plus, X } from 'lucide-react';
 import { Component, AIInfoContent } from '../../studio/types';
 import { ComponentEditorPopover } from './ComponentEditorPopover';
-import { MarkdownEditor } from './MarkdownEditor';
-import { EditorField } from './EditorField';
+import { EditorRoot } from './editor-ui/EditorRoot';
+import { EditorHeader } from './editor-ui/EditorHeader';
+import { EditorContent } from './editor-ui/EditorContent';
+import { EditorSection } from './editor-ui/EditorSection';
+import { EditorField } from './editor-ui/EditorField';
+import { RichTextEditor } from './RichTextEditor';
 
 interface InfoMessageEditorProps {
     component: Component;
@@ -16,7 +20,6 @@ interface InfoMessageEditorProps {
 
 export function InfoMessageEditor({ component, onChange, children, isOpen, onOpenChange }: InfoMessageEditorProps) {
     const content = component.content as AIInfoContent;
-    const bodyRef = useRef<HTMLTextAreaElement>(null);
 
     // --- State Management ---
     // Using local state to prevent cursor jumping from re-renders
@@ -31,19 +34,6 @@ export function InfoMessageEditor({ component, onChange, children, isOpen, onOpe
         setShowHeadingField(content.title?.trim() !== '');
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [component.id]);
-
-    // Focus handling
-    useEffect(() => {
-        if (isOpen && bodyRef.current) {
-            const el = bodyRef.current;
-            el.focus();
-            // Small timeout to ensure cursor is placed at the end after browser's default focus behavior
-            setTimeout(() => {
-                const length = el.value.length;
-                el.setSelectionRange(length, length);
-            }, 0);
-        }
-    }, [isOpen]);
 
     // --- Handlers ---
 
@@ -62,176 +52,117 @@ export function InfoMessageEditor({ component, onChange, children, isOpen, onOpe
     };
 
     const editorContent = (
-        <div className="flex flex-col p-5 space-y-5 max-h-[60vh] overflow-y-auto thin-scrollbar">
-            {/* 1. Heading Section (Progressive Disclosure) */}
-            {(showHeadingField || localTitle.trim() !== '') && (
-                <div className="flex items-end gap-2 group/heading animate-in fade-in slide-in-from-top-1 duration-200">
-                    <div className="flex-1">
-                        <EditorField
-                            label="Heading (optional)"
-                            value={localTitle}
-                            onChange={handleTitleChange}
-                            placeholder="e.g., Eligibility Requirements"
+        <EditorRoot>
+            <EditorHeader
+                icon={MessageSquareText}
+                title="Info Message"
+                onClose={() => onOpenChange(false)}
+            />
+
+            <EditorContent>
+                {/* 1. Heading Section (Progressive Disclosure) */}
+                <EditorSection title="Header">
+                    {!showHeadingField && localTitle.trim() === '' ? (
+                        <button
+                            onClick={() => setShowHeadingField(true)}
+                            className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors w-fit"
+                        >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Add heading</span>
+                        </button>
+                    ) : (
+                        <div className="flex items-end gap-2 group/heading animate-in fade-in slide-in-from-top-1 duration-200">
+                            <EditorField
+                                label="Heading"
+                                value={localTitle}
+                                onChange={handleTitleChange}
+                                placeholder="e.g., Eligibility Requirements"
+                                className="flex-1"
+                            >
+                                <button
+                                    onClick={() => {
+                                        handleTitleChange('');
+                                        setShowHeadingField(false);
+                                    }}
+                                    className="absolute right-0 top-0 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-all opacity-0 group-hover/heading:opacity-100"
+                                    title="Remove heading"
+                                >
+                                    <X className="w-3.5 h-3.5" />
+                                </button>
+                            </EditorField>
+                        </div>
+                    )}
+                </EditorSection>
+
+                {/* 2. Body Section */}
+                <EditorSection title="Content">
+                    <EditorField label="Message Body" value="" onChange={() => { }}>
+                        <RichTextEditor
+                            value={localBody}
+                            onChange={handleBodyChange}
+                            placeholder="Type your message here..."
                         />
-                    </div>
-                    <button
-                        onClick={() => {
-                            handleTitleChange('');
-                            setShowHeadingField(false);
-                        }}
-                        className="p-1.5 mb-0.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-all opacity-0 group-hover/heading:opacity-100"
-                        title="Remove heading"
-                    >
-                        <X className="w-4 h-4" />
-                    </button>
-                </div>
-            )}
+                    </EditorField>
+                </EditorSection>
 
-            {/* 2. Body Section */}
-            <div className="flex flex-col gap-1.5 w-full">
-                <label className="text-xs font-medium text-gray-500">
-                    Message
-                </label>
-                <MarkdownEditor
-                    value={localBody}
-                    onChange={handleBodyChange}
-                    placeholder="Type your message here..."
-                />
-            </div>
-
-            {/* 3. Sources Section (Progressive Disclosure) */}
-            {(content.sources && content.sources.length > 0) && (
-                <div className="space-y-4">
-                    <div className="text-xs font-medium text-gray-500 pt-1">
-                        Sources
-                    </div>
-                    <div className="space-y-5">
-                        {content.sources.map((source, idx) => (
-                            <div key={idx} className="group/source relative flex flex-col gap-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
-                                <div className="flex items-end gap-2">
-                                    <div className="flex-1">
-                                        <EditorField
-                                            value={source.text}
-                                            onChange={(val) => {
-                                                const s = [...(content.sources || [])];
-                                                s[idx] = { ...s[idx], text: val };
-                                                updateSources(s);
-                                            }}
-                                            placeholder="Source label"
-                                        />
-                                    </div>
+                {/* 3. Sources Section */}
+                <EditorSection title="Citations & Sources" collapsible defaultOpen={false}>
+                    <div className="space-y-4">
+                        {(content.sources || []).map((source, idx) => (
+                            <div key={idx} className="group/source relative p-3 bg-gray-50 rounded-lg border border-gray-100 space-y-2 animate-in fade-in slide-in-from-top-1">
+                                <div className="flex justify-between items-start">
+                                    <span className="text-[10px] uppercase font-semibold text-gray-400 tracking-wider">Source {idx + 1}</span>
                                     <button
                                         onClick={() => updateSources((content.sources || []).filter((_, i) => i !== idx))}
-                                        className="p-1.5 mb-0.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-all opacity-0 group-hover/source:opacity-100"
-                                        title="Remove source"
+                                        className="text-gray-400 hover:text-red-500 transition-colors"
                                     >
-                                        <X className="w-4 h-4" />
+                                        <X size={12} />
                                     </button>
                                 </div>
-                                <div className="flex items-start gap-2">
-                                    <div className="flex-1">
-                                        <EditorField
-                                            value={source.url || ''}
-                                            onChange={(val) => {
-                                                const s = [...(content.sources || [])];
 
-                                                // Auto-generate label if empty and valid URL
-                                                let newText = s[idx].text;
-                                                const isValidUrl = (string: string) => {
-                                                    try { return Boolean(new URL(string)); } catch (e) { return false; }
-                                                };
+                                <EditorField
+                                    value={source.text}
+                                    onChange={(val) => {
+                                        const s = [...(content.sources || [])];
+                                        s[idx] = { ...s[idx], text: val };
+                                        updateSources(s);
+                                    }}
+                                    placeholder="Label (e.g. Wikipedia)"
+                                />
+                                <EditorField
+                                    value={source.url || ''}
+                                    onChange={(val) => {
+                                        const s = [...(content.sources || [])];
+                                        // Auto-generate label logic reused here
+                                        let newText = s[idx].text;
+                                        const isValidUrl = (string: string) => { try { return Boolean(new URL(string)); } catch (e) { return false; } };
 
-                                                if (isValidUrl(val) && (!newText || newText.trim() === '')) {
-                                                    // 1. Immediate fallback: Domain name
-                                                    try {
-                                                        const urlObj = new URL(val);
-                                                        const hostname = urlObj.hostname.replace(/^www\./, '');
-                                                        newText = hostname.charAt(0).toUpperCase() + hostname.slice(1);
-
-                                                        // Update state immediately with domain fallback
-                                                        const tempS = [...s];
-                                                        tempS[idx] = { ...tempS[idx], url: val, text: newText };
-                                                        updateSources(tempS);
-
-                                                        // 2. Async fetch: Get real page title via proxy
-                                                        fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(val)}`)
-                                                            .then(response => response.json())
-                                                            .then(data => {
-                                                                if (data.contents) {
-                                                                    const parser = new DOMParser();
-                                                                    const doc = parser.parseFromString(data.contents, "text/html");
-                                                                    const title = doc.querySelector('title')?.innerText;
-
-                                                                    if (title) {
-                                                                        // Clean up title
-                                                                        const cleanTitle = title.split(/ [|-] /)[0].trim();
-
-                                                                        // We need to update the sources again. 
-                                                                        // Since we are in a closure, 'content' might be stale, 
-                                                                        // but for this prototype, we'll try to re-read or just force update.
-                                                                        // A better way in React is functional update, but 'onChange' here likely expects full object.
-                                                                        // We'll invoke onChange with a fresh copy of what we expect.
-                                                                        // NOTE: Only update if the user hasn't changed the label in the meantime.
-                                                                        // Since we can't check that easily without ref, we'll just update for now.
-
-                                                                        // Construct fresh sources array based on what we just set
-                                                                        const upgradedSources = [...tempS];
-                                                                        upgradedSources[idx] = { ...upgradedSources[idx], text: cleanTitle };
-
-                                                                        // We need to merge with potentially *newer* content if other fields changed, 
-                                                                        // but efficiently we just update sources here.
-                                                                        // Warning: this could overwrite concurrent edits if user types VERY fast in 200ms.
-                                                                        onChange({ ...content, sources: upgradedSources });
-                                                                    }
-                                                                }
-                                                            })
-                                                            .catch(() => {
-                                                                // If fetch fails, we stick with the domain name fallback
-                                                            });
-                                                        return; // We handled the update logic inside
-                                                    } catch (e) {
-                                                        // URL parsing error
-                                                    }
-                                                }
-
-                                                s[idx] = { ...s[idx], url: val, text: newText };
-                                                updateSources(s);
-                                            }}
-                                            placeholder="https://..."
-                                        />
-                                    </div>
-                                    {/* Spacer to match the X button width in the row above */}
-                                    <div className="w-[28px] p-1.5 invisible shrink-0">
-                                        <X className="w-4 h-4" />
-                                    </div>
-                                </div>
+                                        if (isValidUrl(val) && (!newText || newText.trim() === '')) {
+                                            try {
+                                                const urlObj = new URL(val);
+                                                const hostname = urlObj.hostname.replace(/^www\./, '');
+                                                newText = hostname.charAt(0).toUpperCase() + hostname.slice(1);
+                                            } catch (e) { }
+                                        }
+                                        s[idx] = { ...s[idx], url: val, text: newText };
+                                        updateSources(s);
+                                    }}
+                                    placeholder="URL (https://...)"
+                                />
                             </div>
                         ))}
+
+                        <button
+                            onClick={() => updateSources([...(content.sources || []), { text: '', url: '' }])}
+                            className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-gray-300 text-gray-500 text-xs font-medium hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/50 transition-all"
+                        >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Add Source</span>
+                        </button>
                     </div>
-                </div>
-            )}
-
-            {/* 4. Action Buttons (Stacked at bottom) */}
-            <div className="flex flex-col gap-3 pt-2 border-t border-gray-50">
-                {!(showHeadingField || localTitle.trim() !== '') && (
-                    <button
-                        onClick={() => setShowHeadingField(true)}
-                        className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors w-fit"
-                    >
-                        <Plus className="w-3.5 h-3.5" />
-                        <span>Add heading</span>
-                    </button>
-                )}
-
-                <button
-                    onClick={() => updateSources([...(content.sources || []), { text: '', url: '' }])}
-                    className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors w-fit"
-                >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Add source</span>
-                </button>
-            </div>
-        </div>
+                </EditorSection>
+            </EditorContent>
+        </EditorRoot>
     );
 
     return (
@@ -240,7 +171,7 @@ export function InfoMessageEditor({ component, onChange, children, isOpen, onOpe
             onOpenChange={onOpenChange}
             componentId={component.id}
             editorContent={editorContent}
-            width={360}
+            width={400}
         >
             {children}
         </ComponentEditorPopover>
