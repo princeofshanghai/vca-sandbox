@@ -34,7 +34,8 @@ export default defineConfig({
           ) {
             return 'ui-utils';
           }
-          if (id.includes('react')) return 'react';
+          // Keep React in vendor to avoid circular chunk init with vendor/react splits.
+          if (id.includes('react')) return 'vendor';
 
           return 'vendor';
         },
