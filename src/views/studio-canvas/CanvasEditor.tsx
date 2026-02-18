@@ -18,7 +18,7 @@ import { UserTurnNode } from './nodes/UserTurnNode';
 import { ConditionNode } from './nodes/ConditionNode';
 import { StartNode } from './nodes/StartNode';
 import { NoteNode } from './nodes/NoteNode';
-import { Flow, Component, ComponentType, FlowPhase, Turn, ComponentContent, UserTurn, Condition, Branch, Note } from '../studio/types';
+import { Flow, Component, ComponentType, Turn, ComponentContent, UserTurn, Condition, Branch, Note } from '../studio/types';
 import { useCallback, useMemo, useEffect, useState, useRef } from 'react';
 import { SelectionState } from './types';
 import { ContextToolbar } from './components/ContextToolbar';
@@ -109,6 +109,17 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
     const [selection, setSelection] = useState<SelectionState | null>(null);
     const [selectionAnchorEl, setSelectionAnchorEl] = useState<HTMLElement | null>(null);
 
+    const selectionRef = useRef<SelectionState | null>(selection);
+    const flowRef = useRef(flow);
+
+    useEffect(() => {
+        selectionRef.current = selection;
+    }, [selection]);
+
+    useEffect(() => {
+        flowRef.current = flow;
+    }, [flow]);
+
     // Export/Import handlers
     const handleExportJSON = () => {
         // Create clean JSON export
@@ -192,13 +203,109 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
         input.click();
     };
 
-    const selectionType = selection?.type;
-    const selectionNodeId = selection?.nodeId;
-    const selectionComponentId = selection?.type === 'component' ? selection.componentId : undefined;
+    const handleDeselect = useCallback(() => {
+        setSelection(null);
+        setSelectionAnchorEl(null);
+    }, []);
 
+    const handleSelectComponent = useCallback((nodeId: string, componentId: string, anchorEl: HTMLElement) => {
+        const currentSelection = selectionRef.current;
+        if (currentSelection?.type === 'component' && currentSelection.nodeId === nodeId && currentSelection.componentId === componentId) {
+            setSelection(null);
+            setSelectionAnchorEl(null);
+        } else {
+            setSelection({ type: 'component', nodeId, componentId });
+            setSelectionAnchorEl(anchorEl);
+        }
+    }, []);
+
+    const handleTurnLabelChange = useCallback((nodeId: string, newLabel: string) => {
+        const currentFlow = flowRef.current;
+        if (!currentFlow.steps) return;
+        const updatedSteps = currentFlow.steps.map(s =>
+            s.id === nodeId && s.type === 'turn'
+                ? { ...s, label: newLabel }
+                : s
+        );
+        onUpdateFlow({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
+    }, [onUpdateFlow]);
+
+    const handleTurnComponentUpdate = useCallback((nodeId: string, componentId: string, updates: Partial<Component>) => {
+        const currentFlow = flowRef.current;
+        if (!currentFlow.steps) return;
+        const updatedSteps = currentFlow.steps.map(s => {
+            if (s.id === nodeId && s.type === 'turn') {
+                return {
+                    ...s,
+                    components: s.components.map(c =>
+                        c.id === componentId
+                            ? { ...c, ...updates }
+                            : c
+                    )
+                };
+            }
+            return s;
+        });
+        onUpdateFlow({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
+    }, [onUpdateFlow]);
+
+    const handleUserTurnUpdate = useCallback((nodeId: string, updates: Partial<UserTurn>) => {
+        const currentFlow = flowRef.current;
+        if (!currentFlow.steps) return;
+        const updatedSteps = currentFlow.steps.map(s =>
+            s.id === nodeId && s.type === 'user-turn'
+                ? { ...s, ...updates }
+                : s
+        );
+        onUpdateFlow({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
+    }, [onUpdateFlow]);
+
+    const handleConditionLabelChange = useCallback((nodeId: string, newLabel: string) => {
+        const currentFlow = flowRef.current;
+        if (!currentFlow.steps) return;
+        const updatedSteps = currentFlow.steps.map(s =>
+            s.id === nodeId && s.type === 'condition'
+                ? { ...s, label: newLabel }
+                : s
+        );
+        onUpdateFlow({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
+    }, [onUpdateFlow]);
+
+    const handleConditionUpdateBranches = useCallback((nodeId: string, branches: Branch[]) => {
+        const currentFlow = flowRef.current;
+        if (!currentFlow.steps) return;
+        const updatedSteps = currentFlow.steps.map(s =>
+            s.id === nodeId && s.type === 'condition'
+                ? { ...s, branches }
+                : s
+        );
+        onUpdateFlow({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
+    }, [onUpdateFlow]);
+
+    const handleNoteLabelChange = useCallback((nodeId: string, newLabel: string) => {
+        const currentFlow = flowRef.current;
+        if (!currentFlow.steps) return;
+        const updatedSteps = currentFlow.steps.map(s =>
+            s.id === nodeId && s.type === 'note'
+                ? { ...s, label: newLabel }
+                : s
+        );
+        onUpdateFlow({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
+    }, [onUpdateFlow]);
+
+    const handleNoteContentChange = useCallback((nodeId: string, newContent: string) => {
+        const currentFlow = flowRef.current;
+        if (!currentFlow.steps) return;
+        const updatedSteps = currentFlow.steps.map(s =>
+            s.id === nodeId && s.type === 'note'
+                ? { ...s, content: newContent }
+                : s
+        );
+        onUpdateFlow({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
+    }, [onUpdateFlow]);
 
     // Convert flow steps to React Flow nodes
-    const initialNodes = useMemo(() => {
+    const baseNodes = useMemo(() => {
         // Use new steps[] if available, otherwise fall back to old blocks[]
         const steps = flow.steps || [];
 
@@ -214,24 +321,9 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                     label: block.type === 'ai' && 'variant' in block
                         ? block.variant
                         : undefined,
-                    componentCount: 1,
                     entryPoint: flow.settings.entryPoint,
-                    onSelectNode: (nodeId: string, anchorEl: HTMLElement) => {
-                        if (selectionType === 'node' && selectionNodeId === nodeId) return;
-                        setSelection({ type: 'node', nodeId });
-                        setSelectionAnchorEl(anchorEl);
-                    },
-                    onSelectComponent: (nodeId: string, componentId: string, anchorEl: HTMLElement) => {
-                        // Allow re-clicking to toggle popover off
-                        if (selectionType === 'component' && selectionNodeId === nodeId && selectionComponentId === componentId) {
-                            setSelection(null);
-                            setSelectionAnchorEl(null);
-                        } else {
-                            setSelection({ type: 'component', nodeId, componentId });
-                            setSelectionAnchorEl(anchorEl);
-                        }
-                    },
-
+                    onSelectComponent: handleSelectComponent,
+                    onDeselect: handleDeselect,
                 },
             }));
         }
@@ -247,139 +339,12 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                         speaker: step.speaker,
                         phase: step.phase,
                         label: step.label,
-                        componentCount: step.components.length,
                         components: step.components,
                         entryPoint: flow.settings.entryPoint,
-                        selectedComponentId: selectionType === 'component' && selectionNodeId === step.id ? selectionComponentId : undefined,
-                        onSelectComponent: (nodeId: string, componentId: string, anchorEl: HTMLElement) => {
-                            // Allow re-clicking to toggle popover off
-                            if (selectionType === 'component' && selectionNodeId === nodeId && selectionComponentId === componentId) {
-                                setSelection(null);
-                                setSelectionAnchorEl(null);
-                            } else {
-                                setSelection({ type: 'component', nodeId, componentId });
-                                setSelectionAnchorEl(anchorEl);
-                            }
-                        },
-                        onDeselect: () => {
-                            setSelection(null);
-                            setSelectionAnchorEl(null);
-                        },
-                        onLabelChange: (newLabel: string) => {
-                            // Update the turn label
-                            const updatedSteps = flow.steps?.map(s =>
-                                s.id === step.id && s.type === 'turn'
-                                    ? { ...s, label: newLabel }
-                                    : s
-                            );
-                            onUpdateFlow({
-                                ...flow,
-                                steps: updatedSteps,
-                                lastModified: Date.now()
-                            });
-                        },
-                        onPhaseChange: (newPhase: string | undefined) => {
-                            // Update the turn phase
-                            const updatedSteps = flow.steps?.map(s =>
-                                s.id === step.id && s.type === 'turn'
-                                    ? { ...s, phase: newPhase as FlowPhase }
-                                    : s
-                            );
-                            onUpdateFlow({
-                                ...flow,
-                                steps: updatedSteps,
-                                lastModified: Date.now()
-                            });
-                        },
-                        onComponentUpdate: (componentId: string, updates: Partial<Component>) => {
-                            // Update the component within the turn
-                            const updatedSteps = flow.steps?.map(s => {
-                                if (s.id === step.id && s.type === 'turn') {
-                                    return {
-                                        ...s,
-                                        components: s.components.map(c =>
-                                            c.id === componentId
-                                                ? { ...c, ...updates }
-                                                : c
-                                        )
-                                    };
-                                }
-                                return s;
-                            });
-                            onUpdateFlow({
-                                ...flow,
-                                steps: updatedSteps,
-                                lastModified: Date.now()
-                            });
-                        },
-                        onComponentAdd: (type: import('../studio/types').ComponentType) => {
-                            // Create new component with default content
-                            const newComponent: Component = {
-                                id: `component-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                                type,
-                                content: getDefaultContent(type)
-                            };
-
-                            // Add to the turn's components
-                            const updatedSteps = flow.steps?.map(s => {
-                                if (s.id === step.id && s.type === 'turn') {
-                                    return {
-                                        ...s,
-                                        components: [...s.components, newComponent]
-                                    };
-                                }
-                                return s;
-                            });
-
-                            onUpdateFlow({
-                                ...flow,
-                                steps: updatedSteps,
-                                lastModified: Date.now()
-                            });
-                        },
-                        onComponentDelete: (componentId: string) => {
-                            // Remove component from the turn
-                            const updatedSteps = flow.steps?.map(s => {
-                                if (s.id === step.id && s.type === 'turn') {
-                                    return {
-                                        ...s,
-                                        components: s.components.filter(c => c.id !== componentId)
-                                    };
-                                }
-                                return s;
-                            });
-
-                            onUpdateFlow({
-                                ...flow,
-                                steps: updatedSteps,
-                                lastModified: Date.now()
-                            });
-                        },
-                        onComponentReorder: (componentIds: string[]) => {
-                            // Reorder components based on new ID order
-                            const updatedSteps = flow.steps?.map(s => {
-                                if (s.id === step.id && s.type === 'turn') {
-                                    // Create a map for quick lookup
-                                    const componentMap = new Map(s.components.map(c => [c.id, c]));
-                                    // Reorder based on new IDs array
-                                    const reorderedComponents = componentIds
-                                        .map(id => componentMap.get(id))
-                                        .filter((c): c is Component => c !== undefined);
-
-                                    return {
-                                        ...s,
-                                        components: reorderedComponents
-                                    };
-                                }
-                                return s;
-                            });
-
-                            onUpdateFlow({
-                                ...flow,
-                                steps: updatedSteps,
-                                lastModified: Date.now()
-                            });
-                        },
+                        onSelectComponent: handleSelectComponent,
+                        onDeselect: handleDeselect,
+                        onLabelChange: handleTurnLabelChange,
+                        onComponentUpdate: handleTurnComponentUpdate,
                     },
                 };
             } else if (step.type === 'user-turn') {
@@ -391,30 +356,7 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                         label: step.label,
                         inputType: step.inputType || 'button', // Default key
                         triggerValue: step.triggerValue,
-                        onLabelChange: (newLabel: string) => {
-                            const updatedSteps = flow.steps?.map(s =>
-                                s.id === step.id && s.type === 'user-turn'
-                                    ? { ...s, label: newLabel }
-                                    : s
-                            );
-                            onUpdateFlow({
-                                ...flow,
-                                steps: updatedSteps,
-                                lastModified: Date.now()
-                            });
-                        },
-                        onUpdate: (updates: Partial<typeof step>) => {
-                            const updatedSteps = flow.steps?.map(s =>
-                                s.id === step.id && s.type === 'user-turn'
-                                    ? { ...s, ...updates }
-                                    : s
-                            );
-                            onUpdateFlow({
-                                ...flow,
-                                steps: updatedSteps,
-                                lastModified: Date.now()
-                            });
-                        }
+                        onUpdate: handleUserTurnUpdate,
                     }
                 };
             } else if (step.type === 'condition') {
@@ -426,30 +368,8 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                     data: {
                         label: step.label,
                         branches: step.branches,
-                        onLabelChange: (newLabel: string) => {
-                            const updatedSteps = flow.steps?.map(s =>
-                                s.id === step.id && s.type === 'condition'
-                                    ? { ...s, label: newLabel }
-                                    : s
-                            );
-                            onUpdateFlow({
-                                ...flow,
-                                steps: updatedSteps,
-                                lastModified: Date.now()
-                            });
-                        },
-                        onUpdateBranches: (branches: import('../studio/types').Branch[]) => {
-                            const updatedSteps = flow.steps?.map(s =>
-                                s.id === step.id && s.type === 'condition'
-                                    ? { ...s, branches }
-                                    : s
-                            );
-                            onUpdateFlow({
-                                ...flow,
-                                steps: updatedSteps,
-                                lastModified: Date.now()
-                            });
-                        }
+                        onLabelChange: handleConditionLabelChange,
+                        onUpdateBranches: handleConditionUpdateBranches,
                     },
                 };
             } else if (step.type === 'note') {
@@ -460,30 +380,8 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                     data: {
                         label: step.label,
                         content: step.content,
-                        onLabelChange: (newLabel: string) => {
-                            const updatedSteps = flow.steps?.map(s =>
-                                s.id === step.id && s.type === 'note'
-                                    ? { ...s, label: newLabel }
-                                    : s
-                            );
-                            onUpdateFlow({
-                                ...flow,
-                                steps: updatedSteps,
-                                lastModified: Date.now()
-                            });
-                        },
-                        onContentChange: (newContent: string) => {
-                            const updatedSteps = flow.steps?.map(s =>
-                                s.id === step.id && s.type === 'note'
-                                    ? { ...s, content: newContent }
-                                    : s
-                            );
-                            onUpdateFlow({
-                                ...flow,
-                                steps: updatedSteps,
-                                lastModified: Date.now()
-                            });
-                        }
+                        onLabelChange: handleNoteLabelChange,
+                        onContentChange: handleNoteContentChange,
                     },
                 };
             } else {
@@ -497,7 +395,20 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                 };
             }
         });
-    }, [flow, selectionType, selectionNodeId, selectionComponentId, onUpdateFlow]);
+    }, [
+        flow.blocks,
+        flow.settings.entryPoint,
+        flow.steps,
+        handleConditionLabelChange,
+        handleConditionUpdateBranches,
+        handleDeselect,
+        handleNoteContentChange,
+        handleNoteLabelChange,
+        handleSelectComponent,
+        handleTurnComponentUpdate,
+        handleTurnLabelChange,
+        handleUserTurnUpdate,
+    ]);
 
     // Create connections from flow.connections or generate from blocks
     const initialEdges = useMemo(() => {
@@ -529,7 +440,7 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
         }));
     }, [flow.blocks, flow.connections]);
 
-    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes as Node[]);
+    const [nodes, setNodes, onNodesChange] = useNodesState(baseNodes as Node[]);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges as Edge[]);
 
     // Handle node clicks natively from React Flow
@@ -545,14 +456,14 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
         setEdges(initialEdges as Edge[]);
     }, [initialEdges, setEdges]);
 
-    // Sync node data when flow changes or selection changes (to update selectedComponentId)
+    // Sync node data when flow changes
     useEffect(() => {
         setNodes((currentNodes) => {
             // Create a map of current node states to preserve transient state not in 'flow'
             // (like React Flow's internal 'selected' state, or dragging position before commit)
             const currentNodeMap = new Map(currentNodes.map(n => [n.id, n]));
 
-            return initialNodes.map(newNode => {
+            return baseNodes.map(newNode => {
                 const existingNode = currentNodeMap.get(newNode.id);
                 if (existingNode) {
                     return {
@@ -569,7 +480,32 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                 return newNode;
             }) as Node[];
         });
-    }, [initialNodes, setNodes]);
+    }, [baseNodes, setNodes]);
+
+    // Sync selected component without rebuilding all node data
+    useEffect(() => {
+        const selectedNodeId = selection?.type === 'component' ? selection.nodeId : null;
+        const selectedComponentId = selection?.type === 'component' ? selection.componentId : undefined;
+
+        setNodes((currentNodes) => {
+            let didChange = false;
+            const nextNodes = currentNodes.map(node => {
+                if (node.type !== 'turn') return node;
+                const data = node.data as { selectedComponentId?: string };
+                const nextSelected = node.id === selectedNodeId ? selectedComponentId : undefined;
+                if (data.selectedComponentId === nextSelected) {
+                    return node;
+                }
+                didChange = true;
+                return {
+                    ...node,
+                    data: { ...data, selectedComponentId: nextSelected }
+                };
+            });
+
+            return didChange ? nextNodes : currentNodes;
+        });
+    }, [selection, setNodes]);
 
     // Save positions when dragging stops
     const onNodeDragStop = useCallback((_: React.MouseEvent, _node: Node, nodes: Node[]) => {
@@ -665,24 +601,6 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
         },
         [flow, onUpdateFlow]
     );
-
-    // Refs for event handlers to avoid re-binding
-    const selectionRef = useRef(selection);
-    const flowRef = useRef(flow);
-
-    useEffect(() => {
-        selectionRef.current = selection;
-    }, [selection]);
-
-    useEffect(() => {
-        flowRef.current = flow;
-    }, [flow]);
-
-    // Selection and toolbar handlers
-    const handleDeselect = useCallback(() => {
-        setSelection(null);
-        setSelectionAnchorEl(null);
-    }, [setSelection, setSelectionAnchorEl]);
 
     const handleComponentAdd = (type: ComponentType) => {
         if (selection?.type === 'node') {

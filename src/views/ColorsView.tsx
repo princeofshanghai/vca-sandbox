@@ -8,7 +8,7 @@ type ColorToken = {
   reference?: string;
 };
 
-type ColorCategory = {
+type ColorCategoryData = {
   title: string;
   description?: string;
   colors: ColorToken[];
@@ -53,8 +53,8 @@ const ColorCategory = ({ title, description, colors }: { title: string; descript
 };
 
 // Auto-generate color categories from design tokens
-const generateColorCategories = (): ColorCategory[] => {
-  const categories: ColorCategory[] = [];
+const generateColorCategories = (): ColorCategoryData[] => {
+  const categories: ColorCategoryData[] = [];
 
   const categoryInfo: Record<string, { title: string; description: string }> = {
     'vca-action': {

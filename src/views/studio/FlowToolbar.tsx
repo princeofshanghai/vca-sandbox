@@ -46,7 +46,7 @@ export const FlowToolbar = ({ flow, onLoadFlow, onUpdateFlow, isPremium, onToggl
                 } else {
                     alert("Invalid flow file");
                 }
-            } catch (err) {
+            } catch (_err) {
                 alert("Error reading file");
             }
         };

@@ -7,9 +7,7 @@ interface UserTurnNodeData {
     label?: string;
     inputType?: 'text' | 'prompt' | 'button';
     triggerValue?: string;
-    onLabelChange?: (newLabel: string) => void;
-    onUpdate?: (updates: { label?: string; inputType?: 'text' | 'button' | 'prompt'; triggerValue?: string }) => void;
-    onSelectNode?: (nodeId: string, anchorEl: HTMLElement) => void;
+    onUpdate?: (nodeId: string, updates: { label?: string; inputType?: 'text' | 'button' | 'prompt'; triggerValue?: string }) => void;
 }
 
 export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
@@ -36,14 +34,9 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
     }, [isEditingLabel]);
 
     const handleUpdate = (updates: { label?: string; inputType?: 'text' | 'button' | 'prompt'; triggerValue?: string }) => {
-        // If explicit handler provided (legacy), use it for label
-        if (updates.label !== undefined && typedData.onLabelChange) {
-            typedData.onLabelChange(updates.label);
-        }
-
         // Persist to Flow Model
         if (typedData.onUpdate) {
-            typedData.onUpdate(updates);
+            typedData.onUpdate(id, updates);
         }
 
         // Always update local node data for immediate feedback

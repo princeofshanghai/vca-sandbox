@@ -1,7 +1,7 @@
 import { memo, useState, useRef, useEffect } from 'react';
 import { Handle, Position, NodeProps, useStore } from '@xyflow/react';
 import { VcaIcon } from '@/components/vca-components/icons/VcaIcon';
-import { Component, ComponentType } from '../../studio/types';
+import { Component } from '../../studio/types';
 import { TurnNodeComponentList } from './components/TurnNodeComponentList';
 
 
@@ -9,7 +9,6 @@ interface TurnNodeData {
     speaker: 'user' | 'ai';
     phase?: string;
     label?: string;
-    componentCount?: number;
     components?: Component[];
     selectedComponentId?: string;
     entryPoint?: string;
@@ -17,12 +16,8 @@ interface TurnNodeData {
     onSelectComponent?: (nodeId: string, componentId: string, anchorEl: HTMLElement) => void;
     onDeselect?: () => void;
 
-    onLabelChange?: (newLabel: string) => void;
-    onPhaseChange?: (newPhase: string | undefined) => void;
-    onComponentUpdate?: (componentId: string, updates: Partial<Component>) => void;
-    onComponentAdd?: (type: ComponentType) => void;
-    onComponentDelete?: (componentId: string) => void;
-    onComponentReorder?: (componentIds: string[]) => void;
+    onLabelChange?: (nodeId: string, newLabel: string) => void;
+    onComponentUpdate?: (nodeId: string, componentId: string, updates: Partial<Component>) => void;
 }
 
 export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
@@ -47,7 +42,7 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
 
     const handleLabelSave = () => {
         if (editedLabel.trim() !== (typedData.label || '')) {
-            typedData.onLabelChange?.(editedLabel.trim());
+            typedData.onLabelChange?.(nodeId, editedLabel.trim());
         }
         setIsEditingLabel(false);
     };
@@ -151,4 +146,3 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
 });
 
 TurnNode.displayName = 'TurnNode';
-

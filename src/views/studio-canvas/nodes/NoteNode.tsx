@@ -5,11 +5,11 @@ import { StickyNote } from 'lucide-react';
 interface NoteNodeData {
     label?: string;
     content: string;
-    onLabelChange?: (newLabel: string) => void;
-    onContentChange?: (newContent: string) => void;
+    onLabelChange?: (nodeId: string, newLabel: string) => void;
+    onContentChange?: (nodeId: string, newContent: string) => void;
 }
 
-export const NoteNode = memo(({ id: _id, data, selected }: NodeProps) => {
+export const NoteNode = memo(({ id, data, selected }: NodeProps) => {
     const typedData = data as unknown as NoteNodeData;
 
     // Label editing state
@@ -58,7 +58,7 @@ export const NoteNode = memo(({ id: _id, data, selected }: NodeProps) => {
 
         // Set new timeout
         debounceTimeoutRef.current = setTimeout(() => {
-            typedData.onContentChange?.(newValue);
+            typedData.onContentChange?.(id, newValue);
             debounceTimeoutRef.current = null;
         }, 500);
     };
@@ -79,13 +79,13 @@ export const NoteNode = memo(({ id: _id, data, selected }: NodeProps) => {
             debounceTimeoutRef.current = null;
         }
         if (localContent !== typedData.content) {
-            typedData.onContentChange?.(localContent);
+            typedData.onContentChange?.(id, localContent);
         }
     };
 
     const handleLabelSave = () => {
         if (editedLabel.trim() !== (typedData.label || '')) {
-            typedData.onLabelChange?.(editedLabel.trim());
+            typedData.onLabelChange?.(id, editedLabel.trim());
         }
         setIsEditingLabel(false);
     };

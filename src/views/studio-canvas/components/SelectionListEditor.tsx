@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Plus, X, GripVertical, Wand2, LayoutList, LayoutGrid, GalleryHorizontal } from 'lucide-react';
 import { Component, SelectionListContent } from '../../studio/types';
 import { ComponentEditorPopover } from './ComponentEditorPopover';
@@ -16,6 +16,117 @@ interface SelectionListEditorProps {
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
 }
+
+type SelectionListItem = SelectionListContent['items'][0];
+
+interface SelectionListItemRowProps {
+    item: SelectionListItem;
+    isExpanded: boolean;
+    onToggle: (itemId: string) => void;
+    onUpdate: (itemId: string, updates: Partial<SelectionListItem>) => void;
+    onDelete: (itemId: string) => void;
+}
+
+const SelectionListItemRow = memo(({
+    item,
+    isExpanded,
+    onToggle,
+    onUpdate,
+    onDelete,
+}: SelectionListItemRowProps) => {
+    const handleToggle = useCallback(() => {
+        onToggle(item.id);
+    }, [item.id, onToggle]);
+
+    const handleDelete = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+        e.stopPropagation();
+        onDelete(item.id);
+    }, [item.id, onDelete]);
+
+    const handleTitleChange = useCallback((val: string) => {
+        onUpdate(item.id, { title: val });
+    }, [item.id, onUpdate]);
+
+    const handleSubtitleChange = useCallback((val: string) => {
+        onUpdate(item.id, { subtitle: val });
+    }, [item.id, onUpdate]);
+
+    const handleImageUrlChange = useCallback((val: string) => {
+        onUpdate(item.id, { imageUrl: val });
+    }, [item.id, onUpdate]);
+
+    const handleIconNameChange = useCallback((val: string) => {
+        onUpdate(item.id, { iconName: val });
+    }, [item.id, onUpdate]);
+
+    return (
+        <div className="group border border-gray-200 rounded-lg bg-white overflow-hidden transition-all hover:border-gray-300">
+            {/* Item Header / Summary */}
+            <div
+                className="flex items-center gap-3 p-2 cursor-pointer bg-gray-50/50 hover:bg-gray-50 transition-colors"
+                onClick={handleToggle}
+            >
+                <div className="text-gray-400 cursor-grab active:cursor-grabbing">
+                    <GripVertical className="w-4 h-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                    <div className="text-xs font-medium text-gray-900 truncate">
+                        {item.title || 'Untitled'}
+                    </div>
+                    <div className="text-[10px] text-gray-500 truncate">
+                        {item.subtitle}
+                    </div>
+                </div>
+                <div className="w-6 h-6 rounded overflow-hidden bg-gray-100 flex-shrink-0">
+                    {item.imageUrl && (
+                        <img
+                            src={item.imageUrl}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                            decoding="async"
+                        />
+                    )}
+                </div>
+                <button
+                    onClick={handleDelete}
+                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-all opacity-0 group-hover:opacity-100"
+                >
+                    <X className="w-3.5 h-3.5" />
+                </button>
+            </div>
+
+            {/* Expanded Editor */}
+            {isExpanded && (
+                <div className="p-3 border-t border-gray-100 bg-white space-y-3 animate-in fade-in slide-in-from-top-1">
+                    <EditorField
+                        label="Title"
+                        value={item.title}
+                        onChange={handleTitleChange}
+                    />
+                    <EditorField
+                        label="Subtitle"
+                        value={item.subtitle || ''}
+                        onChange={handleSubtitleChange}
+                    />
+                    <EditorField
+                        label="Image URL"
+                        value={item.imageUrl || ''}
+                        onChange={handleImageUrlChange}
+                        placeholder="https://..."
+                    />
+                    <EditorField
+                        label="Icon Name (if no image)"
+                        value={item.iconName || ''}
+                        onChange={handleIconNameChange}
+                        placeholder="e.g. building, user..."
+                    />
+                </div>
+            )}
+        </div>
+    );
+});
+
+SelectionListItemRow.displayName = 'SelectionListItemRow';
 
 // Mock Presets
 const PRESETS = {
@@ -42,39 +153,73 @@ export function SelectionListEditor({ component, onChange, children, isOpen, onO
     // Local state for better UX
     const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
 
+    const contentRef = useRef(content);
+    const onChangeRef = useRef(onChange);
+    const expandedItemIdRef = useRef(expandedItemId);
+    useEffect(() => {
+        contentRef.current = content;
+    }, [content]);
+    useEffect(() => {
+        onChangeRef.current = onChange;
+    }, [onChange]);
+    useEffect(() => {
+        expandedItemIdRef.current = expandedItemId;
+    }, [expandedItemId]);
 
+    const handleLayoutChange = useCallback((val: 'list' | 'grid' | 'carousel') => {
+        const current = contentRef.current;
+        onChangeRef.current({ ...current, layout: val });
+    }, []);
 
-    const handleLayoutChange = (val: string) => {
-        onChange({ ...content, layout: val as 'list' | 'grid' | 'carousel' });
-    };
-
-    const applyPreset = (presetKey: keyof typeof PRESETS) => {
-        onChange({
-            ...content,
+    const applyPreset = useCallback((presetKey: keyof typeof PRESETS) => {
+        const current = contentRef.current;
+        onChangeRef.current({
+            ...current,
             items: PRESETS[presetKey].map(item => ({ ...item, id: Math.random().toString(36).substr(2, 9) }))
         });
-    };
+    }, []);
 
-    const updateItem = (index: number, updates: Partial<SelectionListContent['items'][0]>) => {
-        const newItems = [...(content.items || [])];
+    const updateItem = useCallback((itemId: string, updates: Partial<SelectionListItem>) => {
+        const current = contentRef.current;
+        const items = current.items || [];
+        const index = items.findIndex(item => item.id === itemId);
+        if (index === -1) return;
+
+        const newItems = [...items];
         newItems[index] = { ...newItems[index], ...updates };
-        onChange({ ...content, items: newItems });
-    };
+        onChangeRef.current({ ...current, items: newItems });
+    }, []);
 
-    const deleteItem = (index: number) => {
-        const newItems = [...(content.items || [])].filter((_, i) => i !== index);
-        onChange({ ...content, items: newItems });
-    };
+    const deleteItem = useCallback((itemId: string) => {
+        const current = contentRef.current;
+        const newItems = (current.items || []).filter(item => item.id !== itemId);
+        if (expandedItemIdRef.current === itemId) {
+            setExpandedItemId(null);
+        }
+        onChangeRef.current({ ...current, items: newItems });
+    }, []);
 
-    const addItem = () => {
-        const newItem = {
+    const addItem = useCallback(() => {
+        const current = contentRef.current;
+        const newItem: SelectionListItem = {
             id: Math.random().toString(36).substr(2, 9),
             title: 'New Item',
             subtitle: 'Description'
         };
-        onChange({ ...content, items: [...(content.items || []), newItem] });
+        onChangeRef.current({ ...current, items: [...(current.items || []), newItem] });
         setExpandedItemId(newItem.id);
-    };
+    }, []);
+
+    const handleToggleItem = useCallback((itemId: string) => {
+        setExpandedItemId(prev => (prev === itemId ? null : itemId));
+    }, []);
+
+    const items = useMemo(() => content.items || [], [content.items]);
+    const layoutOptions = [
+        { id: 'list', icon: LayoutList, label: 'List' },
+        { id: 'grid', icon: LayoutGrid, label: 'Grid' },
+        { id: 'carousel', icon: GalleryHorizontal, label: 'Carousel' }
+    ] as const;
 
     const editorContent = (
         <EditorRoot>
@@ -88,115 +233,57 @@ export function SelectionListEditor({ component, onChange, children, isOpen, onO
 
 
                 {/* 2. Layout & Presets */}
-                <EditorSection title="Layout">
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs text-gray-500">Display Style</span>
-
-                            {/* Magic Presets Dropdown */}
-                            <div className="relative group">
-                                <button className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors">
-                                    <Wand2 className="w-3.5 h-3.5" />
-                                    <span>Load Preset</span>
-                                </button>
-                                <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-1 hidden group-hover:block z-50">
-                                    <button onClick={() => applyPreset('users')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-gray-700">
-                                        Users (Avatars)
-                                    </button>
-                                    <button onClick={() => applyPreset('accounts')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-gray-700">
-                                        Accounts (Icons)
-                                    </button>
-                                    <button onClick={() => applyPreset('licenses')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-gray-700">
-                                        Simple (Text only)
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-3 gap-2">
-                            {[
-                                { id: 'list', icon: LayoutList, label: 'List' },
-                                { id: 'grid', icon: LayoutGrid, label: 'Grid' },
-                                { id: 'carousel', icon: GalleryHorizontal, label: 'Carousel' }
-                            ].map(opt => (
-                                <button
-                                    key={opt.id}
-                                    onClick={() => handleLayoutChange(opt.id)}
-                                    className={`flex flex-col items-center justify-center gap-1.5 p-2 rounded-lg border transition-all ${content.layout === opt.id
-                                        ? 'bg-blue-50 border-blue-200 text-blue-700'
-                                        : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
-                                        }`}
-                                >
-                                    <opt.icon className="w-4 h-4" />
-                                    <span className="text-[10px] font-medium">{opt.label}</span>
-                                </button>
-                            ))}
-                        </div>
+                <EditorSection>
+                    <div className="grid grid-cols-3 gap-2">
+                        {layoutOptions.map(opt => (
+                            <button
+                                key={opt.id}
+                                onClick={() => handleLayoutChange(opt.id)}
+                                className={`flex items-center justify-center gap-2 p-1.5 rounded-lg border transition-all ${content.layout === opt.id
+                                    ? 'bg-blue-50 border-blue-200 text-blue-700'
+                                    : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
+                                    }`}
+                            >
+                                <opt.icon className="w-4 h-4" />
+                                <span className="text-[10px] font-medium">{opt.label}</span>
+                            </button>
+                        ))}
                     </div>
                 </EditorSection>
 
                 {/* 3. Items List */}
-                <EditorSection title={`Items (${content.items?.length || 0})`}>
-                    <div className="space-y-2">
-                        {content.items?.map((item, idx) => (
-                            <div key={item.id} className="group border border-gray-200 rounded-lg bg-white overflow-hidden transition-all hover:border-gray-300">
-                                {/* Item Header / Summary */}
-                                <div
-                                    className="flex items-center gap-3 p-2 cursor-pointer bg-gray-50/50 hover:bg-gray-50 transition-colors"
-                                    onClick={() => setExpandedItemId(expandedItemId === item.id ? null : item.id)}
-                                >
-                                    <div className="text-gray-400 cursor-grab active:cursor-grabbing">
-                                        <GripVertical className="w-4 h-4" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="text-xs font-medium text-gray-900 truncate">
-                                            {item.title || 'Untitled'}
-                                        </div>
-                                        <div className="text-[10px] text-gray-500 truncate">
-                                            {item.subtitle}
-                                        </div>
-                                    </div>
-                                    <div className="w-6 h-6 rounded overflow-hidden bg-gray-100 flex-shrink-0">
-                                        {item.imageUrl && (
-                                            <img src={item.imageUrl} className="w-full h-full object-cover" />
-                                        )}
-                                    </div>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); deleteItem(idx); }}
-                                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-all opacity-0 group-hover:opacity-100"
-                                    >
-                                        <X className="w-3.5 h-3.5" />
-                                    </button>
-                                </div>
-
-                                {/* Expanded Editor */}
-                                {expandedItemId === item.id && (
-                                    <div className="p-3 border-t border-gray-100 bg-white space-y-3 animate-in fade-in slide-in-from-top-1">
-                                        <EditorField
-                                            label="Title"
-                                            value={item.title}
-                                            onChange={(val) => updateItem(idx, { title: val })}
-                                        />
-                                        <EditorField
-                                            label="Subtitle"
-                                            value={item.subtitle || ''}
-                                            onChange={(val) => updateItem(idx, { subtitle: val })}
-                                        />
-                                        <EditorField
-                                            label="Image URL"
-                                            value={item.imageUrl || ''}
-                                            onChange={(val) => updateItem(idx, { imageUrl: val })}
-                                            placeholder="https://..."
-                                        />
-                                        <EditorField
-                                            label="Icon Name (if no image)"
-                                            value={item.iconName || ''}
-                                            onChange={(val) => updateItem(idx, { iconName: val })}
-                                            placeholder="e.g. building, user..."
-                                        />
-                                    </div>
-                                )}
+                <EditorSection
+                    title={`Items (${items.length})`}
+                    action={
+                        <div className="relative group">
+                            <button className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors">
+                                <Wand2 className="w-3.5 h-3.5" />
+                                <span>Load Preset</span>
+                            </button>
+                            <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-1 hidden group-hover:block z-50">
+                                <button onClick={() => applyPreset('users')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-gray-700">
+                                    Users (Avatars)
+                                </button>
+                                <button onClick={() => applyPreset('accounts')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-gray-700">
+                                    Accounts (Icons)
+                                </button>
+                                <button onClick={() => applyPreset('licenses')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-gray-700">
+                                    Simple (Text only)
+                                </button>
                             </div>
+                        </div>
+                    }
+                >
+                    <div className="space-y-2">
+                        {items.map((item) => (
+                            <SelectionListItemRow
+                                key={item.id}
+                                item={item}
+                                isExpanded={expandedItemId === item.id}
+                                onToggle={handleToggleItem}
+                                onUpdate={updateItem}
+                                onDelete={deleteItem}
+                            />
                         ))}
                     </div>
 

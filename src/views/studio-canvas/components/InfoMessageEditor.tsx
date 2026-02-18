@@ -93,14 +93,14 @@ export function InfoMessageEditor({ component, onChange, children, isOpen, onOpe
                                         const s = [...(content.sources || [])];
                                         // Auto-generate label logic reused here
                                         let newText = s[idx].text;
-                                        const isValidUrl = (string: string) => { try { return Boolean(new URL(string)); } catch (e) { return false; } };
+                                        const isValidUrl = (string: string) => { try { return Boolean(new URL(string)); } catch (_e) { return false; } };
 
                                         if (isValidUrl(val) && (!newText || newText.trim() === '')) {
                                             try {
                                                 const urlObj = new URL(val);
                                                 const hostname = urlObj.hostname.replace(/^www\./, '');
                                                 newText = hostname.charAt(0).toUpperCase() + hostname.slice(1);
-                                            } catch (e) { /* ignore */ }
+                                            } catch (_e) { /* ignore */ }
                                         }
                                         s[idx] = { ...s[idx], url: val, text: newText };
                                         updateSources(s);

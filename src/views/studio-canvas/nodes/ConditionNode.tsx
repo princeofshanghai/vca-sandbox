@@ -8,8 +8,8 @@ import { Branch } from '../../studio/types';
 interface ConditionNodeData {
     label: string;
     branches?: Branch[];
-    onLabelChange?: (newLabel: string) => void;
-    onUpdateBranches?: (branches: Branch[]) => void;
+    onLabelChange?: (nodeId: string, newLabel: string) => void;
+    onUpdateBranches?: (nodeId: string, branches: Branch[]) => void;
 }
 
 export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
@@ -37,7 +37,7 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
 
     const handleLabelSave = () => {
         if (editedLabel.trim() !== (typedData.label || '')) {
-            typedData.onLabelChange?.(editedLabel.trim());
+            typedData.onLabelChange?.(id, editedLabel.trim());
         }
         setIsEditingLabel(false);
     };
@@ -55,12 +55,12 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
         const newBranches = branches.map(b =>
             b.id === branchId ? { ...b, ...updates } : b
         );
-        typedData.onUpdateBranches?.(newBranches);
+        typedData.onUpdateBranches?.(id, newBranches);
     };
 
     const handleBranchDelete = (branchId: string) => {
         const newBranches = branches.filter(b => b.id !== branchId);
-        typedData.onUpdateBranches?.(newBranches);
+        typedData.onUpdateBranches?.(id, newBranches);
     };
 
     const zoom = useStore((s) => s.transform[2]);
