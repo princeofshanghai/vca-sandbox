@@ -173,7 +173,6 @@ const ComponentLibraryView = () => {
           <Route path="container" element={<ContainerComponentView />} />
           <Route path="header" element={<HeaderComponentView />} />
           <Route path="divider" element={<DividerComponentView />} />
-          <Route path="agent-banner" element={<AgentBannerComponentView />} />
           <Route path="avatar" element={<AvatarComponentView />} />
           <Route path="badge" element={<BadgeComponentView />} />
           <Route path="button" element={<ButtonComponentView />} />
@@ -192,4 +191,3 @@ const ComponentLibraryView = () => {
 };
 
 export default ComponentLibraryView;
-

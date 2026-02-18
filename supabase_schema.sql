@@ -10,9 +10,14 @@ create table public.flows (
   metadata jsonb default '{}'::jsonb, -- Stores thumbnail, description, etc.
   content jsonb default '{}'::jsonb, -- Stores the actual nodes and edges
   is_public boolean default false,
+  deleted_at timestamp with time zone, -- Soft delete support for Trash/Restore
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
+
+-- Backward-compatible migration for existing databases
+alter table public.flows add column if not exists deleted_at timestamp with time zone;
+create index if not exists flows_deleted_at_idx on public.flows (deleted_at);
 
 -- Create Folders Table
 create table public.folders (

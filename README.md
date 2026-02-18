@@ -3,7 +3,7 @@
 A comprehensive web application for designers to prototype Virtual Chat Assistant (VCA) conversation flows using production-ready UI components and a visual flow builder.
 
 **Owner:** Charles Hu, Staff Product Designer @ LinkedIn
-**Last Updated:** February 5, 2026
+**Last Updated:** February 18, 2026
 
 ---
 
@@ -15,7 +15,7 @@ VCA Sandbox is an internal design tool that helps LinkedIn designers:
 - Preview flows in a realistic chat interface
 - Share and collaborate on conversation designs
 
-**See [docs/00-START-HERE.md](./docs/00-START-HERE.md) for a beginner-friendly introduction.**
+**See [docs/context/project-overview.md](./docs/context/project-overview.md) for a beginner-friendly introduction.**
 
 ---
 
@@ -106,11 +106,11 @@ vca-sandbox-6/
 │   ├── types/                   # TypeScript definitions
 │   └── config/                  # App configuration
 ├── docs/                        # Documentation
-│   ├── 00-START-HERE.md        # Start here if you're new!
-│   ├── current/                # Active documentation
-│   ├── reference/              # Design system reference
-│   ├── setup/                  # Implementation guides
-│   └── archive/                # Historical docs
+│   ├── context/                # Project overview and strategy
+│   ├── guidelines/             # UX and visual guidelines
+│   ├── proposals/              # Feature/UI proposals
+│   ├── rules/                  # Working mode rules
+│   └── setup/                  # Setup and roadmap docs
 └── public/                     # Static assets
 ```
 
@@ -146,20 +146,21 @@ vca-sandbox-6/
 ## 📚 Documentation
 
 **Start Here:**
-- [00-START-HERE.md](./docs/00-START-HERE.md) — New to the project? Read this first!
-- [project-overview.md](./docs/current/project-overview.md) — Project goals and vision
+- [project-overview.md](./docs/context/project-overview.md) — Project goals, audience, and vision
+- [sdui-strategic-alignment.md](./docs/context/sdui-strategic-alignment.md) — Long-term SDUI direction
 
-**Current Plans:**
-- [studio-redesign-plan.md](./docs/current/studio-redesign-plan.md) — Studio architecture
-- [vca-ui-standards.md](./docs/current/vca-ui-standards.md) — Component guidelines
+**Guidelines:**
+- [flow-preview-guidelines.md](./docs/guidelines/flow-preview-guidelines.md) — Flow preview behavior and patterns
+- [visual-design.md](./docs/guidelines/visual-design.md) — Visual design principles
+- [tailwind-typography-fix.md](./docs/guidelines/tailwind-typography-fix.md) — Typography implementation notes
 
-**Design System:**
-- [design-system-summary.md](./docs/current/design-system-summary.md) — Token overview
-- [VCA-Design-Tokens.md](./docs/reference/VCA-Design-Tokens.md) — Complete token reference
-- [Tailwind-Reference.md](./docs/reference/Tailwind-Reference.md) — Tailwind setup
+**Proposals & Rules:**
+- [condition-branch-editor-redesign.md](./docs/proposals/condition-branch-editor-redesign.md) — Condition node UX proposal
+- [confirmation-mode.md](./docs/rules/confirmation-mode.md) — Confirmation mode rules
+- [design-partner-mode.md](./docs/rules/design-partner-mode.md) — Design-partner collaboration rules
 
 **Setup Guides:**
-- [google-auth-setup.md](./docs/setup/google-auth-setup.md) — Authentication setup
+- [share-feature-roadmap.md](./docs/setup/share-feature-roadmap.md) — Share feature logic and roadmap
 
 ---
 
@@ -234,8 +235,8 @@ npm run build:tokens # Build design tokens
 
 This is an internal LinkedIn tool. If you're a LinkedIn designer or engineer interested in contributing:
 
-1. Read [00-START-HERE.md](./docs/00-START-HERE.md)
-2. Review the [current documentation](./docs/current/)
+1. Read [project-overview.md](./docs/context/project-overview.md)
+2. Review the [docs folder](./docs/) for current context, guidelines, and setup notes
 3. Reach out to Charles Hu for access and guidance
 
 ---
@@ -243,9 +244,9 @@ This is an internal LinkedIn tool. If you're a LinkedIn designer or engineer int
 ## 🐛 Known Issues
 
 - Studio auto-layout sometimes needs manual adjustment
-- Some flows may not save correctly (Supabase schema in progress)
-- Mobile preview not fully responsive yet
-- Share links not generating correctly
+- Mobile preview is still being polished on smaller screens
+- Sharing currently supports public prototype links only (granular permissions are planned)
+- Automated test coverage has not been added yet
 
 ---
 
