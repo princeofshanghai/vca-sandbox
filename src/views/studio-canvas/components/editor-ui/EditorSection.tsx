@@ -33,7 +33,7 @@ export function EditorSection({ title, children, defaultOpen = true, className, 
                             {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                         </div>
                     )}
-                    <h4 className="text-xs font-medium uppercase tracking-wider text-gray-500">
+                    <h4 className="text-[13px] font-medium text-gray-900">
                         {title}
                     </h4>
                 </div>

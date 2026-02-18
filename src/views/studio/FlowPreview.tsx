@@ -302,11 +302,10 @@ const PreviewContent = ({
                             const fullBody = content.body;
                             const bodyToDisplay = isStreaming ? currentStreamingText : fullBody;
 
-                            if (fullBody || content.title) {
+                            if (fullBody) {
                                 renderedComponents.push(
                                     <InfoMessage
                                         key={component.id}
-                                        title={content.title}
                                         sources={content.sources?.map(s => ({ text: s.text, url: s.url }))}
                                         className={!isStreaming ? "animate-fade-in" : ""}
                                     >
@@ -328,6 +327,7 @@ const PreviewContent = ({
                             renderedComponents.push(
                                 <SelectionList
                                     key={component.id}
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                     items={content.items as any}
                                     layout={content.layout}
                                     className="animate-fade-in"

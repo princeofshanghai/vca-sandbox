@@ -39,7 +39,7 @@ export const Composer = ({
         'bg-vca-background border-t border-vca-border-faint w-full',
         className
       )}>
-        <div className="flex flex-col gap-vca-sm items-start justify-center px-vca-xl py-[10px]">
+        <div className="flex flex-col gap-vca-sm items-start justify-center pl-vca-xxl pr-vca-lg py-[10px]">
           <div className="flex gap-vca-xs items-center justify-end w-full min-h-[40px]">
             <button
               onClick={onStop}
@@ -74,7 +74,7 @@ export const Composer = ({
       'bg-vca-background border-t border-vca-border-faint w-full',
       className
     )}>
-      <div className="flex flex-col gap-vca-sm items-start justify-end px-vca-xl py-[10px]">
+      <div className="flex flex-col gap-vca-xs items-start justify-end pl-vca-xxl pr-vca-lg py-[10px]">
         <div className={cn(
           'flex gap-vca-xs w-full py-0',
           hasMultipleLines ? 'items-end' : 'items-center'

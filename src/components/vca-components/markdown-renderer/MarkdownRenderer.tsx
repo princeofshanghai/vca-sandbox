@@ -19,7 +19,7 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
             <ReactMarkdown
                 components={{
                     // Override link to open in new tab
-                    a: ({ node, ...props }) => (
+                    a: ({ node: _node, ...props }) => (
                         <a
                             {...props}
                             target="_blank"
@@ -28,31 +28,31 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
                         />
                     ),
                     // Paragraphs - explicit VCA body style to override global CSS (text-15)
-                    p: ({ node, ...props }) => (
+                    p: ({ node: _node, ...props }) => (
                         <p {...props} className="text-vca-small-open mb-2 last:mb-0" />
                     ),
                     // Strong/Bold
-                    strong: ({ node, ...props }) => (
+                    strong: ({ node: _node, ...props }) => (
                         <strong {...props} className="font-vca-text text-vca-small-bold-open" />
                     ),
-                    b: ({ node, ...props }) => (
+                    b: ({ node: _node, ...props }) => (
                         <strong {...props} className="font-vca-text text-vca-small-bold-open" />
                     ),
                     // Emphasis/Italic
-                    em: ({ node, ...props }) => (
+                    em: ({ node: _node, ...props }) => (
                         <em {...props} className="italic" />
                     ),
-                    i: ({ node, ...props }) => (
+                    i: ({ node: _node, ...props }) => (
                         <em {...props} className="italic" />
                     ),
                     // Lists
-                    ul: ({ node, ...props }) => (
+                    ul: ({ node: _node, ...props }) => (
                         <ul {...props} className="text-vca-small-open text-vca-text list-disc pl-5 my-2 space-y-0.5" />
                     ),
-                    ol: ({ node, ...props }) => (
+                    ol: ({ node: _node, ...props }) => (
                         <ol {...props} className="text-vca-small-open text-vca-text list-decimal pl-5 my-2 space-y-0.5" />
                     ),
-                    li: ({ node, ...props }) => (
+                    li: ({ node: _node, ...props }) => (
                         <li {...props} className="pl-1" />
                     ),
                 }}

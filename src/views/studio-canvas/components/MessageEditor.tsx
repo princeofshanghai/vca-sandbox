@@ -36,14 +36,12 @@ export function MessageEditor({ component, onChange, children, isOpen, onOpenCha
         <EditorRoot>
             <EditorHeader
                 icon={MessageSquare}
-                title="AI Message"
+                title="Message"
                 onClose={() => onOpenChange(false)}
             />
             <EditorContent>
                 <div className="flex flex-col gap-1.5 w-full">
-                    <label className="text-xs font-medium text-gray-700">
-                        Message Content
-                    </label>
+
                     <RichTextEditor
                         value={localText}
                         onChange={handleTextChange}

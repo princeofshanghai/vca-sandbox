@@ -61,12 +61,11 @@ export function PromptEditor({ component, entryPoint, onChange, children, isOpen
             />
             <EditorContent>
                 <EditorField
-                    label="Prompt Instructions"
                     value={localText}
                     onChange={handleTextChange}
                     placeholder={getPlaceholder()}
                     type="textarea"
-                    minRows={6}
+                    minRows={2}
                     autoFocus={true}
                     hint="Instructions for how the AI should behave in this turn."
                 />

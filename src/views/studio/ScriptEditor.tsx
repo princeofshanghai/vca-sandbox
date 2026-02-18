@@ -33,7 +33,7 @@ export const ScriptEditor = ({ flow, onUpdateFlow }: ScriptEditorProps) => {
 
             // Set initial content based on variant
             if (newBlock.variant === 'message') newBlock.content = { text: '' };
-            if (newBlock.variant === 'info') newBlock.content = { title: '', body: '', sources: [], showFeedback: true };
+            if (newBlock.variant === 'info') newBlock.content = { body: '', sources: [], showFeedback: true };
             if (newBlock.variant === 'status') newBlock.content = { loadingTitle: '', successTitle: '' };
         } else {
             newBlock.content = ''; // User content
@@ -145,7 +145,7 @@ const BlockEditor = ({ block, index, onUpdate, onDelete }: {
     const handleVariantChange = (variant: AIBlockVariant) => {
         let defaultContent = {};
         if (variant === 'message') defaultContent = { text: '' };
-        if (variant === 'info') defaultContent = { title: '', body: '', sources: [], showFeedback: true };
+        if (variant === 'info') defaultContent = { body: '', sources: [], showFeedback: true };
         if (variant === 'status') defaultContent = { loadingTitle: '', successTitle: '' };
 
 
@@ -219,15 +219,6 @@ const BlockEditor = ({ block, index, onUpdate, onDelete }: {
                 {/* 3. AI Info Card */}
                 {block.type === 'ai' && block.variant === 'info' && (
                     <div className="space-y-3">
-                        <div className="space-y-2">
-                            <label className="text-xs font-medium text-gray-500">Title (optional)</label>
-                            <input
-                                className="w-full text-sm font-medium text-gray-900 border border-gray-200 rounded-md p-2 focus:ring-2 focus:ring-blue-100 focus:border-blue-300"
-                                placeholder="Ex. Here's what you need to know"
-                                value={(block.content as AIInfoContent).title || ''}
-                                onChange={(e) => onUpdate({ content: { ...block.content, title: e.target.value } })}
-                            />
-                        </div>
                         <div className="space-y-2">
                             <label className="text-xs font-medium text-gray-500">Message</label>
                             <RichTextEditor

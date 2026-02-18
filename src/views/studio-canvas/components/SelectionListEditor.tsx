@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Plus, X, GripVertical, Wand2, LayoutList, LayoutGrid, GalleryHorizontal } from 'lucide-react';
 import { Component, SelectionListContent } from '../../studio/types';
 import { ComponentEditorPopover } from './ComponentEditorPopover';
@@ -40,17 +40,9 @@ export function SelectionListEditor({ component, onChange, children, isOpen, onO
     const content = component.content as SelectionListContent;
 
     // Local state for better UX
-    const [localTitle, setLocalTitle] = useState(content.title || '');
     const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
 
-    useEffect(() => {
-        setLocalTitle(content.title || '');
-    }, [component.id, content.title]);
 
-    const handleTitleChange = (val: string) => {
-        setLocalTitle(val);
-        onChange({ ...content, title: val });
-    };
 
     const handleLayoutChange = (val: string) => {
         onChange({ ...content, layout: val as 'list' | 'grid' | 'carousel' });
@@ -93,15 +85,7 @@ export function SelectionListEditor({ component, onChange, children, isOpen, onO
             />
 
             <EditorContent>
-                {/* 1. Header (Title) */}
-                <EditorSection>
-                    <EditorField
-                        label="Heading (Optional)"
-                        value={localTitle}
-                        onChange={handleTitleChange}
-                        placeholder="e.g., Select an account..."
-                    />
-                </EditorSection>
+
 
                 {/* 2. Layout & Presets */}
                 <EditorSection title="Layout">

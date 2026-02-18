@@ -3,12 +3,12 @@ import { InfoMessage } from '@/components/vca-components/info-message';
 import { FeedbackValue } from '@/components/vca-components/feedback';
 import { ComponentViewLayout } from '@/components/component-library/ComponentViewLayout';
 import { DemoSection } from '@/components/component-library/DemoSection';
-import { ToggleButtons, FormInput, FormTextarea, FormCheckbox } from '@/components/component-library/DemoControls';
+import { ToggleButtons, FormTextarea, FormCheckbox } from '@/components/component-library/DemoControls';
 
 const InfoMessageComponentView = () => {
   // Interactive demo state
   // Interactive demo state
-  const [title, setTitle] = useState("Here's what you need to know");
+  // Interactive demo state
   const [children, setChildren] = useState('Based on your organization\'s usage patterns, we recommend enabling seat auto-assignment for new users.');
   const [status, setStatus] = useState<'complete' | 'interrupted'>('complete');
   const [showSources, setShowSources] = useState(true);
@@ -29,14 +29,7 @@ const InfoMessageComponentView = () => {
               <div></div>
 
               <>
-                <FormInput
-                  id="title"
-                  label="Title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Enter title..."
-                  className="col-span-2"
-                />
+
 
                 <FormTextarea
                   id="message"
@@ -82,7 +75,6 @@ const InfoMessageComponentView = () => {
           <div className="w-[352px] mx-auto">
             <InfoMessage
               status={status}
-              title={title}
               sources={showSources ? [
                 { text: 'Onboarding Best Practices Guide', href: 'https://example.com/guide', status: 'enabled' },
                 { text: 'License Management Documentation', href: 'https://example.com/docs', status: 'enabled' },
@@ -110,7 +102,6 @@ const InfoMessageComponentView = () => {
                 <div className="w-[352px] mx-auto">
                   <InfoMessage
                     status="complete"
-                    title="Here's what you need to know"
                     sources={[
                       { text: 'Onboarding Best Practices Guide', href: 'https://example.com/guide', status: 'enabled' },
                       { text: 'License Management Documentation', href: 'https://example.com/docs', status: 'enabled' },

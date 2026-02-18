@@ -2,6 +2,7 @@ import { memo, useState, useEffect, useRef } from 'react';
 import { Handle, Position, NodeProps, useStore } from '@xyflow/react';
 import { Split } from 'lucide-react';
 import { ConditionBranchEditor } from '../components/ConditionBranchEditor';
+import { BranchCard } from './components/BranchCard';
 import { Branch } from '../../studio/types';
 
 interface ConditionNodeData {
@@ -127,48 +128,11 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
                         isOpen={selectedBranchId === branch.id}
                         onOpenChange={(open) => !open && setSelectedBranchId(null)}
                     >
-                        <div
-                            id={`component-${branch.id}`}
-                            className={`group flex items-center justify-between px-3 py-2 bg-white border rounded-md transition-all cursor-pointer relative nodrag ${selectedBranchId === branch.id
-                                ? 'border-amber-500 shadow-sm'
-                                : 'border-gray-200 hover:border-amber-300 hover:shadow-sm'
-                                }`}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedBranchId(branch.id);
-                            }}
-                        >
-                            <div className="flex-1 min-w-0 mr-2 flex flex-col gap-0.5">
-                                <span className="text-xs font-medium text-gray-700 truncate">{branch.condition}</span>
-                                {branch.isDefault ? (
-                                    <div className="flex items-center gap-1 mt-1">
-                                        <span className="text-[9px] text-gray-500 font-medium bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 uppercase tracking-wide">
-                                            Else
-                                        </span>
-                                    </div>
-                                ) : branch.logic?.variable && (
-                                    <div className="flex flex-wrap gap-1 mt-2">
-                                        <span className="text-[9px] text-cyan-700 font-mono bg-cyan-50 px-1 py-0 rounded border border-cyan-100 truncate max-w-[120px]" title={branch.logic.variable}>
-                                            {branch.logic.variable}
-                                        </span>
-                                        <span className="text-[9px] text-gray-400 font-mono bg-gray-100 px-1 py-0 rounded border border-gray-200 shrink-0">
-                                            =
-                                        </span>
-                                        <span className="text-[9px] text-cyan-700 font-mono bg-cyan-50 px-1 py-0 rounded border border-cyan-100 truncate max-w-[120px]" title={String(branch.logic.value)}>
-                                            {String(branch.logic.value)}
-                                        </span>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Embedded Output Handle */}
-                            <Handle
-                                type="source"
-                                position={Position.Right}
-                                id={branch.id}
-                                className="!bg-amber-400 !w-3 !h-3 !border-2 !border-white !-right-[18px]"
-                            />
-                        </div>
+                        <BranchCard
+                            branch={branch}
+                            isSelected={selectedBranchId === branch.id}
+                            onClick={() => setSelectedBranchId(branch.id)}
+                        />
                     </ConditionBranchEditor>
                 ))}
             </div>

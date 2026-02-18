@@ -21,7 +21,7 @@ We use the following specific standards for the main chat interface:
 
 | Dimension | Token | Value | Applied In |
 | :--- | :--- | :--- | :--- |
-| **Horizontal Padding** | `vca-xl` | **20px** | `Header`, `Composer`, `Container` (content) |
+| **Horizontal Padding** | `vca-xxl` | **24px** | `Header`, `Composer`, `Container` (content) |
 | **Vertical Padding** | `vca-lg` | **16px** | `Container` (top/bottom of scroll area) |
 | **Internal Gap** | `vca-lg` | **16px** | Vertical gap between messages/components |
 

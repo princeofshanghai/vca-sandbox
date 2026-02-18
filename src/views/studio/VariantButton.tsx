@@ -67,7 +67,6 @@ export const VariantButton = ({ variant, isSelected, onClick }: VariantButtonPro
                                     {variant === 'info' && (
                                         <div className="w-[300px]">
                                             <InfoMessage
-                                                title="Info message"
                                                 sources={[{ text: 'Source', href: '#' }]}
                                             >
                                                 Use this for AI messages that contain detailed explanations.

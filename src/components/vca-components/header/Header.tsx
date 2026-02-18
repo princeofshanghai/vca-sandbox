@@ -56,7 +56,7 @@ export const Header = ({
         <div className="w-12 h-1 bg-gray-400 rounded-full" />
 
         {/* Close button - right side */}
-        <div className="absolute right-5 top-1/2 -translate-y-1/2">
+        <div className="absolute right-2 top-1/2 -translate-y-1/2">
           <ButtonIcon
             variant="tertiary"
             size="md"
@@ -82,7 +82,7 @@ export const Header = ({
       >
         {/* Back button - left side */}
         {showBack && (
-          <div className="absolute left-5 top-1/2 -translate-y-1/2">
+          <div className="absolute left-2 top-1/2 -translate-y-1/2">
             <ButtonIcon
               variant="tertiary"
               size="md"
@@ -105,7 +105,7 @@ export const Header = ({
         </div>
 
         {/* Actions - right side */}
-        <div className="absolute right-5 top-1/2 -translate-y-1/2 flex items-center">
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center">
           {showAction && (
             <ButtonIcon
               variant="tertiary"
@@ -133,13 +133,16 @@ export const Header = ({
   return (
     <div
       className={cn(
-        'bg-vca-background h-[72px] w-full flex items-center justify-between px-vca-xl gap-vca-lg',
+        'bg-vca-background h-[72px] w-full flex items-center justify-between px-vca-xxl gap-vca-lg',
         borderClass,
         className
       )}
     >
       {/* Left side - Title */}
-      <div className="flex items-center gap-vca-xs">
+      <div className={cn(
+        "flex items-center gap-vca-xs",
+        showBack ? "-ml-4" : "-ml-1"
+      )}>
         {showBack && (
           <ButtonIcon
             variant="tertiary"
@@ -161,7 +164,7 @@ export const Header = ({
       </div>
 
       {/* Right side - Actions */}
-      <div className="flex items-center">
+      <div className="flex items-center -mr-4">
         {showAction && (
           <ButtonIcon
             variant="tertiary"

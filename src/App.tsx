@@ -8,6 +8,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import ComponentLibraryView from '@/views/ComponentLibraryView';
 import DashboardView from '@/views/dashboard/DashboardView';
 import StudioView from '@/views/studio/StudioView';
+import { Toaster } from '@/components/ui/sonner';
 
 
 
@@ -66,6 +67,7 @@ const App = () => {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AppProvider>
+        <Toaster />
       </AuthProvider>
     </BrowserRouter>
   );

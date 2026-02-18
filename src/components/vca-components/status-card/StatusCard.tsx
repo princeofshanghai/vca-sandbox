@@ -3,7 +3,7 @@ import { cn } from '@/utils';
 import { VcaIcon } from '../icons';
 
 export type StatusCardProps = {
-    status: 'in-progress' | 'complete' | 'success' | 'failure';
+    status: 'in-progress' | 'complete' | 'success';
     title: string;
     children?: React.ReactNode;
     actionLabel?: string;
@@ -45,7 +45,8 @@ export const StatusCard = ({
                     animation: progress-load 2s ease-in-out infinite;
                 }
             `}</style>
-            <div className="flex gap-vca-s p-vca-lg items-start">
+            {/* Main Content Wrapper */}
+            <div className="flex items-start gap-vca-s p-vca-lg">
                 {/* Icon */}
                 <div className="shrink-0 h-6 flex items-center">
                     {status === 'in-progress' && (
@@ -58,11 +59,6 @@ export const StatusCard = ({
                             <VcaIcon icon="signal-success" size="md" />
                         </div>
                     )}
-                    {status === 'failure' && (
-                        <div className="text-red-600">
-                            <VcaIcon icon="signal-error" size="md" />
-                        </div>
-                    )}
                 </div>
 
                 {/* Content */}
@@ -71,13 +67,13 @@ export const StatusCard = ({
                         {title}
                     </div>
 
-                    {(status === 'complete' || status === 'success' || status === 'failure') && children && (
+                    {(status === 'complete' || status === 'success') && children && (
                         <div className="font-vca-text text-vca-small-open text-vca-text mt-0 space-y-2 [&_a]:text-vca-link [&_a]:font-semibold [&_a]:no-underline hover:[&_a]:underline">
                             {children}
                         </div>
                     )}
 
-                    {(status === 'complete' || status === 'success' || status === 'failure') && actionLabel && (
+                    {(status === 'complete' || status === 'success') && actionLabel && (
                         <button
                             onClick={onActionClick}
                             className="mt-2 text-left font-vca-text text-vca-small-bold-open text-vca-link hover:underline bg-transparent border-none p-0 cursor-pointer w-fit"
@@ -87,7 +83,6 @@ export const StatusCard = ({
                     )}
                 </div>
             </div>
-
             {/* Progress Bar (Only for in-progress) */}
             {status === 'in-progress' && (
                 <div className="absolute bottom-0 left-0 w-full h-[4px] bg-white/50">

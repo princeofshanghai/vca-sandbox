@@ -16,7 +16,7 @@ export const getComponentDisplay = (component: Component): { icon: JSX.Element; 
             const messageContent = component.content as AIMessageContent;
             return {
                 icon: <MessageSquare className="w-4 h-4" />,
-                label: 'AI Message',
+                label: 'Message',
                 detail: messageContent.text || ''
             };
         }
@@ -33,7 +33,7 @@ export const getComponentDisplay = (component: Component): { icon: JSX.Element; 
             return {
                 icon: <MessageSquareText className="w-4 h-4" />,
                 label: 'Info Message',
-                detail: infoContent.title || infoContent.body || ''
+                detail: infoContent.body || ''
             };
         }
         case 'statusCard': {
@@ -49,7 +49,7 @@ export const getComponentDisplay = (component: Component): { icon: JSX.Element; 
             return {
                 icon: <LayoutList className="w-4 h-4" />,
                 label: 'Selection List',
-                detail: listContent.title || `${listContent.items?.length || 0} items`
+                detail: `${listContent.items?.length || 0} items`
             };
         }
         case 'checkboxGroup': {

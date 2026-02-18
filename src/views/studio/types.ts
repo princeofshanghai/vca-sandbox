@@ -27,7 +27,6 @@ export interface AIMessageContent {
 }
 
 export interface AIInfoContent {
-    title?: string;
     body?: string;
     sources?: { text: string; url?: string }[];
     showFeedback?: boolean;
@@ -39,10 +38,6 @@ export interface AIStatusContent {
     // Success State (Default)
     successTitle: string;
     successDescription?: string;
-
-    // Failure State (Scenario)
-    failureTitle?: string;
-    failureDescription?: string;
 }
 
 
@@ -105,7 +100,6 @@ export interface PromptContent {
 
 // Selection List Content
 export interface SelectionListContent {
-    title?: string;
     layout: 'list' | 'carousel' | 'grid';
     items: {
         id: string;

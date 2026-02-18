@@ -1,6 +1,8 @@
 import { memo, forwardRef } from 'react';
 import { Handle, Position } from '@xyflow/react';
+import { CircleDashed, Check } from 'lucide-react';
 import { Component } from '../../../studio/types';
+import { StudioCard } from './StudioCard';
 
 interface SimpleComponentCardProps {
     component: Component;
@@ -8,6 +10,28 @@ interface SimpleComponentCardProps {
     isSelected: boolean;
     onClick: () => void;
 }
+
+const stripMarkdown = (text?: string): string => {
+    if (!text) return '';
+    return text
+        // Remove headers
+        .replace(/^#+\s+/gm, '')
+        // Remove bold/italic
+        .replace(/(\*\*|__)(.*?)\1/g, '$2')
+        .replace(/(\*|_)(.*?)\1/g, '$2')
+        // Remove links [text](url) -> text
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        // Remove inline code
+        .replace(/`([^`]+)`/g, '$1')
+        // Remove blockquotes
+        .replace(/^>\s+/gm, '')
+        // Remove list markers
+        .replace(/^[-*+]\s+/gm, '')
+        .replace(/^\d+\.\s+/gm, '')
+        // Remove images
+        .replace(/!\[[^\]]*\]\([^)]+\)/g, '')
+        .trim();
+};
 
 // Simplified Component Card - Display only, no inline editing
 export const SimpleComponentCard = memo(forwardRef<HTMLDivElement, SimpleComponentCardProps>(({
@@ -21,35 +45,52 @@ export const SimpleComponentCard = memo(forwardRef<HTMLDivElement, SimpleCompone
         switch (component.type) {
             case 'message': {
                 const content = component.content as import('../../../studio/types').AIMessageContent;
+                if (!content.text) return null;
                 return (
-                    <div className="p-3 bg-gray-50 border border-gray-100 rounded text-xs text-gray-600 line-clamp-3 leading-relaxed">
-                        {content.text || <span className="text-gray-400 italic">Empty message...</span>}
+                    <div className="px-0.5 py-1 text-sm text-gray-900 line-clamp-3 leading-relaxed">
+                        {stripMarkdown(content.text)}
                     </div>
                 );
             }
             case 'infoMessage': {
                 const content = component.content as import('../../../studio/types').AIInfoContent;
+                if (!content.body) return null;
                 return (
-                    <div className="p-3 bg-slate-50 border border-slate-100 rounded text-xs text-gray-600">
-                        {content.title && <div className="font-medium text-slate-800 mb-1">{content.title}</div>}
-                        <div className="line-clamp-2 leading-relaxed">{content.body || <span className="text-gray-400 italic">Empty info message...</span>}</div>
+                    <div className="px-0.5 py-1 text-sm text-gray-900">
+                        <div className="line-clamp-2 leading-relaxed">{stripMarkdown(content.body)}</div>
                     </div>
                 );
             }
             case 'prompt': {
                 const content = component.content as import('../../../studio/types').PromptContent;
+                if (!content.text) return null;
                 return (
-                    <div className="inline-flex items-center px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-medium max-w-full">
-                        <span className="truncate">{content.text || 'New Prompt'}</span>
+                    <div className="inline-flex items-center px-2.5 py-2.5 rounded-md bg-blue-50 text-blue-700 text-sm max-w-full">
+                        <span className="truncate">{content.text}</span>
                     </div>
                 );
             }
             case 'statusCard': {
                 const content = component.content as import('../../../studio/types').AIStatusContent;
+                if (!content.loadingTitle && !content.successTitle) return null;
                 return (
-                    <div className="p-2 bg-white border border-gray-200 rounded text-xs text-gray-600 shadow-sm flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                        <span className="truncate font-medium">{content.loadingTitle || content.successTitle || 'Status Card'}</span>
+
+                    <div className="flex flex-col gap-1.5 px-0.5 py-1">
+                        {/* Loading State */}
+                        <div className="relative flex flex-col justify-center rounded-md bg-blue-50 overflow-hidden">
+                            <div className="flex items-center gap-2 px-2.5 py-2 text-sm text-gray-900">
+                                <CircleDashed className="w-4 h-4 text-gray-700 animate-spin" />
+                                <span className="truncate">{content.loadingTitle || 'Loading...'}</span>
+                            </div>
+                            {/* Visual Loading Bar */}
+                            <div className="absolute bottom-0 left-0 h-[2px] w-[75%] bg-blue-300" />
+                        </div>
+
+                        {/* Success State */}
+                        <div className="flex items-center gap-2 px-2.5 py-2.5 rounded-md bg-blue-50 text-sm text-gray-900">
+                            <Check className="w-4 h-4 text-gray-700" />
+                            <span className="truncate">{content.successTitle || 'Success'}</span>
+                        </div>
                     </div>
                 );
             }
@@ -57,8 +98,9 @@ export const SimpleComponentCard = memo(forwardRef<HTMLDivElement, SimpleCompone
                 const content = component.content as import('../../../studio/types').SelectionListContent;
                 return (
                     <div className="flex flex-col gap-1.5">
+
                         {content.items?.map((item) => (
-                            <div key={item.id} className="relative flex items-center justify-between px-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-600 shadow-sm group-hover:border-blue-200 transition-colors">
+                            <div key={item.id} className="relative flex items-center justify-between px-3 py-2.5 bg-white border border-gray-200 rounded text-sm text-gray-700 shadow-sm group-hover:border-blue-200 transition-colors">
                                 <span className="truncate max-w-[180px]" title={item.title}>{item.title}</span>
                                 {/* Handle for this specific item */}
                                 <Handle
@@ -69,11 +111,6 @@ export const SimpleComponentCard = memo(forwardRef<HTMLDivElement, SimpleCompone
                                 />
                             </div>
                         ))}
-                        {content.title && (
-                            <div className="mt-1 text-[10px] text-gray-400 italic truncate">
-                                "{content.title}"
-                            </div>
-                        )}
                     </div>
                 );
             }
@@ -82,9 +119,9 @@ export const SimpleComponentCard = memo(forwardRef<HTMLDivElement, SimpleCompone
                 return (
                     <div className="flex flex-col gap-1.5">
                         {content.options?.map((option) => (
-                            <div key={option.id} className="relative flex items-center gap-2 px-2 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-600 shadow-sm">
-                                <div className="w-3 h-3 border border-gray-300 rounded-[3px]" />
-                                <span className="truncate max-w-[160px]" title={option.label}>{option.label}</span>
+                            <div key={option.id} className="relative flex items-center gap-2 px-0.5 py-1 text-sm text-gray-700">
+                                <div className="w-4 h-4 border border-gray-300 rounded-[4px] bg-white flex-shrink-0" />
+                                <span className="truncate max-w-[160px] leading-tight" title={option.label}>{option.label}</span>
                             </div>
                         ))}
                     </div>
@@ -95,43 +132,55 @@ export const SimpleComponentCard = memo(forwardRef<HTMLDivElement, SimpleCompone
         }
     };
 
+    const hasOutputHandle = component.type === 'prompt' || component.type === 'checkboxGroup';
+
+    // Helper to check if content is empty
+    const isEmpty = () => {
+        switch (component.type) {
+            case 'message':
+                return !(component.content as import('../../../studio/types').AIMessageContent).text;
+            case 'infoMessage':
+                return !(component.content as import('../../../studio/types').AIInfoContent).body;
+            case 'prompt':
+                return !(component.content as import('../../../studio/types').PromptContent).text;
+            case 'statusCard': {
+                const content = component.content as import('../../../studio/types').AIStatusContent;
+                return !content.loadingTitle && !content.successTitle;
+            }
+            default:
+                return false;
+        }
+    };
+
+    // Update label to "Add <Component>" if empty
+    const getLabel = () => {
+        if (isEmpty()) {
+            switch (component.type) {
+                case 'message': return 'Add Message';
+                case 'infoMessage': return 'Add Info Message';
+                case 'prompt': return 'Add Prompt';
+                case 'statusCard': return 'Add Status Card';
+                default: return display.label;
+            }
+        }
+        return display.label;
+    };
+
     return (
-        <div
-            ref={ref}
-            id={`component-${component.id}`}
-            onClick={(e) => {
-                e.stopPropagation(); // Prevent node selection
-                onClick();
-            }}
-            className={`component-card flex flex-col gap-0 rounded-md border transition-all z-20 ${isSelected
-                ? 'border-blue-500 bg-blue-50/50 relative'
-                : 'border-gray-200 bg-white hover:border-blue-300 relative'
-                } cursor-default nodrag group overflow-hidden`}
-        >
-            {/* Universal Header */}
-            <div className="flex items-center gap-2 p-3 pb-2 border-b border-gray-100 bg-white/50">
-                <span className={`flex-shrink-0 ${isSelected ? 'text-blue-700' : 'text-blue-600'}`}>
-                    {display.icon}
-                </span>
-                <span className={`text-[13px] font-semibold ${isSelected ? 'text-blue-900' : 'text-gray-700'}`}>
-                    {display.label}
-                </span>
-            </div>
-
-            {/* Content Body - Full Width */}
-            <div className="w-full p-3 pt-2">
+        <div ref={ref} id={`component-${component.id}`} className="relative z-20">
+            <StudioCard
+                icon={display.icon}
+                title={getLabel()}
+                theme="blue"
+                selected={isSelected}
+                onClick={onClick}
+                showOutputHandle={hasOutputHandle}
+                outputHandleId={`handle-${component.id}`}
+                isPlaceholder={isEmpty()}
+                overflowVisible={component.type === 'selectionList'}
+            >
                 {renderContent()}
-            </div>
-
-            {/* Output Handle for Prompt & CheckboxGroup - Standard Blue Dot Style */}
-            {(component.type === 'prompt' || component.type === 'checkboxGroup') && (
-                <Handle
-                    type="source"
-                    position={Position.Right}
-                    id={`handle-${component.id}`}
-                    className="!bg-blue-400 !w-3 !h-3 !border-2 !border-white !-right-[7px] !top-1/2 !-translate-y-1/2 !z-30 transition-transform hover:scale-125"
-                />
-            )}
+            </StudioCard>
         </div>
     );
 }));

@@ -708,12 +708,12 @@ const ParkingLicenseExample = () => {
                 />
 
                 <InfoMessage
-                    title="To park a license in LinkedIn Recruiter, follow these steps:"
                     sources={[
                         { text: "Remove or park a license in LinkedIn Admin Center for Recruiter", href: "#" },
                         { text: "Actions admins can take to manage user licenses in Recruiter", href: "#" }
                     ]}
                 >
+                    <p className="font-semibold mb-2">To park a license in LinkedIn Recruiter, follow these steps:</p>
                     <div className="space-y-4 font-vca-text text-vca-small-open text-vca-text [&_p]:text-vca-small-open [&_ul]:text-vca-small-open [&_ol]:text-vca-small-open [&_li]:text-vca-small-open">
                         <ol className="list-decimal list-outside ml-4 space-y-2">
                             <li><span className="font-semibold">Sign in to Recruiter.</span></li>

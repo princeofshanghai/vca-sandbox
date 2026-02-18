@@ -307,7 +307,7 @@ function getPreviewText(block?: Block): string | undefined {
     if (block.type === 'ai') {
         const content = block.content;
         if ('text' in content) return content.text;
-        if ('title' in content) return content.title;
+        if ('body' in content) return content.body;
         if ('loadingTitle' in content) return content.loadingTitle;
         return 'System Message';
     }

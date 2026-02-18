@@ -24,14 +24,10 @@ export function InfoMessageEditor({ component, onChange, children, isOpen, onOpe
     // --- State Management ---
     // Using local state to prevent cursor jumping from re-renders
     const [localBody, setLocalBody] = useState(content.body || '');
-    const [localTitle, setLocalTitle] = useState(content.title || '');
-    const [showHeadingField, setShowHeadingField] = useState(false);
 
     // Sync from props only when component ID changes (to avoid overwriting user typing)
     useEffect(() => {
         setLocalBody(content.body || '');
-        setLocalTitle(content.title || '');
-        setShowHeadingField(content.title?.trim() !== '');
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [component.id]);
 
@@ -40,11 +36,6 @@ export function InfoMessageEditor({ component, onChange, children, isOpen, onOpe
     const handleBodyChange = (value: string) => {
         setLocalBody(value);
         onChange({ ...content, body: value });
-    };
-
-    const handleTitleChange = (value: string) => {
-        setLocalTitle(value);
-        onChange({ ...content, title: value });
     };
 
     const updateSources = (newSources: AIInfoContent['sources']) => {
@@ -60,43 +51,10 @@ export function InfoMessageEditor({ component, onChange, children, isOpen, onOpe
             />
 
             <EditorContent>
-                {/* 1. Heading Section (Progressive Disclosure) */}
-                <EditorSection title="Header">
-                    {!showHeadingField && localTitle.trim() === '' ? (
-                        <button
-                            onClick={() => setShowHeadingField(true)}
-                            className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors w-fit"
-                        >
-                            <Plus className="w-3.5 h-3.5" />
-                            <span>Add heading</span>
-                        </button>
-                    ) : (
-                        <div className="flex items-end gap-2 group/heading animate-in fade-in slide-in-from-top-1 duration-200">
-                            <EditorField
-                                label="Heading"
-                                value={localTitle}
-                                onChange={handleTitleChange}
-                                placeholder="e.g., Eligibility Requirements"
-                                className="flex-1"
-                            >
-                                <button
-                                    onClick={() => {
-                                        handleTitleChange('');
-                                        setShowHeadingField(false);
-                                    }}
-                                    className="absolute right-0 top-0 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-all opacity-0 group-hover/heading:opacity-100"
-                                    title="Remove heading"
-                                >
-                                    <X className="w-3.5 h-3.5" />
-                                </button>
-                            </EditorField>
-                        </div>
-                    )}
-                </EditorSection>
 
-                {/* 2. Body Section */}
-                <EditorSection title="Content">
-                    <EditorField label="Message Body" value="" onChange={() => { }}>
+
+                <EditorSection>
+                    <EditorField renderInput={false}>
                         <RichTextEditor
                             value={localBody}
                             onChange={handleBodyChange}
@@ -106,12 +64,12 @@ export function InfoMessageEditor({ component, onChange, children, isOpen, onOpe
                 </EditorSection>
 
                 {/* 3. Sources Section */}
-                <EditorSection title="Citations & Sources" collapsible defaultOpen={false}>
+                <EditorSection>
                     <div className="space-y-4">
                         {(content.sources || []).map((source, idx) => (
                             <div key={idx} className="group/source relative p-3 bg-gray-50 rounded-lg border border-gray-100 space-y-2 animate-in fade-in slide-in-from-top-1">
                                 <div className="flex justify-between items-start">
-                                    <span className="text-[10px] uppercase font-semibold text-gray-400 tracking-wider">Source {idx + 1}</span>
+                                    <span className="text-[10px] font-semibold text-gray-400 tracking-wider">source {idx + 1}</span>
                                     <button
                                         onClick={() => updateSources((content.sources || []).filter((_, i) => i !== idx))}
                                         className="text-gray-400 hover:text-red-500 transition-colors"
@@ -142,7 +100,7 @@ export function InfoMessageEditor({ component, onChange, children, isOpen, onOpe
                                                 const urlObj = new URL(val);
                                                 const hostname = urlObj.hostname.replace(/^www\./, '');
                                                 newText = hostname.charAt(0).toUpperCase() + hostname.slice(1);
-                                            } catch (e) { }
+                                            } catch (e) { /* ignore */ }
                                         }
                                         s[idx] = { ...s[idx], url: val, text: newText };
                                         updateSources(s);
@@ -157,7 +115,7 @@ export function InfoMessageEditor({ component, onChange, children, isOpen, onOpe
                             className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-gray-300 text-gray-500 text-xs font-medium hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/50 transition-all"
                         >
                             <Plus className="w-3.5 h-3.5" />
-                            <span>Add Source</span>
+                            <span>Add source</span>
                         </button>
                     </div>
                 </EditorSection>

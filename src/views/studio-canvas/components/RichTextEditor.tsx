@@ -58,10 +58,11 @@ export function RichTextEditor({
                 case 'ul':
                 case 'ol':
                     return `${children}\n`;
-                case 'li':
+                case 'li': {
                     const parent = element.parentElement?.tagName.toLowerCase();
                     const prefix = parent === 'ol' ? '1. ' : '- ';
                     return `${prefix}${children.trim()}\n`;
+                }
                 case 'a':
                     return `[${children}](${element.getAttribute('href') || ''})`;
                 case 'br':
@@ -123,15 +124,15 @@ export function RichTextEditor({
         editorProps: {
             attributes: {
                 class: cn(
-                    "max-w-none outline-none text-xs leading-relaxed text-gray-800 min-h-[80px] p-3",
+                    "max-w-none outline-none text-[13px] leading-relaxed text-gray-800 min-h-[60px] p-2.5",
                     // List Styling
                     "[&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2",
                     "[&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-2",
                     "[&_li]:my-0.5",
                     // Nested Paragraphs in Lists (Fix for "moving down")
                     "[&_li_p]:m-0 [&_li_p]:inline",
-                    // Paragraph Styling
-                    "[&_p]:my-2 [&_p]:leading-relaxed first:[&_p]:mt-0 last:[&_p]:mb-0"
+                    // Paragraph Styling - Explicitly force 13px to override global 15px p style
+                    "[&_p]:text-[13px] [&_p]:my-2 [&_p]:leading-relaxed first:[&_p]:mt-0 last:[&_p]:mb-0"
                 ),
             },
             handleKeyDown: (_view, event) => {
@@ -171,7 +172,7 @@ export function RichTextEditor({
     return (
         <div
             className={cn(
-                "border border-gray-200 rounded-xl bg-white overflow-hidden transition-all focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-300",
+                "border border-gray-200 rounded-lg bg-white overflow-hidden transition-all focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-300",
                 className
             )}
             onKeyDown={(e) => e.stopPropagation()}

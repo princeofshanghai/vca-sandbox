@@ -1,6 +1,7 @@
 import * as HoverCard from '@radix-ui/react-hover-card';
 import * as Popover from '@radix-ui/react-popover';
 import { MessageSquare, MessageCirclePlus, MessageSquareText, Zap, LayoutList, CheckSquare } from 'lucide-react';
+import { toast } from 'sonner';
 import type { ComponentType } from '../../studio/types';
 import { Message } from '@/components/vca-components/messages/Message';
 import { PromptGroup } from '@/components/vca-components/prompt-group/PromptGroup';
@@ -55,7 +56,6 @@ const componentOptions: ComponentOption[] = [
         previewComponent: (
             <div className="w-[300px]">
                 <InfoMessage
-                    title="Info message"
                     sources={[{ text: 'Source', href: '#' }]}
                 >
                     Use this for AI messages that contain detailed explanations and citations.
@@ -185,7 +185,10 @@ export function AddComponentContent({ onAdd }: { onAdd: (type: ComponentType) =>
                     <ComponentOptionCard
                         key={option.type}
                         option={option}
-                        onClick={() => onAdd(option.type)}
+                        onClick={() => {
+                            onAdd(option.type);
+                            toast(`Added ${option.name}`);
+                        }}
                         side="right"
                     />
                 ))}

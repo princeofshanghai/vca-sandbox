@@ -69,12 +69,12 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
     const getIcon = () => {
         switch (typedData.inputType) {
             case 'button':
-                return <MousePointerClick className="w-3.5 h-3.5" />;
+                return <MousePointerClick className="w-4 h-4" />;
             case 'prompt':
-                return <MessageCirclePlus className="w-3.5 h-3.5" />;
+                return <MessageCirclePlus className="w-4 h-4" />;
             case 'text':
             default:
-                return <ALargeSmall className="w-3.5 h-3.5" />;
+                return <ALargeSmall className="w-4 h-4" />;
         }
     };
 
@@ -104,7 +104,7 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
             return (
                 <div className="flex items-start gap-3 w-full">
                     <ALargeSmall className={`w-4 h-4 shrink-0 mt-0.5 ${hasTriggers ? 'text-purple-500' : 'text-gray-400'}`} />
-                    <div className={`text-xs leading-normal break-words ${hasTriggers ? 'text-gray-900' : 'text-gray-400'}`}>
+                    <div className={`text-sm leading-normal break-words ${hasTriggers ? 'text-gray-900' : 'text-gray-400'}`}>
                         {val || 'What does the user say?'}
                     </div>
                 </div>
@@ -114,8 +114,8 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
         if (inputType === 'button') {
             const hasLabel = !!val;
             return (
-                <div className="flex items-center gap-2 text-xs py-1">
-                    <MousePointerClick className={`w-3.5 h-3.5 ${hasLabel ? 'text-purple-600' : 'text-gray-400'}`} />
+                <div className="flex items-center gap-2 text-sm py-1">
+                    <MousePointerClick className={`w-4 h-4 ${hasLabel ? 'text-purple-600' : 'text-gray-400'}`} />
                     <span className={`truncate ${hasLabel ? 'text-gray-900 font-medium' : 'text-gray-400'}`}>
                         {val ? `User clicks ${val}` : 'Which button does the user click?'}
                     </span>
@@ -127,8 +127,8 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
         const promptText = getLinkedPromptText();
 
         return (
-            <div className="flex items-center gap-2 text-xs py-1">
-                <MessageCirclePlus className={`w-3.5 h-3.5 shrink-0 ${isLinked ? 'text-purple-600' : 'text-gray-400'}`} />
+            <div className="flex items-center gap-2 text-sm py-1">
+                <MessageCirclePlus className={`w-4 h-4 shrink-0 ${isLinked ? 'text-purple-600' : 'text-gray-400'}`} />
                 <span className={`truncate ${isLinked ? 'text-gray-900 font-medium' : 'text-gray-400'}`}>
                     {isLinked ? `User clicks ${promptText || 'AI Prompt'}` : 'Which prompt does the user click?'}
                 </span>

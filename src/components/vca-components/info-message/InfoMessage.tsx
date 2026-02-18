@@ -8,7 +8,6 @@ import { MarkdownRenderer } from '../markdown-renderer/MarkdownRenderer';
 export type InfoMessageProps = {
 
   status?: 'complete' | 'interrupted';
-  title?: string;
   children?: ReactNode;
   sources?: Array<{
     text: string;
@@ -25,7 +24,6 @@ export type InfoMessageProps = {
  */
 export const InfoMessage = ({
   status = 'complete',
-  title,
   children,
   sources,
   feedbackValue,
@@ -54,15 +52,6 @@ export const InfoMessage = ({
     <div className={cn('flex flex-col items-start w-full', className)}>
       {/* Title and Message */}
       <div className="flex flex-col gap-vca-s items-start w-full">
-        {/* Optional Title */}
-        {title && (
-          <div className="flex flex-col justify-center min-w-full">
-            <p className="font-vca-text text-vca-small-bold text-vca-text">
-              {title}
-            </p>
-          </div>
-        )}
-
         {/* Message Content (children) */}
         {children && (
           <div className="text-vca-text text-vca-small-open">

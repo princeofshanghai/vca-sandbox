@@ -161,8 +161,10 @@ export const useSmartFlowEngine = ({
                     let textToStream = '';
 
                     if (component.type === 'message') {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         textToStream = (component.content as any).text || '';
                     } else if (component.type === 'infoMessage') {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         textToStream = (component.content as any).body || '';
                     }
 
@@ -482,6 +484,7 @@ export const useSmartFlowEngine = ({
 
             // 2. Fallback: Find first turn manually
             const firstTurn = flow.steps.find(s =>
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 s.type === 'turn' && (s as any).phase === 'welcome'
             ) || flow.steps[0];
 

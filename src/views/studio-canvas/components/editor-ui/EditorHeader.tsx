@@ -10,17 +10,12 @@ interface EditorHeaderProps {
     actions?: ReactNode;
 }
 
-export function EditorHeader({ icon: Icon, title, onClose, className, actions }: EditorHeaderProps) {
+export function EditorHeader({ title, onClose, className, actions }: EditorHeaderProps) {
     return (
         <div className={cn("flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0", className)}>
             <div className="flex items-center gap-2.5 overflow-hidden">
-                {Icon && (
-                    <div className="p-1.5 bg-gray-50 rounded-md text-gray-500">
-                        <Icon size={16} />
-                    </div>
-                )}
                 <h3 className="text-sm font-semibold text-gray-900 truncate">
-                    {title}
+                    Edit {title}
                 </h3>
             </div>
 
