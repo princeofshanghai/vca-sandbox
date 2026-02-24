@@ -98,7 +98,7 @@ const PromptComponentView = () => {
             <div>
               <h3 className="mb-2">Intro message</h3>
               <p className="mb-3">Use prompts in intro message to the user to help them get started quickly.</p>
-              <div className="bg-gray-50 border border-gray-200 rounded-lg pt-0 pb-6 px-4 overflow-hidden">
+              <div className="bg-shell-surface-subtle border border-shell-border rounded-lg pt-0 pb-6 px-4 overflow-hidden">
                 <div className="w-[400px] mx-auto">
                   {/* Mini conversation view - focused and compact */}
                   <div className="bg-vca-background border border-vca-border-faint rounded-b-vca-md overflow-hidden flex flex-col h-[480px] -mt-1">
@@ -152,7 +152,7 @@ const PromptComponentView = () => {
             <div>
               <h3 className="mb-2">Behavior</h3>
               <p className="mb-3">Clicking a prompt instantly sends that text as a user message to the AI. Try clicking a prompt below.</p>
-              <div className="bg-gray-50 border border-gray-200 rounded-lg pt-0 pb-6 px-4 overflow-hidden">
+              <div className="bg-shell-surface-subtle border border-shell-border rounded-lg pt-0 pb-6 px-4 overflow-hidden">
                 <div className="w-[400px] mx-auto">
                   {/* Mini conversation view - focused and compact */}
                   <div className="bg-vca-background border border-vca-border-faint rounded-b-vca-md overflow-hidden flex flex-col h-[480px] -mt-1">
@@ -219,8 +219,8 @@ const PromptComponentView = () => {
                   </div>
                 </div>
               </div>
-              <div className="mt-3 flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-900">
+              <div className="mt-3 flex items-center justify-between p-3 bg-shell-accent-soft border border-shell-accent-border rounded-lg">
+                <p className="text-sm text-shell-accent-text">
                   <span className="font-semibold">💡 Interactive demo:</span> {
                     !selectedPrompt ? "Click a prompt above to see the full conversation flow." :
                       isThinking ? "AI is thinking..." :
@@ -231,7 +231,7 @@ const PromptComponentView = () => {
                 {aiResponse && (
                   <button
                     onClick={resetDemo}
-                    className="text-sm font-medium text-blue-700 hover:text-blue-800 underline"
+                    className="text-sm font-medium text-shell-accent hover:text-shell-accent-hover underline"
                   >
                     Try again
                   </button>
@@ -249,4 +249,3 @@ const PromptComponentView = () => {
 };
 
 export default PromptComponentView;
-

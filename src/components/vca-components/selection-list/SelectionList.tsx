@@ -2,6 +2,20 @@ import { useState } from 'react';
 import { cn } from '@/utils';
 import { VcaIcon, VcaIconName } from '../icons';
 import { ButtonLink } from '../buttons/ButtonLink';
+import { Avatar, AvatarFallbackTone } from '../avatar';
+
+export type SelectionItemVisualType = 'avatar' | 'icon' | 'none';
+
+const FALLBACK_AVATAR_TONES: AvatarFallbackTone[] = ['amber', 'rose', 'green', 'blue', 'taupe'];
+
+const getFallbackToneFromSeed = (seed: string): AvatarFallbackTone => {
+    let hash = 0;
+    for (let i = 0; i < seed.length; i += 1) {
+        hash = (hash << 5) - hash + seed.charCodeAt(i);
+        hash |= 0;
+    }
+    return FALLBACK_AVATAR_TONES[Math.abs(hash) % FALLBACK_AVATAR_TONES.length];
+};
 
 export interface SelectionItem {
     id: string;
@@ -9,6 +23,7 @@ export interface SelectionItem {
     subtitle?: string;
     imageUrl?: string;
     iconName?: VcaIconName;
+    visualType?: SelectionItemVisualType;
     disabled?: boolean;
 }
 
@@ -71,50 +86,63 @@ export const SelectionList = ({
     return (
         <div className={cn("selection-list-container", className)}>
             <div className={cn(containerLayoutStyles[layout])}>
-                {displayedItems.map((item) => (
-                    <button
-                        key={item.id}
-                        onClick={() => !item.disabled && onSelect?.(item)}
-                        disabled={item.disabled}
-                        className={cn(
-                            itemBaseStyles,
-                            itemStateStyles,
-                            itemLayoutStyles[layout],
-                            item.disabled && "opacity-50 cursor-not-allowed grayscale pointer-events-none"
-                        )}
-                        type="button"
-                    >
-                        {/* Visual (Image or Icon) - Optional */}
-                        {(item.imageUrl || item.iconName) && (
-                            <div className={cn(
-                                "relative shrink-0 overflow-hidden bg-gray-100 flex items-center justify-center text-gray-400",
-                                layout === 'list' ? "w-8 h-8 rounded-full" : "w-10 h-10 rounded-lg"
-                            )}>
-                                {item.imageUrl ? (
-                                    <img
-                                        src={item.imageUrl}
-                                        alt=""
-                                        className="w-full h-full object-cover"
-                                    />
-                                ) : (
-                                    <VcaIcon icon={item.iconName || 'user'} size="md" />
+                {displayedItems.map((item) => {
+                    const resolvedVisualType: SelectionItemVisualType =
+                        item.imageUrl
+                            ? 'avatar'
+                            : item.visualType || (item.iconName ? 'icon' : 'none');
+                    const showAvatar = resolvedVisualType === 'avatar';
+                    const showIcon = resolvedVisualType === 'icon';
+                    const fallbackTone = getFallbackToneFromSeed(item.id || item.title || 'item');
+
+                    return (
+                        <button
+                            key={item.id}
+                            onClick={() => !item.disabled && onSelect?.(item)}
+                            disabled={item.disabled}
+                            className={cn(
+                                itemBaseStyles,
+                                itemStateStyles,
+                                itemLayoutStyles[layout],
+                                item.disabled && "opacity-50 cursor-not-allowed grayscale pointer-events-none"
+                            )}
+                            type="button"
+                        >
+                            {(showAvatar || showIcon) && (
+                                <div className={cn(
+                                    "relative shrink-0 flex items-center justify-center",
+                                    layout === 'list' ? "w-8 h-8" : "w-10 h-10"
+                                )}>
+                                    {showAvatar ? (
+                                        <Avatar
+                                            size={32}
+                                            src={item.imageUrl}
+                                            alt={item.title ? `${item.title} avatar` : 'Item avatar'}
+                                            fallbackStyle="silhouette"
+                                            fallbackTone={fallbackTone}
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full rounded-lg overflow-hidden bg-vca-background-neutral-soft flex items-center justify-center text-vca-text-meta">
+                                            <VcaIcon icon={item.iconName || 'user'} size="md" />
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Content */}
+                            <div className="flex flex-col min-w-0">
+                                <span className="font-vca-text text-vca-small-bold text-gray-900 truncate leading-tight">
+                                    {item.title}
+                                </span>
+                                {item.subtitle && (
+                                    <span className="font-vca-text text-vca-xsmall text-vca-text truncate mt-0.5">
+                                        {item.subtitle}
+                                    </span>
                                 )}
                             </div>
-                        )}
-
-                        {/* Content */}
-                        <div className="flex flex-col min-w-0">
-                            <span className="font-vca-text text-vca-small-bold text-gray-900 truncate leading-tight">
-                                {item.title}
-                            </span>
-                            {item.subtitle && (
-                                <span className="font-vca-text text-vca-xsmall text-vca-text truncate mt-0.5">
-                                    {item.subtitle}
-                                </span>
-                            )}
-                        </div>
-                    </button>
-                ))}
+                        </button>
+                    );
+                })}
             </div>
 
             {/* Expansion Toggle */}

@@ -19,13 +19,13 @@ export const PatternPage = ({ title, description, children, relatedComponents }:
             <div className="w-full">
                 {relatedComponents && relatedComponents.length > 0 && (
                     <div className="mb-12 flex items-center gap-3 text-sm">
-                        <span className="text-gray-400 uppercase tracking-wider font-semibold text-xs">Related Components:</span>
+                        <span className="text-shell-muted uppercase tracking-wider font-semibold text-xs">Related Components:</span>
                         <div className="flex gap-2">
                             {relatedComponents.map((comp, idx) => (
                                 <Link
                                     key={idx}
                                     to={comp.path}
-                                    className="px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition-colors"
+                                    className="px-2 py-1 bg-shell-surface text-shell-muted rounded hover:bg-shell-surface transition-colors"
                                 >
                                     {comp.label}
                                 </Link>

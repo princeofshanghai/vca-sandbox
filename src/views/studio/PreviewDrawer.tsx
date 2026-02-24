@@ -9,6 +9,7 @@ import { RotateCcw, Split, X, Monitor, Smartphone } from 'lucide-react';
 import { SimulationContextPanel } from './components/SimulationContextPanel';
 import { ActionTooltip } from '../studio-canvas/components/ActionTooltip';
 import { ToolbarPill } from '@/components/ui/toolbar-pill';
+import { useApp } from '@/contexts/AppContext';
 
 interface PreviewDrawerProps {
     isOpen: boolean;
@@ -31,6 +32,8 @@ export function PreviewDrawer({
     onTogglePremium,
     onToggleMobile,
 }: PreviewDrawerProps) {
+    const { state } = useApp();
+    const isDark = state.theme === 'dark';
     const [shouldRender, setShouldRender] = useState(isOpen);
     const [activeFlow, setActiveFlow] = useState<Flow>(flow);
     const [resetKey, setResetKey] = useState(0);
@@ -89,7 +92,7 @@ export function PreviewDrawer({
             )}>
                 {/* 1. The Context Sidecar (Slides out to the LEFT of the drawer) */}
                 <div className={cn(
-                    "w-[320px] bg-white border-r shadow-2xl transition-all duration-300 ease-out overflow-hidden flex flex-col",
+                    "w-[320px] bg-shell-bg border-r border-shell-border/70 shadow-2xl transition-all duration-300 ease-out overflow-hidden flex flex-col",
                     showContextPanel ? "translate-x-0 opacity-100" : "translate-x-[50px] opacity-0 w-0 border-none"
                 )}>
                     <SimulationContextPanel
@@ -101,13 +104,13 @@ export function PreviewDrawer({
                 </div>
 
                 {/* 2. The Main Preview Drawer */}
-                <div className="w-[480px] h-full bg-slate-50 shadow-2xl flex flex-col border-l border-white/20">
+                <div className="w-[480px] h-full bg-shell-surface shadow-2xl flex flex-col border-l border-shell-border/70">
                     {/* Compact Header */}
-                    <div className="h-14 bg-white border-b flex items-center justify-between pl-2 pr-4 shrink-0 z-20 sticky top-0">
+                    <div className="h-14 bg-shell-bg border-b border-shell-border/70 flex items-center justify-between pl-2 pr-4 shrink-0 z-20 sticky top-0">
                         <div className="flex items-center gap-2">
                             {/* Close Button */}
                             <ActionTooltip content="Close preview" side="bottom">
-                                <Button variant="ghost" size="icon" className="h-9 w-9 text-gray-500 hover:text-gray-900 hover:bg-gray-100" onClick={onClose}>
+                                <Button variant="ghost" size="icon" className="h-9 w-9 text-shell-muted hover:text-shell-text hover:bg-shell-surface" onClick={onClose}>
                                     <X size={20} />
                                 </Button>
                             </ActionTooltip>
@@ -118,7 +121,7 @@ export function PreviewDrawer({
                                     <Button
                                         variant="ghost"
                                         size="icon"
-                                        className="h-8 w-8 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-full transition-all"
+                                        className="h-8 w-8 text-shell-muted hover:text-shell-text hover:bg-shell-surface rounded-full transition-all"
                                         onClick={handleRestart}
                                     >
                                         <RotateCcw size={16} />
@@ -132,14 +135,14 @@ export function PreviewDrawer({
                                         className={cn(
                                             "h-8 w-8 transition-all relative border-transparent rounded-full",
                                             showContextPanel
-                                                ? "bg-blue-50 text-blue-600 shadow-sm border-blue-100"
-                                                : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
+                                                ? "bg-shell-accent-soft text-shell-accent-text shadow-sm border-shell-accent-border"
+                                                : "text-shell-muted hover:text-shell-text hover:bg-shell-surface"
                                         )}
                                         onClick={() => setShowContextPanel(!showContextPanel)}
                                     >
                                         <Split size={16} className={showContextPanel ? "rotate-90" : ""} />
                                         {Object.keys(simulationVariables).length > 0 && (
-                                            <span className="absolute top-2 right-2 flex h-1.5 w-1.5 rounded-full bg-blue-600" />
+                                            <span className="absolute top-2 right-2 flex h-1.5 w-1.5 rounded-full bg-shell-accent" />
                                         )}
                                     </Button>
                                 </ActionTooltip>
@@ -154,8 +157,8 @@ export function PreviewDrawer({
                                         className={cn(
                                             "h-8 w-8 transition-all rounded-full border-transparent",
                                             !isMobile
-                                                ? "bg-blue-50 text-blue-600 shadow-sm border-blue-100"
-                                                : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
+                                                ? "bg-shell-accent-soft text-shell-accent-text shadow-sm border-shell-accent-border"
+                                                : "text-shell-muted hover:text-shell-text hover:bg-shell-surface"
                                         )}
                                         onClick={() => isMobile && onToggleMobile()}
                                     >
@@ -170,8 +173,8 @@ export function PreviewDrawer({
                                         className={cn(
                                             "h-8 w-8 transition-all rounded-full border-transparent",
                                             isMobile
-                                                ? "bg-blue-50 text-blue-600 shadow-sm border-blue-100"
-                                                : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
+                                                ? "bg-shell-accent-soft text-shell-accent-text shadow-sm border-shell-accent-border"
+                                                : "text-shell-muted hover:text-shell-text hover:bg-shell-surface"
                                         )}
                                         onClick={() => !isMobile && onToggleMobile()}
                                     >
@@ -185,6 +188,7 @@ export function PreviewDrawer({
                                         onUpdateFlow={onUpdateFlow}
                                         isPremium={isPremium}
                                         onTogglePremium={onTogglePremium}
+                                        darkTheme={isDark}
                                         iconOnly={true}
                                         rounded={true}
                                     />
@@ -195,7 +199,7 @@ export function PreviewDrawer({
                         <div className="flex items-center gap-1">
                             {/* Share Button */}
                             <ShareDialog flow={activeFlow}>
-                                <Button size="sm" className="h-8 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-3">
+                                <Button size="sm" className="h-8 bg-shell-accent hover:bg-shell-accent-hover text-white text-xs font-medium px-3">
                                     Share
                                 </Button>
                             </ShareDialog>
@@ -203,7 +207,7 @@ export function PreviewDrawer({
                     </div>
 
                     {/* Preview Content */}
-                    <div className="flex-1 overflow-hidden relative bg-slate-50/50">
+                    <div className="flex-1 overflow-hidden relative bg-shell-surface-subtle">
                         <FlowPreview
                             key={resetKey}
                             flow={activeFlow}

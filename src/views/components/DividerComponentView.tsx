@@ -44,7 +44,7 @@ const DividerComponentView = () => {
             <div>
               <h3 className="mb-4">Live chat mode</h3>
               <p className="mb-3">Indicates transition to live chat with a human agent.</p>
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="bg-shell-bg border border-shell-border rounded-lg p-4">
                 <div className="w-[400px] mx-auto">
                   <Divider text="LIVE CHAT" />
                 </div>

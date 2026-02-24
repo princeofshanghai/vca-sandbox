@@ -6,10 +6,14 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ShellIconButton } from '@/components/shell';
 import { ActionTooltip } from '@/views/studio-canvas/components/ActionTooltip';
+import { useApp } from '@/contexts/AppContext';
+import { Switch } from '@/components/ui/switch';
 
 export function UserMenu() {
     const { user, signOut } = useAuth();
+    const { state, setTheme } = useApp();
 
     if (!user?.email) return null;
 
@@ -25,26 +29,46 @@ export function UserMenu() {
     };
 
     const initials = getInitials();
+    const isDarkMode = state.theme === 'dark';
+
+    const updateTheme = (checked: boolean) => {
+        setTheme(checked ? 'dark' : 'light');
+    };
 
     return (
         <DropdownMenu>
             <ActionTooltip content={user.email} side="bottom">
                 <DropdownMenuTrigger asChild>
-                    <button className="h-8 w-8 rounded-md hover:bg-gray-100 flex items-center justify-center transition-colors outline-none cursor-pointer">
-                        <div className="h-6 w-6 rounded-full bg-gradient-to-br from-blue-200 via-indigo-100 to-purple-200 flex items-center justify-center text-gray-900 font-bold text-[9px] tracking-wide shadow-sm">
+                    <ShellIconButton aria-label="Open user menu" className="h-9 w-9">
+                        <div className="h-7 w-7 rounded-full bg-[radial-gradient(circle_at_18%_20%,rgb(var(--shell-accent))_0%,rgb(var(--shell-accent-hover))_45%,rgb(var(--shell-muted-strong))_100%)] flex items-center justify-center text-shell-dark-text font-bold text-[10px] tracking-wide">
                             {initials}
                         </div>
-                    </button>
+                    </ShellIconButton>
                 </DropdownMenuTrigger>
             </ActionTooltip>
 
-            <DropdownMenuContent align="end" className="w-[200px]">
+            <DropdownMenuContent align="end" className="w-[200px] border-shell-border bg-shell-bg text-shell-text">
                 <div className="px-2 py-1.5 pb-0">
-                    <p className="text-xs font-medium text-gray-500">Signed in as</p>
-                    <p className="text-[13px] font-medium text-gray-900 truncate mt-0.5">{user.email}</p>
+                    <p className="text-xs font-medium text-shell-muted">Signed in as</p>
+                    <p className="text-[13px] font-medium text-shell-text truncate mt-0.5">{user.email}</p>
                 </div>
 
                 <DropdownMenuSeparator />
+
+                <DropdownMenuItem
+                    className="justify-between gap-3"
+                    onSelect={(e) => e.preventDefault()}
+                    onClick={() => updateTheme(!isDarkMode)}
+                >
+                    <span>Dark mode</span>
+                    <Switch
+                        size="sm"
+                        checked={isDarkMode}
+                        onCheckedChange={updateTheme}
+                        onClick={(e) => e.stopPropagation()}
+                        aria-label="Toggle dark mode"
+                    />
+                </DropdownMenuItem>
 
                 <DropdownMenuItem
                     variant="destructive"

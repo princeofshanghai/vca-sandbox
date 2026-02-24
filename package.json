@@ -7,8 +7,11 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "build:tokens": "node scripts/build-tokens.js",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 2",
+    "lint": "eslint . --ext js,cjs,mjs,ts,tsx --report-unused-disable-directives --max-warnings 2",
     "preview": "vite preview"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

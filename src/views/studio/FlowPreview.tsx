@@ -1,5 +1,5 @@
 // ... (imports)
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Flow } from './types';
 import { Container } from '@/components/vca-components/container/Container';
 import { Message } from '@/components/vca-components/messages';
@@ -34,13 +34,28 @@ export const FlowPreview = ({
 }: FlowPreviewProps) => {
     // Shared composer state
     const [composerValue, setComposerValue] = useState('');
-    const [handleSendRef, setHandleSendRef] = useState<(() => void) | undefined>(undefined);
+    const handleSendRef = useRef<(() => void) | undefined>(undefined);
+    const stopHandlerRef = useRef<(() => void) | undefined>(undefined);
 
-    // NEW: Lifted status state for Composer
-    const [statusData, setStatusData] = useState<{
-        status: 'default' | 'active' | 'stop',
-        onStop?: () => void
-    }>({ status: 'default' });
+    // Lifted status state for Composer (only re-render when status changes)
+    const [composerStatus, setComposerStatus] = useState<'default' | 'active' | 'stop'>('default');
+
+    const handleRegisterSend = useCallback((fn: () => void) => {
+        handleSendRef.current = fn;
+    }, []);
+
+    const handleStatusChange = useCallback((status: 'default' | 'active' | 'stop', onStop?: () => void) => {
+        stopHandlerRef.current = onStop;
+        setComposerStatus((prev) => (prev === status ? prev : status));
+    }, []);
+
+    const handleComposerSend = useCallback(() => {
+        handleSendRef.current?.();
+    }, []);
+
+    const handleComposerStop = useCallback(() => {
+        stopHandlerRef.current?.();
+    }, []);
 
     return (
         <div className="h-full w-full flex flex-col relative bg-transparent pointer-events-none">
@@ -52,24 +67,23 @@ export const FlowPreview = ({
                             <PhoneFrame showStatusBar={true} dimBackground={false}>
                                 <Container
                                     headerTitle="Help"
-                                    className="bg-white h-[772px] w-[393px]"
+                                    className="bg-shell-bg h-[772px] w-[393px]"
                                     viewport="mobile"
                                     showHeaderPremiumIcon={isPremium}
                                     showPremiumBorder={isPremium}
                                     composerValue={composerValue}
                                     onComposerChange={setComposerValue}
-                                    onComposerSend={() => handleSendRef?.()}
-                                    // STOP LOGIC MAPPING
-                                    composerStatus={statusData.status}
-                                    onStop={statusData.onStop}
+                                    onComposerSend={handleComposerSend}
+                                    composerStatus={composerStatus}
+                                    onStop={handleComposerStop}
                                 >
                                     <PreviewContent
                                         flow={flow}
                                         variables={variables}
-                                        onRegisterSend={(fn) => setHandleSendRef(() => fn)}
+                                        onRegisterSend={handleRegisterSend}
                                         onComposerReset={() => setComposerValue('')}
                                         composerValue={composerValue}
-                                        onStatusChange={(status, onStop) => setStatusData({ status, onStop })}
+                                        onStatusChange={handleStatusChange}
                                         onVariableUpdate={onVariableUpdate}
                                     />
                                 </Container>
@@ -81,25 +95,24 @@ export const FlowPreview = ({
 
                         <Container
                             headerTitle="Help"
-                            className="shadow-xl bg-white"
+                            className="shadow-xl bg-shell-bg"
                             viewport="desktop"
                             showHeaderPremiumIcon={isPremium}
                             showPremiumBorder={isPremium}
                             composerValue={composerValue}
                             onComposerChange={setComposerValue}
-                            onComposerSend={() => handleSendRef?.()}
-                            // STOP LOGIC MAPPING
-                            composerStatus={statusData.status}
-                            onStop={statusData.onStop}
+                            onComposerSend={handleComposerSend}
+                            composerStatus={composerStatus}
+                            onStop={handleComposerStop}
                         >
                             <PreviewContent
                                 flow={flow}
                                 variables={variables}
                                 onVariableUpdate={onVariableUpdate}
-                                onRegisterSend={(fn) => setHandleSendRef(() => fn)}
+                                onRegisterSend={handleRegisterSend}
                                 onComposerReset={() => setComposerValue('')}
                                 composerValue={composerValue}
-                                onStatusChange={(status, onStop) => setStatusData({ status, onStop })}
+                                onStatusChange={handleStatusChange}
                             />
                         </Container>
                     </div>
@@ -140,12 +153,32 @@ const PreviewContent = ({
         handleStop,
         handleSend,
         handlePromptClick,
-        resolveInterceptor
+        handleSelectionItemClick,
+        resolveInterceptor,
+        switchConditionPath,
+        lastConditionSelection
     } = useSmartFlowEngine({
         flow,
         variables,
         onVariableUpdate
     });
+
+    const [isPathPickerOpen, setIsPathPickerOpen] = useState(false);
+
+    const activeInterceptor = [...history]
+        .reverse()
+        .find((step) => step.type === 'interceptor') as ({
+            variableName: string,
+            branches: import('./types').Branch[],
+            stepId: string,
+            id: string
+        } | undefined);
+
+    useEffect(() => {
+        if (activeInterceptor) {
+            setIsPathPickerOpen(false);
+        }
+    }, [activeInterceptor]);
 
 
     // Report Status to Parent (Container)
@@ -186,7 +219,8 @@ const PreviewContent = ({
 
     // Render logic
     return (
-        <div className="space-y-4">
+        <div className="relative">
+            <div className={`space-y-4 ${activeInterceptor || (isPathPickerOpen && lastConditionSelection) ? 'pb-28' : lastConditionSelection ? 'pb-14' : ''}`}>
             {/* Disclaimer (Global) */}
             {flow.settings?.showDisclaimer && <Message variant="disclaimer" />}
 
@@ -207,28 +241,7 @@ const PreviewContent = ({
 
                 // 4. Interceptor Step (NEW)
                 if (step.type === 'interceptor') {
-                    // Force cast for TS ease
-                    const interceptor = step as unknown as {
-                        variableName: string,
-                        branches: import('./types').Branch[],
-                        stepId: string,
-                        id: string
-                    };
-
-                    return (
-                        <ContextInterceptorMessage
-                            key={step.id}
-                            variableName={interceptor.variableName}
-                            branches={interceptor.branches}
-                            onResolve={(value) => resolveInterceptor(
-                                interceptor.stepId,
-                                interceptor.variableName,
-                                value,
-                                interceptor.branches,
-                                interceptor.id
-                            )}
-                        />
-                    );
+                    return null;
                 }
 
                 // 1. AI Turn
@@ -293,7 +306,7 @@ const PreviewContent = ({
                                 );
                             } else {
                                 renderedComponents.push(
-                                    <div key={component.id} className="animate-fade-in w-full h-[40px] bg-slate-100 rounded-lg border border-slate-200/50" />
+                                    <div key={component.id} className="animate-fade-in w-full h-[40px] bg-shell-surface-subtle rounded-lg border border-shell-border-subtle" />
                                 );
                             }
                         }
@@ -314,7 +327,7 @@ const PreviewContent = ({
                                 );
                             } else {
                                 renderedComponents.push(
-                                    <div key={component.id} className="animate-fade-in w-full h-[60px] bg-slate-100 rounded-lg border border-slate-200/50" />
+                                    <div key={component.id} className="animate-fade-in w-full h-[60px] bg-shell-surface-subtle rounded-lg border border-shell-border-subtle" />
                                 );
                             }
                         }
@@ -331,6 +344,7 @@ const PreviewContent = ({
                                     items={content.items as any}
                                     layout={content.layout}
                                     className="animate-fade-in"
+                                    onSelect={(item) => handleSelectionItemClick(step.id, component.id, item.id, item.title)}
                                 />
                             );
                         }
@@ -386,6 +400,60 @@ const PreviewContent = ({
             )}
 
             <div ref={messagesEndRef} className="h-4" />
+            </div>
+
+            {activeInterceptor && (
+                <div className="pointer-events-none absolute inset-x-0 bottom-2 z-30 flex justify-center px-2">
+                    <ContextInterceptorMessage
+                        className="pointer-events-auto w-full max-w-[330px]"
+                        variableName={activeInterceptor.variableName}
+                        branches={activeInterceptor.branches}
+                        onResolve={(value) => resolveInterceptor(
+                            activeInterceptor.stepId,
+                            activeInterceptor.variableName,
+                            value,
+                            activeInterceptor.branches,
+                            activeInterceptor.id
+                        )}
+                    />
+                </div>
+            )}
+
+            {!activeInterceptor && isPathPickerOpen && lastConditionSelection && (
+                <div className="pointer-events-none absolute inset-x-0 bottom-2 z-30 flex justify-center px-2">
+                    <ContextInterceptorMessage
+                        className="pointer-events-auto w-full max-w-[330px]"
+                        variableName={lastConditionSelection.variableName}
+                        branches={lastConditionSelection.branches}
+                        onResolve={(value) => {
+                            switchConditionPath(
+                                lastConditionSelection.stepId,
+                                lastConditionSelection.variableName,
+                                value,
+                                lastConditionSelection.branches
+                            );
+                            setIsPathPickerOpen(false);
+                        }}
+                    />
+                </div>
+            )}
+
+            {!activeInterceptor && !isPathPickerOpen && lastConditionSelection && (
+                <div className="pointer-events-none absolute inset-x-0 bottom-2 z-20 flex justify-center px-2">
+                    <div className="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-shell-border bg-shell-bg/95 px-3 py-1.5 shadow-sm backdrop-blur">
+                        <span className="text-[11px] text-shell-muted">Previewing path:</span>
+                        <span className="max-w-[160px] truncate text-xs font-medium text-shell-text" title={lastConditionSelection.selectedLabel}>
+                            {lastConditionSelection.selectedLabel}
+                        </span>
+                        <button
+                            onClick={() => setIsPathPickerOpen(true)}
+                            className="text-[11px] font-medium text-shell-accent hover:text-shell-accent-hover"
+                        >
+                            Change
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

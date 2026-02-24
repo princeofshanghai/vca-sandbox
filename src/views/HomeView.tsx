@@ -6,7 +6,7 @@ const HomeView = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="relative h-full w-full bg-white overflow-hidden">
+    <div className="relative h-full w-full bg-shell-bg overflow-hidden">
       {/* Particle background effect */}
       <ParticleBackground />
       
@@ -17,7 +17,7 @@ const HomeView = () => {
           <Button
             size="lg"
             onClick={() => navigate('/foundations/typography')}
-            className="bg-black text-white hover:bg-gray-800 text-base"
+            className="bg-shell-accent text-white hover:bg-shell-accent-hover text-base"
           >
             View components
           </Button>
@@ -26,7 +26,7 @@ const HomeView = () => {
           <Button
             size="lg"
             onClick={() => navigate('/flows')}
-            className="bg-black text-white hover:bg-gray-800 text-base"
+            className="bg-shell-accent text-white hover:bg-shell-accent-hover text-base"
           >
             View playground
           </Button>
@@ -35,7 +35,7 @@ const HomeView = () => {
           <Button
             size="lg"
             onClick={() => window.open('https://www.figma.com/design/mIZ0RhTTUQYe6JE1H5n2Lu/VCA-Sandbox-v0?node-id=47-223&t=94pjORtOl7i7GnXw-1', '_blank', 'noopener,noreferrer')}
-            className="bg-black text-white hover:bg-gray-800 text-base flex items-center gap-2"
+            className="bg-shell-accent text-white hover:bg-shell-accent-hover text-base flex items-center gap-2"
           >
             <img 
               src="/figma-logo.svg" 
@@ -51,4 +51,3 @@ const HomeView = () => {
 };
 
 export default HomeView;
-

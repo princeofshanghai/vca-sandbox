@@ -36,7 +36,7 @@ const CheckboxComponentView = () => {
                                 onChange={setCheckedState}
                             />
 
-                            <div className="col-span-2 border-t border-gray-100 my-2"></div>
+                            <div className="col-span-2 border-t border-shell-border-subtle my-2"></div>
 
                             <FormCheckbox
                                 id="showLabel"
@@ -81,19 +81,19 @@ const CheckboxComponentView = () => {
                     <h3 className="text-lg font-semibold">States</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div className="p-4 border rounded-lg flex flex-col items-center gap-3">
-                            <span className="text-xs text-gray-500 uppercase font-medium">Unchecked</span>
+                            <span className="text-xs text-shell-muted uppercase font-medium">Unchecked</span>
                             <Checkbox checked={false} />
                         </div>
                         <div className="p-4 border rounded-lg flex flex-col items-center gap-3">
-                            <span className="text-xs text-gray-500 uppercase font-medium">Checked</span>
+                            <span className="text-xs text-shell-muted uppercase font-medium">Checked</span>
                             <Checkbox checked={true} />
                         </div>
                         <div className="p-4 border rounded-lg flex flex-col items-center gap-3">
-                            <span className="text-xs text-gray-500 uppercase font-medium">Indeterminate</span>
+                            <span className="text-xs text-shell-muted uppercase font-medium">Indeterminate</span>
                             <Checkbox checked="indeterminate" />
                         </div>
                         <div className="p-4 border rounded-lg flex flex-col items-center gap-3">
-                            <span className="text-xs text-gray-500 uppercase font-medium">Disabled</span>
+                            <span className="text-xs text-shell-muted uppercase font-medium">Disabled</span>
                             <Checkbox checked={true} disabled />
                         </div>
                     </div>
@@ -102,8 +102,8 @@ const CheckboxComponentView = () => {
                 {/* Form Example */}
                 <div className="space-y-4">
                     <h3 className="text-lg font-semibold">Form Layout</h3>
-                    <div className="bg-white border rounded-xl overflow-hidden max-w-md">
-                        <div className="p-4 border-b bg-gray-50">
+                    <div className="bg-shell-bg border rounded-xl overflow-hidden max-w-md">
+                        <div className="p-4 border-b bg-shell-surface-subtle">
                             <h4 className="font-medium text-sm">Notification Settings</h4>
                         </div>
                         <div className="p-6 space-y-4">

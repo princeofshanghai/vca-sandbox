@@ -40,11 +40,11 @@ export function ShareDialog({ children, flow }: ShareDialogProps) {
             <DialogTrigger asChild>
                 {children}
             </DialogTrigger>
-            <DialogContent hideClose className="sm:max-w-[420px] p-0 gap-0 overflow-hidden bg-white border-0 shadow-2xl rounded-xl">
-                <DialogHeader className="p-3 px-4 border-b flex flex-row items-center justify-between gap-4 h-[52px]">
-                    <DialogTitle className="text-[14px] font-medium text-gray-900 shrink-0">Share this prototype</DialogTitle>
+            <DialogContent hideClose className="sm:max-w-[420px] p-0 gap-0 overflow-hidden bg-shell-bg border-shell-border shadow-2xl rounded-xl">
+                <DialogHeader className="p-3 px-4 border-b border-shell-border flex flex-row items-center justify-between gap-4 h-[52px]">
+                    <DialogTitle className="text-[14px] font-medium text-shell-text shrink-0">Share this prototype</DialogTitle>
 
-                    <DialogClose className="h-8 w-8 -mr-1 rounded-md flex items-center justify-center text-gray-500 hover:text-gray-900 transition-colors focus:outline-none">
+                    <DialogClose className="h-8 w-8 -mr-1 rounded-md flex items-center justify-center text-shell-muted hover:text-shell-text transition-colors focus:outline-none">
                         <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M12 4L4 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                             <path d="M4 4L12 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -58,28 +58,28 @@ export function ShareDialog({ children, flow }: ShareDialogProps) {
                     <div className="space-y-3">
                         <div className="flex items-center justify-between group">
                             <div className="flex items-center gap-3">
-                                <div className="w-7 h-7 rounded-sm bg-gray-50 flex items-center justify-center border border-gray-100 shadow-sm">
-                                    <Globe size={14} className="text-gray-500" />
+                                <div className="w-7 h-7 rounded-sm bg-shell-surface-subtle flex items-center justify-center border border-shell-border-subtle shadow-sm">
+                                    <Globe size={14} className="text-shell-muted" />
                                 </div>
                                 <div>
-                                    <div className="text-[13px] font-medium text-gray-900">Anyone with link</div>
-                                    <div className="text-[11px] text-gray-400">Public access</div>
+                                    <div className="text-[13px] font-medium text-shell-text">Anyone with link</div>
+                                    <div className="text-[11px] text-shell-muted">Public access</div>
                                 </div>
                             </div>
-                            <span className="text-[12px] text-gray-500 font-medium px-1">can view</span>
+                            <span className="text-[12px] text-shell-muted font-medium px-1">can view</span>
                         </div>
                     </div>
                 </div>
 
                 {/* Footer */}
-                <div className="p-3 px-4 border-t bg-gray-50/50">
+                <div className="p-3 px-4 border-t border-shell-border bg-shell-surface-subtle">
                     <Button
                         onClick={handleCopyLink}
                         className={cn(
                             "w-full shadow-sm font-medium transition-all text-[13px] h-9",
                             isCopying
                                 ? "bg-green-600 hover:bg-green-700 text-white"
-                                : "bg-blue-600 hover:bg-blue-700 text-white"
+                                : "bg-shell-accent hover:bg-shell-accent-hover text-white"
                         )}
                     >
                         {isSharing ? (

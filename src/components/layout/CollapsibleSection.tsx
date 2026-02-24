@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { cn } from '@/utils';
 import { AppIcon } from '@/components/app-shell/AppIcon';
+import { Button } from '@/components/ui/button';
 
 type CollapsibleSectionProps = {
   /** Section title displayed in the header */
@@ -43,11 +44,13 @@ const CollapsibleSection = ({
   return (
     <div className={className}>
       {/* Header button */}
-      <button
+      <Button
         onClick={onToggle}
-        className="flex items-center gap-2 text-sm font-medium text-gray-900 mb-4 cursor-pointer hover:text-gray-700 transition-colors w-full"
+        className="mb-4 w-full justify-start gap-2 p-0 h-auto text-sm font-medium text-shell-text hover:text-shell-muted-strong"
         aria-expanded={expanded}
         aria-label={`${expanded ? 'Collapse' : 'Expand'} ${title} section`}
+        variant="ghost"
+        type="button"
       >
         <span>{title}</span>
         
@@ -57,7 +60,7 @@ const CollapsibleSection = ({
           size="sm"
           className={cn("transition-transform", expanded ? "rotate-0" : "-rotate-90")}
         />
-      </button>
+      </Button>
       
       {/* Content - only rendered when expanded */}
       {expanded && children}
@@ -66,4 +69,3 @@ const CollapsibleSection = ({
 };
 
 export default CollapsibleSection;
-

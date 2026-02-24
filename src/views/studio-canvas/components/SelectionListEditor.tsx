@@ -1,5 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Plus, X, GripVertical, Wand2, LayoutList, LayoutGrid, GalleryHorizontal } from 'lucide-react';
+import { Avatar, AvatarFallbackTone } from '@/components/vca-components/avatar';
+import { VcaIcon, VcaIconName } from '@/components/vca-components/icons';
 import { Component, SelectionListContent } from '../../studio/types';
 import { ComponentEditorPopover } from './ComponentEditorPopover';
 
@@ -18,6 +20,26 @@ interface SelectionListEditorProps {
 }
 
 type SelectionListItem = SelectionListContent['items'][0];
+type ItemVisualType = NonNullable<SelectionListItem['visualType']>;
+
+const ICON_OPTIONS: VcaIconName[] = ['user', 'building', 'document', 'messages'];
+const FALLBACK_AVATAR_TONES: AvatarFallbackTone[] = ['amber', 'rose', 'green', 'blue', 'taupe'];
+
+const getFallbackToneFromSeed = (seed: string): AvatarFallbackTone => {
+    let hash = 0;
+    for (let i = 0; i < seed.length; i += 1) {
+        hash = (hash << 5) - hash + seed.charCodeAt(i);
+        hash |= 0;
+    }
+    return FALLBACK_AVATAR_TONES[Math.abs(hash) % FALLBACK_AVATAR_TONES.length];
+};
+
+const getResolvedVisualType = (item: SelectionListItem): ItemVisualType => {
+    if (item.imageUrl) return 'avatar';
+    if (item.visualType) return item.visualType;
+    if (item.iconName) return 'icon';
+    return 'none';
+};
 
 interface SelectionListItemRowProps {
     item: SelectionListItem;
@@ -51,45 +73,78 @@ const SelectionListItemRow = memo(({
         onUpdate(item.id, { subtitle: val });
     }, [item.id, onUpdate]);
 
-    const handleImageUrlChange = useCallback((val: string) => {
-        onUpdate(item.id, { imageUrl: val });
+    const handleVisualTypeChange = useCallback((visualType: ItemVisualType) => {
+        if (visualType === 'avatar') {
+            onUpdate(item.id, {
+                visualType: 'avatar',
+                iconName: undefined
+            });
+            return;
+        }
+
+        if (visualType === 'icon') {
+            onUpdate(item.id, {
+                visualType: 'icon',
+                imageUrl: undefined,
+                iconName: (item.iconName as VcaIconName) || 'building'
+            });
+            return;
+        }
+
+        onUpdate(item.id, {
+            visualType: 'none',
+            imageUrl: undefined,
+            iconName: undefined
+        });
+    }, [item.iconName, item.id, onUpdate]);
+
+    const handleIconNameChange = useCallback((iconName: VcaIconName) => {
+        onUpdate(item.id, { iconName, visualType: 'icon' });
     }, [item.id, onUpdate]);
 
-    const handleIconNameChange = useCallback((val: string) => {
-        onUpdate(item.id, { iconName: val });
-    }, [item.id, onUpdate]);
+    const currentVisualType = getResolvedVisualType(item);
+    const fallbackTone = getFallbackToneFromSeed(item.id || item.title || 'item');
 
     return (
-        <div className="group border border-gray-200 rounded-lg bg-white overflow-hidden transition-all hover:border-gray-300">
+        <div className="group border border-shell-border rounded-lg bg-shell-bg overflow-hidden transition-all hover:border-shell-accent-border">
             {/* Item Header / Summary */}
             <div
-                className="flex items-center gap-3 p-2 cursor-pointer bg-gray-50/50 hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-3 p-2 cursor-pointer bg-shell-surface-subtle hover:bg-shell-surface transition-colors"
                 onClick={handleToggle}
             >
-                <div className="text-gray-400 cursor-grab active:cursor-grabbing">
+                <div className="text-shell-muted cursor-grab active:cursor-grabbing">
                     <GripVertical className="w-4 h-4" />
                 </div>
                 <div className="flex-1 min-w-0">
-                    <div className="text-xs font-medium text-gray-900 truncate">
+                    <div className="text-xs font-medium text-shell-text truncate">
                         {item.title || 'Untitled'}
                     </div>
-                    <div className="text-[10px] text-gray-500 truncate">
+                    <div className="text-[10px] text-shell-muted truncate">
                         {item.subtitle}
                     </div>
                 </div>
-                <div className="w-6 h-6 rounded overflow-hidden bg-gray-100 flex-shrink-0">
-                    {item.imageUrl && (
-                        <img
+                <div className="w-6 h-6 flex items-center justify-center flex-shrink-0">
+                    {currentVisualType === 'avatar' && (
+                        <Avatar
+                            size={24}
                             src={item.imageUrl}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                            decoding="async"
+                            alt={item.title ? `${item.title} avatar` : 'Item avatar'}
+                            fallbackStyle="silhouette"
+                            fallbackTone={fallbackTone}
                         />
+                    )}
+                    {currentVisualType === 'icon' && (
+                        <div className="w-6 h-6 rounded-md bg-shell-surface border border-shell-border-subtle flex items-center justify-center text-shell-muted">
+                            <VcaIcon icon={(item.iconName as VcaIconName) || 'building'} size="sm" />
+                        </div>
+                    )}
+                    {currentVisualType === 'none' && (
+                        <div className="w-6 h-6 rounded-md border border-dashed border-shell-border" />
                     )}
                 </div>
                 <button
                     onClick={handleDelete}
-                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-all opacity-0 group-hover:opacity-100"
+                    className="p-1.5 text-shell-muted hover:text-shell-danger hover:bg-shell-danger-soft rounded transition-all opacity-0 group-hover:opacity-100"
                 >
                     <X className="w-3.5 h-3.5" />
                 </button>
@@ -97,7 +152,7 @@ const SelectionListItemRow = memo(({
 
             {/* Expanded Editor */}
             {isExpanded && (
-                <div className="p-3 border-t border-gray-100 bg-white space-y-3 animate-in fade-in slide-in-from-top-1">
+                <div className="p-3 border-t border-shell-border-subtle bg-shell-bg space-y-3 animate-in fade-in slide-in-from-top-1">
                     <EditorField
                         label="Title"
                         value={item.title}
@@ -108,18 +163,42 @@ const SelectionListItemRow = memo(({
                         value={item.subtitle || ''}
                         onChange={handleSubtitleChange}
                     />
-                    <EditorField
-                        label="Image URL"
-                        value={item.imageUrl || ''}
-                        onChange={handleImageUrlChange}
-                        placeholder="https://..."
-                    />
-                    <EditorField
-                        label="Icon Name (if no image)"
-                        value={item.iconName || ''}
-                        onChange={handleIconNameChange}
-                        placeholder="e.g. building, user..."
-                    />
+                    <div className="space-y-1.5">
+                        <label className="text-[11px] font-medium text-shell-muted-strong">Visual</label>
+                        <div className="grid grid-cols-3 gap-1.5">
+                            {(['avatar', 'icon', 'none'] as ItemVisualType[]).map((option) => (
+                                <button
+                                    key={option}
+                                    type="button"
+                                    onClick={() => handleVisualTypeChange(option)}
+                                    className={`rounded-md border px-2 py-1.5 text-[11px] font-medium transition-colors ${currentVisualType === option
+                                        ? 'border-shell-accent-border bg-shell-accent-soft text-shell-accent-text'
+                                        : 'border-shell-border text-shell-muted-strong hover:border-shell-accent-border'
+                                        }`}
+                                >
+                                    {option === 'avatar' ? 'Avatar' : option === 'icon' ? 'Icon' : 'None'}
+                                </button>
+                            ))}
+                        </div>
+                        <p className="text-[10px] text-shell-muted">Avatar auto-generates when no photo is provided.</p>
+                    </div>
+
+                    {currentVisualType === 'icon' && (
+                        <div className="space-y-1.5">
+                            <label className="text-[11px] font-medium text-shell-muted-strong">Icon</label>
+                            <select
+                                className="w-full text-[13px] text-shell-text border border-shell-border rounded-lg p-2.5 bg-shell-bg focus:outline-none focus:border-shell-accent focus:ring-2 focus:ring-shell-accent/20"
+                                value={(item.iconName as VcaIconName) || 'building'}
+                                onChange={(e) => handleIconNameChange(e.target.value as VcaIconName)}
+                            >
+                                {ICON_OPTIONS.map((iconOption) => (
+                                    <option key={iconOption} value={iconOption}>
+                                        {iconOption}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
                 </div>
             )}
         </div>
@@ -131,19 +210,19 @@ SelectionListItemRow.displayName = 'SelectionListItemRow';
 // Mock Presets
 const PRESETS = {
     users: [
-        { id: '1', title: 'Sarah Jenkins', subtitle: 'sarah.j@example.com', imageUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
-        { id: '2', title: 'Michael Chen', subtitle: 'm.chen@example.com', imageUrl: 'https://images.unsplash.com/photo-1519244703995-f4e0f30006d5?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
-        { id: '3', title: 'Emily Davis', subtitle: 'edavis@example.com', imageUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' },
+        { id: '1', title: 'Sarah Jenkins', subtitle: 'sarah.j@example.com', visualType: 'avatar' as const },
+        { id: '2', title: 'Michael Chen', subtitle: 'm.chen@example.com', visualType: 'avatar' as const },
+        { id: '3', title: 'Emily Davis', subtitle: 'edavis@example.com', visualType: 'avatar' as const },
     ],
     accounts: [
-        { id: 'a1', title: 'Acme Corp', subtitle: 'ID: 8839201', iconName: 'building' },
-        { id: 'a2', title: 'Globex Inc', subtitle: 'ID: 4492011', iconName: 'building' },
-        { id: 'a3', title: 'Soylent Corp', subtitle: 'ID: 1102934', iconName: 'building' },
+        { id: 'a1', title: 'Acme Corp', subtitle: 'ID: 8839201', visualType: 'icon' as const, iconName: 'building' as const },
+        { id: 'a2', title: 'Globex Inc', subtitle: 'ID: 4492011', visualType: 'icon' as const, iconName: 'building' as const },
+        { id: 'a3', title: 'Soylent Corp', subtitle: 'ID: 1102934', visualType: 'icon' as const, iconName: 'building' as const },
     ],
     licenses: [
-        { id: 'l1', title: 'Enterprise Seat 2024', subtitle: 'Expires Dec 31' },
-        { id: 'l2', title: 'Pro Seat 2024', subtitle: 'Expires Nov 15' },
-        { id: 'l3', title: 'Basic Seat', subtitle: 'Monthly' },
+        { id: 'l1', title: 'Enterprise Seat 2024', subtitle: 'Expires Dec 31', visualType: 'none' as const },
+        { id: 'l2', title: 'Pro Seat 2024', subtitle: 'Expires Nov 15', visualType: 'none' as const },
+        { id: 'l3', title: 'Basic Seat', subtitle: 'Monthly', visualType: 'none' as const },
     ]
 };
 
@@ -204,7 +283,8 @@ export function SelectionListEditor({ component, onChange, children, isOpen, onO
         const newItem: SelectionListItem = {
             id: Math.random().toString(36).substr(2, 9),
             title: 'New Item',
-            subtitle: 'Description'
+            subtitle: 'Description',
+            visualType: 'none'
         };
         onChangeRef.current({ ...current, items: [...(current.items || []), newItem] });
         setExpandedItemId(newItem.id);
@@ -240,8 +320,8 @@ export function SelectionListEditor({ component, onChange, children, isOpen, onO
                                 key={opt.id}
                                 onClick={() => handleLayoutChange(opt.id)}
                                 className={`flex items-center justify-center gap-2 p-1.5 rounded-lg border transition-all ${content.layout === opt.id
-                                    ? 'bg-blue-50 border-blue-200 text-blue-700'
-                                    : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
+                                    ? 'bg-shell-accent-soft border-shell-accent-border text-shell-accent-text'
+                                    : 'bg-shell-bg border-shell-border text-shell-muted-strong hover:border-shell-accent-border'
                                     }`}
                             >
                                 <opt.icon className="w-4 h-4" />
@@ -256,18 +336,18 @@ export function SelectionListEditor({ component, onChange, children, isOpen, onO
                     title={`Items (${items.length})`}
                     action={
                         <div className="relative group">
-                            <button className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors">
+                            <button className="flex items-center gap-1.5 text-xs text-shell-accent hover:text-shell-accent-hover font-medium transition-colors">
                                 <Wand2 className="w-3.5 h-3.5" />
                                 <span>Load Preset</span>
                             </button>
-                            <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-1 hidden group-hover:block z-50">
-                                <button onClick={() => applyPreset('users')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-gray-700">
+                            <div className="absolute right-0 top-full mt-1 w-48 bg-shell-surface rounded-lg shadow-xl border border-shell-border py-1 hidden group-hover:block z-50">
+                                <button onClick={() => applyPreset('users')} className="w-full text-left px-3 py-2 text-xs hover:bg-shell-surface-subtle text-shell-muted-strong">
                                     Users (Avatars)
                                 </button>
-                                <button onClick={() => applyPreset('accounts')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-gray-700">
+                                <button onClick={() => applyPreset('accounts')} className="w-full text-left px-3 py-2 text-xs hover:bg-shell-surface-subtle text-shell-muted-strong">
                                     Accounts (Icons)
                                 </button>
-                                <button onClick={() => applyPreset('licenses')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-gray-700">
+                                <button onClick={() => applyPreset('licenses')} className="w-full text-left px-3 py-2 text-xs hover:bg-shell-surface-subtle text-shell-muted-strong">
                                     Simple (Text only)
                                 </button>
                             </div>
@@ -289,7 +369,7 @@ export function SelectionListEditor({ component, onChange, children, isOpen, onO
 
                     <button
                         onClick={addItem}
-                        className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg border border-dashed border-gray-300 text-gray-500 text-xs font-medium hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/50 transition-all"
+                        className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg border border-dashed border-shell-border text-shell-muted text-xs font-medium hover:border-shell-accent-border hover:text-shell-accent hover:bg-shell-accent-soft transition-all"
                     >
                         <Plus className="w-3.5 h-3.5" />
                         <span>Add Item</span>

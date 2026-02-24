@@ -43,15 +43,15 @@ const BadgeComponentView = () => {
             <div>
               <h3 className="mb-2">States</h3>
               <p className="mb-3">Two status states for user availability.</p>
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <div className="bg-shell-bg border border-shell-border rounded-lg p-6">
                 <div className="flex items-center gap-8">
                   <div className="flex items-center gap-2">
                     <Badge state="online" />
-                    <span className="text-sm text-gray-700">Online (Available)</span>
+                    <span className="text-sm text-shell-muted-strong">Online (Available)</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge state="offline" />
-                    <span className="text-sm text-gray-700">Offline (Unavailable)</span>
+                    <span className="text-sm text-shell-muted-strong">Offline (Unavailable)</span>
                   </div>
                 </div>
               </div>
@@ -61,10 +61,10 @@ const BadgeComponentView = () => {
             <div>
               <h3 className="mb-2">Size reference</h3>
               <p className="mb-3">Badge is 8px × 8px (fixed size).</p>
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <div className="bg-shell-bg border border-shell-border rounded-lg p-6">
                 <div className="flex items-center gap-4">
                   <Badge state="online" />
-                  <span className="text-xs text-gray-500">8px × 8px</span>
+                  <span className="text-xs text-shell-muted">8px × 8px</span>
                 </div>
               </div>
             </div>
@@ -73,7 +73,7 @@ const BadgeComponentView = () => {
             <div>
               <h3 className="mb-2">Usage example</h3>
               <p className="mb-3">Badge is typically used with the Avatar component to show status.</p>
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <div className="bg-shell-bg border border-shell-border rounded-lg p-6">
                 <div className="space-y-2">
                   <p>The Badge component is automatically integrated into the Avatar component.</p>
                   <p>See the <span className="font-medium">Avatar component</span> for usage examples with status badges.</p>

@@ -67,7 +67,7 @@ const SourceLinkComponentView = () => {
             <div>
               <h3 className="mb-2">Enabled</h3>
               <p className="mb-3">Default state with gray text and underline.</p>
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="bg-shell-bg border border-shell-border rounded-lg p-4">
                 <div className="">
                   <SourceLink
                     status="enabled"
@@ -82,7 +82,7 @@ const SourceLinkComponentView = () => {
             <div>
               <h3 className="mb-2">Hover</h3>
               <p className="mb-3">Interactive state when user hovers over the link.</p>
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="bg-shell-bg border border-shell-border rounded-lg p-4">
                 <div className="">
                   <SourceLink
                     status="hover"
@@ -96,7 +96,7 @@ const SourceLinkComponentView = () => {
             <div>
               <h3 className="mb-2">Active</h3>
               <p className="mb-3">State when user clicks/presses the link.</p>
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="bg-shell-bg border border-shell-border rounded-lg p-4">
                 <div className="">
                   <SourceLink
                     status="active"
@@ -110,7 +110,7 @@ const SourceLinkComponentView = () => {
             <div>
               <h3 className="mb-2">Visited</h3>
               <p className="mb-3">State for previously visited links (purple).</p>
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="bg-shell-bg border border-shell-border rounded-lg p-4">
                 <div className="">
                   <SourceLink
                     status="visited"
@@ -124,7 +124,7 @@ const SourceLinkComponentView = () => {
             <div>
               <h3 className="mb-2">In context</h3>
               <p className="mb-3">Example showing how source links appear within text content.</p>
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="bg-shell-bg border border-shell-border rounded-lg p-4">
                 <div className="">
                   <p className="vca-small-open text-vca-text">
                     According to recent research, user engagement increased by 45% after implementing AI recommendations.{' '}
@@ -142,7 +142,7 @@ const SourceLinkComponentView = () => {
             <div>
               <h3 className="mb-2">Multiple sources</h3>
               <p className="mb-3">Example with multiple source citations in a single paragraph.</p>
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="bg-shell-bg border border-shell-border rounded-lg p-4">
                 <div className="">
                   <p className="vca-small-open text-vca-text">
                     The data shows significant improvements in productivity (

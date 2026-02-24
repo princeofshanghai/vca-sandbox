@@ -24,16 +24,16 @@ export function EditorSection({ title, children, defaultOpen = true, className, 
                 <div
                     className={cn(
                         "flex items-center gap-2",
-                        collapsible ? "cursor-pointer text-gray-700 hover:text-gray-900" : "text-gray-900"
+                        collapsible ? "cursor-pointer text-shell-muted-strong hover:text-shell-text" : "text-shell-text"
                     )}
                     onClick={() => collapsible && setIsOpen(!isOpen)}
                 >
                     {collapsible && (
-                        <div className="text-gray-400">
+                        <div className="text-shell-muted">
                             {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                         </div>
                     )}
-                    <h4 className="text-[13px] font-medium text-gray-900">
+                    <h4 className="text-[13px] font-medium text-shell-text">
                         {title}
                     </h4>
                 </div>

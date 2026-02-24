@@ -1,6 +1,11 @@
+import { cn } from '@/utils/cn';
+
 type DemoSectionProps = {
   children: React.ReactNode;
-  controls: React.ReactNode;
+  controls?: React.ReactNode;
+  title?: string;
+  demoAreaClassName?: string;
+  demoContentClassName?: string;
 };
 
 /**
@@ -13,29 +18,43 @@ type DemoSectionProps = {
  *   <YourComponentDemo />
  * </DemoSection>
  */
-export const DemoSection = ({ children, controls }: DemoSectionProps) => {
+export const DemoSection = ({
+  children,
+  controls,
+  title = 'Demo',
+  demoAreaClassName,
+  demoContentClassName,
+}: DemoSectionProps) => {
+  const hasControls = controls !== null && controls !== undefined;
+
   return (
     <div>
-      <h2 className="text-xl font-medium text-gray-900 mb-4 tracking-tight">Demo</h2>
+      <h2 className="text-xl font-medium text-shell-text mb-4 tracking-tight">{title}</h2>
       
       {/* Unified card container */}
-      <div className="border border-gray-200 rounded-lg mb-12 overflow-hidden">
-        {/* Demo area with gray background */}
-        <div className="bg-gray-50 p-8">
-          <div className="flex items-center justify-center min-h-[120px]">
+      <div className="border border-shell-border rounded-lg mb-12 overflow-hidden">
+        {/* Demo area */}
+        <div className={cn("bg-shell-surface-subtle p-8", demoAreaClassName)}>
+          <div className={cn("flex items-center justify-center min-h-[120px]", demoContentClassName)}>
             {children}
           </div>
         </div>
 
-        {/* Divider */}
-        <div className="border-t border-gray-200" />
+        {hasControls && (
+          <>
+            {/* Divider */}
+            <div className="border-t border-shell-border" />
 
-        {/* Controls area with white background */}
-        <div className="bg-white p-6">
-          {controls}
-        </div>
+            {/* Controls area */}
+            <div className="bg-shell-bg p-4">
+              <p className="mb-3 text-xs font-medium text-shell-muted">
+                Controls
+              </p>
+              {controls}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
 };
-

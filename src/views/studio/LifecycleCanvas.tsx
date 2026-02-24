@@ -157,8 +157,8 @@ export const LifecycleCanvas = ({ flow, onUpdateFlow, renderBlock, onAddBlock }:
                 {createPortal(
                     <DragOverlay dropAnimation={dropAnimation}>
                         {activeBlock ? (
-                            <div className="bg-white p-4 rounded-xl border border-blue-200 shadow-xl opacity-90 w-[400px]">
-                                <span className="font-semibold text-gray-900">Moving block...</span>
+                            <div className="bg-shell-bg p-4 rounded-xl border border-shell-accent-border shadow-xl opacity-90 w-[400px]">
+                                <span className="font-semibold text-shell-text">Moving block...</span>
                             </div>
                         ) : null}
                     </DragOverlay>,

@@ -25,6 +25,8 @@ interface StudioCardProps {
     isPlaceholder?: boolean;
     /** ID for the output handle */
     outputHandleId?: string;
+    /** Right offset in px for the output handle */
+    outputHandleOffsetPx?: number;
     /** Whether to allow content to overflow (e.g. for inner handles) */
     overflowVisible?: boolean;
     /** Additional classes for the root element */
@@ -42,6 +44,7 @@ export const StudioCard = memo(({
     showInputHandle,
     showOutputHandle,
     outputHandleId,
+    outputHandleOffsetPx = 7,
     className,
     isPlaceholder = false,
     overflowVisible = false
@@ -49,31 +52,31 @@ export const StudioCard = memo(({
     // Theme configurations
     const themes = {
         blue: {
-            border: 'border-blue-500',
-            bg: 'bg-blue-50/50',
-            text: 'text-blue-900',
-            iconColor: 'text-blue-600',
-            selectedIconColor: 'text-blue-700',
-            hoverBorder: 'hover:border-blue-300',
-            handle: '!bg-blue-400',
+            selectedBorder: 'border-shell-accent ring-1 ring-shell-accent/30',
+            baseBorder: 'border-shell-border/70',
+            hoverBorder: 'hover:border-shell-accent/60',
+            text: 'text-shell-text',
+            iconColor: 'text-shell-accent',
+            selectedIconColor: 'text-shell-accent',
+            handle: '!bg-shell-accent',
         },
         amber: {
-            border: 'border-amber-500',
-            bg: 'bg-amber-50/50',
-            text: 'text-amber-900',
-            iconColor: 'text-amber-600',
-            selectedIconColor: 'text-amber-700',
-            hoverBorder: 'hover:border-amber-300',
-            handle: '!bg-amber-400',
+            selectedBorder: 'border-shell-node-condition ring-1 ring-shell-node-condition/30',
+            baseBorder: 'border-shell-border/70',
+            hoverBorder: 'hover:border-shell-node-condition/60',
+            text: 'text-shell-text',
+            iconColor: 'text-shell-node-condition',
+            selectedIconColor: 'text-shell-node-condition',
+            handle: '!bg-shell-node-condition',
         },
         gray: {
-            border: 'border-gray-400',
-            bg: 'bg-gray-50/50',
-            text: 'text-gray-700', // Title color when selected
-            iconColor: 'text-gray-400', // Icon color
-            selectedIconColor: 'text-gray-600',
-            hoverBorder: 'hover:border-gray-300',
-            handle: '!bg-gray-400',
+            selectedBorder: 'border-shell-muted-strong ring-1 ring-shell-muted-strong/30',
+            baseBorder: 'border-shell-border/70',
+            hoverBorder: 'hover:border-shell-muted-strong/70',
+            text: 'text-shell-text',
+            iconColor: 'text-shell-muted-strong',
+            selectedIconColor: 'text-shell-muted-strong',
+            handle: '!bg-shell-muted',
         }
     };
 
@@ -87,8 +90,8 @@ export const StudioCard = memo(({
                 onClick?.();
             }}
             className={cn(
-                "flex flex-col gap-0 rounded-md border transition-all z-20 relative cursor-default nodrag group bg-white",
-                selected ? `${activeTheme.border} ${activeTheme.bg}` : `border-gray-200 ${activeTheme.hoverBorder}`,
+                "flex flex-col gap-0 rounded-md border transition-all z-20 relative cursor-pointer nodrag group bg-shell-bg",
+                selected ? activeTheme.selectedBorder : `${activeTheme.baseBorder} ${activeTheme.hoverBorder}`,
                 className
             )}
         >
@@ -96,9 +99,9 @@ export const StudioCard = memo(({
             {showInputHandle && (
                 <Handle
                     type="target"
-                    position={Position.Left}
-                    className={cn("!w-3 !h-3 !border-2 !border-white !-left-[7px] !top-1/2 !-translate-y-1/2 !z-30 transition-transform hover:scale-125", activeTheme.handle)}
-                />
+                position={Position.Left}
+                className={cn("!w-3 !h-3 !border-2 !border-shell-bg !-left-[7px] !top-1/2 !-translate-y-1/2 !z-30 transition-transform hover:scale-125", activeTheme.handle)}
+            />
             )}
 
             {/* Header - Only show if NOT a placeholder */}
@@ -106,28 +109,28 @@ export const StudioCard = memo(({
             <div className={cn("flex flex-col w-full h-full rounded-[inherit]", overflowVisible ? "overflow-visible" : "overflow-hidden")}>
                 {/* Header - Only show if NOT a placeholder */}
                 {!isPlaceholder && (
-                    <div className="flex items-center gap-2 p-3 pb-2 border-b border-gray-100 bg-white/50 rounded-t-[inherit]">
+                    <div className="flex items-center gap-2 p-3 pb-2 border-b border-shell-border-subtle bg-shell-bg rounded-t-[inherit]">
                         {icon && (
                             <span className={cn("flex-shrink-0", selected ? activeTheme.selectedIconColor : activeTheme.iconColor)}>
                                 {icon}
                             </span>
                         )}
-                        <span className={cn("text-sm font-semibold", selected ? activeTheme.text : "text-gray-700")}>
+                        <span className={cn("text-sm font-semibold", selected ? activeTheme.text : "text-shell-muted-strong")}>
                             {title}
                         </span>
                     </div>
                 )}
 
                 {/* Body */}
-                <div className={cn("w-full p-3", !isPlaceholder && "pt-2")}>
+                <div className={cn("w-full p-3 bg-shell-bg", !isPlaceholder && "pt-2")}>
                     {isPlaceholder ? (
                         <div className="flex items-center gap-2">
                             {icon && (
-                                <span className="flex-shrink-0 text-gray-400">
+                                <span className="flex-shrink-0 text-shell-text">
                                     {icon}
                                 </span>
                             )}
-                            <span className="text-sm font-normal text-gray-500">
+                            <span className="text-sm font-medium text-shell-text">
                                 {title}
                             </span>
                         </div>
@@ -143,7 +146,8 @@ export const StudioCard = memo(({
                     type="source"
                     position={Position.Right}
                     id={outputHandleId}
-                    className={cn("!w-3 !h-3 !border-2 !border-white !-right-[7px] !top-1/2 !-translate-y-1/2 !z-30 transition-transform hover:scale-125", activeTheme.handle)}
+                    style={{ right: -outputHandleOffsetPx }}
+                    className={cn("!w-3 !h-3 !border-2 !border-shell-bg !top-1/2 !-translate-y-1/2 !z-30 transition-transform hover:scale-125", activeTheme.handle)}
                 />
             )}
         </div>

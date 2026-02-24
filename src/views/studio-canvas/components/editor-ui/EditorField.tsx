@@ -35,17 +35,22 @@ export const EditorField = ({
     autoFocus,
     renderInput = true
 }: EditorFieldProps) => {
+    const handleInputKeyDown = (e: React.KeyboardEvent) => {
+        e.stopPropagation();
+        onKeyDown?.(e);
+    };
+
     return (
         <div className={cn("flex flex-col gap-1.5 w-full", className)}>
             {(label || error) && (
                 <div className="flex justify-between items-baseline">
                     {label && (
-                        <label className="text-[11px] font-medium text-gray-700">
+                        <label className="text-[11px] font-medium text-shell-muted-strong">
                             {label}
                         </label>
                     )}
                     {error && (
-                        <span className="text-[10px] text-red-500 font-medium">
+                        <span className="text-[10px] text-shell-danger font-medium">
                             {error}
                         </span>
                     )}
@@ -59,14 +64,14 @@ export const EditorField = ({
                     onChange={(e) => onChange?.(e.target.value)}
                     placeholder={placeholder}
                     minRows={minRows}
-                    onKeyDown={onKeyDown}
+                    onKeyDown={handleInputKeyDown}
                     autoFocus={autoFocus}
                     className={cn(
-                        "w-full text-[13px] text-gray-800 border rounded-lg p-2.5 resize-none leading-relaxed transition-all",
-                        "placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-100",
+                        "w-full text-[13px] text-shell-text border rounded-lg p-2.5 resize-none leading-relaxed transition-all",
+                        "placeholder:text-shell-muted focus:outline-none",
                         error
-                            ? "border-red-300 focus:border-red-400 focus:ring-red-50 bg-red-50/10"
-                            : "border-gray-200 focus:border-blue-400 bg-white"
+                            ? "border-shell-danger-border focus:border-shell-danger focus:ring-2 focus:ring-shell-danger/20 bg-shell-danger-soft/20"
+                            : "border-shell-border focus:border-shell-accent focus:ring-2 focus:ring-shell-accent/20 bg-shell-bg"
                     )}
                 />
             ) : (
@@ -76,20 +81,20 @@ export const EditorField = ({
                     value={value || ''}
                     onChange={(e) => onChange?.(e.target.value)}
                     placeholder={placeholder}
-                    onKeyDown={onKeyDown}
+                    onKeyDown={handleInputKeyDown}
                     autoFocus={autoFocus}
                     className={cn(
-                        "w-full text-[13px] text-gray-800 border rounded-lg p-2.5 transition-all",
-                        "placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-100",
+                        "w-full text-[13px] text-shell-text border rounded-lg p-2.5 transition-all",
+                        "placeholder:text-shell-muted focus:outline-none",
                         error
-                            ? "border-red-300 focus:border-red-400 focus:ring-red-50 bg-red-50/10"
-                            : "border-gray-200 focus:border-blue-400 bg-white"
+                            ? "border-shell-danger-border focus:border-shell-danger focus:ring-2 focus:ring-shell-danger/20 bg-shell-danger-soft/20"
+                            : "border-shell-border focus:border-shell-accent focus:ring-2 focus:ring-shell-accent/20 bg-shell-bg"
                     )}
                 />
             ))}
 
             {hint && (
-                <p className="text-[10px] text-gray-500 leading-relaxed">
+                <p className="text-[10px] text-shell-muted leading-relaxed">
                     {hint}
                 </p>
             )}

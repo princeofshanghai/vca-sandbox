@@ -74,6 +74,12 @@ export interface Flow {
     steps?: Step[]; // New turn/condition-based structure
     connections?: Connection[]; // Connections between steps
     startStepId?: string; // ID of the first step (Welcome node)
+    metadata?: {
+        previewText?: string;
+        entryPoint?: string;
+        thumbnailPath?: string;
+        thumbnailUpdatedAt?: string;
+    };
 }
 
 // ============================================
@@ -107,6 +113,7 @@ export interface SelectionListContent {
         subtitle?: string;
         imageUrl?: string;
         iconName?: string; // VcaIconName
+        visualType?: 'avatar' | 'icon' | 'none';
         disabled?: boolean;
     }[];
 }
@@ -148,7 +155,7 @@ export interface UserTurn {
     type: 'user-turn';
     label: string;
     inputType: 'text' | 'prompt' | 'button'; // How they interacted
-    triggerValue?: string; // The specific value (e.g., "Remove User")
+    triggerValue?: string; // Match text (supports single phrase or multiple phrases).
     position?: { x: number; y: number };
 }
 
@@ -201,4 +208,3 @@ export interface Connection {
     target: string; // Target step ID
     targetHandle?: string; // For future support of multi-input nodes
 }
-

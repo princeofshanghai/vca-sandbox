@@ -50,7 +50,7 @@ const AgentBannerComponentView = () => {
             <div>
               <h3 className="mb-2">Active live chat</h3>
               <p className="mb-3">Appears at the top of chat when user is connected to a human agent. Shows agent's online status and provides option to end the session.</p>
-              <div className="bg-gray-50 border border-gray-200 rounded-lg pt-6 pb-0 px-4 overflow-hidden">
+              <div className="bg-shell-surface-subtle border border-shell-border rounded-lg pt-6 pb-0 px-4 overflow-hidden">
                 <div className="w-[400px] mx-auto">
                   {/* Mini conversation view - zoomed to top */}
                   <div className="bg-vca-background border border-vca-border-faint rounded-t-vca-md overflow-hidden flex flex-col h-[480px] -mb-1">

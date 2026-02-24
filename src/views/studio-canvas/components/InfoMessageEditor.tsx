@@ -65,14 +65,14 @@ export function InfoMessageEditor({ component, onChange, children, isOpen, onOpe
 
                 {/* 3. Sources Section */}
                 <EditorSection>
-                    <div className="space-y-4">
-                        {(content.sources || []).map((source, idx) => (
-                            <div key={idx} className="group/source relative p-3 bg-gray-50 rounded-lg border border-gray-100 space-y-2 animate-in fade-in slide-in-from-top-1">
+                        <div className="space-y-4">
+                            {(content.sources || []).map((source, idx) => (
+                            <div key={idx} className="group/source relative p-3 bg-shell-surface-subtle rounded-lg border border-shell-border-subtle space-y-2 animate-in fade-in slide-in-from-top-1">
                                 <div className="flex justify-between items-start">
-                                    <span className="text-[10px] font-semibold text-gray-400 tracking-wider">source {idx + 1}</span>
+                                    <span className="text-[10px] font-semibold text-shell-muted tracking-wider">source {idx + 1}</span>
                                     <button
                                         onClick={() => updateSources((content.sources || []).filter((_, i) => i !== idx))}
-                                        className="text-gray-400 hover:text-red-500 transition-colors"
+                                        className="text-shell-muted hover:text-shell-danger transition-colors"
                                     >
                                         <X size={12} />
                                     </button>
@@ -112,7 +112,7 @@ export function InfoMessageEditor({ component, onChange, children, isOpen, onOpe
 
                         <button
                             onClick={() => updateSources([...(content.sources || []), { text: '', url: '' }])}
-                            className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-gray-300 text-gray-500 text-xs font-medium hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/50 transition-all"
+                            className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-shell-border text-shell-muted text-xs font-medium hover:border-shell-accent-border hover:text-shell-accent hover:bg-shell-accent-soft transition-all"
                         >
                             <Plus className="w-3.5 h-3.5" />
                             <span>Add source</span>

@@ -46,7 +46,6 @@ export function MessageEditor({ component, onChange, children, isOpen, onOpenCha
                         value={localText}
                         onChange={handleTextChange}
                         placeholder="Type your message here..."
-                        autoFocus={true}
                     />
                 </div>
             </EditorContent>

@@ -86,13 +86,13 @@ const componentOptions: ComponentOption[] = [
         description: 'User selection from a list (users, accounts)',
         previewComponent: (
             <div className="w-[300px] flex flex-col gap-2 p-2">
-                <div className="flex items-center gap-2 p-2 rounded border bg-white">
-                    <div className="w-6 h-6 rounded-full bg-gray-100" />
-                    <div className="flex-1 h-2 bg-gray-100 rounded w-2/3" />
+                <div className="flex items-center gap-2 p-2 rounded border border-shell-border bg-shell-bg">
+                    <div className="w-6 h-6 rounded-full bg-shell-surface" />
+                    <div className="flex-1 h-2 bg-shell-surface rounded w-2/3" />
                 </div>
-                <div className="flex items-center gap-2 p-2 rounded border bg-white">
-                    <div className="w-6 h-6 rounded-full bg-gray-100" />
-                    <div className="flex-1 h-2 bg-gray-100 rounded w-2/3" />
+                <div className="flex items-center gap-2 p-2 rounded border border-shell-border bg-shell-bg">
+                    <div className="w-6 h-6 rounded-full bg-shell-surface" />
+                    <div className="flex-1 h-2 bg-shell-surface rounded w-2/3" />
                 </div>
             </div>
         ),
@@ -106,14 +106,14 @@ const componentOptions: ComponentOption[] = [
             <div className="w-[300px] flex flex-col gap-2 p-2">
                 <div className="text-xs font-bold mb-1">Select topics:</div>
                 <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 border border-gray-300 rounded-[2px]" />
-                    <div className="text-xs text-gray-500">Option 1</div>
+                    <div className="w-3 h-3 border border-shell-border rounded-[2px]" />
+                    <div className="text-xs text-shell-muted">Option 1</div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 border border-gray-300 rounded-[2px] bg-blue-500 border-blue-500" />
-                    <div className="text-xs text-gray-900">Option 2</div>
+                    <div className="w-3 h-3 border border-shell-accent rounded-[2px] bg-shell-accent" />
+                    <div className="text-xs text-shell-text">Option 2</div>
                 </div>
-                <div className="w-16 h-6 bg-blue-600 rounded text-center text-[10px] text-white flex items-center justify-center mt-2">
+                <div className="w-16 h-6 bg-shell-accent rounded text-center text-[10px] text-white flex items-center justify-center mt-2">
                     Save
                 </div>
             </div>
@@ -134,38 +134,37 @@ const ComponentOptionCard = ({
         <HoverCard.Trigger asChild>
             <button
                 onClick={onClick}
-                className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-gray-800 transition-colors text-left w-full group cursor-default"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-shell-surface-subtle transition-colors text-left w-full group cursor-pointer"
             >
-                <div className="text-gray-400 group-hover:text-blue-400 transition-colors">
+                <div className="text-shell-muted group-hover:text-shell-accent transition-colors">
                     {option.icon}
                 </div>
-                <span className="text-xs font-medium text-gray-300 group-hover:text-white transition-colors">
+                <span className="text-xs font-medium text-shell-muted-strong group-hover:text-shell-text transition-colors">
                     {option.name}
                 </span>
             </button>
         </HoverCard.Trigger>
         <HoverCard.Portal>
             <HoverCard.Content
-                className="w-[240px] bg-gray-900 rounded-xl shadow-2xl border border-gray-800 p-0 z-[1002] animate-in fade-in zoom-in-95 overflow-hidden"
+                className="w-[240px] bg-shell-bg rounded-xl shadow-2xl border border-shell-border p-0 z-[1002] animate-in fade-in zoom-in-95 overflow-hidden"
                 sideOffset={8}
                 side={side}
             >
                 <div className="flex flex-col">
                     {/* Content Area */}
                     <div className="p-3 space-y-3">
-                        {/* Scaled Preview Wrapper - Light theme for contrast */}
-                        <div className="relative w-full flex justify-center py-3 min-h-[100px] items-center bg-white rounded-lg border border-gray-100 shadow-sm">
+                        <div className="relative w-full flex justify-center py-3 min-h-[100px] items-center bg-shell-surface-subtle rounded-lg border border-shell-border shadow-sm">
                             <div className="origin-center scale-[0.7] transform-gpu pointer-events-none select-none w-full flex justify-center">
                                 {option.previewComponent}
                             </div>
                         </div>
 
-                        <p className="text-[10px] text-center text-gray-500 leading-relaxed px-2 italic">
+                        <p className="text-[10px] text-center text-shell-muted leading-relaxed px-2 italic">
                             {option.description}
                         </p>
                     </div>
                 </div>
-                <HoverCard.Arrow className="fill-gray-900" />
+                <HoverCard.Arrow className="fill-shell-bg stroke-shell-border" />
             </HoverCard.Content>
         </HoverCard.Portal>
     </HoverCard.Root>
@@ -178,7 +177,7 @@ export function AddComponentContent({ onAdd }: { onAdd: (type: ComponentType) =>
             sideOffset={8}
             align="center"
             onOpenAutoFocus={(e: Event) => e.preventDefault()}
-            className="bg-gray-900 border border-gray-800 rounded-xl shadow-2xl p-1 w-[200px] z-[1001] animate-in fade-in zoom-in-95 duration-200 ease-out"
+            className="bg-shell-bg border border-shell-border rounded-xl shadow-2xl p-1 w-[200px] z-[1001] animate-in fade-in zoom-in-95 duration-200 ease-out"
         >
             <div className="flex flex-col">
                 {componentOptions.map((option) => (
@@ -193,8 +192,7 @@ export function AddComponentContent({ onAdd }: { onAdd: (type: ComponentType) =>
                     />
                 ))}
             </div>
-            <Popover.Arrow className="fill-gray-900 stroke-gray-800" />
+            <Popover.Arrow className="fill-shell-bg stroke-shell-border" />
         </Popover.Content>
     );
 }
-

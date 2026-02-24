@@ -79,8 +79,8 @@ const StatusCardComponentView = () => {
                         {/* In Progress State */}
                         <div>
                             <h3 className="mb-4">In Progress</h3>
-                            <p className="mb-3 text-gray-600">Shows a spinning sparkle animation and a looping progress bar.</p>
-                            <div className="bg-white border border-gray-200 rounded-lg p-6">
+                            <p className="mb-3 text-shell-muted">Shows a spinning sparkle animation and a looping progress bar.</p>
+                            <div className="bg-shell-bg border border-shell-border rounded-lg p-6">
                                 <StatusCard
                                     status="in-progress"
                                     title="Removing user..."
@@ -91,8 +91,8 @@ const StatusCardComponentView = () => {
                         {/* Complete State (Rich Content) - User's Example */}
                         <div>
                             <h3 className="mb-4">Complete (Rich Content)</h3>
-                            <p className="mb-3 text-gray-600">Shows a success checkmark and can contain rich text descriptions and links.</p>
-                            <div className="bg-white border border-gray-200 rounded-lg p-6">
+                            <p className="mb-3 text-shell-muted">Shows a success checkmark and can contain rich text descriptions and links.</p>
+                            <div className="bg-shell-bg border border-shell-border rounded-lg p-6">
                                 <StatusCard
                                     status="complete"
                                     title="User removed from Flexis Recruiter"

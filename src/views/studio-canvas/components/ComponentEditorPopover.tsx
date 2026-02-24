@@ -36,7 +36,7 @@ export function ComponentEditorPopover({
                     sideOffset={16}
                     align="start"
                     collisionPadding={20}
-                    className="bg-white rounded-xl shadow-2xl border border-gray-200 p-0 z-[1001]"
+                    className="bg-shell-bg rounded-xl shadow-2xl border border-shell-border p-0 z-[1001]"
                     style={{
                         width: `${width}px`,
                         maxHeight: 'calc(100vh - 40px)',

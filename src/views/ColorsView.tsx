@@ -17,13 +17,13 @@ type ColorCategoryData = {
 const ColorSwatch = ({ name, colorClass, value, reference }: { name: string; colorClass: string; value: string; reference?: string }) => {
   return (
     <div className="space-y-3">
-      <div className={`w-full h-20 rounded-lg border border-gray-200 ${colorClass}`} />
+      <div className={`w-full h-20 rounded-lg border border-shell-border ${colorClass}`} />
       <div className="space-y-1">
-        <div className="text-sm font-medium text-gray-900">{name}</div>
-        <div className="text-xs text-gray-500 font-mono">{colorClass}</div>
-        <div className="text-xs text-gray-400 font-mono">{value}</div>
+        <div className="text-sm font-medium text-shell-text">{name}</div>
+        <div className="text-xs text-shell-muted font-mono">{colorClass}</div>
+        <div className="text-xs text-shell-muted font-mono">{value}</div>
         {reference && (
-          <div className="text-xs text-blue-600 font-mono">{reference}</div>
+          <div className="text-xs text-shell-accent font-mono">{reference}</div>
         )}
       </div>
     </div>
@@ -35,7 +35,7 @@ const ColorCategory = ({ title, description, colors }: { title: string; descript
     <div>
       <div className="mb-6">
         <h2 className="mb-4">{title}</h2>
-        {description && <p className="text-md text-gray-900">{description}</p>}
+        {description && <p className="text-md text-shell-text">{description}</p>}
       </div>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {colors.map((color) => (

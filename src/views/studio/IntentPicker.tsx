@@ -31,11 +31,11 @@ export const IntentPicker = ({ onSelect, onClose, position }: IntentPickerProps)
     return (
         <div
             ref={ref}
-            className="fixed z-50 w-64 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden flex flex-col animation-in fade-in zoom-in-95 duration-100"
+            className="fixed z-50 w-64 bg-shell-bg rounded-xl shadow-xl border border-shell-border overflow-hidden flex flex-col animation-in fade-in zoom-in-95 duration-100"
             style={style}
         >
-            <div className="bg-gray-50 px-3 py-2 border-b border-gray-100">
-                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Add Step</span>
+            <div className="bg-shell-surface-subtle px-3 py-2 border-b border-shell-border-subtle">
+                <span className="text-xs font-semibold text-shell-muted uppercase tracking-wider">Add Step</span>
             </div>
 
             <div className="p-1.5 space-y-0.5">
@@ -46,9 +46,9 @@ export const IntentPicker = ({ onSelect, onClose, position }: IntentPickerProps)
                     onClick={() => onSelect('user')}
                 />
 
-                <div className="h-px bg-gray-100 my-1 mx-2" />
+                <div className="h-px bg-shell-border-subtle my-1 mx-2" />
 
-                <h4 className="px-3 py-1 text-[10px] text-gray-400 font-medium font-mono uppercase">AI Responses</h4>
+                <h4 className="px-3 py-1 text-[10px] text-shell-muted font-medium font-mono uppercase">AI Responses</h4>
 
                 <Option
                     icon={<MessageSquare size={16} />}
@@ -76,14 +76,14 @@ export const IntentPicker = ({ onSelect, onClose, position }: IntentPickerProps)
 const Option = ({ icon, label, description, onClick }: { icon: React.ReactNode, label: string, description: string, onClick: () => void }) => (
     <button
         onClick={onClick}
-        className="w-full text-left flex items-start gap-3 p-2 rounded-lg hover:bg-blue-50 hover:text-blue-700 transition-colors group"
+        className="w-full text-left flex items-start gap-3 p-2 rounded-lg hover:bg-shell-accent-soft transition-colors group"
     >
-        <div className="mt-0.5 text-gray-400 group-hover:text-blue-600 transition-colors">
+        <div className="mt-0.5 text-shell-muted group-hover:text-shell-accent transition-colors">
             {icon}
         </div>
         <div>
-            <div className="text-sm font-medium text-gray-900 group-hover:text-blue-700">{label}</div>
-            <div className="text-[10px] text-gray-400 group-hover:text-blue-400/80 leading-tight">{description}</div>
+            <div className="text-sm font-medium text-shell-text group-hover:text-shell-accent-text">{label}</div>
+            <div className="text-[10px] text-shell-muted group-hover:text-shell-accent-text/80 leading-tight">{description}</div>
         </div>
     </button>
 );

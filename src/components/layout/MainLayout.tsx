@@ -10,7 +10,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
 
 
     return (
-        <div className="flex h-screen w-full overflow-hidden bg-gray-50">
+        <div className="flex h-screen w-full overflow-hidden bg-shell-surface">
             {/* {!shouldHideSidebar && <GlobalSidebar />} - Removed for single sidebar design */}
             <div className="flex-1 h-full overflow-hidden flex flex-col relative">
                 {children}

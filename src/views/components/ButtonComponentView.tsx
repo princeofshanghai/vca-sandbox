@@ -84,7 +84,7 @@ const ButtonComponentView = () => {
             <div>
               <h3 className="mb-2">In recommendations</h3>
               <p className="mb-4">Used in recommendation cards to apply or dismiss AI suggestions.</p>
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="bg-shell-bg border border-shell-border rounded-lg p-4">
                 <div className="w-[352px] mx-auto">
                   <RecommendationCard
                     status="default"

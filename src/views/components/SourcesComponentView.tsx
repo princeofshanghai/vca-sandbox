@@ -53,7 +53,7 @@ const SourcesComponentView = () => {
             <div>
               <h3 className="mb-2">Default (3 sources)</h3>
               <p className="mb-3">Standard sources list with three references.</p>
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="bg-shell-bg border border-shell-border rounded-lg p-4">
                 <div className="">
                   <Sources
                     sources={[
@@ -70,7 +70,7 @@ const SourcesComponentView = () => {
             <div>
               <h3 className="mb-2">Single source</h3>
               <p className="mb-3">Sources list with one reference.</p>
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="bg-shell-bg border border-shell-border rounded-lg p-4">
                 <div className="">
                   <Sources
                     sources={[
@@ -85,7 +85,7 @@ const SourcesComponentView = () => {
             <div>
               <h3 className="mb-2">Two sources</h3>
               <p className="mb-3">Sources list with two references.</p>
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="bg-shell-bg border border-shell-border rounded-lg p-4">
                 <div className="">
                   <Sources
                     sources={[
@@ -101,7 +101,7 @@ const SourcesComponentView = () => {
             <div>
               <h3 className="mb-2">Mixed link states</h3>
               <p className="mb-3">Sources with different link states (enabled, visited).</p>
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="bg-shell-bg border border-shell-border rounded-lg p-4">
                 <div className="">
                   <Sources
                     sources={[
@@ -118,7 +118,7 @@ const SourcesComponentView = () => {
             <div>
               <h3 className="mb-2">In context</h3>
               <p className="mb-3">Example showing Sources component after an AI response.</p>
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="bg-shell-bg border border-shell-border rounded-lg p-4">
                 <div className="space-y-4">
                   <p className="font-vca-text text-[14px] leading-[21px] text-vca-text">
                     Based on recent data, implementing seat assignments can increase team productivity by up to 45% and improve user engagement significantly. Organizations that proactively manage licenses see better ROI and reduced administrative overhead.

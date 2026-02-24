@@ -104,7 +104,7 @@ export const NoteNode = memo(({ id, data, selected }: NodeProps) => {
 
     return (
         <div
-            className={`bg-yellow-50 rounded-lg border shadow-sm w-[300px] transition-colors cursor-default relative group ${selected
+            className={`bg-yellow-50 rounded-lg border shadow-sm w-[300px] transition-colors relative group ${selected
                 ? 'border-yellow-400 ring-1 ring-yellow-400'
                 : 'border-yellow-200 hover:border-yellow-300'
                 }`}
@@ -126,12 +126,12 @@ export const NoteNode = memo(({ id, data, selected }: NodeProps) => {
                         onChange={(e) => setEditedLabel(e.target.value)}
                         onBlur={handleLabelSave}
                         onKeyDown={handleLabelKeyDown}
-                        className="w-full h-full text-xs font-medium text-gray-900 bg-transparent border border-blue-500 rounded px-1 outline-none nodrag"
+                        className="w-full h-full text-xs font-medium text-shell-text bg-transparent border border-yellow-500 rounded px-1 outline-none nodrag"
                         onClick={(e) => e.stopPropagation()}
                     />
                 ) : (
                     <div
-                        className={`w-full h-full flex items-center text-xs font-medium truncate rounded transition-colors cursor-text ${!typedData.label ? 'text-gray-400' : 'text-gray-500 hover:text-gray-900'}`}
+                        className={`w-full h-full flex items-center text-xs font-medium truncate rounded transition-colors cursor-text ${!typedData.label ? 'text-shell-muted' : 'text-shell-muted-strong hover:text-shell-text'}`}
                         onClick={(e) => {
                             e.stopPropagation();
                             setIsEditingLabel(true);
@@ -151,7 +151,7 @@ export const NoteNode = memo(({ id, data, selected }: NodeProps) => {
                     onChange={handleContentChange}
                     onBlur={handleContentBlur}
                     placeholder="Write a note..."
-                    className="w-full bg-transparent border-none resize-none outline-none text-sm text-gray-800 placeholder-yellow-800/30 leading-relaxed overflow-hidden min-h-[80px] nodrag"
+                    className="w-full bg-transparent border-none resize-none outline-none text-sm text-shell-muted-strong placeholder-yellow-800/30 leading-relaxed overflow-hidden min-h-[80px] nodrag"
                     spellCheck={false}
                     rows={1}
                 />

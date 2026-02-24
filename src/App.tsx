@@ -1,3 +1,4 @@
+import { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider } from '@/contexts/AppContext';
 import { AuthProvider } from '@/contexts/AuthContext';
@@ -5,13 +6,14 @@ import { LoginView } from './views/auth/LoginView';
 import ShareView from './views/share/ShareView';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { MainLayout } from '@/components/layout/MainLayout';
-import ComponentLibraryView from '@/views/ComponentLibraryView';
 import DashboardView from '@/views/dashboard/DashboardView';
-import StudioView from '@/views/studio/StudioView';
 import { Toaster } from '@/components/ui/sonner';
+import { LoadingScreen } from '@/components/ui/loading-screen';
 
+const ComponentLibraryView = lazy(() => import('@/views/ComponentLibraryView'));
+const StudioView = lazy(() => import('@/views/studio/StudioView'));
 
-
+const RouteLoadingFallback = () => <LoadingScreen fullScreen />;
 
 const App = () => {
   return (
@@ -33,7 +35,9 @@ const App = () => {
             <Route path="/foundations/*" element={
               <ProtectedRoute>
                 <MainLayout>
-                  <ComponentLibraryView />
+                  <Suspense fallback={<RouteLoadingFallback />}>
+                    <ComponentLibraryView />
+                  </Suspense>
                 </MainLayout>
               </ProtectedRoute>
             } />
@@ -41,7 +45,9 @@ const App = () => {
             <Route path="/components/*" element={
               <ProtectedRoute>
                 <MainLayout>
-                  <ComponentLibraryView />
+                  <Suspense fallback={<RouteLoadingFallback />}>
+                    <ComponentLibraryView />
+                  </Suspense>
                 </MainLayout>
               </ProtectedRoute>
             } />
@@ -49,7 +55,9 @@ const App = () => {
             <Route path="/patterns/*" element={
               <ProtectedRoute>
                 <MainLayout>
-                  <ComponentLibraryView />
+                  <Suspense fallback={<RouteLoadingFallback />}>
+                    <ComponentLibraryView />
+                  </Suspense>
                 </MainLayout>
               </ProtectedRoute>
             } />
@@ -57,7 +65,9 @@ const App = () => {
             {/* Studio has its own layout, but still protected */}
             <Route path="/studio/:id" element={
               <ProtectedRoute>
-                <StudioView />
+                <Suspense fallback={<RouteLoadingFallback />}>
+                  <StudioView />
+                </Suspense>
               </ProtectedRoute>
             } />
 
@@ -74,4 +84,3 @@ const App = () => {
 };
 
 export default App;
-

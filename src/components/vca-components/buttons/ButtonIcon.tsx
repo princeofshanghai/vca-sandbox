@@ -43,7 +43,7 @@ export const ButtonIcon = ({
   };
 
   // Base styles - always circular
-  const baseClasses = 'flex items-center justify-center rounded-full transition-colors';
+  const baseClasses = 'flex items-center justify-center rounded-full transition-colors cursor-pointer';
 
   // Type & emphasis combinations
   let variantClasses = '';
@@ -118,4 +118,3 @@ export const ButtonIcon = ({
     </button>
   );
 };
-

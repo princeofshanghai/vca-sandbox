@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/utils';
+import { Button } from '@/components/ui/button';
 
 type NavLinkBaseProps = {
   /** Link text or custom content */
@@ -49,10 +50,10 @@ type NavLinkProps = NavLinkAsRouterLink | NavLinkAsButton;
 const NavLink = ({ children, isActive = false, className, ...props }: NavLinkProps) => {
   // Shared classes for both Link and button variants
   const baseClasses = cn(
-    'block text-left px-3 py-2 text-2xs rounded transition-colors',
+    'block text-left px-3 py-1.5 text-2xs rounded-vca-sm transition-colors',
     isActive 
-      ? 'bg-gray-100 text-gray-900'
-      : 'text-gray-700 hover:bg-gray-50',
+      ? 'bg-shell-border-subtle text-shell-text font-medium hover:bg-shell-border hover:text-shell-text'
+      : 'text-shell-muted-strong hover:bg-shell-surface hover:text-shell-text',
     className
   );
 
@@ -68,13 +69,18 @@ const NavLink = ({ children, isActive = false, className, ...props }: NavLinkPro
   // Render as button if 'onClick' prop is provided
   if ('onClick' in props && props.onClick) {
     return (
-      <button 
+      <Button
         onClick={props.onClick} 
-        className={cn(baseClasses, 'w-full')}
+        className={cn(
+          baseClasses,
+          'w-full justify-start h-auto',
+          !isActive && 'font-normal'
+        )}
+        variant="ghost"
         type="button"
       >
         {children}
-      </button>
+      </Button>
     );
   }
 
@@ -83,4 +89,3 @@ const NavLink = ({ children, isActive = false, className, ...props }: NavLinkPro
 };
 
 export default NavLink;
-

@@ -43,7 +43,7 @@ const CheckboxGroupComponentView = () => {
                         </div>
                     }
                 >
-                    <div className="w-full max-w-sm bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                    <div className="w-full max-w-sm bg-shell-bg p-6 rounded-lg shadow-sm border border-shell-border-subtle">
                         <CheckboxGroup
                             title="Which funnel stages should be part of the plan?"
                             options={funnelOptions.map(opt => ({ ...opt, disabled }))}
@@ -58,9 +58,9 @@ const CheckboxGroupComponentView = () => {
                 {/* Controlled Example with Descriptions */}
                 <div className="space-y-12">
                     <div>
-                        <h2 className="text-xl font-medium text-gray-900 mb-4">Controlled Mode with Descriptions</h2>
-                        <div className="p-8 border border-gray-200 rounded-lg bg-gray-50 flex justify-center">
-                            <div className="w-full max-w-md bg-white p-8 rounded-xl border border-gray-200 shadow-sm">
+                        <h2 className="text-xl font-medium text-shell-text mb-4">Controlled Mode with Descriptions</h2>
+                        <div className="p-8 border border-shell-border rounded-lg bg-shell-surface-subtle flex justify-center">
+                            <div className="w-full max-w-md bg-shell-bg p-8 rounded-xl border border-shell-border shadow-sm">
                                 <CheckboxGroup
                                     title="Select your interests"
                                     description="We'll customize your feed based on these choices."
@@ -70,7 +70,7 @@ const CheckboxGroupComponentView = () => {
                                     onSave={(ids) => alert(`Updated interests: ${ids.join(', ')}`)}
                                     saveLabel="Update Preferences"
                                 />
-                                <div className="mt-6 pt-4 border-t border-gray-100 text-xs text-gray-500">
+                                <div className="mt-6 pt-4 border-t border-shell-border-subtle text-xs text-shell-muted">
                                     Current Selection: {selectedInterests.join(', ') || 'None'}
                                 </div>
                             </div>

@@ -56,4 +56,39 @@ module.exports = [
       '@typescript-eslint/no-explicit-any': 'error',
     },
   },
+  {
+    files: [
+      'src/components/layout/**/*.{ts,tsx}',
+      'src/components/dashboard/**/*.{ts,tsx}',
+      'src/views/dashboard/**/*.{ts,tsx}',
+      'src/views/auth/**/*.{ts,tsx}',
+      'src/views/share/**/*.{ts,tsx}',
+      'src/views/ComponentLibraryView.tsx',
+    ],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "JSXOpeningElement[name.name='button']",
+          message:
+            'Shell UI: use components from src/components/shell or src/components/ui instead of raw <button>.',
+        },
+        {
+          selector: "JSXOpeningElement[name.name='input']",
+          message:
+            'Shell UI: use components from src/components/shell or src/components/ui instead of raw <input>.',
+        },
+        {
+          selector: "JSXOpeningElement[name.name='select']",
+          message:
+            'Shell UI: use components from src/components/shell or src/components/ui instead of raw <select>.',
+        },
+        {
+          selector: "JSXOpeningElement[name.name='textarea']",
+          message:
+            'Shell UI: use components from src/components/shell or src/components/ui instead of raw <textarea>.',
+        },
+      ],
+    },
+  },
 ];

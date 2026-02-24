@@ -1,8 +1,15 @@
 
-import { Download, Upload, Settings, Check } from 'lucide-react';
+import { Download, Upload, Settings } from 'lucide-react';
 import { Flow } from './types';
 import { useRef } from 'react';
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import {
+    DropdownMenu,
+    DropdownMenuCheckboxItem,
+    DropdownMenuContent,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface FlowToolbarProps {
     flow: Flow;
@@ -81,82 +88,62 @@ export const FlowToolbar = ({ flow, onLoadFlow, onUpdateFlow, isPremium, onToggl
 
             <button
                 onClick={handleImportClick}
-                className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                className="p-2 text-shell-muted hover:text-shell-accent hover:bg-shell-accent-soft rounded-md transition-colors"
                 title="Import JSON"
             >
                 <Upload size={18} />
             </button>
             <button
                 onClick={handleExport}
-                className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                className="p-2 text-shell-muted hover:text-shell-accent hover:bg-shell-accent-soft rounded-md transition-colors"
                 title="Export JSON"
             >
                 <Download size={18} />
             </button>
 
-            <div className="w-px h-6 bg-gray-200 mx-1"></div>
+            <div className="w-px h-6 bg-shell-border mx-1"></div>
 
-            <DropdownMenu.Root>
-                <DropdownMenu.Trigger asChild>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
                     <button
-                        className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
+                        className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-shell-muted-strong bg-shell-bg border border-shell-border rounded-lg hover:bg-shell-surface transition-colors shadow-sm"
                         title="Display Settings"
                     >
                         <Settings size={16} />
                         <span>Display</span>
                     </button>
-                </DropdownMenu.Trigger>
+                </DropdownMenuTrigger>
 
-                <DropdownMenu.Portal>
-                    <DropdownMenu.Content
-                        align="end"
-                        sideOffset={8}
-                        className="min-w-[260px] bg-white rounded-lg shadow-lg border border-gray-200 p-2 z-50 animate-in fade-in-0 zoom-in-95 data-[side=bottom]:slide-in-from-top-2"
+                <DropdownMenuContent align="end" sideOffset={8} className="min-w-[260px]">
+                    <DropdownMenuLabel className="mb-1 text-xs font-semibold uppercase tracking-wider text-shell-muted">
+                        Display settings
+                    </DropdownMenuLabel>
+
+                    <DropdownMenuCheckboxItem
+                        checked={settings.showDisclaimer}
+                        onCheckedChange={() => toggleSetting('showDisclaimer')}
                     >
-                        <DropdownMenu.Label className="text-xs font-semibold text-gray-400 px-2 py-1 uppercase tracking-wider mb-1">
-                            Display settings
-                        </DropdownMenu.Label>
+                        <span>Show Disclaimer</span>
+                    </DropdownMenuCheckboxItem>
 
-                        <DropdownMenu.CheckboxItem
-                            className="flex items-center justify-between gap-4 px-2 py-2 text-sm text-gray-700 rounded hover:bg-gray-100 cursor-pointer outline-none"
-                            checked={settings.showDisclaimer}
-                            onCheckedChange={() => toggleSetting('showDisclaimer')}
-                        >
-                            <span>Show Disclaimer</span>
-                            {settings.showDisclaimer && <Check size={14} className="text-blue-600 shrink-0" />}
-                        </DropdownMenu.CheckboxItem>
+                    <DropdownMenuCheckboxItem
+                        checked={settings.simulateThinking}
+                        onCheckedChange={() => toggleSetting('simulateThinking')}
+                    >
+                        <span>Simulate Thinking</span>
+                    </DropdownMenuCheckboxItem>
 
-                        <DropdownMenu.CheckboxItem
-                            className="flex items-center justify-between gap-4 px-2 py-2 text-sm text-gray-700 rounded hover:bg-gray-100 cursor-pointer outline-none"
-                            checked={settings.simulateThinking}
-                            onCheckedChange={() => toggleSetting('simulateThinking')}
-                        >
-                            <span>Simulate Thinking</span>
-                            {settings.simulateThinking && <Check size={14} className="text-blue-600 shrink-0" />}
-                        </DropdownMenu.CheckboxItem>
+                    <DropdownMenuSeparator />
 
-                        <div className="h-px bg-gray-100 my-1"></div>
+                    <DropdownMenuCheckboxItem checked={isMobile} onCheckedChange={onToggleMobile}>
+                        <span>View as Mobile</span>
+                    </DropdownMenuCheckboxItem>
 
-                        <DropdownMenu.CheckboxItem
-                            className="flex items-center justify-between gap-4 px-2 py-2 text-sm text-gray-700 rounded hover:bg-gray-100 cursor-pointer outline-none"
-                            checked={isMobile}
-                            onCheckedChange={onToggleMobile}
-                        >
-                            <span>View as Mobile</span>
-                            {isMobile && <Check size={14} className="text-blue-600 shrink-0" />}
-                        </DropdownMenu.CheckboxItem>
-
-                        <DropdownMenu.CheckboxItem
-                            className="flex items-center justify-between gap-4 px-2 py-2 text-sm text-gray-700 rounded hover:bg-gray-100 cursor-pointer outline-none"
-                            checked={isPremium}
-                            onCheckedChange={onTogglePremium}
-                        >
-                            <span>View as LinkedIn Premium member</span>
-                            {isPremium && <Check size={14} className="text-blue-600 shrink-0" />}
-                        </DropdownMenu.CheckboxItem>
-                    </DropdownMenu.Content>
-                </DropdownMenu.Portal>
-            </DropdownMenu.Root>
+                    <DropdownMenuCheckboxItem checked={isPremium} onCheckedChange={onTogglePremium}>
+                        <span>View as LinkedIn Premium member</span>
+                    </DropdownMenuCheckboxItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
         </div>
     );
 };

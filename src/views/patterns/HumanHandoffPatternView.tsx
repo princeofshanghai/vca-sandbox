@@ -22,9 +22,9 @@ const HumanHandoffPatternView = () => {
             ]}
         >
             {/* 1. The Handoff Lifecycle */}
-            <div className="border-b border-gray-200 pb-16">
+            <div className="border-b border-shell-border pb-16">
                 <h2 id="lifecycle" className="scroll-mt-24 mb-4">The Handoff Lifecycle</h2>
-                <p className="text-gray-600 mb-10 max-w-3xl text-lg">
+                <p className="text-shell-muted mb-10 max-w-3xl text-lg">
                     Moving from AI to a human involves three critical moments: Confirmation, Waiting, and Connection. Each step needs to reassure the user they're still on the right path.
                 </p>
 
@@ -51,9 +51,9 @@ const HumanHandoffPatternView = () => {
             </div>
 
             {/* 2. Realistic Example */}
-            <div className="border-b border-gray-200 pb-16">
+            <div className="border-b border-shell-border pb-16">
                 <h2 id="example" className="scroll-mt-24 mb-4">In Practice</h2>
-                <p className="text-gray-600 mb-10 max-w-3xl text-lg">
+                <p className="text-shell-muted mb-10 max-w-3xl text-lg">
                     Here's how those pieces come together in a real conversation.
                 </p>
 
@@ -308,7 +308,7 @@ const LiveAgentDemo = () => {
             <div className="text-center mt-4">
                 <button
                     onClick={resetDemo}
-                    className="text-xs text-gray-400 hover:text-gray-600 underline"
+                    className="text-xs text-shell-muted hover:text-shell-muted underline"
                 >
                     Reset Demo
                 </button>

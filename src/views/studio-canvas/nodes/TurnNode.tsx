@@ -15,6 +15,7 @@ interface TurnNodeData {
 
     onSelectComponent?: (nodeId: string, componentId: string, anchorEl: HTMLElement) => void;
     onDeselect?: () => void;
+    onComponentReorder?: (nodeId: string, activeComponentId: string, overComponentId: string) => void;
 
     onLabelChange?: (nodeId: string, newLabel: string) => void;
     onComponentUpdate?: (nodeId: string, componentId: string, updates: Partial<Component>) => void;
@@ -58,14 +59,24 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
 
     const zoom = useStore((s) => s.transform[2]);
     const scale = Math.max(1, 1 / zoom);
+    const borderClassName = isAI
+        ? (selected
+            ? 'border-shell-accent ring-1 ring-shell-accent/30'
+            : 'border-shell-accent/35 hover:border-shell-accent/60')
+        : (selected
+            ? 'border-shell-node-user ring-1 ring-shell-node-user/30'
+            : 'border-shell-node-user/35 hover:border-shell-node-user/60');
+    const nodeSurfaceClassName = isAI
+        ? 'bg-[rgb(var(--shell-node-ai-surface)/1)]'
+        : 'bg-[rgb(var(--shell-node-user-surface)/1)]';
+    const accentClassName = isAI ? 'text-shell-accent' : 'text-shell-node-user';
+    const handleClassName = isAI ? '!bg-shell-accent' : '!bg-shell-node-user';
+    const labelInputBorderClassName = isAI ? 'border-shell-accent' : 'border-shell-node-user';
 
     return (
         <div
             id={`node-${id}`}
-            className={`bg-white rounded-lg border shadow-sm w-[320px] transition-colors cursor-default relative overflow-visible ${selected
-                ? 'border-blue-500 ring-1 ring-blue-500'
-                : 'border-gray-300 hover:border-blue-300'
-                }`}
+            className={`${nodeSurfaceClassName} rounded-lg border shadow-sm w-[320px] transition-colors relative overflow-visible ${borderClassName}`}
         >
             {/* Node Label (Figma Style) - Above the card */}
             < div
@@ -77,9 +88,9 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
                 {/* Speaker Icon relocated from header */}
                 {
                     isAI ? (
-                        <VcaIcon icon="signal-ai" size="sm" className="text-blue-600 flex-shrink-0" />
+                        <VcaIcon icon="signal-ai" size="sm" className={`${accentClassName} flex-shrink-0`} />
                     ) : (
-                        <span className="text-gray-600 flex-shrink-0 text-xs">👤</span>
+                        <span className={`${accentClassName} flex-shrink-0 text-xs`}>👤</span>
                     )
                 }
 
@@ -92,12 +103,12 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
                             onChange={(e) => setEditedLabel(e.target.value)}
                             onBlur={handleLabelSave}
                             onKeyDown={handleLabelKeyDown}
-                            className="w-full h-full text-xs font-medium text-gray-900 bg-transparent border border-blue-500 rounded px-1 outline-none nodrag"
+                            className={`w-full h-full text-xs font-medium text-shell-text bg-transparent border rounded px-1 outline-none nodrag ${labelInputBorderClassName}`}
                             onClick={(e) => e.stopPropagation()}
                         />
                     ) : (
                         <div
-                            className={`w-full h-full flex items-center text-xs font-medium truncate rounded transition-colors cursor-text ${!typedData.label ? 'text-gray-400' : 'text-gray-500 hover:text-gray-900'}`}
+                            className={`w-full h-full flex items-center text-xs font-medium truncate rounded transition-colors cursor-text ${!typedData.label ? 'text-shell-muted' : 'text-shell-muted-strong hover:text-shell-text'}`}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 setIsEditingLabel(true);
@@ -115,7 +126,7 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
                 type="target"
                 id="main-input"
                 position={Position.Left}
-                className="!bg-blue-400 !w-3 !h-3 !border-2 !border-white !z-50"
+                className={`${handleClassName} !w-3 !h-3 !border-2 !border-shell-bg !z-50`}
                 style={{ top: 19 }}
             />
 
@@ -127,8 +138,10 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
                     components={components}
                     selectedComponentId={typedData.selectedComponentId}
                     entryPoint={typedData.entryPoint}
+                    surfaceClassName={nodeSurfaceClassName}
                     onSelectComponent={typedData.onSelectComponent}
                     onDeselect={typedData.onDeselect}
+                    onComponentReorder={typedData.onComponentReorder}
                     onComponentUpdate={typedData.onComponentUpdate}
                 />
             </div>
@@ -138,7 +151,7 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
                 type="source"
                 id="main-output"
                 position={Position.Right}
-                className="!bg-blue-400 !w-3 !h-3 !border-2 !border-white !z-50"
+                className={`${handleClassName} !w-3 !h-3 !border-2 !border-shell-bg !z-50`}
                 style={{ top: 19 }}
             />
         </div >

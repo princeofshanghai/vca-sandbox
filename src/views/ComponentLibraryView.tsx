@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Routes, Route, useLocation, Navigate, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import Sidebar from '@/components/layout/Sidebar';
 import MainContent from '@/components/layout/MainContent';
 import CollapsibleSection from '@/components/layout/CollapsibleSection';
@@ -66,22 +67,24 @@ const ComponentLibraryView = () => {
   const sidebarHeader = (
     <>
       <div className="h-14 px-4 flex items-center">
-        <button
+        <Button
           onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-2xs font-medium text-gray-500 hover:text-gray-900 transition-colors"
+          className="h-auto p-0 text-2xs font-medium text-shell-muted hover:text-shell-text"
+          variant="ghost"
+          type="button"
         >
           <ArrowLeft size={16} />
           Back to Dashboard
-        </button>
+        </Button>
       </div>
       <div className="px-4">
-        <div className="h-px bg-gray-200" />
+        <div className="h-px bg-shell-border" />
       </div>
     </>
   );
 
   return (
-    <div className="flex h-full">
+    <div className="component-library-scope flex h-full">
       <Sidebar
         header={sidebarHeader}
         isMobileOpen={state.mobileMenuOpen}

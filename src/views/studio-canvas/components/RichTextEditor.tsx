@@ -111,7 +111,7 @@ export function RichTextEditor({
             Link.configure({
                 openOnClick: false,
                 HTMLAttributes: {
-                    class: 'text-blue-500 hover:underline cursor-pointer',
+                    class: 'text-shell-accent hover:text-shell-accent-hover hover:underline cursor-pointer',
                 },
             }),
             Placeholder.configure({
@@ -124,7 +124,7 @@ export function RichTextEditor({
         editorProps: {
             attributes: {
                 class: cn(
-                    "max-w-none outline-none text-[13px] leading-relaxed text-gray-800 min-h-[60px] p-2.5",
+                    "max-w-none outline-none text-[13px] leading-relaxed text-shell-text min-h-[60px] p-2.5",
                     // List Styling
                     "[&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2",
                     "[&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-2",
@@ -172,29 +172,29 @@ export function RichTextEditor({
     return (
         <div
             className={cn(
-                "border border-gray-200 rounded-lg bg-white overflow-hidden transition-all focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-300",
+                "border border-shell-border rounded-lg bg-shell-bg overflow-hidden transition-all focus-within:ring-2 focus-within:ring-shell-accent/20 focus-within:border-shell-accent",
                 className
             )}
             onKeyDown={(e) => e.stopPropagation()}
         >
             {/* Bubble Menu */}
             {editor && (
-                <BubbleMenu className="flex bg-white shadow-xl border border-gray-200 rounded-lg overflow-hidden" editor={editor}>
-                    <button onClick={() => editor.chain().focus().toggleBold().run()} className={cn("p-2 hover:bg-gray-100", editor.isActive('bold') ? 'text-blue-600' : 'text-gray-600')}>
+                <BubbleMenu className="flex bg-shell-surface shadow-xl border border-shell-border rounded-lg overflow-hidden" editor={editor}>
+                    <button onClick={() => editor.chain().focus().toggleBold().run()} className={cn("p-2 hover:bg-shell-surface-subtle", editor.isActive('bold') ? 'text-shell-accent' : 'text-shell-muted-strong')}>
                         <Bold size={14} />
                     </button>
-                    <button onClick={() => editor.chain().focus().toggleItalic().run()} className={cn("p-2 hover:bg-gray-100", editor.isActive('italic') ? 'text-blue-600' : 'text-gray-600')}>
+                    <button onClick={() => editor.chain().focus().toggleItalic().run()} className={cn("p-2 hover:bg-shell-surface-subtle", editor.isActive('italic') ? 'text-shell-accent' : 'text-shell-muted-strong')}>
                         <Italic size={14} />
                     </button>
-                    <div className="w-px h-4 bg-gray-200 my-auto mx-1" />
-                    <button onClick={() => editor.chain().focus().toggleBulletList().run()} className={cn("p-2 hover:bg-gray-100", editor.isActive('bulletList') ? 'text-blue-600' : 'text-gray-600')}>
+                    <div className="w-px h-4 bg-shell-border-subtle my-auto mx-1" />
+                    <button onClick={() => editor.chain().focus().toggleBulletList().run()} className={cn("p-2 hover:bg-shell-surface-subtle", editor.isActive('bulletList') ? 'text-shell-accent' : 'text-shell-muted-strong')}>
                         <List size={14} />
                     </button>
-                    <button onClick={() => editor.chain().focus().toggleOrderedList().run()} className={cn("p-2 hover:bg-gray-100", editor.isActive('orderedList') ? 'text-blue-600' : 'text-gray-600')}>
+                    <button onClick={() => editor.chain().focus().toggleOrderedList().run()} className={cn("p-2 hover:bg-shell-surface-subtle", editor.isActive('orderedList') ? 'text-shell-accent' : 'text-shell-muted-strong')}>
                         <ListOrdered size={14} />
                     </button>
-                    <div className="w-px h-4 bg-gray-200 my-auto mx-1" />
-                    <button onClick={setLink} className={cn("p-2 hover:bg-gray-100", editor.isActive('link') ? 'text-blue-600' : 'text-gray-600')}>
+                    <div className="w-px h-4 bg-shell-border-subtle my-auto mx-1" />
+                    <button onClick={setLink} className={cn("p-2 hover:bg-shell-surface-subtle", editor.isActive('link') ? 'text-shell-accent' : 'text-shell-muted-strong')}>
                         <LinkIcon size={14} />
                     </button>
                 </BubbleMenu>
@@ -204,4 +204,3 @@ export function RichTextEditor({
         </div>
     );
 }
-

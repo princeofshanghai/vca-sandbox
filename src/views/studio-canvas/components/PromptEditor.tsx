@@ -66,7 +66,6 @@ export function PromptEditor({ component, entryPoint, onChange, children, isOpen
                     placeholder={getPlaceholder()}
                     type="textarea"
                     minRows={2}
-                    autoFocus={true}
                     hint="Instructions for how the AI should behave in this turn."
                 />
             </EditorContent>

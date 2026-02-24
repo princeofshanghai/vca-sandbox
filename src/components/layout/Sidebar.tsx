@@ -38,7 +38,7 @@ const Sidebar = ({ children, header, footer, isMobileOpen = false, onClose }: Si
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed md:static top-0 left-0 w-[240px] h-full border-r border-gray-200 bg-white z-50 md:z-auto flex flex-col transform transition-transform duration-300 ease-in-out",
+          "fixed md:static top-0 left-0 w-[240px] h-full border-r border-shell-border dark:border-shell-border/60 bg-shell-bg z-50 md:z-auto flex flex-col transform transition-transform duration-300 ease-in-out",
           isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         )}
       >
@@ -56,7 +56,7 @@ const Sidebar = ({ children, header, footer, isMobileOpen = false, onClose }: Si
           {children}
         </div>
 
-        <div className="flex-shrink-0 bg-white">
+        <div className="flex-shrink-0 bg-shell-bg">
           {footer}
         </div>
       </aside>
@@ -65,4 +65,3 @@ const Sidebar = ({ children, header, footer, isMobileOpen = false, onClose }: Si
 };
 
 export default Sidebar;
-

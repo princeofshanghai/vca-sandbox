@@ -20,15 +20,15 @@ const ConversationFlowPatternView = () => {
             ]}
         >
             {/* 0. Designing the Conversation */}
-            <div className="border-b border-gray-200 pb-16">
+            <div className="border-b border-shell-border pb-16">
                 <h2 id="the-conversation-lifecycle" className="scroll-mt-24 mb-4">Designing the Conversation</h2>
-                <p className="text-gray-600 mb-10 max-w-3xl text-lg">
+                <p className="text-shell-muted mb-10 max-w-3xl text-lg">
                     Designing for AI doesn't mean reinventing the wheel. At its core, a good chat interaction follows a reliable structure—similar to a traditional user flow, but more flexible. Use this 5-step framework to map out your experience.
                 </p>
 
                 <div className="space-y-12">
                     {/* Visual Process Map */}
-                    <div className="bg-white rounded-xl p-8 border border-gray-200 shadow-sm">
+                    <div className="bg-shell-bg rounded-xl p-8 border border-shell-border shadow-sm">
                         <div className="hidden md:grid grid-cols-7 gap-4">
                             <ProcessStep
                                 number="01"
@@ -36,7 +36,7 @@ const ConversationFlowPatternView = () => {
                                 icon="👋"
                                 desc="Establish context"
                             />
-                            <div className="flex items-center justify-center text-gray-300">
+                            <div className="flex items-center justify-center text-shell-border">
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
                             </div>
                             <ProcessStep
@@ -45,7 +45,7 @@ const ConversationFlowPatternView = () => {
                                 icon="🤔"
                                 desc="Confirm request"
                             />
-                            <div className="flex items-center justify-center text-gray-300">
+                            <div className="flex items-center justify-center text-shell-border">
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
                             </div>
                             <ProcessStep
@@ -54,7 +54,7 @@ const ConversationFlowPatternView = () => {
                                 icon="📝"
                                 desc="Collect details"
                             />
-                            <div className="flex items-center justify-center text-gray-300">
+                            <div className="flex items-center justify-center text-shell-border">
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
                             </div>
                             <ProcessStep
@@ -66,41 +66,41 @@ const ConversationFlowPatternView = () => {
                         </div>
                         {/* Mobile View / Fallback text list */}
                         <div className="md:hidden space-y-4">
-                            <div className="flex items-center gap-3"><span className="font-mono text-gray-400">01</span> <span className="font-semibold">Welcome</span></div>
-                            <div className="flex items-center gap-3"><span className="font-mono text-gray-400">02</span> <span className="font-semibold">Intent Recognition</span></div>
-                            <div className="flex items-center gap-3"><span className="font-mono text-gray-400">03</span> <span className="font-semibold">Info Gathering</span></div>
-                            <div className="flex items-center gap-3"><span className="font-mono text-gray-400">04</span> <span className="font-semibold">Action</span></div>
+                            <div className="flex items-center gap-3"><span className="font-mono text-shell-muted">01</span> <span className="font-semibold">Welcome</span></div>
+                            <div className="flex items-center gap-3"><span className="font-mono text-shell-muted">02</span> <span className="font-semibold">Intent Recognition</span></div>
+                            <div className="flex items-center gap-3"><span className="font-mono text-shell-muted">03</span> <span className="font-semibold">Info Gathering</span></div>
+                            <div className="flex items-center gap-3"><span className="font-mono text-shell-muted">04</span> <span className="font-semibold">Action</span></div>
                         </div>
                     </div>
 
                     {/* Core Principles Block */}
                     <div>
-                        <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-6">Core Design Principles</h3>
+                        <h3 className="text-sm font-semibold text-shell-text uppercase tracking-wider mb-6">Core Design Principles</h3>
                         <div className="grid md:grid-cols-3 gap-6">
-                            <div className="bg-gray-50 p-6 rounded-lg border border-gray-100">
-                                <div className="text-blue-600 mb-3">
+                            <div className="bg-shell-surface-subtle p-6 rounded-lg border border-shell-border-subtle">
+                                <div className="text-shell-accent mb-3">
                                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                 </div>
                                 <h4 className="font-semibold text-vca-text mb-2">Establish Context</h4>
-                                <p className="text-sm text-gray-600 leading-relaxed">
+                                <p className="text-sm text-shell-muted leading-relaxed">
                                     Don't ask questions the system already understands. Use the user's current page and permissions to skip the basics.
                                 </p>
                             </div>
-                            <div className="bg-gray-50 p-6 rounded-lg border border-gray-100">
-                                <div className="text-blue-600 mb-3">
+                            <div className="bg-shell-surface-subtle p-6 rounded-lg border border-shell-border-subtle">
+                                <div className="text-shell-accent mb-3">
                                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                                 </div>
                                 <h4 className="font-semibold text-vca-text mb-2">Clarify Early</h4>
-                                <p className="text-sm text-gray-600 leading-relaxed">
+                                <p className="text-sm text-shell-muted leading-relaxed">
                                     Vague requests lead to errors. If there's doubt, ask a quick multiple-choice question to zero in on the goal.
                                 </p>
                             </div>
-                            <div className="bg-gray-50 p-6 rounded-lg border border-gray-100">
-                                <div className="text-blue-600 mb-3">
+                            <div className="bg-shell-surface-subtle p-6 rounded-lg border border-shell-border-subtle">
+                                <div className="text-shell-accent mb-3">
                                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                 </div>
                                 <h4 className="font-semibold text-vca-text mb-2">Provide Feedback</h4>
-                                <p className="text-sm text-gray-600 leading-relaxed">
+                                <p className="text-sm text-shell-muted leading-relaxed">
                                     Silence is scary. Chat interfaces need clear "working" and "success" states to build trust during tasks.
                                 </p>
                             </div>
@@ -110,9 +110,9 @@ const ConversationFlowPatternView = () => {
 
             </div>
             {/* 1. Welcome */}
-            <div className="border-b border-gray-200 pb-16">
+            <div className="border-b border-shell-border pb-16">
                 <h2 id="welcome" className="scroll-mt-24 mb-4">Welcome</h2>
-                <p className="text-gray-600 mb-10 max-w-3xl text-lg">
+                <p className="text-shell-muted mb-10 max-w-3xl text-lg">
                     Make a great first impression. Acknowledge where the user is and offer relevant help immediately.
                 </p>
 
@@ -209,9 +209,9 @@ const ConversationFlowPatternView = () => {
             </div>
 
             {/* 2. Intent Recognition */}
-            <div className="border-b border-gray-200 pb-16">
+            <div className="border-b border-shell-border pb-16">
                 <h2 id="intent-recognition" className="scroll-mt-24 mb-4">Intent Recognition</h2>
-                <p className="text-gray-600 mb-10 max-w-3xl text-lg">
+                <p className="text-shell-muted mb-10 max-w-3xl text-lg">
                     Understand what they need. If their request is vague, dangerous, or high-stakes, clarify it before taking action.
                 </p>
 
@@ -364,9 +364,9 @@ const ConversationFlowPatternView = () => {
             </div>
 
             {/* 3. Info Gathering */}
-            <div className="border-b border-gray-200 pb-16">
+            <div className="border-b border-shell-border pb-16">
                 <h2 id="info-gathering" className="scroll-mt-24 mb-4">Info Gathering</h2>
-                <p className="text-gray-600 mb-10 max-w-3xl text-lg">
+                <p className="text-shell-muted mb-10 max-w-3xl text-lg">
                     Get the details. Ask for what's missing naturally, and check for blockers early so users don't waste time.
                 </p>
 
@@ -474,7 +474,7 @@ const ConversationFlowPatternView = () => {
             {/* 4. Action */}
             <div>
                 <h2 id="action" className="scroll-mt-24 mb-4">Action</h2>
-                <p className="text-gray-600 mb-10 max-w-3xl text-lg">
+                <p className="text-shell-muted mb-10 max-w-3xl text-lg">
                     Do the work confidently. Keep the user in the loop, verify the result, and proactively suggest what comes next.
                 </p>
 
@@ -639,7 +639,7 @@ const RemovingUserExample = () => {
             </Container>
 
             {/* Replay indicator */}
-            <div className="text-center text-xs text-gray-400 mt-4 animate-pulse">
+            <div className="text-center text-xs text-shell-muted mt-4 animate-pulse">
                 {status === 'in-progress' ? 'Action in progress...' : 'Action complete. Resetting demo in 3s...'}
             </div>
         </div>
@@ -751,12 +751,11 @@ interface ProcessStepProps {
 
 const ProcessStep = ({ number, title, icon, desc }: ProcessStepProps) => (
     <div className="flex flex-col items-center text-center group">
-        <div className="w-12 h-12 rounded-full bg-white border border-gray-200 flex items-center justify-center text-xl mb-3 shadow-sm group-hover:border-blue-300 group-hover:shadow-md transition-all">
+        <div className="w-12 h-12 rounded-full bg-shell-bg border border-shell-border flex items-center justify-center text-xl mb-3 shadow-sm group-hover:border-shell-accent-border group-hover:shadow-md transition-all">
             {icon}
         </div>
-        <div className="text-xs font-mono text-gray-400 font-medium mb-1">{number}</div>
+        <div className="text-xs font-mono text-shell-muted font-medium mb-1">{number}</div>
         <div className="font-semibold text-vca-text text-sm mb-1">{title}</div>
-        <div className="text-xs text-gray-500 leading-tight px-2">{desc}</div>
+        <div className="text-xs text-shell-muted leading-tight px-2">{desc}</div>
     </div>
 );
-

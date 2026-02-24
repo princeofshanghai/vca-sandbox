@@ -2,9 +2,116 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: "Community Pro";
+  src: url("/fonts/community-pro/CommunityPro-BoldWEB.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
 @layer base {
   * {
-    @apply border-gray-200;
+    @apply border-shell-border;
+  }
+
+  :root {
+    --shell-bg: 255 255 255;
+    --shell-surface: 249 250 251;
+    --shell-surface-subtle: 249 250 251;
+    --shell-surface-subtle-alpha: 0.5;
+    --shell-text: 17 24 39;
+    --shell-muted: 107 114 128;
+    --shell-muted-strong: 55 65 81;
+    --shell-border: 229 231 235;
+    --shell-border-subtle: 243 244 246;
+    --shell-accent: 37 99 235;
+    --shell-accent-hover: 29 78 216;
+    --shell-accent-soft: 239 246 255;
+    --shell-accent-soft-alpha: 0.5;
+    --shell-accent-border: 219 234 254;
+    --shell-accent-text: 29 78 216;
+    --shell-danger: 220 38 38;
+    --shell-danger-hover: 185 28 28;
+    --shell-danger-soft: 254 242 242;
+    --shell-danger-soft-alpha: 1;
+    --shell-danger-border: 254 202 202;
+    --shell-canvas: 245 245 247;
+    --shell-canvas-grid: 180 179 168;
+    --shell-flow-edge: 156 163 175;
+    --shell-flow-edge-hover: 75 85 99;
+    --shell-flow-edge-selected: 37 99 235;
+    --shell-flow-edge-marker: 148 163 184;
+    --shell-scrollbar-thumb: 203 213 225;
+    --shell-scrollbar-thumb-hover: 148 163 184;
+    --shell-node-ai-surface: 245 248 255;
+    --shell-node-user-surface: 249 245 255;
+    --shell-node-condition-surface: 255 249 240;
+    --shell-node-user: 147 51 234;
+    --shell-node-condition: 245 158 11;
+    --shell-node-note: 202 138 4;
+
+    /* Always-dark cinematic tokens */
+    --shell-dark-bg: 30 30 30;
+    --shell-dark-panel: 44 44 44;
+    --shell-dark-panel-alt: 18 18 20;
+    --shell-dark-card: 24 24 27;
+    --shell-dark-card-alpha: 0.4;
+    --shell-dark-surface: 58 58 58;
+    --shell-dark-text: 255 255 255;
+    --shell-dark-muted: 156 163 175;
+    --shell-dark-border: 255 255 255;
+    --shell-dark-border-alpha: 0.1;
+    --shell-dark-border-strong: 255 255 255;
+    --shell-dark-border-strong-alpha: 0.2;
+    --shell-dark-accent: 37 99 235;
+    --shell-dark-accent-hover: 29 78 216;
+    --shell-dark-accent-soft: 29 78 216;
+    --shell-dark-accent-soft-alpha: 0.3;
+    --shell-dark-danger: 239 68 68;
+    --shell-dark-danger-soft: 239 68 68;
+    --shell-dark-danger-soft-alpha: 0.1;
+    --shell-dark-success: 52 211 153;
+    --shell-dark-success-soft: 52 211 153;
+    --shell-dark-success-soft-alpha: 0.1;
+    --shell-dark-orb: 28 28 28;
+  }
+
+  .dark {
+    --shell-bg: 12 13 15;
+    --shell-surface: 19 20 23;
+    --shell-surface-subtle: 28 30 35;
+    --shell-surface-subtle-alpha: 0.52;
+    --shell-text: 241 242 245;
+    --shell-muted: 152 155 165;
+    --shell-muted-strong: 198 201 210;
+    --shell-border: 42 44 50;
+    --shell-border-subtle: 30 32 37;
+    --shell-accent: 82 139 255;
+    --shell-accent-hover: 106 156 255;
+    --shell-accent-soft: 82 139 255;
+    --shell-accent-soft-alpha: 0.16;
+    --shell-accent-border: 101 129 194;
+    --shell-accent-text: 197 217 255;
+    --shell-danger: 242 113 113;
+    --shell-danger-hover: 248 141 141;
+    --shell-danger-soft: 126 44 44;
+    --shell-danger-soft-alpha: 0.38;
+    --shell-danger-border: 175 76 76;
+    --shell-canvas: 15 16 19;
+    --shell-canvas-grid: 47 49 56;
+    --shell-flow-edge: 82 86 96;
+    --shell-flow-edge-hover: 120 125 136;
+    --shell-flow-edge-selected: 82 139 255;
+    --shell-flow-edge-marker: 124 129 140;
+    --shell-scrollbar-thumb: 75 85 99;
+    --shell-scrollbar-thumb-hover: 107 114 128;
+    --shell-node-ai-surface: 22 28 39;
+    --shell-node-user-surface: 29 23 39;
+    --shell-node-condition-surface: 37 31 24;
+    --shell-node-user: 192 132 252;
+    --shell-node-condition: 251 191 36;
+    --shell-node-note: 250 204 21;
   }
 
   html,
@@ -16,7 +123,7 @@
   }
 
   body {
-    @apply bg-white text-gray-900;
+    @apply bg-shell-bg text-shell-text;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
@@ -28,51 +135,51 @@
 
   /* Headings H1-H6 */
   h1 {
-    @apply text-4xl font-medium tracking-tight text-gray-900 mb-4;
+    @apply text-4xl font-medium tracking-tight text-shell-text mb-4;
     /* 36px / 2.25rem, weight: 500, margin-bottom: 16px */
   }
 
   h2 {
-    @apply text-xl font-medium tracking-tight text-gray-900;
+    @apply text-xl font-medium tracking-tight text-shell-text;
     /* 20px / 1.25rem, weight: 500 */
   }
 
   h3 {
-    @apply text-lg font-medium tracking-tight text-gray-900;
+    @apply text-lg font-medium tracking-tight text-shell-text;
     /* 18px / 1.125rem, weight: 500 */
   }
 
   h4 {
-    @apply text-base font-medium tracking-tight text-gray-900;
+    @apply text-base font-medium tracking-tight text-shell-text;
     /* 14px / 0.875rem, weight: 600 */
   }
 
   h5 {
-    @apply text-sm font-medium text-gray-700;
+    @apply text-sm font-medium text-shell-muted-strong;
     /* 14px / 0.875rem, weight: 500 */
   }
 
   h6 {
-    @apply text-sm font-medium text-gray-700;
+    @apply text-sm font-medium text-shell-muted-strong;
     /* 12px / 0.75rem, weight: 600 */
   }
 
   /* Body Text & Paragraphs */
   p {
-    @apply text-15 text-gray-900 leading-relaxed;
+    @apply text-15 text-shell-text leading-relaxed;
     /* 15px / 0.9375rem (custom size) */
   }
 
   /* Links */
   a {
-    @apply text-blue-600 hover:text-blue-800 underline-offset-2 transition-colors;
+    @apply text-shell-accent hover:text-shell-accent-hover underline-offset-2 transition-colors;
     /* 2px underline offset */
   }
 
   /* Inline Text Styles */
   strong,
   b {
-    @apply font-semibold text-gray-900;
+    @apply font-semibold text-shell-text;
     /* weight: 600 */
   }
 
@@ -82,18 +189,18 @@
   }
 
   small {
-    @apply text-sm text-gray-500;
+    @apply text-sm text-shell-muted;
     /* 14px / 0.875rem */
   }
 
   /* Code & Preformatted Text */
   code {
-    @apply text-sm font-mono bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded;
+    @apply text-sm font-mono bg-shell-surface text-shell-text px-1.5 py-0.5 rounded;
     /* 14px, padding: 6px 4px, border-radius: 4px */
   }
 
   pre {
-    @apply bg-gray-100 text-gray-800 p-4 rounded-lg overflow-x-auto;
+    @apply bg-shell-surface text-shell-text p-4 rounded-lg overflow-x-auto;
     /* padding: 16px, border-radius: 8px */
   }
 
@@ -104,14 +211,14 @@
 
   /* Blockquotes */
   blockquote {
-    @apply border-l-4 border-gray-300 pl-4 py-2 italic text-gray-700;
+    @apply border-l-4 border-shell-border pl-4 py-2 italic text-shell-muted-strong;
     /* left border: 4px, padding-left: 16px, padding-y: 8px */
   }
 
   /* Lists */
   ul,
   ol {
-    @apply text-base text-gray-700 leading-relaxed;
+    @apply text-base text-shell-muted-strong leading-relaxed;
     /* 16px / 1rem, line-height: 1.625 */
   }
 
@@ -132,8 +239,19 @@
 
   /* Horizontal Rule */
   hr {
-    @apply border-gray-200 my-8;
+    @apply border-shell-border my-8;
     /* margin-top & bottom: 32px */
+  }
+
+  /* Component Library heading typography (scoped) */
+  .component-library-scope h1,
+  .component-library-scope h2,
+  .component-library-scope h3,
+  .component-library-scope h4,
+  .component-library-scope h5,
+  .component-library-scope h6 {
+    font-family: "Community Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-weight: 700;
   }
 }
 
@@ -151,45 +269,41 @@
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: theme('colors.gray.300');
-    /* gray-300: #D1D5DB */
+    background: rgb(var(--shell-scrollbar-thumb) / 1);
     border-radius: 4px;
-    /* rounded scrollbar thumb */
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: theme('colors.gray.400');
-    /* gray-400: #9CA3AF on hover */
+    background: rgb(var(--shell-scrollbar-thumb-hover) / 1);
   }
 
   /* Firefox */
   .scrollbar-thin {
     scrollbar-width: thin;
-    /* thin scrollbar for Firefox */
-    scrollbar-color: theme('colors.gray.300') transparent;
-    /* thumb color, track color */
+    scrollbar-color: rgb(var(--shell-scrollbar-thumb) / 1) transparent;
+  }
+}
+
+@layer components {
+  .shell-dropdown-item[data-highlighted] svg {
+    color: inherit !important;
   }
 }
 
 /* React Flow Edge Styling Overrides */
 .react-flow__edge-path {
-  stroke: #9ca3af;
-  /* Gray-400 default */
+  stroke: rgb(var(--shell-flow-edge) / 1);
   stroke-width: 1.5px;
   transition: stroke 0.2s, stroke-width 0.2s;
   cursor: pointer;
 }
 
-/* Hover State: Darker Gray + Thicker */
 .react-flow__edge:hover .react-flow__edge-path {
-  stroke: #4b5563;
-  /* Gray-600 */
+  stroke: rgb(var(--shell-flow-edge-hover) / 1);
   stroke-width: 2px;
 }
 
-/* Selected State: VCA Blue + Thicker */
 .react-flow__edge.selected .react-flow__edge-path {
-  stroke: #2563eb;
-  /* Blue-600 */
+  stroke: rgb(var(--shell-flow-edge-selected) / 1);
   stroke-width: 2.5px;
 }

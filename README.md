@@ -51,7 +51,7 @@ VCA Sandbox is an internal design tool that helps LinkedIn designers:
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js 18+
+- Node.js 20.19+ (or 22.12+)
 - npm or yarn
 
 ### Installation
@@ -60,6 +60,17 @@ VCA Sandbox is an internal design tool that helps LinkedIn designers:
 # Install dependencies
 npm install
 ```
+
+### Environment Variables
+
+Create a `.env` file in the project root:
+
+```bash
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+If you deploy on Vercel, add the same two variables in Project Settings → Environment Variables for both Preview and Production.
 
 ### Development
 
@@ -120,7 +131,7 @@ vca-sandbox-6/
 
 **Core:**
 - React 18.3 + TypeScript 5.4
-- Vite 5.2 (build tool)
+- Vite 7.3 (build tool)
 - React Router 6 (routing)
 
 **UI & Styling:**
@@ -147,11 +158,13 @@ vca-sandbox-6/
 
 **Start Here:**
 - [project-overview.md](./docs/context/project-overview.md) — Project goals, audience, and vision
+- [ui-ux-shared-context.md](./docs/context/ui-ux-shared-context.md) — Shared designer + Codex UI/UX collaboration context
 - [sdui-strategic-alignment.md](./docs/context/sdui-strategic-alignment.md) — Long-term SDUI direction
 
 **Guidelines:**
 - [flow-preview-guidelines.md](./docs/guidelines/flow-preview-guidelines.md) — Flow preview behavior and patterns
 - [visual-design.md](./docs/guidelines/visual-design.md) — Visual design principles
+- [shell-design-system.md](./docs/guidelines/shell-design-system.md) — App shell component contract to prevent UI drift
 - [tailwind-typography-fix.md](./docs/guidelines/tailwind-typography-fix.md) — Typography implementation notes
 
 **Proposals & Rules:**

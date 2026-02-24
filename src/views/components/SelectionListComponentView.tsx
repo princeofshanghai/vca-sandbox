@@ -107,7 +107,7 @@ const SelectionListComponentView = () => {
                         </div>
                     }
                 >
-                    <div className="p-4 bg-gray-50 rounded-xl w-full flex justify-center">
+                    <div className="p-4 bg-shell-surface-subtle rounded-xl w-full flex justify-center">
                         <SelectionList
                             items={getItems()}
                             layout={layout}
@@ -119,7 +119,7 @@ const SelectionListComponentView = () => {
                 <div className="space-y-12">
                     <div>
                         <h2>Usage</h2>
-                        <p className="mt-4 text-gray-600">
+                        <p className="mt-4 text-shell-muted">
                             Use the Selection List when you need the user to choose one item from a collection.
                             It adapts to different content types (people with avatars, accounts with icons) and display contexts.
                         </p>
@@ -128,7 +128,7 @@ const SelectionListComponentView = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="space-y-4">
                             <h3 className="font-semibold text-lg">Layouts</h3>
-                            <ul className="list-disc pl-5 space-y-2 text-gray-600">
+                            <ul className="list-disc pl-5 space-y-2 text-shell-muted">
                                 <li><strong>List:</strong> Best for 3-5 items where clarity is key. Vertical stack.</li>
                                 <li><strong>Carousel:</strong> Good for preserving vertical space or showing 5+ items. Horizontal scroll.</li>
                                 <li><strong>Grid:</strong> specific use cases where you want a compact 2-column view.</li>
@@ -142,7 +142,7 @@ const SelectionListComponentView = () => {
             <div className="space-y-8">
                 <div>
                     <h2>Realistic Usage</h2>
-                    <p className="mt-4 text-gray-600">
+                    <p className="mt-4 text-shell-muted">
                         Here's how the Selection List appears within a typical VCA conversation flow.
                     </p>
                 </div>
@@ -199,7 +199,7 @@ const SelectionListComponentView = () => {
                                         />
                                         <button
                                             onClick={resetUserDemo}
-                                            className="text-xs text-gray-400 hover:text-gray-600 underline mt-4"
+                                            className="text-xs text-shell-muted hover:text-shell-muted underline mt-4"
                                         >
                                             Reset Demo
                                         </button>

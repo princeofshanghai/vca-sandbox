@@ -41,7 +41,7 @@ export const ComponentViewLayout = ({
         {/* Main Content Column */}
         <div className="min-w-0">
           <h1 className="mb-4">{title}</h1>
-          <p className="text-base text-gray-500 mb-12 max-w-6xl">{description}</p>
+          <p className="text-base text-shell-muted mb-12 max-w-6xl">{description}</p>
 
           {/* Page Content */}
           <div>
@@ -51,7 +51,7 @@ export const ComponentViewLayout = ({
 
         {/* Sidebar Column - Sticky */}
         <div className="hidden lg:block relative">
-          <div className="sticky top-24 border-l border-gray-100 pl-6">
+          <div className="sticky top-24 border-l border-shell-border-subtle pl-6">
             <OnThisPage selectors={headingSelectors} />
           </div>
         </div>

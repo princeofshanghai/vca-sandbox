@@ -7,8 +7,8 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
     if (isLoading) {
         return (
-            <div className="h-screen w-screen flex items-center justify-center bg-gray-50">
-                <Loader2 className="animate-spin text-blue-600" size={32} />
+            <div className="h-screen w-screen flex items-center justify-center bg-shell-surface">
+                <Loader2 className="animate-spin text-shell-accent" size={32} />
             </div>
         );
     }

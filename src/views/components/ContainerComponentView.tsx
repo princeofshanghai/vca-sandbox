@@ -66,7 +66,7 @@ const ContainerComponentView = () => {
           controls={
             <div className="space-y-4">
               {/* Viewport Toggle - Full Width */}
-              <div className="pb-4 border-b border-gray-200">
+              <div className="pb-4 border-b border-shell-border">
                 <ToggleButtons
                   label="Viewport"
                   options={['desktop', 'mobile'] as const}
@@ -158,7 +158,7 @@ const ContainerComponentView = () => {
             <div>
               <h3 className="mb-2">Desktop</h3>
               <p className="mb-3">Header contains Help title and close button.</p>
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 flex justify-center">
+              <div className="bg-shell-surface-subtle border border-shell-border rounded-lg p-6 flex justify-center">
                 <Container
                   headerTitle="Help"
                   showHeaderBack={false}
@@ -174,7 +174,7 @@ const ContainerComponentView = () => {
             <div>
               <h3 className="mb-2">Mobile</h3>
               <p className="mb-3">Mobile container appears as a sheet overlay with handle bar and close button.</p>
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 flex justify-center">
+              <div className="bg-shell-surface-subtle border border-shell-border rounded-lg p-6 flex justify-center">
                 <Container
                   headerTitle="Help"
                   viewport="mobile"
@@ -196,7 +196,7 @@ const ContainerComponentView = () => {
                 <Badge variant="wip">WIP</Badge>
               </h3>
               <p className="mb-3">LinkedIn premium bug and gold bottom border for premium users.</p>
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 flex justify-center">
+              <div className="bg-shell-surface-subtle border border-shell-border rounded-lg p-6 flex justify-center">
                 <Container
                   headerTitle="Help"
                   showHeaderBack={false}
@@ -218,7 +218,7 @@ const ContainerComponentView = () => {
             <div>
               <h3 className="mb-2">From IPH</h3>
               <p className="mb-3">Header contains additional back button to go back to IPH.</p>
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 flex justify-center">
+              <div className="bg-shell-surface-subtle border border-shell-border rounded-lg p-6 flex justify-center">
                 <Container
                   headerTitle="Help"
                   showHeaderBack={true}
@@ -234,7 +234,7 @@ const ContainerComponentView = () => {
             <div>
               <h3 className="mb-2">Full example</h3>
               <p className="mb-3">Complete container with all features enabled and rich content.</p>
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 flex justify-center">
+              <div className="bg-shell-surface-subtle border border-shell-border rounded-lg p-6 flex justify-center">
                 <Container
                   headerTitle="Help"
                   showHeaderBack={true}

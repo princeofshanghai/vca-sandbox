@@ -249,6 +249,41 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
         onUpdateFlow({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
     }, [onUpdateFlow]);
 
+    const handleTurnComponentReorder = useCallback((nodeId: string, activeComponentId: string, overComponentId: string) => {
+        if (activeComponentId === overComponentId) return;
+
+        const currentFlow = flowRef.current;
+        if (!currentFlow.steps) return;
+
+        let didReorder = false;
+        const updatedSteps = currentFlow.steps.map((step) => {
+            if (step.id !== nodeId || step.type !== 'turn') {
+                return step;
+            }
+
+            const oldIndex = step.components.findIndex((component) => component.id === activeComponentId);
+            const newIndex = step.components.findIndex((component) => component.id === overComponentId);
+
+            if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) {
+                return step;
+            }
+
+            const reorderedComponents = [...step.components];
+            const [movedComponent] = reorderedComponents.splice(oldIndex, 1);
+            reorderedComponents.splice(newIndex, 0, movedComponent);
+            didReorder = true;
+
+            return {
+                ...step,
+                components: reorderedComponents
+            };
+        });
+
+        if (!didReorder) return;
+
+        onUpdateFlow({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
+    }, [onUpdateFlow]);
+
     const handleUserTurnUpdate = useCallback((nodeId: string, updates: Partial<UserTurn>) => {
         const currentFlow = flowRef.current;
         if (!currentFlow.steps) return;
@@ -343,6 +378,7 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                         entryPoint: flow.settings.entryPoint,
                         onSelectComponent: handleSelectComponent,
                         onDeselect: handleDeselect,
+                        onComponentReorder: handleTurnComponentReorder,
                         onLabelChange: handleTurnLabelChange,
                         onComponentUpdate: handleTurnComponentUpdate,
                     },
@@ -405,6 +441,7 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
         handleNoteContentChange,
         handleNoteLabelChange,
         handleSelectComponent,
+        handleTurnComponentReorder,
         handleTurnComponentUpdate,
         handleTurnLabelChange,
         handleUserTurnUpdate,
@@ -414,7 +451,7 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
     const initialEdges = useMemo(() => {
         const edgeMarker = {
             type: MarkerType.ArrowClosed,
-            color: '#94a3b8',
+            color: 'rgb(var(--shell-flow-edge-marker) / 1)',
         };
 
         // Use new connections[] if available
@@ -466,8 +503,17 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
             return baseNodes.map(newNode => {
                 const existingNode = currentNodeMap.get(newNode.id);
                 if (existingNode) {
+                    const existingData = existingNode.data as { selectedComponentId?: string } | undefined;
+                    const nextData = newNode.type === 'turn'
+                        ? {
+                            ...(newNode.data as Record<string, unknown>),
+                            selectedComponentId: existingData?.selectedComponentId
+                        }
+                        : newNode.data;
+
                     return {
                         ...newNode,
+                        data: nextData,
                         // Preserve React Flow's internal state
                         selected: existingNode.selected,
                         // Optionally preserve position if currently dragging? 
@@ -800,14 +846,14 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
             const originalStep = flow.steps?.find(s => s.id === node.id);
             if (!originalStep || originalStep.type === 'start') return;
 
-            // Strategy: 
+            // Strategy:
             // 1. The node being dragged (Node A, original ID) becomes the "Duplicate" (moving).
             //    - It gets a new label.
-            //    - It loses its connections (usually duplicates don't inherit wires).
+            //    - It should have no connections.
             // 2. We place a NEW node (Node B, new ID) at the original position.
             //    - It keeps the original label.
-            //    - We clone all edges from Node A to Node B.
-            //    - This makes Node B effectively act as the "Original" that stayed behind.
+            //    - It receives all of Node A's existing edges.
+            //    - This keeps the original graph wiring on the node that stayed in place.
 
             // 1. Prepare Node B (The "Original" that stays)
             let staticOriginalClone: typeof originalStep;
@@ -817,13 +863,15 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                 staticOriginalClone = {
                     ...originalStep,
                     id: newOriginalId,
-                    components: originalStep.components.map(c => ({ ...c, id: crypto.randomUUID() })),
+                    // Keep component IDs so handle-based connections remain valid.
+                    components: originalStep.components.map(c => ({ ...c })),
                 };
             } else if (originalStep.type === 'condition') {
                 staticOriginalClone = {
                     ...originalStep,
                     id: newOriginalId,
-                    branches: originalStep.branches.map(b => ({ ...b, id: crypto.randomUUID() })),
+                    // Keep branch IDs so branch-handle connections remain valid.
+                    branches: originalStep.branches.map(b => ({ ...b })),
                 };
             } else {
                 staticOriginalClone = {
@@ -832,18 +880,19 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                 };
             }
 
-            // 2. Prepare edges for Node B (Clone Node A's edges)
+            // 2. Move Node A's edges to Node B so the dragged copy starts disconnected.
             const currentEdges = flow.connections || [];
-            const newEdgesForStaticOriginal = currentEdges
-                .filter(conn => conn.source === node.id || conn.target === node.id)
-                .map(conn => ({
+            const finalConnections = currentEdges.map((conn) => {
+                if (conn.source !== node.id && conn.target !== node.id) {
+                    return conn;
+                }
+
+                return {
                     ...conn,
-                    id: `edge-${Date.now()}-${Math.random()}`,
                     source: conn.source === node.id ? newOriginalId : conn.source,
                     target: conn.target === node.id ? newOriginalId : conn.target,
-                }));
-
-            const finalConnections = [...currentEdges, ...newEdgesForStaticOriginal];
+                };
+            });
 
             // 3. Update flow
             // - Add Node B (Static Original)
@@ -966,20 +1015,22 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
         [flow, onUpdateFlow, screenToFlowPosition]
     );
 
+    const selectedNodeId = selection?.type === 'node' ? selection.nodeId : null;
+
     // Get current input type for toolbar (User Turn)
-    const currentUserTurnInputType = selection?.type === 'node'
-        ? (flow.steps?.find(s => s.id === selection.nodeId && s.type === 'user-turn') as UserTurn | undefined)?.inputType
+    const currentUserTurnInputType = selectedNodeId
+        ? (flow.steps?.find(s => s.id === selectedNodeId && s.type === 'user-turn') as UserTurn | undefined)?.inputType
         : undefined;
 
     // Get current branches for toolbar (Condition Node)
-    const currentBranches = selection?.type === 'node'
-        ? (flow.steps?.find(s => s.id === selection.nodeId && s.type === 'condition') as Condition | undefined)?.branches
+    const currentBranches = selectedNodeId
+        ? (flow.steps?.find(s => s.id === selectedNodeId && s.type === 'condition') as Condition | undefined)?.branches
         : undefined;
 
     const handleUpdateBranches = (branches: Branch[]) => {
-        if (selection?.type === 'node') {
+        if (selectedNodeId) {
             const updatedSteps = flow.steps?.map(s =>
-                s.id === selection.nodeId && s.type === 'condition'
+                s.id === selectedNodeId && s.type === 'condition'
                     ? { ...s, branches }
                     : s
             );
@@ -987,40 +1038,20 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
         }
     };
 
-    // Check if component can move up/down
-    const canMoveUp = selection?.type === 'component' ? (() => {
-        const step = flow.steps?.find(s => s.id === selection.nodeId && s.type === 'turn');
-        if (step && step.type === 'turn') {
-            const index = step.components.findIndex(c => c.id === selection.componentId);
-            return index > 0;
-        }
-        return false;
-    })() : false;
-
-    const canMoveDown = selection?.type === 'component' ? (() => {
-        const step = flow.steps?.find(s => s.id === selection.nodeId && s.type === 'turn');
-        if (step && step.type === 'turn') {
-            const index = step.components.findIndex(c => c.id === selection.componentId);
-            return index < step.components.length - 1;
-        }
-        return false;
-    })() : false;
-
-
     return (
-        <div className="w-full h-full flex flex-col relative bg-[#F5F5F7]">
+        <div className="w-full h-full flex flex-col relative bg-shell-canvas">
             {/* Header */}
             {/* Top Left Pill: Back & Title */}
-            <div className="absolute top-4 left-4 z-50 flex items-center h-11 gap-1.5 bg-white px-2 rounded-xl shadow-sm border border-gray-200/80 backdrop-blur-sm">
+            <div className="absolute top-4 left-4 z-50 flex items-center h-11 gap-1.5 bg-shell-bg px-2 rounded-xl shadow-sm border border-shell-border/70 backdrop-blur-sm">
                 <ActionTooltip content="Back to dashboard">
                     <button
                         onClick={onBack}
-                        className="flex items-center justify-center p-2 text-gray-500 hover:text-gray-900 transition-colors rounded-md hover:bg-gray-100"
+                        className="flex items-center justify-center p-2 text-shell-muted hover:text-shell-text transition-colors rounded-md hover:bg-shell-surface"
                     >
                         <ArrowLeft size={18} />
                     </button>
                 </ActionTooltip>
-                <div className="h-5 w-px bg-gray-200" />
+                <div className="h-5 w-px bg-shell-border-subtle" />
                 <div className="relative inline-grid items-center min-w-[60px] max-w-[320px]">
                     <span className="invisible px-3 py-1 text-sm font-medium whitespace-pre border border-transparent col-start-1 row-start-1">
                         {flow.title || "Untitled flow"}
@@ -1028,20 +1059,20 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                     <input
                         value={flow.title}
                         onChange={(e) => onUpdateFlow({ ...flow, title: e.target.value, lastModified: Date.now() })}
-                        className="absolute inset-0 w-full h-full font-medium text-sm text-gray-900 bg-transparent hover:bg-gray-50 focus:bg-white border border-transparent focus:border-blue-300 rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all truncate placeholder-gray-400"
+                        className="absolute inset-0 w-full h-full font-medium text-sm text-shell-text bg-transparent hover:bg-shell-surface-subtle focus:bg-shell-bg border border-transparent focus:border-shell-accent-border rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-shell-accent/20 transition-all truncate placeholder:text-shell-muted"
                         placeholder="Untitled flow"
                     />
                 </div>
             </div>
 
             {/* Top Right Pill: File, Run & Share */}
-            <div className="absolute top-4 right-4 z-50 flex items-center h-11 gap-2 bg-white px-1.5 rounded-xl shadow-sm border border-gray-200/80 backdrop-blur-sm">
+            <div className="absolute top-4 right-4 z-50 flex items-center h-11 gap-2 bg-shell-bg px-1.5 rounded-xl shadow-sm border border-shell-border/70 backdrop-blur-sm">
                 {/* File Menu (Export/Import) */}
                 <DropdownMenu>
                     <ActionTooltip content="File options">
                         <DropdownMenuTrigger asChild>
                             <button
-                                className="flex items-center justify-center w-8 h-8 rounded-md transition-all text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+                                className="flex items-center justify-center w-8 h-8 rounded-md transition-all text-shell-muted hover:text-shell-text hover:bg-shell-surface"
                             >
                                 <FileJson size={16} />
                             </button>
@@ -1049,17 +1080,17 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                     </ActionTooltip>
                     <DropdownMenuContent align="end" className="w-48">
                         <DropdownMenuItem onClick={handleExportJSON} className="gap-2">
-                            <Download size={14} className="text-gray-500" />
+                            <Download size={14} className="text-shell-muted" />
                             Export JSON
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={handleImportJSON} className="gap-2">
-                            <Upload size={14} className="text-gray-500" />
+                            <Upload size={14} className="text-shell-muted" />
                             Import JSON
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
 
-                <div className="h-5 w-px bg-gray-200" />
+                <div className="h-5 w-px bg-shell-border-subtle" />
 
                 {/* Run Menu */}
                 <DropdownMenu>
@@ -1067,8 +1098,8 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                         <DropdownMenuTrigger asChild>
                             <button
                                 className={`flex items-center justify-center w-8 h-8 rounded-md transition-all group ${isPreviewActive
-                                    ? "text-blue-600 bg-blue-50 ring-1 ring-blue-200"
-                                    : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+                                    ? "text-shell-accent-text bg-shell-accent-soft ring-1 ring-shell-accent-border"
+                                    : "text-shell-muted hover:text-shell-text hover:bg-shell-surface"
                                     }`}
                             >
                                 <Play size={16} fill={isPreviewActive ? "currentColor" : "none"} className="mr-[1px]" />
@@ -1077,7 +1108,7 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                     </ActionTooltip>
                     <DropdownMenuContent align="end" className="w-48">
                         <DropdownMenuItem onClick={onPreview} className="gap-2">
-                            <PanelRightOpen size={14} className="text-gray-500" />
+                            <PanelRightOpen size={14} className="text-shell-muted" />
                             Preview in canvas
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
@@ -1085,7 +1116,7 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                             onClick={() => window.open(`/share/${flow.id}`, '_blank')}
                             className="gap-2"
                         >
-                            <ExternalLink size={14} className="text-gray-500" />
+                            <ExternalLink size={14} className="text-shell-muted" />
                             Open prototype
                         </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -1094,7 +1125,7 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                 <ShareDialog flow={flow}>
                     <Button
                         size="sm"
-                        className="bg-blue-600 text-white hover:bg-blue-700 border-0"
+                        className="bg-shell-accent text-white hover:bg-shell-accent-hover border-0"
                     >
                         Share
                     </Button>
@@ -1105,8 +1136,7 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
             <div className="flex-1 w-full relative overflow-hidden h-full">
                 <style>{`
                     .react-flow__pane, 
-                    .react-flow__selection-pane,
-                    .cursor-default {
+                    .react-flow__selection-pane {
                         cursor: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23FFF' stroke='%23000' stroke-width='2' d='M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87a.5.5 0 0 0 .35-.85L6.35 2.85a.5.5 0 0 0-.85.35Z'%3E%3C/path%3E%3C/svg%3E") 6 3, auto !important;
                     }
                     .is-alt-pressed .react-flow__node:hover,
@@ -1120,17 +1150,23 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                         background: transparent;
                     }
                     .thin-scrollbar::-webkit-scrollbar-thumb {
-                        background-color: #cbd5e1;
+                        background-color: rgb(var(--shell-scrollbar-thumb) / 1);
                         border-radius: 3px;
                     }
                     .thin-scrollbar::-webkit-scrollbar-thumb:hover {
-                        background-color: #94a3b8;
+                        background-color: rgb(var(--shell-scrollbar-thumb-hover) / 1);
                     }
                 `}</style>
                 <ReactFlow
                     nodes={nodes}
                     edges={edges}
                     nodeTypes={nodeTypes}
+                    fitView
+                    fitViewOptions={{
+                        padding: 0.2,
+                        minZoom: 0.2,
+                        maxZoom: 1,
+                    }}
                     onNodesChange={onNodesChange}
                     onEdgesChange={onEdgesChange}
                     onConnect={onConnect}
@@ -1150,29 +1186,23 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
                     proOptions={{ hideAttribution: true }}
                     minZoom={0.1}
                     maxZoom={2}
-                    defaultViewport={{ x: 0, y: 0, zoom: 1 }}
                     onDragOver={onDragOver}
                     onDrop={onDrop}
                     connectionLineComponent={ConnectionLine}
-                    className={`bg-[#f2f1ee] !cursor-default ${isAltPressed ? 'is-alt-pressed' : ''}`}
+                    className={`bg-shell-canvas ${isAltPressed ? 'is-alt-pressed' : ''}`}
                 >
 
-                    <Background color="#b4b3a8" gap={20} size={2} />
-                    {selection && (
+                    <Background color="rgb(var(--shell-canvas-grid) / 1)" gap={20} size={2} />
+                    {selectedNodeId && (
                         <ContextToolbar
-                            selection={selection}
+                            selection={{ type: 'node', nodeId: selectedNodeId }}
                             anchorEl={selectionAnchorEl}
                             onAddComponent={(type: ComponentType) => handleComponentAdd(type)}
                             onChangeUserTurnInputType={handleChangeUserTurnInputType}
-                            onMoveUp={handleMoveComponentUp}
-                            onMoveDown={handleMoveComponentDown}
-                            onDelete={handleDeleteComponent}
                             currentUserTurnInputType={currentUserTurnInputType}
                             currentBranches={currentBranches}
                             onUpdateBranches={handleUpdateBranches}
-                            canMoveUp={canMoveUp}
-                            canMoveDown={canMoveDown}
-                            isAiTurn={selection?.type === 'node' && flow.steps?.some(s => s.id === selection.nodeId && s.type === 'turn')}
+                            isAiTurn={flow.steps?.some(s => s.id === selectedNodeId && s.type === 'turn')}
                         />
                     )}
 

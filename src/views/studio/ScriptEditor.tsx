@@ -60,8 +60,8 @@ export const ScriptEditor = ({ flow, onUpdateFlow }: ScriptEditorProps) => {
     };
 
     return (
-        <div className="h-full flex flex-col bg-white">
-            <div className="flex-1 overflow-y-auto bg-gray-50/50">
+        <div className="h-full flex flex-col bg-shell-bg">
+            <div className="flex-1 overflow-y-auto bg-shell-surface-subtle">
                 <LifecycleCanvas
                     flow={flow}
                     onUpdateFlow={onUpdateFlow}
@@ -108,7 +108,7 @@ export const SortableBlockItem = (props: { block: Block, index: number, onUpdate
 
     return (
         <div ref={setNodeRef} style={style} className="relative">
-            <div className="absolute left-2 top-1/2 -translate-y-1/2 -ml-6 text-gray-300 cursor-grab hover:text-gray-500" {...attributes} {...listeners}>
+            <div className="absolute left-2 top-1/2 -translate-y-1/2 -ml-6 text-shell-muted cursor-grab hover:text-shell-muted-strong" {...attributes} {...listeners}>
                 <GripVertical size={16} />
             </div>
             <BlockEditor {...props} />
@@ -127,15 +127,15 @@ const BlockEditor = ({ block, index, onUpdate, onDelete }: {
 
     const config = isAI ? {
         icon: AITurnIcon,
-        color: 'text-blue-600',
-        bg: 'bg-blue-50',
-        border: 'border-blue-100',
+        color: 'text-shell-accent',
+        bg: 'bg-shell-accent-soft',
+        border: 'border-shell-accent-border',
         label: 'AI Turn'
     } : {
         icon: User,
-        color: 'text-gray-600',
-        bg: 'bg-gray-50',
-        border: 'border-gray-200',
+        color: 'text-shell-muted-strong',
+        bg: 'bg-shell-surface-subtle',
+        border: 'border-shell-border',
         label: 'User Turn'
     };
 
@@ -156,7 +156,7 @@ const BlockEditor = ({ block, index, onUpdate, onDelete }: {
     };
 
     return (
-        <div className={cn("group relative bg-white rounded-xl border shadow-sm transition-all hover:shadow-md", config.border)}>
+        <div className={cn("group relative bg-shell-bg rounded-xl border shadow-sm transition-all hover:shadow-md", config.border)}>
             {/* Header */}
             <div className={cn("flex items-center justify-between px-4 py-3 border-b", config.bg, config.border)}>
                 <div className="flex items-center gap-2">
@@ -164,11 +164,11 @@ const BlockEditor = ({ block, index, onUpdate, onDelete }: {
                     <span className={cn("text-sm font-semibold", config.color)}>
                         {config.label}
                     </span>
-                    <span className="text-xs text-gray-400 font-mono ml-2">#{index + 1}</span>
+                    <span className="text-xs text-shell-muted font-mono ml-2">#{index + 1}</span>
                 </div>
                 <button
                     onClick={onDelete}
-                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md opacity-0 group-hover:opacity-100 transition-all"
+                    className="p-1.5 text-shell-muted hover:text-shell-danger hover:bg-shell-danger-soft rounded-md opacity-0 group-hover:opacity-100 transition-all"
                     title="Delete step"
                 >
                     <Trash2 size={14} />
@@ -180,7 +180,7 @@ const BlockEditor = ({ block, index, onUpdate, onDelete }: {
 
                 {/* Variant Switcher for AI Blocks */}
                 {isAI && (
-                    <div className="flex gap-2 mb-3 pb-3 border-b border-gray-50 overflow-x-auto">
+                    <div className="flex gap-2 mb-3 pb-3 border-b border-shell-border-subtle overflow-x-auto">
                         {(['message', 'info', 'status'] as const).map(variant => (
                             <VariantButton
                                 key={variant}
@@ -207,7 +207,7 @@ const BlockEditor = ({ block, index, onUpdate, onDelete }: {
                 {/* 2. AI Message (Standard) */}
                 {block.type === 'ai' && block.variant === 'message' && (
                     <div className="space-y-2">
-                        <label className="text-xs font-medium text-gray-500">Message</label>
+                        <label className="text-xs font-medium text-shell-muted">Message</label>
                         <RichTextEditor
                             value={(block.content as AIMessageContent).text || ''}
                             onChange={(value) => onUpdate({ content: { ...(block.content as AIMessageContent), text: value } })}
@@ -220,7 +220,7 @@ const BlockEditor = ({ block, index, onUpdate, onDelete }: {
                 {block.type === 'ai' && block.variant === 'info' && (
                     <div className="space-y-3">
                         <div className="space-y-2">
-                            <label className="text-xs font-medium text-gray-500">Message</label>
+                            <label className="text-xs font-medium text-shell-muted">Message</label>
                             <RichTextEditor
                                 value={(block.content as AIInfoContent).body || ''}
                                 onChange={(value) => onUpdate({ content: { ...block.content, body: value } })}
@@ -230,14 +230,14 @@ const BlockEditor = ({ block, index, onUpdate, onDelete }: {
                         </div>
 
                         {/* Sources Editor */}
-                        <div className="pt-2 border-t border-gray-100">
+                        <div className="pt-2 border-t border-shell-border-subtle">
                             <button
                                 onClick={() => {
                                     const currentContent = block.content as AIInfoContent;
                                     const currentSources = currentContent.sources || [];
                                     onUpdate({ content: { ...currentContent, sources: [...currentSources, { text: '', url: '' }] } });
                                 }}
-                                className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 font-medium py-2 rounded transition-colors"
+                                className="flex items-center gap-1.5 text-xs text-shell-accent hover:text-shell-accent-hover font-medium py-2 rounded transition-colors"
                             >
                                 <Plus size={14} />
                                 <span>Add source</span>
@@ -248,7 +248,7 @@ const BlockEditor = ({ block, index, onUpdate, onDelete }: {
                                     <div key={i} className="flex gap-2 items-start group/source w-full">
                                         <div className="flex-1 flex gap-2">
                                             <input
-                                                className="w-1/3 text-sm font-medium text-gray-900 border border-gray-200 rounded-md p-2 focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all bg-white"
+                                                className="w-1/3 text-sm font-medium text-shell-text border border-shell-border rounded-md p-2 focus:ring-2 focus:ring-shell-accent/20 focus:border-shell-accent-border transition-all bg-shell-bg"
                                                 placeholder="Label"
                                                 value={source.text}
                                                 onChange={(e) => {
@@ -259,7 +259,7 @@ const BlockEditor = ({ block, index, onUpdate, onDelete }: {
                                                 }}
                                             />
                                             <input
-                                                className="flex-1 text-sm text-gray-500 border border-gray-200 rounded-md p-2 focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all bg-white"
+                                                className="flex-1 text-sm text-shell-muted border border-shell-border rounded-md p-2 focus:ring-2 focus:ring-shell-accent/20 focus:border-shell-accent-border transition-all bg-shell-bg"
                                                 placeholder="https://..."
                                                 value={source.url || ''}
                                                 onChange={(e) => {
@@ -277,7 +277,7 @@ const BlockEditor = ({ block, index, onUpdate, onDelete }: {
                                                 newSources.splice(i, 1);
                                                 onUpdate({ content: { ...currentContent, sources: newSources } });
                                             }}
-                                            className="text-gray-300 hover:text-red-500 p-2 mt-0.5 opacity-0 group-hover/source:opacity-100 transition-all"
+                                            className="text-shell-muted hover:text-shell-danger p-2 mt-0.5 opacity-0 group-hover/source:opacity-100 transition-all"
                                             title="Remove source"
                                         >
                                             <Trash2 size={14} />
@@ -289,13 +289,13 @@ const BlockEditor = ({ block, index, onUpdate, onDelete }: {
 
                         {/* Feedback Toggle */}
                         {/* Feedback Toggle */}
-                        <div className="flex items-center gap-2 pt-2 border-t border-gray-100 mt-3">
+                        <div className="flex items-center gap-2 pt-2 border-t border-shell-border-subtle mt-3">
                             <Checkbox
                                 id={`feedback-${block.id}`}
                                 checked={(block.content as AIInfoContent).showFeedback !== false}
                                 onCheckedChange={(checked) => onUpdate({ content: { ...block.content, showFeedback: checked as boolean } })}
                             />
-                            <label htmlFor={`feedback-${block.id}`} className="text-xs font-medium text-gray-500 select-none cursor-pointer">
+                            <label htmlFor={`feedback-${block.id}`} className="text-xs font-medium text-shell-muted select-none cursor-pointer">
                                 User feedback
                             </label>
                         </div>
@@ -304,7 +304,7 @@ const BlockEditor = ({ block, index, onUpdate, onDelete }: {
 
                 {/* 4. AI Action (Simulated) */}
                 {block.type === 'ai' && block.variant === 'status' && (
-                    <div className="p-3 border rounded-lg bg-gray-50">
+                    <div className="p-3 border border-shell-border rounded-lg bg-shell-surface-subtle">
                         <ActionBlockEditor
                             content={block.content as AIStatusContent}
                             onChange={(newContent) => onUpdate({ content: newContent })}
@@ -320,14 +320,14 @@ const BlockEditor = ({ block, index, onUpdate, onDelete }: {
                         <button
                             onClick={() => {
                                 const currentPrompts = (block as AIBlock).metadata?.prompts || [];
-                                onUpdate({
-                                    metadata: {
-                                        ...(block as AIBlock).metadata,
-                                        prompts: [...currentPrompts, '']
-                                    }
-                                });
-                            }}
-                            className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 font-medium py-2 rounded transition-colors mb-2"
+                            onUpdate({
+                                metadata: {
+                                    ...(block as AIBlock).metadata,
+                                    prompts: [...currentPrompts, '']
+                                }
+                            });
+                        }}
+                            className="flex items-center gap-1.5 text-xs text-shell-accent hover:text-shell-accent-hover font-medium py-2 rounded transition-colors mb-2"
                         >
                             <Plus size={14} />
                             <span>Add prompt</span>
@@ -337,7 +337,7 @@ const BlockEditor = ({ block, index, onUpdate, onDelete }: {
                             {((block as AIBlock).metadata?.prompts || []).map((prompt, i) => (
                                 <div key={i} className="flex items-center gap-2 group/prompt">
                                     <input
-                                        className="flex-1 bg-blue-50 border-0 rounded-full px-3 py-1 text-sm text-blue-700 placeholder-blue-300 focus:ring-1 focus:ring-blue-300 focus:bg-white transition-all"
+                                        className="flex-1 bg-shell-accent-soft border border-transparent rounded-full px-3 py-1 text-sm text-shell-accent-text placeholder:text-shell-accent-text/70 focus:ring-1 focus:ring-shell-accent-border focus:bg-shell-bg transition-all"
                                         placeholder="Prompt text..."
                                         value={prompt}
                                         onChange={(e) => {
@@ -352,7 +352,7 @@ const BlockEditor = ({ block, index, onUpdate, onDelete }: {
                                             newPrompts.splice(i, 1);
                                             onUpdate({ metadata: { ...(block as AIBlock).metadata, prompts: newPrompts } });
                                         }}
-                                        className="text-gray-300 hover:text-red-500 p-1 opacity-0 group-hover/prompt:opacity-100 transition-opacity"
+                                        className="text-shell-muted hover:text-shell-danger p-1 opacity-0 group-hover/prompt:opacity-100 transition-opacity"
                                     >
                                         <Trash2 size={14} />
                                     </button>
@@ -365,5 +365,4 @@ const BlockEditor = ({ block, index, onUpdate, onDelete }: {
         </div >
     );
 };
-
 

@@ -14,7 +14,7 @@ export const LoadingScreen = ({ className, fullScreen = false }: LoadingScreenPr
     return (
         <div
             className={cn(
-                "flex flex-col items-center justify-center bg-white z-50",
+                "flex flex-col items-center justify-center bg-shell-bg z-50",
                 fullScreen ? "fixed inset-0" : "w-full h-full min-h-[400px]",
                 className
             )}
@@ -38,9 +38,9 @@ export const LoadingScreen = ({ className, fullScreen = false }: LoadingScreenPr
                 </div>
 
                 {/* Loading Line */}
-                <div className="w-[140px] h-[3px] bg-gray-100 rounded-full overflow-hidden relative">
+                <div className="w-[140px] h-[3px] bg-shell-border-subtle rounded-full overflow-hidden relative">
                     <div
-                        className="absolute top-0 left-0 w-full h-full bg-blue-600 animate-loading-bar origin-left"
+                        className="absolute top-0 left-0 w-full h-full bg-shell-accent animate-loading-bar origin-left"
                         style={{
                             width: '50%',
                             // We start off-screen left and move to off-screen right

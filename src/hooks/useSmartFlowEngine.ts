@@ -16,6 +16,15 @@ export type HistoryStep = Step | {
     stepId: string // To resume from
 };
 
+export interface ConditionPathSelection {
+    stepId: string;
+    variableName: string;
+    branches: Branch[];
+    selectedBranchId: string;
+    selectedLabel: string;
+    selectedValue: string;
+}
+
 interface UseSmartFlowEngineProps {
     flow: Flow;
     variables?: Record<string, string>;
@@ -39,6 +48,7 @@ export const useSmartFlowEngine = ({
     // NEW: Text Streaming State
     const [streamingComponentId, setStreamingComponentId] = useState<string | null>(null);
     const [currentStreamingText, setCurrentStreamingText] = useState<string>('');
+    const [lastConditionSelection, setLastConditionSelection] = useState<ConditionPathSelection | null>(null);
 
     const simulateThinking = flow.settings?.simulateThinking;
     const variablesString = JSON.stringify(variables);
@@ -263,9 +273,95 @@ export const useSmartFlowEngine = ({
         return matrix[b.length][a.length];
     };
 
+    const STOP_WORDS = new Set([
+        'the', 'a', 'an', 'to', 'for', 'on', 'in', 'at', 'of', 'and', 'or',
+        'is', 'are', 'am', 'be', 'do', 'does', 'did', 'please', 'hi', 'hello', 'hey'
+    ]);
+
+    const normalizeForMatch = (value: string) =>
+        value
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .replace(/[^a-z0-9\s]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+    const tokenizeForMatch = (value: string) =>
+        normalizeForMatch(value)
+            .split(' ')
+            .filter((token) => token.length > 1 && !STOP_WORDS.has(token));
+
+    const parseTriggerExamples = (triggerValue?: string) =>
+        (triggerValue || '')
+            .split(/\n+|[;|]/g)
+            .map((line) => line.replace(/^\s*[-*•]\s*/, '').trim())
+            .filter(Boolean);
+
+    const getPhraseMatchScore = (
+        normalizedInput: string,
+        inputTokens: string[],
+        phrase: string
+    ) => {
+        const normalizedPhrase = normalizeForMatch(phrase);
+        if (!normalizedPhrase) return 0;
+
+        if (normalizedInput === normalizedPhrase) return 1;
+
+        const phraseTokens = tokenizeForMatch(phrase);
+        if (phraseTokens.length === 0) return 0;
+
+        // Reward strong substring matches when users type short-but-meaningful phrases.
+        if (
+            normalizedInput.length >= 4 &&
+            (normalizedInput.includes(normalizedPhrase) || normalizedPhrase.includes(normalizedInput))
+        ) {
+            return 0.92;
+        }
+
+        let tokenScore = 0;
+        let hardMatches = 0;
+
+        for (const targetToken of phraseTokens) {
+            let bestTokenScore = 0;
+
+            for (const inputToken of inputTokens) {
+                if (inputToken === targetToken) {
+                    bestTokenScore = Math.max(bestTokenScore, 1);
+                    continue;
+                }
+
+                if (inputToken.includes(targetToken) || targetToken.includes(inputToken)) {
+                    bestTokenScore = Math.max(bestTokenScore, 0.78);
+                    continue;
+                }
+
+                const distance = getLevenshteinDistance(inputToken, targetToken);
+                if (targetToken.length >= 7 && distance <= 2) {
+                    bestTokenScore = Math.max(bestTokenScore, 0.6);
+                    continue;
+                }
+                if (targetToken.length >= 4 && distance <= 1) {
+                    bestTokenScore = Math.max(bestTokenScore, 0.68);
+                }
+            }
+
+            tokenScore += bestTokenScore;
+            if (bestTokenScore >= 0.78) {
+                hardMatches++;
+            }
+        }
+
+        const coverage = tokenScore / phraseTokens.length;
+        const precision = inputTokens.length > 0 ? Math.min(1, hardMatches / inputTokens.length) : 0;
+
+        return coverage * 0.8 + precision * 0.2;
+    };
+
     const findBestMatch = (input: string, possibleNodeIds: string[]): string | undefined => {
-        const normalizedInput = input.toLowerCase().trim();
-        const inputTokens = normalizedInput.split(/\s+/);
+        const normalizedInput = normalizeForMatch(input);
+        const inputTokens = tokenizeForMatch(input);
+        if (!normalizedInput) return undefined;
 
         let bestMatchId: string | undefined;
         let bestScore = 0;
@@ -274,33 +370,22 @@ export const useSmartFlowEngine = ({
             const node = flow.steps?.find(s => s.id === nodeId) as UserTurn;
             if (!node || node.type !== 'user-turn') return;
 
-            // Gather matchable text
-            const label = (node.label || '').toLowerCase();
-            const trigger = (node.triggerValue || '').toLowerCase();
+            const triggerExamples = parseTriggerExamples(node.triggerValue);
+            const candidatePhrases = triggerExamples.length > 0
+                ? triggerExamples
+                : (node.triggerValue ? [node.triggerValue] : []);
 
-            // 1. Exact Input Match (Highest Priority)
-            if (normalizedInput === label || normalizedInput === trigger) {
-                if (bestScore < 1.0) { bestScore = 1.0; bestMatchId = nodeId; }
-                return;
+            let score = 0;
+
+            for (const phrase of candidatePhrases) {
+                score = Math.max(score, getPhraseMatchScore(normalizedInput, inputTokens, phrase));
             }
 
-            // 2. Token Overlap Score
-            const targetText = `${label} ${trigger}`;
-            const targetTokens = targetText.split(/\s+/).filter(t => t.length > 2);
-
-            let matchedTokens = 0;
-            targetTokens.forEach(token => {
-                // Fuzzy check each token
-                if (inputTokens.some(inputToken =>
-                    inputToken.includes(token) ||
-                    token.includes(inputToken) ||
-                    getLevenshteinDistance(inputToken, token) <= 1
-                )) {
-                    matchedTokens++;
-                }
-            });
-
-            const score = targetTokens.length > 0 ? (matchedTokens / targetTokens.length) : 0;
+            // Label helps as a fallback signal but shouldn't dominate examples.
+            if (node.label) {
+                const labelScore = getPhraseMatchScore(normalizedInput, inputTokens, node.label) * 0.55;
+                score = Math.max(score, labelScore);
+            }
 
             if (score > bestScore) {
                 bestScore = score;
@@ -308,7 +393,8 @@ export const useSmartFlowEngine = ({
             }
         });
 
-        return bestScore >= 0.3 ? bestMatchId : undefined;
+        const threshold = inputTokens.length <= 2 ? 0.52 : 0.42;
+        return bestScore >= threshold ? bestMatchId : undefined;
     };
 
 
@@ -347,6 +433,98 @@ export const useSmartFlowEngine = ({
         }
 
         return selectedBranchId;
+    };
+
+    const getConditionSelectionMeta = (
+        stepId: string,
+        variableName: string,
+        value: string,
+        branches: Branch[],
+    ): ConditionPathSelection => {
+        const selectedBranchId = value === '__USE_DEFAULT__'
+            ? (branches.find((branch) => branch.isDefault)?.id || branches[0]?.id || '')
+            : (getConditionBranch(branches, { ...(variables || {}), [variableName]: value }) || '');
+
+        const selectedBranch = branches.find((branch) => branch.id === selectedBranchId);
+        const selectedLabel = selectedBranch?.condition
+            || (selectedBranch?.logic?.value !== undefined ? String(selectedBranch.logic.value) : 'Path');
+
+        return {
+            stepId,
+            variableName,
+            branches,
+            selectedBranchId,
+            selectedLabel,
+            selectedValue: value,
+        };
+    };
+
+    const buildVisibleComponentSet = (steps: HistoryStep[]) => {
+        const next = new Set<string>();
+        steps.forEach((step) => {
+            if (step.type === 'turn') {
+                step.components.forEach((component) => next.add(component.id));
+            }
+        });
+        return next;
+    };
+
+    const applyConditionSelection = ({
+        stepId,
+        variableName,
+        value,
+        branches,
+        interceptorStepId,
+        replayFromCondition,
+    }: {
+        stepId: string;
+        variableName: string;
+        value: string;
+        branches: Branch[];
+        interceptorStepId?: string;
+        replayFromCondition?: boolean;
+    }) => {
+        const selectionMeta = getConditionSelectionMeta(stepId, variableName, value, branches);
+        setLastConditionSelection(selectionMeta);
+
+        if (value !== '__USE_DEFAULT__') {
+            onVariableUpdate?.(variableName, value);
+        }
+
+        if (replayFromCondition) {
+            stopRequestedRef.current = true;
+            currentRunId.current = Date.now();
+            setDeliveryQueue([]);
+            setIsThinking(false);
+            setIsProcessingQueue(false);
+            setStreamingComponentId(null);
+            setCurrentStreamingText('');
+
+            const baselineHistory = interceptorStepId
+                ? historyRef.current.filter((step) => step.id !== interceptorStepId)
+                : historyRef.current;
+
+            let cutoffIndex = -1;
+            for (let i = baselineHistory.length - 1; i >= 0; i--) {
+                if (baselineHistory[i].id === stepId) {
+                    cutoffIndex = i;
+                    break;
+                }
+            }
+
+            const truncatedHistory = cutoffIndex >= 0
+                ? baselineHistory.slice(0, cutoffIndex + 1)
+                : baselineHistory;
+
+            setHistory(truncatedHistory);
+            setVisibleComponentIds(buildVisibleComponentSet(truncatedHistory));
+        } else if (interceptorStepId) {
+            setHistory((prev) => prev.filter((step) => step.id !== interceptorStepId));
+        }
+
+        setTimeout(() => {
+            traverse(stepId, selectionMeta.selectedBranchId || undefined);
+        }, 50);
     };
 
 
@@ -543,6 +721,23 @@ export const useSmartFlowEngine = ({
         traverse(stepId, handleId, text);
     };
 
+    const handleSelectionItemClick = (stepId: string, componentId: string, itemId: string, title?: string) => {
+        const handleId = `handle-${componentId}-${itemId}`;
+
+        // Mirror prompt-click UX: show selected choice as the user bubble.
+        if (title) {
+            const mockUserStep: UserTurn = {
+                id: `temp-${Date.now()}`,
+                type: 'user-turn',
+                label: title,
+                inputType: 'button'
+            };
+            setHistory(prev => [...prev, mockUserStep]);
+        }
+
+        traverse(stepId, handleId, title);
+    };
+
     const handleSend = (input: string) => {
         if (!input) return;
 
@@ -567,25 +762,24 @@ export const useSmartFlowEngine = ({
     };
 
     const resolveInterceptor = (stepId: string, variableName: string, value: string, branches: Branch[], interceptorStepId: string) => {
-        // 1. Handle "Use Default" special case
-        if (value === '__USE_DEFAULT__') {
-            setHistory(prev => prev.filter(s => s.id !== interceptorStepId));
-            const defaultBranch = branches.find(b => b.isDefault);
-            const selectedBranch = defaultBranch?.id || branches[0]?.id;
-            setTimeout(() => { traverse(stepId, selectedBranch || undefined); }, 50);
-            return;
-        }
+        applyConditionSelection({
+            stepId,
+            variableName,
+            value,
+            branches,
+            interceptorStepId,
+            replayFromCondition: false,
+        });
+    };
 
-        // 2. Normal case
-        onVariableUpdate?.(variableName, value);
-        setHistory(prev => prev.filter(s => s.id !== interceptorStepId));
-
-        const tempVars = { ...(variables || {}), [variableName]: value };
-        const selectedBranch = getConditionBranch(branches, tempVars);
-
-        setTimeout(() => {
-            traverse(stepId, selectedBranch || undefined);
-        }, 50);
+    const switchConditionPath = (stepId: string, variableName: string, value: string, branches: Branch[]) => {
+        applyConditionSelection({
+            stepId,
+            variableName,
+            value,
+            branches,
+            replayFromCondition: true,
+        });
     };
 
     return {
@@ -598,7 +792,10 @@ export const useSmartFlowEngine = ({
         handleStop,
         handleSend,
         handlePromptClick,
+        handleSelectionItemClick,
         resolveInterceptor,
+        switchConditionPath,
+        lastConditionSelection,
         setHistory
     };
 };

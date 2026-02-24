@@ -65,7 +65,7 @@ const IconsComponentView = () => {
               <div></div>
 
               <div className="col-span-2">
-                <label className="block text-xs font-medium text-gray-700 mb-2">
+                <label className="block text-xs font-medium text-shell-muted-strong mb-2">
                   Select Icon
                 </label>
                 <Select value={selectedIcon} onValueChange={(value) => setSelectedIcon(value as VcaIconName)}>
@@ -96,12 +96,12 @@ const IconsComponentView = () => {
           <div className="space-y-12">
             {/* All icons Grid */}
             <div>
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <div className="bg-shell-bg border border-shell-border rounded-lg p-6">
                 <div className="grid grid-cols-4 gap-6">
                   {icons.map((iconName) => (
-                    <div key={iconName} className="flex flex-col items-center gap-2 p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                    <div key={iconName} className="flex flex-col items-center gap-2 p-4 border border-shell-border rounded-lg hover:bg-shell-surface-subtle">
                       <VcaIcon icon={iconName} size="md" className="text-vca-icon" />
-                      <span className="text-xs text-gray-600 text-center">{iconName}</span>
+                      <span className="text-xs text-shell-muted text-center">{iconName}</span>
                     </div>
                   ))}
                 </div>
@@ -112,19 +112,19 @@ const IconsComponentView = () => {
             <div>
               <h2>Sizes</h2>
               <p className="mb-3">Icons in VCA are used in three sizes.</p>
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <div className="bg-shell-bg border border-shell-border rounded-lg p-6">
                 <div className="flex items-end gap-8">
                   <div className="flex flex-col items-center gap-2">
                     <VcaIcon icon="send" size="sm" className="text-vca-icon" />
-                    <span className="text-xs text-gray-500">Small (16px)</span>
+                    <span className="text-xs text-shell-muted">Small (16px)</span>
                   </div>
                   <div className="flex flex-col items-center gap-2">
                     <VcaIcon icon="send" size="md" className="text-vca-icon" />
-                    <span className="text-xs text-gray-500">Medium (24px)</span>
+                    <span className="text-xs text-shell-muted">Medium (24px)</span>
                   </div>
                   <div className="flex flex-col items-center gap-2">
                     <VcaIcon icon="send" size="lg" className="text-vca-icon" />
-                    <span className="text-xs text-gray-500">Large (32px)</span>
+                    <span className="text-xs text-shell-muted">Large (32px)</span>
                   </div>
                 </div>
               </div>

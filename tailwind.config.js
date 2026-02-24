@@ -163,17 +163,75 @@ export default {
     },
     extend: {
       colors: {
+        // Shell semantic tokens (app shell only)
+        shell: {
+          bg: 'rgb(var(--shell-bg) / <alpha-value>)',
+          surface: 'rgb(var(--shell-surface) / <alpha-value>)',
+          'surface-subtle': 'rgb(var(--shell-surface-subtle) / var(--shell-surface-subtle-alpha))',
+          canvas: 'rgb(var(--shell-canvas) / <alpha-value>)',
+          'canvas-grid': 'rgb(var(--shell-canvas-grid) / <alpha-value>)',
+          text: 'rgb(var(--shell-text) / <alpha-value>)',
+          muted: 'rgb(var(--shell-muted) / <alpha-value>)',
+          'muted-strong': 'rgb(var(--shell-muted-strong) / <alpha-value>)',
+          border: 'rgb(var(--shell-border) / <alpha-value>)',
+          'border-subtle': 'rgb(var(--shell-border-subtle) / <alpha-value>)',
+          accent: 'rgb(var(--shell-accent) / <alpha-value>)',
+          'accent-hover': 'rgb(var(--shell-accent-hover) / <alpha-value>)',
+          'accent-soft': 'rgb(var(--shell-accent-soft) / var(--shell-accent-soft-alpha))',
+          'accent-border': 'rgb(var(--shell-accent-border) / <alpha-value>)',
+          'accent-text': 'rgb(var(--shell-accent-text) / <alpha-value>)',
+          danger: 'rgb(var(--shell-danger) / <alpha-value>)',
+          'danger-hover': 'rgb(var(--shell-danger-hover) / <alpha-value>)',
+          'danger-soft': 'rgb(var(--shell-danger-soft) / var(--shell-danger-soft-alpha))',
+          'danger-border': 'rgb(var(--shell-danger-border) / <alpha-value>)',
+          'node-user': 'rgb(var(--shell-node-user) / <alpha-value>)',
+          'node-condition': 'rgb(var(--shell-node-condition) / <alpha-value>)',
+          'node-note': 'rgb(var(--shell-node-note) / <alpha-value>)',
+        },
+        // Shell dark semantic tokens (cinematic surfaces)
+        'shell-dark': {
+          bg: 'rgb(var(--shell-dark-bg) / <alpha-value>)',
+          panel: 'rgb(var(--shell-dark-panel) / <alpha-value>)',
+          'panel-alt': 'rgb(var(--shell-dark-panel-alt) / <alpha-value>)',
+          card: 'rgb(var(--shell-dark-card) / var(--shell-dark-card-alpha))',
+          surface: 'rgb(var(--shell-dark-surface) / <alpha-value>)',
+          text: 'rgb(var(--shell-dark-text) / <alpha-value>)',
+          muted: 'rgb(var(--shell-dark-muted) / <alpha-value>)',
+          border: 'rgb(var(--shell-dark-border) / var(--shell-dark-border-alpha))',
+          'border-strong': 'rgb(var(--shell-dark-border-strong) / var(--shell-dark-border-strong-alpha))',
+          accent: 'rgb(var(--shell-dark-accent) / <alpha-value>)',
+          'accent-hover': 'rgb(var(--shell-dark-accent-hover) / <alpha-value>)',
+          'accent-soft': 'rgb(var(--shell-dark-accent-soft) / var(--shell-dark-accent-soft-alpha))',
+          danger: 'rgb(var(--shell-dark-danger) / <alpha-value>)',
+          'danger-soft': 'rgb(var(--shell-dark-danger-soft) / var(--shell-dark-danger-soft-alpha))',
+          success: 'rgb(var(--shell-dark-success) / <alpha-value>)',
+          'success-soft': 'rgb(var(--shell-dark-success-soft) / var(--shell-dark-success-soft-alpha))',
+          orb: 'rgb(var(--shell-dark-orb) / <alpha-value>)',
+        },
         // Keep all Tailwind defaults (slate, gray, zinc, blue, etc.)
         // VCA-specific colors imported from auto-generated design tokens
         // To regenerate: npm run build:tokens
         ...vcaColors,
       },
       spacing: {
+        // Shell semantic spacing tokens
+        'shell-0': '0px',
+        'shell-1': '4px',
+        'shell-2': '8px',
+        'shell-3': '12px',
+        'shell-4': '16px',
+        'shell-5': '20px',
+        'shell-6': '24px',
         // VCA-specific spacing imported from auto-generated design tokens
         // To regenerate: npm run build:tokens
         ...vcaSpacing,
       },
       borderRadius: {
+        // Shell semantic radius tokens
+        'shell-sm': '6px',
+        'shell-md': '8px',
+        'shell-lg': '12px',
+        'shell-xl': '16px',
         // VCA-specific radius imported from auto-generated design tokens
         // To regenerate: npm run build:tokens
         ...vcaRadius,
@@ -236,6 +294,9 @@ export default {
         '15': ['15px', { lineHeight: '1.6' }], // Custom size for body text
       },
       boxShadow: {
+        // Shell semantic shadows
+        'shell-sm': '0 1px 2px rgba(0, 0, 0, 0.06)',
+        'shell-lg': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
         // VCA shadows
         'vca': '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
         'vca-lg': '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
@@ -284,4 +345,3 @@ export default {
   },
   plugins: [require("tailwindcss-animate")],
 }
-

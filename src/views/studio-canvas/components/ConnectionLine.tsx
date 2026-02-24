@@ -22,20 +22,20 @@ export const ConnectionLine = ({
         <g>
             <path
                 fill="none"
-                stroke="#2563eb" // Blue-600
+                stroke="rgb(var(--shell-accent) / 1)"
                 strokeWidth={2.5}
                 className="animated"
                 d={edgePath}
                 style={{
-                    filter: "drop-shadow(0 1px 2px rgb(37 99 235 / 0.2))"
+                    filter: "drop-shadow(0 1px 2px rgb(var(--shell-accent) / 0.2))"
                 }}
             />
             <circle
                 cx={toX}
                 cy={toY}
-                fill="#fff"
+                fill="rgb(var(--shell-bg) / 1)"
                 r={4}
-                stroke="#2563eb"
+                stroke="rgb(var(--shell-accent) / 1)"
                 strokeWidth={2}
             />
         </g>

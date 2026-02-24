@@ -18,7 +18,7 @@ const createDragPreview = (config: {
     bgColor?: string;
     width?: number;
 }) => {
-    const { label, icon, accentColor, bgColor = 'white', width = 200 } = config;
+    const { label, icon, accentColor, bgColor = 'rgb(var(--shell-bg) / 1)', width = 200 } = config;
 
     // Create a temporary container
     const dragPreview = document.createElement('div');
@@ -30,14 +30,14 @@ const createDragPreview = (config: {
     dragPreview.style.background = bgColor;
     dragPreview.style.border = `2px solid ${accentColor}`;
     dragPreview.style.borderRadius = '8px';
-    dragPreview.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+    dragPreview.style.boxShadow = '0 4px 12px rgb(var(--shell-muted-strong) / 0.25)';
     dragPreview.style.display = 'flex';
     dragPreview.style.alignItems = 'center';
     dragPreview.style.gap = '8px';
     dragPreview.style.fontFamily = 'system-ui, -apple-system, sans-serif';
     dragPreview.style.fontSize = '14px';
     dragPreview.style.fontWeight = '500';
-    dragPreview.style.color = '#374151';
+    dragPreview.style.color = 'rgb(var(--shell-text) / 1)';
     dragPreview.style.pointerEvents = 'none';
 
     // Create icon container
@@ -69,39 +69,49 @@ export function FloatingToolbar({ onAddAiTurn, onAddUserTurn, onAddCondition, on
 
         // Create custom drag preview based on node type
         let dragPreview: HTMLElement | null = null;
+        const accent = 'rgb(var(--shell-accent) / 1)';
+        const userAccent = 'rgb(var(--shell-node-user) / 1)';
+        const conditionAccent = 'rgb(var(--shell-node-condition) / 1)';
+        const noteAccent = 'rgb(var(--shell-node-note) / 1)';
+        const aiSoft = 'rgb(var(--shell-node-ai-surface) / 1)';
+        const userSoft = 'rgb(var(--shell-node-user-surface) / 1)';
+        const conditionSoft = 'rgb(var(--shell-node-condition-surface) / 1)';
+        const noteSoft = 'rgb(var(--shell-node-note) / 0.14)';
 
         switch (nodeType) {
             case 'turn':
                 dragPreview = createDragPreview({
                     label: 'AI Turn',
-                    icon: <VcaIcon icon="signal-ai" size="md" className="text-blue-600" />,
-                    accentColor: '#3b82f6',
+                    icon: <VcaIcon icon="signal-ai" size="md" className="text-shell-accent" />,
+                    accentColor: accent,
+                    bgColor: aiSoft,
                     width: 180,
                 });
                 break;
             case 'user-turn':
                 dragPreview = createDragPreview({
                     label: 'User Turn',
-                    icon: <UserRound className="text-purple-600" size={20} />,
-                    accentColor: '#9333ea',
+                    icon: <UserRound className="text-shell-node-user" size={20} />,
+                    accentColor: userAccent,
+                    bgColor: userSoft,
                     width: 180,
                 });
                 break;
             case 'condition':
                 dragPreview = createDragPreview({
                     label: 'Condition',
-                    icon: <Split className="text-amber-500" size={20} />,
-                    accentColor: '#f59e0b',
-                    bgColor: '#fffbeb',
+                    icon: <Split className="text-shell-node-condition" size={20} />,
+                    accentColor: conditionAccent,
+                    bgColor: conditionSoft,
                     width: 180,
                 });
                 break;
             case 'note':
                 dragPreview = createDragPreview({
                     label: 'Sticky Note',
-                    icon: <StickyNote className="text-yellow-500" size={20} fill="currentColor" />,
-                    accentColor: '#eab308',
-                    bgColor: '#fefce8',
+                    icon: <StickyNote className="text-shell-node-note" size={20} fill="currentColor" />,
+                    accentColor: noteAccent,
+                    bgColor: noteSoft,
                     width: 180,
                 });
                 break;
@@ -121,7 +131,7 @@ export function FloatingToolbar({ onAddAiTurn, onAddUserTurn, onAddCondition, on
     };
 
     return (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 p-1.5 bg-white rounded-xl shadow-xl border border-gray-200/80 backdrop-blur-sm">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 p-1.5 bg-shell-bg rounded-xl shadow-xl border border-shell-border/70 backdrop-blur-sm">
 
             {/* Group 1: Logic Nodes */}
             <div className="flex items-center gap-1">
@@ -131,9 +141,9 @@ export function FloatingToolbar({ onAddAiTurn, onAddUserTurn, onAddCondition, on
                         onClick={onAddAiTurn}
                         draggable
                         onDragStart={(e) => onDragStart(e, 'turn')}
-                        className="group relative flex items-center justify-center w-10 h-10 rounded-md hover:bg-gray-100 transition-colors tooltip-trigger cursor-grab active:cursor-grabbing"
+                        className="group relative flex items-center justify-center w-10 h-10 rounded-md hover:bg-shell-surface transition-colors tooltip-trigger cursor-grab active:cursor-grabbing"
                     >
-                        <VcaIcon icon="signal-ai" size="md" className="text-blue-600" />
+                        <VcaIcon icon="signal-ai" size="md" className="text-shell-accent" />
                     </button>
                 </ActionTooltip>
 
@@ -143,9 +153,9 @@ export function FloatingToolbar({ onAddAiTurn, onAddUserTurn, onAddCondition, on
                         onClick={onAddUserTurn}
                         draggable
                         onDragStart={(e) => onDragStart(e, 'user-turn')}
-                        className="group relative flex items-center justify-center w-10 h-10 rounded-md hover:bg-gray-100 transition-colors cursor-grab active:cursor-grabbing"
+                        className="group relative flex items-center justify-center w-10 h-10 rounded-md hover:bg-shell-surface transition-colors cursor-grab active:cursor-grabbing"
                     >
-                        <UserRound className="text-purple-600" size={20} />
+                        <UserRound className="text-shell-node-user" size={20} />
                     </button>
                 </ActionTooltip>
 
@@ -155,15 +165,15 @@ export function FloatingToolbar({ onAddAiTurn, onAddUserTurn, onAddCondition, on
                         onClick={onAddCondition}
                         draggable
                         onDragStart={(e) => onDragStart(e, 'condition')}
-                        className="group relative flex items-center justify-center w-10 h-10 rounded-md hover:bg-gray-100 transition-colors cursor-grab active:cursor-grabbing"
+                        className="group relative flex items-center justify-center w-10 h-10 rounded-md hover:bg-shell-surface transition-colors cursor-grab active:cursor-grabbing"
                     >
-                        <Split className="text-amber-500" size={20} />
+                        <Split className="text-shell-node-condition" size={20} />
                     </button>
                 </ActionTooltip>
             </div>
 
             {/* Divider */}
-            <div className="w-px h-6 bg-gray-200 mx-1" />
+            <div className="w-px h-6 bg-shell-border-subtle mx-1" />
 
             {/* Group 2: Annotations */}
             {/* Sticky Note */}
@@ -172,9 +182,9 @@ export function FloatingToolbar({ onAddAiTurn, onAddUserTurn, onAddCondition, on
                     draggable
                     onDragStart={(e) => onDragStart(e, 'note')}
                     onClick={onAddNote}
-                    className="group relative flex items-center justify-center w-10 h-10 rounded-md hover:bg-gray-100 transition-colors text-gray-400 tooltip-trigger cursor-grab active:cursor-grabbing"
+                    className="group relative flex items-center justify-center w-10 h-10 rounded-md hover:bg-shell-surface transition-colors tooltip-trigger cursor-grab active:cursor-grabbing"
                 >
-                    <StickyNote className="text-yellow-500/80" size={20} fill="currentColor" />
+                    <StickyNote className="text-shell-node-note" size={20} fill="currentColor" />
                 </button>
             </ActionTooltip>
 

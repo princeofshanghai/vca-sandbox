@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Component, Menu, X } from 'lucide-react';
-import VcaLogo from '@/components/VcaLogo';
+import { Plus, Component, Menu } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { flowStorage, FlowMetadata, Folder as FolderType } from '@/utils/flowStorage';
 import { FlowCard } from '@/components/dashboard/FlowCard';
-import { Button } from '@/components/ui/button';
+import { ShellButton, ShellIconButton, ShellSearchInput } from '@/components/shell';
 import { NewFlowDialog } from '@/components/dashboard/NewFlowDialog';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import NavLink from '@/components/layout/NavLink';
@@ -114,43 +113,40 @@ export const DashboardView = () => {
 
     const sidebarHeader = (
         <>
-            <div className="h-14 px-4 flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
-                    <VcaLogo className="h-5" />
-                    <span className="font-medium text-lg text-gray-700 tracking-tight">Sandbox</span>
+            <div className="h-16 px-4 flex items-center justify-between">
+                <div className="flex items-center">
+                    <img
+                        src="/vca-logo-black.svg"
+                        alt="VCA Sandbox"
+                        className="h-7 w-auto dark:hidden"
+                    />
+                    <img
+                        src="/vca-logo-white.svg"
+                        alt="VCA Sandbox"
+                        className="hidden h-7 w-auto dark:block"
+                    />
                 </div>
                 <UserMenu />
             </div>
             <div className="px-4">
-                <div className="h-px bg-gray-200" />
+                <div className="h-px bg-shell-border dark:bg-shell-border/60" />
             </div>
             {/* Search */}
             <div className="px-4 pt-4">
-                <div className="relative group/search">
-                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-                    <input
-                        type="text"
-                        placeholder="Search projects..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-8 pr-8 py-1.5 bg-gray-100 border-transparent rounded-lg text-2xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white focus:border-blue-500 transition-all placeholder:text-gray-400"
-                    />
-                    {searchQuery && (
-                        <button
-                            onClick={() => setSearchQuery('')}
-                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                        >
-                            <X size={14} />
-                        </button>
-                    )}
-                </div>
+                <ShellSearchInput
+                    placeholder="Search projects..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onClear={() => setSearchQuery('')}
+                    clearAriaLabel="Clear search"
+                />
             </div>
         </>
     );
 
     const sidebarFooter = (
-        <div className="p-4 bg-white">
-            <div className="h-px bg-gray-200 mb-4" />
+        <div className="p-4 bg-shell-bg">
+            <div className="h-px bg-shell-border dark:bg-shell-border/60 mb-4" />
             <NavLink to="/foundations/typography">
                 <div className="flex items-center gap-2">
                     <Component size={16} strokeWidth={1.5} />
@@ -161,7 +157,7 @@ export const DashboardView = () => {
     );
 
     return (
-        <div className="flex h-full bg-white overflow-hidden">
+        <div className="flex h-full bg-shell-bg overflow-hidden">
             <DashboardSidebar
                 folders={folders}
                 activeFolderId={activeFolderId}
@@ -174,43 +170,55 @@ export const DashboardView = () => {
             />
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col h-full overflow-hidden bg-gray-50">
+            <div className="flex-1 flex flex-col h-full overflow-hidden bg-shell-surface">
                 {/* Mobile Header */}
-                <div className="h-14 px-4 flex items-center border-b border-gray-200 bg-white md:hidden shrink-0">
-                    <button
+                <div className="h-16 px-4 flex items-center border-b border-shell-border bg-shell-bg md:hidden shrink-0">
+                    <ShellIconButton
                         onClick={() => setMobileMenuOpen(true)}
-                        className="p-2 -ml-2 text-gray-500 hover:text-gray-900 transition-colors"
+                        className="-ml-2"
+                        aria-label="Open mobile menu"
                     >
                         <Menu size={20} />
-                    </button>
-                    <div className="ml-2 flex items-center gap-2">
-                        <VcaLogo className="h-4" />
-                        <span className="font-medium text-sm text-gray-700">Sandbox</span>
+                    </ShellIconButton>
+                    <div className="ml-2.5 flex items-center">
+                        <img
+                            src="/vca-logo-black.svg"
+                            alt="VCA Sandbox"
+                            className="h-6 w-auto dark:hidden"
+                        />
+                        <img
+                            src="/vca-logo-white.svg"
+                            alt="VCA Sandbox"
+                            className="hidden h-6 w-auto dark:block"
+                        />
                     </div>
                 </div>
 
                 <div className="flex-1 overflow-y-auto">
                     <div className="max-w-7xl mx-auto px-6 md:px-20 lg:px-32 xl:px-48 py-10 md:py-16 lg:py-24">
                         {/* Header */}
-                        <div className="flex items-center justify-between mb-8">
+                        <div className="flex items-center justify-between mb-10">
                             <div>
-                                <h1 className="text-2xl font-medium tracking-tight text-gray-900 mb-2">
+                                <h1
+                                    className="text-2xl font-bold tracking-tight text-shell-text mb-2"
+                                    style={{ fontFamily: '"Community Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }}
+                                >
                                     {activeFolderId === 'trash'
                                         ? 'Trash'
                                         : activeFolderId
                                             ? folders.find(f => f.id === activeFolderId)?.name || 'Folder'
-                                            : 'All'}
+                                            : 'All projects'}
                                 </h1>
                             </div>
                             {activeFolderId !== 'trash' && (
-                                <Button
+                                <ShellButton
                                     onClick={() => setShowNewFlowDialog(true)}
-                                    size="sm"
-                                    className="bg-blue-600 text-white hover:bg-blue-700 gap-2"
+                                    size="compact"
+                                    className="gap-2"
                                 >
                                     <Plus size={16} />
                                     New
-                                </Button>
+                                </ShellButton>
                             )}
                         </div>
 
@@ -219,7 +227,7 @@ export const DashboardView = () => {
                         {isLoading ? (
                             <LoadingScreen className="py-20 bg-transparent" />
                         ) : filteredFlows.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10">
                                 {filteredFlows.map(flow => (
                                     <FlowCard
                                         key={flow.id}
@@ -255,41 +263,33 @@ export const DashboardView = () => {
 
                 {/* Delete Confirmation Dialog */}
                 <Dialog open={!!deleteConfirmation} onOpenChange={(open) => !open && setDeleteConfirmation(null)}>
-                    <DialogContent className="max-w-[320px] p-0 gap-0 border-gray-100 shadow-2xl bg-white overflow-hidden" hideClose>
+                    <DialogContent className="max-w-[320px] p-shell-0 gap-shell-0 border-shell-border-subtle shadow-shell-lg bg-shell-bg overflow-hidden" hideClose>
                         <div className="px-5 pt-5 pb-4">
                             <DialogHeader>
-                                <DialogTitle className={cn("text-sm font-semibold mb-2", deleteConfirmation?.isPermanent ? "text-red-700" : "text-gray-900")}>
+                                <DialogTitle className={cn("text-sm font-semibold mb-2", deleteConfirmation?.isPermanent ? "text-shell-danger" : "text-shell-text")}>
                                     {deleteConfirmation?.isPermanent ? "Delete permanently?" : "Delete project?"}
                                 </DialogTitle>
-                                <DialogDescription className="text-xs text-gray-500 leading-normal">
+                                <DialogDescription className="text-xs text-shell-muted leading-normal">
                                     {deleteConfirmation?.isPermanent
                                         ? `Are you sure you want to permanently delete "${deleteConfirmation?.title}"? This action cannot be undone.`
                                         : `Move "${deleteConfirmation?.title}" to the Trash? You can verify contents before permanent deletion.`}
                                 </DialogDescription>
                             </DialogHeader>
                         </div>
-                        <DialogFooter className="p-4 bg-gray-50/50 border-t border-gray-100 flex flex-row justify-end gap-2">
-                            <Button
-                                variant="ghost"
+                        <DialogFooter className="p-shell-4 bg-shell-surface-subtle border-t border-shell-border-subtle flex flex-row justify-end gap-shell-2">
+                            <ShellButton
+                                variant="outline"
                                 onClick={() => setDeleteConfirmation(null)}
-                                size="sm"
-                                className="text-gray-600 hover:text-gray-900 border border-gray-200 h-8 text-xs font-normal bg-white"
+                                className="font-normal"
                             >
                                 Cancel
-                            </Button>
-                            <Button
-                                variant={deleteConfirmation?.isPermanent ? "destructive" : "default"}
+                            </ShellButton>
+                            <ShellButton
+                                variant="destructive"
                                 onClick={handleConfirmDelete}
-                                size="sm"
-                                className={cn(
-                                    "h-8 text-xs font-medium shadow-none",
-                                    deleteConfirmation?.isPermanent
-                                        ? "bg-red-600 hover:bg-red-700 text-white"
-                                        : "bg-red-600 hover:bg-red-700 text-white"
-                                )}
                             >
                                 {deleteConfirmation?.isPermanent ? "Delete permanently" : "Delete project"}
-                            </Button>
+                            </ShellButton>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>

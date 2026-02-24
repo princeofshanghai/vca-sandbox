@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Plus, Grid2x2, Folder, Pencil, Trash2 } from 'lucide-react';
 import { Folder as FolderType, flowStorage } from '@/utils/flowStorage';
 import { cn } from '@/utils/cn';
+import { ShellButton, ShellIconButton, ShellInput } from '@/components/shell';
 import Sidebar from '@/components/layout/Sidebar';
 import NavLink from '@/components/layout/NavLink';
 
@@ -72,10 +73,10 @@ export const DashboardSidebar = ({
             onClose={() => setMobileMenuOpen(false)}
         >
             <div className="flex items-center justify-between mb-2 px-1">
-                <h2 className="text-2xs font-medium text-gray-900">Projects</h2>
+                <h2 className="text-2xs font-medium text-shell-text">Projects</h2>
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-0.5">
                 <NavLink
                     onClick={() => {
                         setActiveFolderId(null);
@@ -91,9 +92,9 @@ export const DashboardSidebar = ({
 
                 {isCreatingFolder && (
                     <div className="px-2 py-1 mb-2">
-                        <input
+                        <ShellInput
                             autoFocus
-                            className="w-full text-sm px-2 py-1 rounded border border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                            className="w-full h-7 rounded border-shell-accent-border px-2 py-1 text-xs focus-visible:ring-shell-accent/20"
                             placeholder="Folder Name"
                             value={newFolderName}
                             onChange={(e) => setNewFolderName(e.target.value)}
@@ -109,9 +110,9 @@ export const DashboardSidebar = ({
                 {folders.map(folder => (
                     editingFolderId === folder.id ? (
                         <div key={folder.id} className="px-2 py-1 mb-2">
-                            <input
+                            <ShellInput
                                 autoFocus
-                                className="w-full text-xs px-2 py-1 rounded border border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                                className="w-full h-7 rounded border-shell-accent-border px-2 py-1 text-xs focus-visible:ring-shell-accent/20"
                                 value={editingFolderName}
                                 onChange={(e) => setEditingFolderName(e.target.value)}
                                 onKeyDown={(e) => {
@@ -130,56 +131,59 @@ export const DashboardSidebar = ({
                                 setMobileMenuOpen(false);
                             }}
                             className={cn(
-                                "group flex items-center justify-between px-3 py-2 rounded text-2xs cursor-pointer transition-colors",
+                                "group flex items-center justify-between px-3 py-1.5 rounded-vca-sm text-2xs cursor-pointer transition-colors",
                                 activeFolderId === folder.id
-                                    ? "bg-gray-100 text-gray-900"
-                                    : "text-gray-700 hover:bg-gray-50"
+                                    ? "bg-shell-border-subtle text-shell-text font-medium"
+                                    : "text-shell-muted-strong hover:bg-shell-surface hover:text-shell-text"
                             )}
                         >
                             <div className="flex items-center gap-2 overflow-hidden">
-                                <Folder size={16} strokeWidth={1.5} className={cn("shrink-0", activeFolderId === folder.id ? "fill-gray-400 text-gray-400" : "fill-gray-100 text-gray-400")} />
+                                <Folder size={16} strokeWidth={1.5} className={cn("shrink-0", activeFolderId === folder.id ? "fill-shell-muted text-shell-muted" : "fill-shell-surface text-shell-muted")} />
                                 <span className="truncate">{folder.name}</span>
                             </div>
                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button
+                                <ShellIconButton
                                     onClick={(e) => handleStartRenameFolder(folder, e)}
-                                    className="p-1 hover:bg-gray-200 text-gray-400 hover:text-gray-700 rounded transition-all"
+                                    className="h-6 w-6 text-shell-muted hover:bg-shell-surface hover:text-shell-muted-strong"
+                                    aria-label="Rename folder"
                                 >
                                     <Pencil size={12} />
-                                </button>
-                                <button
+                                </ShellIconButton>
+                                <ShellIconButton
                                     onClick={(e) => handleDeleteFolder(folder.id, e)}
-                                    className="p-1 hover:bg-red-100 text-gray-400 hover:text-red-500 rounded transition-all"
+                                    className="h-6 w-6 text-shell-muted hover:bg-shell-danger-soft hover:text-shell-danger"
+                                    aria-label="Delete folder"
                                 >
                                     <Trash2 size={12} />
-                                </button>
+                                </ShellIconButton>
                             </div>
                         </div>
                     )
                 ))}
 
-                <button
+                <ShellButton
                     onClick={() => setIsCreatingFolder(true)}
-                    className="flex items-center gap-2 w-full px-3 py-2 rounded text-gray-500 hover:text-gray-900 hover:bg-gray-100/50 transition-colors text-2xs"
+                    className="w-full justify-start gap-2 rounded-vca-sm px-3 py-1.5 text-2xs text-shell-muted hover:bg-shell-surface-subtle hover:text-shell-text"
+                    variant="ghost"
                 >
                     <Plus size={16} strokeWidth={1.5} />
                     <span>New folder</span>
-                </button>
+                </ShellButton>
 
-                <div className="pt-2 mt-2 border-t border-gray-100">
+                <div className="pt-2 mt-2 border-t border-shell-border-subtle dark:border-shell-border-subtle/70">
                     <div
                         onClick={() => {
                             setActiveFolderId('trash');
                             setMobileMenuOpen(false);
                         }}
                         className={cn(
-                            "group flex items-center gap-2 px-3 py-2 rounded text-2xs cursor-pointer transition-colors",
+                            "group flex items-center gap-2 px-3 py-1.5 rounded-vca-sm text-2xs cursor-pointer transition-colors",
                             activeFolderId === 'trash'
-                                ? "bg-red-50 text-red-700"
-                                : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                                ? "bg-shell-danger-soft text-shell-danger font-medium"
+                                : "text-shell-muted-strong hover:bg-shell-surface hover:text-shell-text"
                         )}
                     >
-                        <Trash2 size={16} strokeWidth={1.5} className={cn("shrink-0", activeFolderId === 'trash' ? "text-red-500" : "text-gray-700")} />
+                        <Trash2 size={16} strokeWidth={1.5} className={cn("shrink-0", activeFolderId === 'trash' ? "text-shell-danger" : "text-shell-muted-strong")} />
                         <span>Trash</span>
                     </div>
                 </div>

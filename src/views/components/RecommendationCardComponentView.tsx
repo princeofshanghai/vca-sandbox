@@ -86,7 +86,7 @@ const RecommendationCardComponentView = () => {
           <div>
             <h3 className="mb-2">With impact</h3>
             <p className="mb-3">Recommendation with impact metric displayed to show expected benefit.</p>
-            <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <div className="bg-shell-bg border border-shell-border rounded-lg p-4">
               <div className="w-[352px] mx-auto">
                 <RecommendationCard
                   status="default"

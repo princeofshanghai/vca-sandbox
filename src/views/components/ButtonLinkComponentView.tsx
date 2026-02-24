@@ -68,7 +68,7 @@ const ButtonLinkComponentView = () => {
             <div>
               <h3 className="mb-2">Agent status</h3>
               <p className="mb-3">Used for secondary actions where button needs to be aligned with text, like ending a live chat session.</p>
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="bg-shell-bg border border-shell-border rounded-lg p-4">
                 <div className="w-[352px] mx-auto">
                   <AgentStatus
                     state="connecting"

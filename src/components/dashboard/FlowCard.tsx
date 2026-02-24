@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FlowMetadata, flowStorage, Folder } from '@/utils/flowStorage';
 import { MoreVertical } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ENTRY_POINTS, EntryPointId } from '@/utils/entryPoints';
+import { ShellIconButton, ShellInput } from '@/components/shell';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -48,6 +49,44 @@ export const FlowCard = ({ flow, onDelete, onRename, isTrash, onRestore, onPerma
     const [folders, setFolders] = useState<Folder[]>([]);
     const [isRenaming, setIsRenaming] = useState(false);
     const [newTitle, setNewTitle] = useState(flow.title);
+    const [thumbnailUrl, setThumbnailUrl] = useState<string | undefined>(flow.thumbnailUrl);
+    const [thumbnailState, setThumbnailState] = useState<'idle' | 'loading' | 'ready' | 'error'>(
+        flow.thumbnailUrl ? 'loading' : 'idle'
+    );
+
+    useEffect(() => {
+        let cancelled = false;
+        setThumbnailUrl(flow.thumbnailUrl);
+
+        const loadThumbnail = async () => {
+            if (!flow.thumbnailPath || flow.thumbnailUnavailable) {
+                setThumbnailState(flow.thumbnailUnavailable ? 'error' : 'idle');
+                return;
+            }
+
+            if (flow.thumbnailUrl) {
+                setThumbnailState('loading');
+                return;
+            }
+
+            setThumbnailState('loading');
+            const signedUrl = await flowStorage.getFlowThumbnailUrl(flow.thumbnailPath);
+            if (cancelled) return;
+
+            if (signedUrl) {
+                setThumbnailUrl(signedUrl);
+                setThumbnailState('loading');
+            } else {
+                setThumbnailState('error');
+            }
+        };
+
+        void loadThumbnail();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [flow.id, flow.thumbnailPath, flow.thumbnailUnavailable, flow.thumbnailUrl]);
 
     const handleClick = () => {
         if (!isTrash) navigate(`/studio/${flow.id}`);
@@ -89,63 +128,100 @@ export const FlowCard = ({ flow, onDelete, onRename, isTrash, onRestore, onPerma
     const entryPointName = flow.entryPoint && flow.entryPoint in ENTRY_POINTS
         ? ENTRY_POINTS[flow.entryPoint as EntryPointId].productName
         : null;
+    const hasThumbnail = Boolean(thumbnailUrl);
+    const isPreviewGenerating = !hasThumbnail && thumbnailState !== 'error';
+    const isPreviewUnavailable = thumbnailState === 'error';
+    const showFallbackPreview = isPreviewGenerating || isPreviewUnavailable;
+    const previewTileStyle = showFallbackPreview
+        ? { backgroundColor: 'rgb(var(--shell-bg) / 1)' }
+        : {
+            backgroundColor: 'rgb(var(--shell-canvas) / 1)',
+            backgroundImage: 'radial-gradient(rgb(var(--shell-canvas-grid) / 1) 1.1px, transparent 1.1px)',
+            backgroundSize: '20px 20px',
+        };
 
     return (
         <div
             onClick={handleClick}
-            className={`group relative flex flex-col bg-white border border-gray-200/80 rounded-xl overflow-hidden hover:border-blue-400/40 transition-all duration-0 cursor-pointer h-40 ${isTrash ? 'opacity-75 grayscale hover:grayscale-0' : ''}`}
+            className={`group cursor-pointer ${isTrash ? 'opacity-75 grayscale hover:grayscale-0' : ''}`}
         >
-            {/* Swirling Premium Gradient Layers */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                {/* Primary Swirl */}
-                <div className="absolute -inset-[50%] bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.08),transparent_70%)] blur-3xl opacity-60" />
-
-                {/* Accent Swirl */}
-                <div className="absolute -top-1/2 -right-1/4 w-full h-full bg-[radial-gradient(circle_at_center,rgba(139,92,246,0.06),transparent_60%)] blur-2xl" />
-
-                {/* Secondary Accent */}
-                <div className="absolute -bottom-1/2 -left-1/4 w-full h-full bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.04),transparent_60%)] blur-2xl" />
+            <div className="relative overflow-hidden rounded-xl border border-shell-border/80 dark:border-shell-border/60 bg-shell-bg transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-[0_4px_14px_rgb(var(--shell-muted-strong)/0.2)] group-focus-within:-translate-y-0.5 group-focus-within:shadow-[0_4px_14px_rgb(var(--shell-muted-strong)/0.2)]">
+                <div className="aspect-[3/2] w-full relative overflow-hidden" style={previewTileStyle}>
+                    {hasThumbnail ? (
+                        <>
+                            {thumbnailState === 'loading' && (
+                                <div className="absolute inset-0 animate-pulse bg-shell-surface" />
+                            )}
+                            <img
+                                src={thumbnailUrl}
+                                alt={`${flow.title} canvas preview`}
+                                loading="lazy"
+                                onLoad={() => setThumbnailState('ready')}
+                                onError={() => setThumbnailState('error')}
+                                className={`h-full w-full object-cover transition-opacity duration-200 ${thumbnailState === 'ready' ? 'opacity-100' : 'opacity-0'}`}
+                            />
+                        </>
+                    ) : null}
+                    {showFallbackPreview && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <img
+                                src="/vca-bug.svg"
+                                alt={isPreviewGenerating ? 'Generating preview' : 'Preview unavailable'}
+                                className="h-9 w-9 opacity-40 grayscale"
+                            />
+                        </div>
+                    )}
+                </div>
             </div>
 
-            {/* Content Container */}
-            <div className="p-5 flex flex-col h-full bg-white/40 backdrop-blur-[2px] relative z-10">
-                <div className="flex items-start justify-between gap-3 mb-2">
-                    <div className="flex flex-col gap-0.5 overflow-hidden w-full pr-2">
-                        {isRenaming ? (
-                            <input
-                                autoFocus
-                                value={newTitle}
-                                onChange={(e) => setNewTitle(e.target.value)}
-                                onClick={(e) => e.stopPropagation()}
-                                onBlur={handleRename}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') handleRename();
-                                    if (e.key === 'Escape') {
-                                        setNewTitle(flow.title);
-                                        setIsRenaming(false);
-                                    }
-                                    e.stopPropagation();
-                                }}
-                                className="font-medium text-sm text-gray-900 border border-blue-300 rounded px-1 py-0.5 focus:outline-none focus:ring-2 focus:ring-blue-100 w-full"
-                            />
-                        ) : (
-                            <h3 className="font-medium text-sm text-gray-900 truncate">
-                                {flow.title}
-                            </h3>
-                        )}
-                        {entryPointName && (
-                            <span className="text-[13px] text-gray-500 truncate">
-                                {entryPointName}
-                            </span>
-                        )}
+            <div className="pt-3 px-0.5">
+                <div className="flex items-center justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                        <div className="flex flex-col gap-0.5 overflow-hidden mb-0.5">
+                            {isRenaming ? (
+                                <ShellInput
+                                    autoFocus
+                                    value={newTitle}
+                                    onChange={(e) => setNewTitle(e.target.value)}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onBlur={handleRename}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') handleRename();
+                                        if (e.key === 'Escape') {
+                                            setNewTitle(flow.title);
+                                            setIsRenaming(false);
+                                        }
+                                        e.stopPropagation();
+                                    }}
+                                    className="h-7 w-full rounded border-shell-accent-border px-1 py-0.5 text-sm font-medium text-shell-text focus-visible:ring-shell-accent/20"
+                                />
+                            ) : (
+                                <h3 className="font-medium text-sm text-shell-text truncate">
+                                    {flow.title}
+                                </h3>
+                            )}
+                        </div>
+
+                        <div className="flex items-center gap-1 text-[13px] text-shell-muted min-w-0">
+                            {entryPointName && (
+                                <>
+                                    <span className="truncate min-w-0">{entryPointName}</span>
+                                    <span className="shrink-0">·</span>
+                                </>
+                            )}
+                            <span className="shrink-0">{getRelativeTimeString(flow.lastModified)}</span>
+                        </div>
                     </div>
 
-                    <div onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                    <div className="shrink-0" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                         <DropdownMenu onOpenChange={(open) => { if (open && !isTrash) handleLoadFolders(); }}>
                             <DropdownMenuTrigger asChild>
-                                <button className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors opacity-0 group-hover:opacity-100 outline-none">
+                                <ShellIconButton
+                                    className="h-7 w-7 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 text-shell-muted hover:text-shell-muted-strong hover:bg-shell-surface"
+                                    aria-label="Open project menu"
+                                >
                                     <MoreVertical size={16} />
-                                </button>
+                                </ShellIconButton>
                             </DropdownMenuTrigger>
 
                             <DropdownMenuContent align="end" className="w-48">
@@ -213,16 +289,6 @@ export const FlowCard = ({ flow, onDelete, onRename, isTrash, onRestore, onPerma
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
-                </div>
-
-                {/* Spacer */}
-                <div className="flex-1 min-h-0 mb-2" />
-
-                {/* Footer Metadata */}
-                <div className="flex items-center gap-3 text-[13px] text-gray-500 pt-3 border-t border-gray-50 mt-auto">
-                    <span>
-                        {getRelativeTimeString(flow.lastModified)}
-                    </span>
                 </div>
             </div>
         </div>

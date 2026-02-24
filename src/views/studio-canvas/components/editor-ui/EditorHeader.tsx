@@ -12,9 +12,9 @@ interface EditorHeaderProps {
 
 export function EditorHeader({ title, onClose, className, actions }: EditorHeaderProps) {
     return (
-        <div className={cn("flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0", className)}>
+        <div className={cn("flex items-center justify-between px-5 py-4 border-b border-shell-border-subtle shrink-0", className)}>
             <div className="flex items-center gap-2.5 overflow-hidden">
-                <h3 className="text-sm font-semibold text-gray-900 truncate">
+                <h3 className="text-sm font-semibold text-shell-text truncate">
                     Edit {title}
                 </h3>
             </div>
@@ -24,7 +24,7 @@ export function EditorHeader({ title, onClose, className, actions }: EditorHeade
                 {onClose && (
                     <button
                         onClick={onClose}
-                        className="p-1.5 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+                        className="p-1.5 text-shell-muted hover:text-shell-text hover:bg-shell-surface-subtle rounded-md transition-colors"
                     >
                         <X size={16} />
                     </button>

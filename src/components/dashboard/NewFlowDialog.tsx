@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ENTRY_POINTS, EntryPointId } from '@/utils/entryPoints';
 import { Flow } from '@/views/studio/types';
-import { Button } from '@/components/ui/button';
+import { ShellButton } from '@/components/shell';
 import {
     Dialog,
     DialogContent,
@@ -39,68 +39,68 @@ export function NewFlowDialog({ onCreateFlow, onClose }: NewFlowDialogProps) {
 
     return (
         <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-[320px] p-0 gap-0 border-gray-100 shadow-2xl bg-white overflow-hidden" hideClose>
-                <div className="px-5 pt-5">
-                    <DialogHeader className="mb-4">
-                        <DialogTitle className="text-sm font-semibold text-gray-900">
+            <DialogContent className="max-w-[320px] p-shell-0 gap-shell-0 border-shell-border-subtle shadow-shell-lg bg-shell-bg overflow-hidden" hideClose>
+                <div className="px-shell-5 pt-shell-5">
+                    <DialogHeader className="mb-shell-4">
+                        <DialogTitle className="text-sm font-semibold text-shell-text">
                             Create project
                         </DialogTitle>
                     </DialogHeader>
 
-                    <div className="space-y-1 mb-6">
-                        <label className="block text-xs font-medium text-gray-500 mb-2 px-1">
+                    <div className="space-y-shell-1 mb-shell-6">
+                        <p className="block text-xs font-medium text-shell-muted mb-shell-2 px-shell-1">
                             Choose entry point
-                        </label>
+                        </p>
 
-                        {ENTRY_POINT_ORDER.map((id) => {
-                            const config = ENTRY_POINTS[id];
-                            if (!config) return null;
+                        <div role="radiogroup" aria-label="Choose entry point" className="space-y-shell-1">
+                            {ENTRY_POINT_ORDER.map((id) => {
+                                const config = ENTRY_POINTS[id];
+                                if (!config) return null;
 
-                            return (
-                                <label
-                                    key={id}
-                                    className={`flex items-center gap-2.5 px-3 py-2 rounded-md cursor-pointer transition-all border ${selectedEntryPoint === id
-                                        ? 'bg-blue-50/50 border-blue-100 text-blue-700'
-                                        : 'bg-white border-transparent hover:bg-gray-50 hover:border-gray-100 text-gray-600'
-                                        }`}
-                                >
-                                    <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center transition-colors ${selectedEntryPoint === id
-                                        ? 'border-blue-500 bg-blue-500'
-                                        : 'border-gray-300 bg-white'
-                                        }`}>
-                                        {selectedEntryPoint === id && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                                    </div>
-                                    <input
-                                        type="radio"
-                                        name="entryPoint"
-                                        value={id}
-                                        checked={selectedEntryPoint === id}
-                                        onChange={(e) => setSelectedEntryPoint(e.target.value as EntryPointId)}
-                                        className="hidden"
-                                    />
-                                    <span className="text-xs font-medium">{config.productName}</span>
-                                </label>
-                            );
-                        })}
+                                const isSelected = selectedEntryPoint === id;
+
+                                return (
+                                    <ShellButton
+                                        key={id}
+                                        type="button"
+                                        role="radio"
+                                        aria-checked={isSelected}
+                                        onClick={() => setSelectedEntryPoint(id)}
+                                        className={`h-auto w-full justify-start gap-2.5 px-shell-3 py-shell-2 text-xs transition-all border ${isSelected
+                                            ? 'bg-shell-accent-soft border-shell-accent-border text-shell-accent-text'
+                                            : 'bg-shell-bg border-transparent hover:bg-shell-surface hover:border-shell-border-subtle text-shell-muted'
+                                            }`}
+                                        variant="ghost"
+                                    >
+                                        <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center transition-colors ${isSelected
+                                            ? 'border-shell-accent bg-shell-accent'
+                                            : 'border-shell-border bg-shell-bg'
+                                            }`}>
+                                            {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-shell-bg" />}
+                                        </div>
+                                        <span className="text-xs font-medium">{config.productName}</span>
+                                    </ShellButton>
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
 
-                <DialogFooter className="p-4 bg-gray-50/50 border-t border-gray-100 flex flex-row justify-end gap-2">
-                    <Button
-                        variant="ghost"
+                <DialogFooter className="p-shell-4 bg-shell-surface-subtle border-t border-shell-border-subtle flex flex-row justify-end gap-shell-1 sm:space-x-0">
+                    <ShellButton
+                        size="compact"
+                        variant="outline"
                         onClick={onClose}
-                        size="sm"
-                        className="text-gray-600 hover:text-gray-900 border border-gray-200 h-8 font-normal bg-white"
+                        className="font-normal"
                     >
                         Cancel
-                    </Button>
-                    <Button
+                    </ShellButton>
+                    <ShellButton
+                        size="compact"
                         onClick={handleCreate}
-                        size="sm"
-                        className="bg-blue-600 hover:bg-blue-700 text-white h-8 text-xs font-medium"
                     >
                         Create project
-                    </Button>
+                    </ShellButton>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

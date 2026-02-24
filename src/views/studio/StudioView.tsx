@@ -43,11 +43,11 @@ export const StudioView = () => {
     if (isLoading) return <LoadingScreen fullScreen />;
 
     return (
-        <div className="flex h-screen overflow-hidden flex-col bg-white">
+        <div className="flex h-screen overflow-hidden flex-col bg-shell-surface">
 
 
             {/* Canvas Editor - Full Width */}
-            <div className="flex-1 overflow-hidden bg-white">
+            <div className="flex-1 overflow-hidden bg-shell-surface">
                 <CanvasEditor
                     flow={flow}
                     onUpdateFlow={setFlowWithHistory}

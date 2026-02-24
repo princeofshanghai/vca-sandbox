@@ -1,6 +1,9 @@
 import { Flow, Block } from '../views/studio/types';
 import { supabase } from '@/lib/supabase';
 
+const THUMBNAIL_BUCKET = 'flow-thumbnails';
+let hasLoggedThumbnailBucketIssue = false;
+
 // Types remain mostly the same
 export interface Folder {
     id: string;
@@ -16,6 +19,9 @@ export interface FlowMetadata {
     description?: string;
     folderId?: string;
     entryPoint?: string;
+    thumbnailPath?: string;
+    thumbnailUrl?: string;
+    thumbnailUnavailable?: boolean;
     isPublic?: boolean;
     deletedAt?: number | null;
 }
@@ -170,9 +176,14 @@ export const flowStorage = {
             folderId: d.folder_id,
             previewText: d.metadata?.previewText,
             entryPoint: d.metadata?.entryPoint,
+            thumbnailPath: d.metadata?.thumbnailPath,
             isPublic: d.is_public,
             deletedAt: d.deleted_at ? new Date(d.deleted_at).getTime() : null
         }));
+    },
+
+    getFlowThumbnailUrl: async (thumbnailPath: string): Promise<string | undefined> => {
+        return getSignedThumbnailUrl(thumbnailPath);
     },
 
     getFlow: async (id: string): Promise<Flow | null> => {
@@ -195,7 +206,13 @@ export const flowStorage = {
             settings: data.content?.settings || INITIAL_FLOW.settings,
             steps: data.content?.steps || [],
             connections: data.content?.connections || [],
-            blocks: data.content?.blocks || []
+            blocks: data.content?.blocks || [],
+            metadata: {
+                previewText: data.metadata?.previewText,
+                entryPoint: data.metadata?.entryPoint,
+                thumbnailPath: data.metadata?.thumbnailPath,
+                thumbnailUpdatedAt: data.metadata?.thumbnailUpdatedAt
+            }
         };
 
         // Migration: Ensure phase exists on blocks (same logic as before)
@@ -226,7 +243,9 @@ export const flowStorage = {
 
         const metadata = {
             previewText: getPreviewText(flow.blocks?.[0]),
-            entryPoint: flow.settings?.entryPoint
+            entryPoint: flow.settings?.entryPoint,
+            thumbnailPath: flow.metadata?.thumbnailPath,
+            thumbnailUpdatedAt: flow.metadata?.thumbnailUpdatedAt
         };
 
         const payload = {
@@ -315,4 +334,29 @@ function getPreviewText(block?: Block): string | undefined {
         return block.content;
     }
     return undefined;
+}
+
+async function getSignedThumbnailUrl(thumbnailPath: string): Promise<string | undefined> {
+    const { data, error } = await supabase.storage
+        .from(THUMBNAIL_BUCKET)
+        .createSignedUrl(thumbnailPath, 60 * 60);
+
+    if (error) {
+        maybeLogThumbnailBucketIssue(error);
+        return undefined;
+    }
+
+    return data.signedUrl;
+}
+
+function maybeLogThumbnailBucketIssue(error: { message?: string } | null) {
+    if (hasLoggedThumbnailBucketIssue) return;
+    if (!error?.message) return;
+
+    hasLoggedThumbnailBucketIssue = true;
+    console.warn(
+        `Flow thumbnails are disabled because the "${THUMBNAIL_BUCKET}" storage bucket is unavailable. ` +
+        'Create this private bucket in Supabase Storage to enable dashboard previews.',
+        error.message
+    );
 }

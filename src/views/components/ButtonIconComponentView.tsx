@@ -78,8 +78,8 @@ const ButtonIconComponentView = () => {
             <div>
               <h3 className="mb-2">Composer</h3>
               <p className="mb-4">Used for attachment and send actions in the composer.</p>
-              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                <div className="w-[400px] mx-auto my-4 border border-gray-200 rounded-lg overflow-hidden">
+              <div className="bg-shell-bg border border-shell-border rounded-lg overflow-hidden">
+                <div className="w-[400px] mx-auto my-4 border border-shell-border rounded-lg overflow-hidden">
                   <Composer
                     status="active"
                     value="How can I help you today?"

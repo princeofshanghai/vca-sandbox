@@ -76,7 +76,7 @@ const ComposerComponentView = () => {
             </div>
           }
         >
-          <div className="w-[400px] mx-auto my-4 border-b border-x border-gray-200 rounded-lg overflow-hidden">
+          <div className="w-[400px] mx-auto my-4 border-b border-x border-shell-border rounded-lg overflow-hidden">
             <Composer
               status={activeState}
               value={value}
@@ -106,8 +106,8 @@ const ComposerComponentView = () => {
             <div>
               <h3 className="mb-2">Default</h3>
               <p className="mb-3">Empty input field ready for user input.</p>
-              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                <div className="w-[400px] mx-auto my-4 border-b border-x border-gray-200 rounded-lg overflow-hidden">
+              <div className="bg-shell-bg border border-shell-border rounded-lg overflow-hidden">
+                <div className="w-[400px] mx-auto my-4 border-b border-x border-shell-border rounded-lg overflow-hidden">
                   <Composer status="default" />
                 </div>
               </div>
@@ -117,8 +117,8 @@ const ComposerComponentView = () => {
             <div>
               <h3 className="mb-2">Active (focused)</h3>
               <p className="mb-3">Input field in focused state with cursor blinker.</p>
-              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                <div className="w-[400px] mx-auto my-4 border-b border-x border-gray-200 rounded-lg overflow-hidden">
+              <div className="bg-shell-bg border border-shell-border rounded-lg overflow-hidden">
+                <div className="w-[400px] mx-auto my-4 border-b border-x border-shell-border rounded-lg overflow-hidden">
                   <Composer status="active" />
                 </div>
               </div>
@@ -128,8 +128,8 @@ const ComposerComponentView = () => {
             <div>
               <h3 className="mb-2">Typing</h3>
               <p className="mb-3">Input field with text being entered.</p>
-              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                <div className="w-[400px] mx-auto my-4 border-b border-x border-gray-200 rounded-lg overflow-hidden">
+              <div className="bg-shell-bg border border-shell-border rounded-lg overflow-hidden">
+                <div className="w-[400px] mx-auto my-4 border-b border-x border-shell-border rounded-lg overflow-hidden">
                   <Composer status="typing" value="How to" />
                 </div>
               </div>
@@ -139,8 +139,8 @@ const ComposerComponentView = () => {
             <div>
               <h3 className="mb-2">Ready to Send</h3>
               <p className="mb-3">Input field with content, enabling the send button.</p>
-              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                <div className="w-[400px] mx-auto my-4 border-b border-x border-gray-200 rounded-lg overflow-hidden">
+              <div className="bg-shell-bg border border-shell-border rounded-lg overflow-hidden">
+                <div className="w-[400px] mx-auto my-4 border-b border-x border-shell-border rounded-lg overflow-hidden">
                   <Composer status="typing" value="Hello world" />
                 </div>
               </div>
@@ -150,8 +150,8 @@ const ComposerComponentView = () => {
             <div>
               <h3 className="mb-2">Multiline</h3>
               <p className="mb-3">Expanded input for longer messages (max 4 lines).</p>
-              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                <div className="w-[400px] mx-auto my-4 border-b border-x border-gray-200 rounded-lg overflow-hidden">
+              <div className="bg-shell-bg border border-shell-border rounded-lg overflow-hidden">
+                <div className="w-[400px] mx-auto my-4 border-b border-x border-shell-border rounded-lg overflow-hidden">
                   <Composer
                     status="multiline"
                     value="Use this component when the content is more than two lines. The input box reaches its maximum height at 4 lines."
@@ -164,8 +164,8 @@ const ComposerComponentView = () => {
             <div>
               <h3 className="mb-2">Disabled</h3>
               <p className="mb-3">Non-interactive disabled state.</p>
-              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                <div className="w-[400px] mx-auto my-4 border-b border-x border-gray-200 rounded-lg overflow-hidden">
+              <div className="bg-shell-bg border border-shell-border rounded-lg overflow-hidden">
+                <div className="w-[400px] mx-auto my-4 border-b border-x border-shell-border rounded-lg overflow-hidden">
                   <Composer status="disabled" />
                 </div>
               </div>
@@ -175,8 +175,8 @@ const ComposerComponentView = () => {
             <div>
               <h3 className="mb-2">Stop answering</h3>
               <p className="mb-3">Special state shown when AI is generating a response.</p>
-              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                <div className="w-[400px] mx-auto my-4 border-b border-x border-gray-200 rounded-lg overflow-hidden">
+              <div className="bg-shell-bg border border-shell-border rounded-lg overflow-hidden">
+                <div className="w-[400px] mx-auto my-4 border-b border-x border-shell-border rounded-lg overflow-hidden">
                   <Composer status="stop" />
                 </div>
               </div>
@@ -186,8 +186,8 @@ const ComposerComponentView = () => {
             <div>
               <h3 className="mb-2">Without attachment</h3>
               <p className="mb-3">Composer without the attachment icon.</p>
-              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                <div className="w-[400px] mx-auto my-4 border-b border-x border-gray-200 rounded-lg overflow-hidden">
+              <div className="bg-shell-bg border border-shell-border rounded-lg overflow-hidden">
+                <div className="w-[400px] mx-auto my-4 border-b border-x border-shell-border rounded-lg overflow-hidden">
                   <Composer status="default" attachment={false} />
                 </div>
               </div>

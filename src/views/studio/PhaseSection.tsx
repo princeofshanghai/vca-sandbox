@@ -28,11 +28,11 @@ export const PhaseSection = ({ id, title, description, icon, items, children, on
             {/* Minimalist Header */}
             <div className="flex items-baseline gap-3 mb-4 px-2">
                 <span className="text-xl">{icon}</span>
-                <h3 className="text-sm font-semibold text-gray-900 tracking-tight">
+                <h3 className="text-sm font-semibold text-shell-text tracking-tight">
                     {title}
                 </h3>
                 {description && (
-                    <span className="text-xs text-gray-400 font-normal">
+                    <span className="text-xs text-shell-muted font-normal">
                         {description}
                     </span>
                 )}
@@ -40,8 +40,8 @@ export const PhaseSection = ({ id, title, description, icon, items, children, on
 
             {/* Droppable Area */}
             <div className={cn(
-                "min-h-[80px] rounded-xl border border-dashed border-gray-200 transition-colors p-2 space-y-3",
-                items.length === 0 ? "bg-gray-50/30 hover:bg-gray-50/50" : "bg-transparent border-transparent px-0"
+                "min-h-[80px] rounded-xl border border-dashed border-shell-border transition-colors p-2 space-y-3",
+                items.length === 0 ? "bg-shell-surface-subtle hover:bg-shell-surface" : "bg-transparent border-transparent px-0"
             )}>
                 <SortableContext items={items} strategy={verticalListSortingStrategy}>
                     {children}
@@ -51,7 +51,7 @@ export const PhaseSection = ({ id, title, description, icon, items, children, on
                 {items.length === 0 && (
                     <button
                         onClick={onAddBlock}
-                        className="w-full h-full min-h-[80px] flex items-center justify-center gap-2 text-gray-400 hover:text-gray-600 transition-colors"
+                        className="w-full h-full min-h-[80px] flex items-center justify-center gap-2 text-shell-muted hover:text-shell-muted-strong transition-colors"
                     >
                         <Plus size={16} />
                         <span className="text-xs">Add to {title.toLowerCase()}</span>
@@ -64,7 +64,7 @@ export const PhaseSection = ({ id, title, description, icon, items, children, on
                 <div className="opacity-0 group-hover:opacity-100 transition-opacity flex justify-center mt-2">
                     <button
                         onClick={onAddBlock}
-                        className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-blue-600 transition-colors py-1 px-3 rounded-full hover:bg-blue-50"
+                        className="flex items-center gap-1.5 text-xs text-shell-muted hover:text-shell-accent transition-colors py-1 px-3 rounded-full hover:bg-shell-accent-soft"
                     >
                         <Plus size={14} />
                         <span>Add step</span>

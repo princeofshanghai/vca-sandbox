@@ -27,7 +27,7 @@ const HeaderComponentView = () => {
           controls={
             <div className="space-y-4">
               {/* Viewport Toggle - Full Width */}
-              <div className="pb-4 border-b border-gray-200">
+              <div className="pb-4 border-b border-shell-border">
                 <ToggleButtons
                   label="Viewport"
                   options={['desktop', 'mobile'] as const}
@@ -78,7 +78,7 @@ const HeaderComponentView = () => {
           }
         >
           <div
-            className="mx-auto my-4 border-t border-x border-gray-200 rounded-lg overflow-hidden"
+            className="mx-auto my-4 border-t border-x border-shell-border rounded-lg overflow-hidden"
             style={{ width: viewport === 'mobile' ? '393px' : '400px' }}
           >
             <Header
@@ -107,8 +107,8 @@ const HeaderComponentView = () => {
             <div>
               <h3 className="mb-2">Desktop</h3>
               <p className="mb-3">Desktop shows Help title and close button.</p>
-              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                <div className="w-[400px] mx-auto my-4 border-t border-x border-gray-200 rounded-lg overflow-hidden">
+              <div className="bg-shell-bg border border-shell-border rounded-lg overflow-hidden">
+                <div className="w-[400px] mx-auto my-4 border-t border-x border-shell-border rounded-lg overflow-hidden">
                   <Header
                     title="Help"
                     position="left"
@@ -125,8 +125,8 @@ const HeaderComponentView = () => {
             <div>
               <h3 className="mb-2">Mobile</h3>
               <p className="mb-3">Mobile includes a centered handle bar and close button.</p>
-              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                <div className="w-[393px] mx-auto my-4 border-t border-x border-gray-200 rounded-lg overflow-hidden">
+              <div className="bg-shell-bg border border-shell-border rounded-lg overflow-hidden">
+                <div className="w-[393px] mx-auto my-4 border-t border-x border-shell-border rounded-lg overflow-hidden">
                   <Header
                     title="Help"
                     viewport="mobile"
@@ -142,10 +142,10 @@ const HeaderComponentView = () => {
                 <Badge variant="wip">WIP</Badge>
               </h3>
               <p className="mb-3">Premium users have unique Premium styling.</p>
-              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden p-4">
+              <div className="bg-shell-bg border border-shell-border rounded-lg overflow-hidden p-4">
                 <div className="space-y-4">
                   {/* Desktop Premium */}
-                  <div className="w-[400px] mx-auto border-t border-x border-gray-200 rounded-lg overflow-hidden">
+                  <div className="w-[400px] mx-auto border-t border-x border-shell-border rounded-lg overflow-hidden">
                     <Header
                       title="Help"
                       position="left"
@@ -158,7 +158,7 @@ const HeaderComponentView = () => {
                   </div>
 
                   {/* Mobile Premium */}
-                  <div className="w-[393px] mx-auto border-t border-x border-gray-200 rounded-lg overflow-hidden">
+                  <div className="w-[393px] mx-auto border-t border-x border-shell-border rounded-lg overflow-hidden">
                     <Header
                       title="Help"
                       viewport="mobile"

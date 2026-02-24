@@ -2,6 +2,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { BookMarked, Blocks } from 'lucide-react';
 import VcaLogo from '@/components/VcaLogo';
 import { cn } from '@/utils/cn'; // Assuming cn utility exists, otherwise I'll use template literals
+import { Button } from '@/components/ui/button';
 
 interface SidebarItemProps {
     icon: React.ElementType;
@@ -11,22 +12,24 @@ interface SidebarItemProps {
 }
 
 const SidebarItem = ({ icon: Icon, label, isActive, onClick }: SidebarItemProps) => (
-    <button
+    <Button
         onClick={onClick}
         className={cn(
-            "flex flex-col items-center justify-center w-full py-4 gap-1 transition-colors relative group",
+            "relative group h-auto w-full flex-col items-center justify-center gap-1 rounded-none py-4 transition-colors",
             isActive
-                ? "text-blue-600 bg-blue-50/50"
-                : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+                ? "text-shell-accent-text bg-shell-accent-soft"
+                : "text-shell-muted hover:text-shell-text hover:bg-shell-surface"
         )}
         title={label}
+        variant="ghost"
+        type="button"
     >
         {isActive && (
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-blue-600 rounded-r-md" />
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-shell-accent rounded-r-md" />
         )}
         <Icon size={22} strokeWidth={1.25} />
         <span className="text-[10px] font-medium">{label}</span>
-    </button>
+    </Button>
 );
 
 export const GlobalSidebar = () => {
@@ -39,11 +42,11 @@ export const GlobalSidebar = () => {
     const isLibraryActive = location.pathname.startsWith('/components') || location.pathname.startsWith('/foundations');
 
     return (
-        <div className="w-[72px] h-full bg-white border-r border-gray-200 flex flex-col items-center flex-shrink-0 z-50">
+        <div className="w-[72px] h-full bg-shell-bg border-r border-shell-border flex flex-col items-center flex-shrink-0 z-50">
             {/* Logo Area */}
-            <div className="h-16 flex items-center justify-center w-full border-b border-gray-100">
+            <div className="h-16 flex items-center justify-center w-full border-b border-shell-border-subtle">
                 <div className="scale-75">
-                    <VcaLogo />
+                    <VcaLogo autoInvertInDark />
                 </div>
             </div>
 

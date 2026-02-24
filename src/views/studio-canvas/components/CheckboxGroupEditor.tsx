@@ -96,18 +96,18 @@ export function CheckboxGroupEditor({ component, onChange, children, isOpen, onO
 
     const presetActions = (
         <div className="relative group">
-            <button className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors">
+            <button className="flex items-center gap-1.5 text-xs text-shell-accent hover:text-shell-accent-hover font-medium transition-colors">
                 <Wand2 className="w-3.5 h-3.5" />
                 <span>Preset</span>
             </button>
-            <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-1 hidden group-hover:block z-50">
-                <button onClick={() => applyPreset('policies')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-gray-700">
+            <div className="absolute right-0 top-full mt-1 w-48 bg-shell-surface rounded-lg shadow-xl border border-shell-border py-1 hidden group-hover:block z-50">
+                <button onClick={() => applyPreset('policies')} className="w-full text-left px-3 py-2 text-xs hover:bg-shell-surface-subtle text-shell-muted-strong">
                     Policies
                 </button>
-                <button onClick={() => applyPreset('features')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-gray-700">
+                <button onClick={() => applyPreset('features')} className="w-full text-left px-3 py-2 text-xs hover:bg-shell-surface-subtle text-shell-muted-strong">
                     Product Features
                 </button>
-                <button onClick={() => applyPreset('feedback')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-gray-700">
+                <button onClick={() => applyPreset('feedback')} className="w-full text-left px-3 py-2 text-xs hover:bg-shell-surface-subtle text-shell-muted-strong">
                     Feedback Types
                 </button>
             </div>
@@ -150,7 +150,7 @@ export function CheckboxGroupEditor({ component, onChange, children, isOpen, onO
                     action={
                         <button
                             onClick={addOption}
-                            className="flex items-center gap-1 text-[10px] text-blue-600 hover:text-blue-700 font-medium"
+                            className="flex items-center gap-1 text-[10px] text-shell-accent hover:text-shell-accent-hover font-medium"
                         >
                             <Plus size={12} />
                             Add
@@ -159,26 +159,26 @@ export function CheckboxGroupEditor({ component, onChange, children, isOpen, onO
                 >
                     <div className="space-y-2">
                         {content.options?.map((option, idx) => (
-                            <div key={option.id} className="group border border-gray-200 rounded-lg bg-white overflow-hidden transition-all hover:border-gray-300">
+                            <div key={option.id} className="group border border-shell-border rounded-lg bg-shell-bg overflow-hidden transition-all hover:border-shell-accent-border">
                                 {/* Item Header / Summary */}
                                 <div
-                                    className="flex items-center gap-3 p-2 cursor-pointer bg-gray-50/50 hover:bg-gray-50 transition-colors"
+                                    className="flex items-center gap-3 p-2 cursor-pointer bg-shell-surface-subtle hover:bg-shell-surface transition-colors"
                                     onClick={() => setExpandedItemId(expandedItemId === option.id ? null : option.id)}
                                 >
-                                    <div className="text-gray-400 cursor-grab active:cursor-grabbing">
+                                    <div className="text-shell-muted cursor-grab active:cursor-grabbing">
                                         <GripVertical className="w-4 h-4" />
                                     </div>
                                     <div className="flex-1 min-w-0 flex items-center gap-2">
-                                        <div className="w-4 h-4 rounded border border-gray-300 bg-white flex items-center justify-center">
-                                            <div className="w-2 h-2 rounded-[1px] bg-gray-200 opacity-0 group-hover:opacity-100" />
+                                        <div className="w-4 h-4 rounded border border-shell-border bg-shell-bg flex items-center justify-center">
+                                            <div className="w-2 h-2 rounded-[1px] bg-shell-muted opacity-0 group-hover:opacity-100" />
                                         </div>
-                                        <div className="text-xs font-medium text-gray-900 truncate">
+                                        <div className="text-xs font-medium text-shell-text truncate">
                                             {option.label || 'New Option'}
                                         </div>
                                     </div>
                                     <button
                                         onClick={(e) => { e.stopPropagation(); deleteOption(idx); }}
-                                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-all opacity-0 group-hover:opacity-100"
+                                        className="p-1.5 text-shell-muted hover:text-shell-danger hover:bg-shell-danger-soft rounded transition-all opacity-0 group-hover:opacity-100"
                                     >
                                         <X className="w-3.5 h-3.5" />
                                     </button>
@@ -186,7 +186,7 @@ export function CheckboxGroupEditor({ component, onChange, children, isOpen, onO
 
                                 {/* Expanded Editor */}
                                 {expandedItemId === option.id && (
-                                    <div className="p-3 border-t border-gray-100 bg-white space-y-3 animate-in fade-in slide-in-from-top-1">
+                                    <div className="p-3 border-t border-shell-border-subtle bg-shell-bg space-y-3 animate-in fade-in slide-in-from-top-1">
                                         <EditorField
                                             label="Label"
                                             value={option.label}
@@ -203,7 +203,7 @@ export function CheckboxGroupEditor({ component, onChange, children, isOpen, onO
                             </div>
                         ))}
                         {content.options?.length === 0 && (
-                            <div className="text-center py-4 text-xs text-gray-400 border border-dashed border-gray-200 rounded-lg">
+                            <div className="text-center py-4 text-xs text-shell-muted border border-dashed border-shell-border rounded-lg">
                                 No options added yet.
                             </div>
                         )}

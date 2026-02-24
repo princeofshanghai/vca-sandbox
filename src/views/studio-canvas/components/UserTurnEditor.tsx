@@ -93,7 +93,7 @@ export const UserTurnEditor = ({
                 )}
 
                 {inputType === 'prompt' && (
-                    <div className="p-3 bg-blue-50/50 rounded border border-blue-100/50 text-xs text-blue-700 leading-normal font-medium flex items-start gap-2">
+                    <div className="p-3 bg-shell-accent-soft rounded border border-shell-accent-border text-xs text-shell-accent-text leading-normal font-medium flex items-start gap-2">
                         <div className="mt-0.5">
                             <User size={14} />
                         </div>

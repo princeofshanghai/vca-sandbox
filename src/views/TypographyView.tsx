@@ -17,15 +17,15 @@ const TypographyView = () => {
     weight: string;
     fontFamily: string;
   }) => (
-    <div className="border-b border-gray-100 last:border-0 pb-6 last:pb-0">
+    <div className="border-b border-shell-border-subtle last:border-0 pb-6 last:pb-0">
       <div className="flex items-baseline justify-between mb-3">
         <div>
-          <h3 className="text-lg font-medium text-gray-900">{label}</h3>
-          <code className="text-xs text-gray-500 font-mono">{token}</code>
+          <p className="text-lg font-medium text-shell-text">{label}</p>
+          <code className="text-xs text-shell-muted font-mono">{token}</code>
         </div>
         <div className="text-right">
-          <p className="text-xs text-gray-500">{size} / {lineHeight} / {weight}</p>
-          <p className="text-xs text-gray-400">{fontFamily}</p>
+          <p className="text-xs text-shell-muted">{size} / {lineHeight} / {weight}</p>
+          <p className="text-xs text-shell-muted">{fontFamily}</p>
         </div>
       </div>
       <p className={`${fontFamily === 'SF Pro Display' ? 'font-vca-display' : 'font-vca-text'} ${token} text-vca-text`}>
@@ -46,17 +46,17 @@ const TypographyView = () => {
         {/* Font Families */}
         <div>
           <h2 className="mb-4">Font families</h2>
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
+          <div className="bg-shell-bg border border-shell-border rounded-lg p-6">
             <div className="space-y-4">
               <div>
-                <h3 className="mb-2">SF Pro Text</h3>
-                <p className="text-sm text-gray-600 mb-2">Used for body text and small headings</p>
-                <code className="text-xs text-gray-500 font-mono">font-vca-text</code>
+                <p className="mb-2 text-lg font-medium text-shell-text">SF Pro Text</p>
+                <p className="text-sm text-shell-muted mb-2">Used for body text and small headings</p>
+                <code className="text-xs text-shell-muted font-mono">font-vca-text</code>
               </div>
-              <div className="pt-4 border-t border-gray-100">
-                <h3 className="mb-2">SF Pro Display</h3>
-                <p className="text-sm text-gray-600 mb-2">Used for headings and large display text</p>
-                <code className="text-xs text-gray-500 font-mono">font-vca-display</code>
+              <div className="pt-4 border-t border-shell-border-subtle">
+                <p className="mb-2 text-lg font-medium text-shell-text">SF Pro Display</p>
+                <p className="text-sm text-shell-muted mb-2">Used for headings and large display text</p>
+                <code className="text-xs text-shell-muted font-mono">font-vca-display</code>
 
               </div>
             </div>
@@ -66,7 +66,7 @@ const TypographyView = () => {
         {/* Body XSmall */}
         <div>
           <h2 className="mb-4">Body xsmall (12px)</h2>
-          <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-6">
+          <div className="bg-shell-bg border border-shell-border rounded-lg p-6 space-y-6">
             <TypeStyle
               label="Body XSmall"
               token="text-vca-xsmall"
@@ -105,7 +105,7 @@ const TypographyView = () => {
         {/* Body Small */}
         <div>
           <h2 className="mb-4">Body small (14px)</h2>
-          <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-6">
+          <div className="bg-shell-bg border border-shell-border rounded-lg p-6 space-y-6">
             <TypeStyle
               label="Body Small"
               token="text-vca-small"
@@ -144,7 +144,7 @@ const TypographyView = () => {
         {/* Body Medium */}
         <div>
           <h2 className="mb-4">Body medium (16px)</h2>
-          <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-6">
+          <div className="bg-shell-bg border border-shell-border rounded-lg p-6 space-y-6">
             <TypeStyle
               label="Body Medium"
               token="text-vca-medium"
@@ -183,7 +183,7 @@ const TypographyView = () => {
         {/* Body Large */}
         <div>
           <h2 className="mb-4">Body large (20px)</h2>
-          <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-6">
+          <div className="bg-shell-bg border border-shell-border rounded-lg p-6 space-y-6">
             <TypeStyle
               label="Body Large"
               token="text-vca-large"
@@ -222,8 +222,8 @@ const TypographyView = () => {
         {/* Heading Styles */}
         <div>
           <h2 className="mb-4">Heading styles</h2>
-          <p className="text-md text-gray-900 mb-4">All heading styles are semibold (600 weight) by default.</p>
-          <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-6">
+          <p className="text-md text-shell-text mb-4">All heading styles are semibold (600 weight) by default.</p>
+          <div className="bg-shell-bg border border-shell-border rounded-lg p-6 space-y-6">
             <TypeStyle
               label="Heading Small"
               token="text-vca-heading-small"
@@ -262,8 +262,8 @@ const TypographyView = () => {
         {/* Display Styles */}
         <div>
           <h2 className="mb-4">Display styles</h2>
-          <p className="text-md text-gray-900 mb-4">Large display text for prominent UI elements and hero sections.</p>
-          <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-6">
+          <p className="text-md text-shell-text mb-4">Large display text for prominent UI elements and hero sections.</p>
+          <div className="bg-shell-bg border border-shell-border rounded-lg p-6 space-y-6">
             <TypeStyle
               label="Display Large"
               token="text-vca-display-large"
@@ -306,4 +306,3 @@ const TypographyView = () => {
 };
 
 export default TypographyView;
-

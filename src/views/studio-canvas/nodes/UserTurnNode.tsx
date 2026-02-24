@@ -96,8 +96,8 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
             const hasTriggers = !!val;
             return (
                 <div className="flex items-start gap-3 w-full">
-                    <ALargeSmall className={`w-4 h-4 shrink-0 mt-0.5 ${hasTriggers ? 'text-purple-500' : 'text-gray-400'}`} />
-                    <div className={`text-sm leading-normal break-words ${hasTriggers ? 'text-gray-900' : 'text-gray-400'}`}>
+                    <ALargeSmall className={`w-4 h-4 shrink-0 mt-0.5 ${hasTriggers ? 'text-shell-node-user' : 'text-shell-muted'}`} />
+                    <div className={`text-sm leading-normal break-words ${hasTriggers ? 'text-shell-text' : 'text-shell-muted'}`}>
                         {val || 'What does the user say?'}
                     </div>
                 </div>
@@ -108,8 +108,8 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
             const hasLabel = !!val;
             return (
                 <div className="flex items-center gap-2 text-sm py-1">
-                    <MousePointerClick className={`w-4 h-4 ${hasLabel ? 'text-purple-600' : 'text-gray-400'}`} />
-                    <span className={`truncate ${hasLabel ? 'text-gray-900 font-medium' : 'text-gray-400'}`}>
+                    <MousePointerClick className={`w-4 h-4 ${hasLabel ? 'text-shell-node-user' : 'text-shell-muted'}`} />
+                    <span className={`truncate ${hasLabel ? 'text-shell-text font-medium' : 'text-shell-muted'}`}>
                         {val ? `User clicks ${val}` : 'Which button does the user click?'}
                     </span>
                 </div>
@@ -121,8 +121,8 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
 
         return (
             <div className="flex items-center gap-2 text-sm py-1">
-                <MessageCirclePlus className={`w-4 h-4 shrink-0 ${isLinked ? 'text-purple-600' : 'text-gray-400'}`} />
-                <span className={`truncate ${isLinked ? 'text-gray-900 font-medium' : 'text-gray-400'}`}>
+                <MessageCirclePlus className={`w-4 h-4 shrink-0 ${isLinked ? 'text-shell-node-user' : 'text-shell-muted'}`} />
+                <span className={`truncate ${isLinked ? 'text-shell-text font-medium' : 'text-shell-muted'}`}>
                     {isLinked ? `User clicks ${promptText || 'AI Prompt'}` : 'Which prompt does the user click?'}
                 </span>
             </div>
@@ -131,6 +131,7 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
 
     const zoom = useStore((s) => s.transform[2]);
     const scale = Math.max(1, 1 / zoom);
+    const userSurfaceClassName = 'bg-[rgb(var(--shell-node-user-surface)/1)]';
 
     const promptText = getLinkedPromptText();
 
@@ -148,9 +149,9 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
         >
             <div
                 id={`node-${id}`}
-                className={`bg-white rounded-lg border shadow-sm w-[280px] transition-all cursor-pointer relative overflow-visible ${selected || isEditorOpen
-                    ? 'border-purple-500 ring-1 ring-purple-500'
-                    : 'border-gray-300 hover:border-purple-300 hover:shadow-md'
+                className={`${userSurfaceClassName} rounded-lg border shadow-sm w-[280px] transition-all relative overflow-visible ${selected || isEditorOpen
+                    ? 'border-shell-node-user ring-1 ring-shell-node-user/30'
+                    : 'border-shell-node-user/35 hover:border-shell-node-user/60'
                     }`}
                 onClick={() => {
                     // Don't stop propagation so React Flow selects the node
@@ -164,7 +165,7 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
                         transform: `scale(${scale})`,
                     }}
                 >
-                    <div className="text-purple-600 flex-shrink-0">
+                    <div className="text-shell-node-user flex-shrink-0">
                         {getIcon()}
                     </div>
                     {isEditingLabel ? (
@@ -175,12 +176,12 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
                             onChange={(e) => setEditedLabel(e.target.value)}
                             onBlur={handleLabelSave}
                             onKeyDown={handleLabelKeyDown}
-                            className="w-full h-full text-xs font-medium text-gray-900 bg-transparent border border-purple-500 rounded px-1 outline-none nodrag"
+                            className="w-full h-full text-xs font-medium text-shell-text bg-transparent border border-shell-node-user rounded px-1 outline-none nodrag"
                             onClick={(e) => e.stopPropagation()}
                         />
                     ) : (
                         <div
-                            className={`w-full h-full flex items-center text-xs font-medium truncate rounded transition-colors cursor-text ${!typedData.label ? 'text-gray-400' : 'text-gray-500 hover:text-gray-900 border border-transparent hover:border-gray-200'}`}
+                            className={`w-full h-full flex items-center text-xs font-medium truncate rounded transition-colors cursor-text ${!typedData.label ? 'text-shell-muted' : 'text-shell-muted-strong hover:text-shell-text border border-transparent hover:border-shell-border/70'}`}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 setIsEditingLabel(true);
@@ -197,13 +198,13 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
                     type="target"
                     id="user-input"
                     position={Position.Left}
-                    className="!bg-purple-400 !w-3 !h-3 !border-2 !border-white !z-50"
+                    className="!bg-shell-node-user !w-3 !h-3 !border-2 !border-shell-bg !z-50"
                 />
 
                 {/* Wrapper ID for Popover to detect clicks inside */}
                 <div id={`component-${id}`} className="w-full h-full overflow-hidden rounded-lg">
                     {/* Content Body */}
-                    <div className="px-4 py-3 bg-white rounded-b-lg">
+                    <div className={`px-4 py-3 ${userSurfaceClassName} rounded-b-lg`}>
                         {renderReadonlyContent()}
                     </div>
                 </div>
@@ -213,7 +214,7 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
                     type="source"
                     id="user-output"
                     position={Position.Right}
-                    className="!bg-purple-400 !w-3 !h-3 !border-2 !border-white !z-50"
+                    className="!bg-shell-node-user !w-3 !h-3 !border-2 !border-shell-bg !z-50"
                 />
             </div >
         </UserTurnEditor>

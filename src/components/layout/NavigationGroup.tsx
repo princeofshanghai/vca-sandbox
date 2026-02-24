@@ -27,7 +27,7 @@ const NavigationGroup = ({ label, children, className }: NavigationGroupProps) =
   return (
     <div className={className}>
       {label && (
-        <div className="text-xs font-normal text-gray-500 mb-2">{label}</div>
+        <div className="text-xs font-normal text-shell-muted mb-2">{label}</div>
       )}
       <div className="space-y-0.5">
         {children}
@@ -37,4 +37,3 @@ const NavigationGroup = ({ label, children, className }: NavigationGroupProps) =
 };
 
 export default NavigationGroup;
-

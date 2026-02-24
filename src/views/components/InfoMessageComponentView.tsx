@@ -98,7 +98,7 @@ const InfoMessageComponentView = () => {
             <div>
               <h3 className="mb-4">Full example</h3>
               <p className="mb-3">Use AI information messages to provide information to the user along with clickable links to sources.</p>
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="bg-shell-bg border border-shell-border rounded-lg p-4">
                 <div className="w-[352px] mx-auto">
                   <InfoMessage
                     status="complete"

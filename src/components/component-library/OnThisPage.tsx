@@ -110,7 +110,7 @@ export const OnThisPage = ({ selectors = 'h2, h3' }: { selectors?: string }) => 
   return (
     <div>
       <div className="mb-4">
-        <h4 className="text-xs font-medium text-gray-500">On this page</h4>
+        <h4 className="text-xs font-medium text-shell-muted">On this page</h4>
       </div>
       <nav className="space-y-1">
         {headings.map((heading) => (
@@ -121,9 +121,9 @@ export const OnThisPage = ({ selectors = 'h2, h3' }: { selectors?: string }) => 
             className={cn(
               'block text-[13px] transition-colors',
               heading.level === 2
-                ? 'text-gray-500 hover:text-gray-900 font-medium'
-                : 'text-gray-500 hover:text-gray-700 pl-4',
-              activeId === heading.id && 'text-gray-900 font-medium'
+                ? 'text-shell-muted hover:text-shell-text font-medium'
+                : 'text-shell-muted hover:text-shell-muted-strong pl-4',
+              activeId === heading.id && 'text-shell-text font-medium'
             )}
           >
             {heading.text}

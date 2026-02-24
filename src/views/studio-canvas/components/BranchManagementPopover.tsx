@@ -37,16 +37,16 @@ export function BranchManagementContent({ branches, onChange }: BranchManagement
             side="top"
             sideOffset={12}
             align="center"
-            className="bg-gray-900 border border-gray-800 rounded-xl shadow-2xl p-4 w-[320px] z-[1001] animate-in fade-in zoom-in-95 duration-200 ease-out"
+            className="bg-shell-dark-panel border border-shell-dark-border rounded-xl shadow-2xl p-4 w-[320px] z-[1001] animate-in fade-in zoom-in-95 duration-200 ease-out"
         >
-            <div className="flex items-center gap-2 mb-3 text-gray-400 px-1">
+            <div className="flex items-center gap-2 mb-3 text-shell-dark-muted px-1">
                 <GitBranch className="w-4 h-4" />
-                <span className="text-xs font-medium text-gray-400">Condition branches</span>
+                <span className="text-xs font-medium text-shell-dark-muted">Condition branches</span>
             </div>
 
             <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1 thin-scrollbar">
                 {branches.map((branch) => (
-                    <div key={branch.id} className="p-3 bg-gray-950/50 rounded-lg border border-gray-800 space-y-2">
+                    <div key={branch.id} className="p-3 bg-shell-dark-bg/60 rounded-lg border border-shell-dark-border space-y-2">
                         {/* Branch Label Row */}
                         <div className="flex items-center gap-2">
                             <div className="flex-1 relative">
@@ -54,14 +54,14 @@ export function BranchManagementContent({ branches, onChange }: BranchManagement
                                     type="text"
                                     value={branch.condition}
                                     onChange={(e) => handleUpdateBranch(branch.id, { condition: e.target.value })}
-                                    className="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-1.5 text-sm text-gray-200 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-600"
+                                    className="w-full bg-shell-dark-bg border border-shell-dark-border rounded-md px-3 py-1.5 text-sm text-shell-dark-text focus:border-shell-accent focus:outline-none focus:ring-1 focus:ring-shell-accent transition-all placeholder:text-shell-dark-muted"
                                     placeholder="Branch label (e.g. Yes)..."
                                 />
                             </div>
                             <button
                                 onClick={() => handleRemoveBranch(branch.id)}
                                 disabled={branches.length <= 1}
-                                className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-gray-800 rounded-md transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-500 cursor-default"
+                                className="p-1.5 text-shell-dark-muted hover:text-shell-danger hover:bg-shell-dark-surface rounded-md transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-shell-dark-muted cursor-pointer disabled:cursor-not-allowed"
                             >
                                 <X className="w-4 h-4" />
                             </button>
@@ -69,7 +69,7 @@ export function BranchManagementContent({ branches, onChange }: BranchManagement
 
                         {/* Logic Row */}
                         <div className="flex items-center gap-2 px-1">
-                            <GitBranch className="w-3 h-3 text-gray-600 shrink-0" />
+                            <GitBranch className="w-3 h-3 text-shell-dark-muted shrink-0" />
                             <div className="flex-1 flex items-center gap-2">
                                 <input
                                     type="text"
@@ -81,10 +81,10 @@ export function BranchManagementContent({ branches, onChange }: BranchManagement
                                             operator: 'eq'
                                         }
                                     })}
-                                    className="w-full bg-gray-900 border border-gray-800 rounded px-2 py-1 text-xs text-blue-300 placeholder:text-gray-600 focus:border-blue-500/50 focus:outline-none"
+                                    className="w-full bg-shell-dark-bg border border-shell-dark-border rounded px-2 py-1 text-xs text-shell-accent-text placeholder:text-shell-dark-muted focus:border-shell-accent-border focus:outline-none"
                                     placeholder="Variable..."
                                 />
-                                <span className="text-gray-600 text-xs font-mono">==</span>
+                                <span className="text-shell-dark-muted text-xs font-mono">==</span>
                                 <input
                                     type="text"
                                     value={branch.logic?.value || ''}
@@ -95,7 +95,7 @@ export function BranchManagementContent({ branches, onChange }: BranchManagement
                                             operator: 'eq'
                                         }
                                     })}
-                                    className="w-full bg-gray-900 border border-gray-800 rounded px-2 py-1 text-xs text-green-300 placeholder:text-gray-600 focus:border-green-500/50 focus:outline-none"
+                                    className="w-full bg-shell-dark-bg border border-shell-dark-border rounded px-2 py-1 text-xs text-vca-positive placeholder:text-shell-dark-muted focus:border-shell-accent-border focus:outline-none"
                                     placeholder="Value..."
                                 />
                             </div>
@@ -106,13 +106,13 @@ export function BranchManagementContent({ branches, onChange }: BranchManagement
 
             <button
                 onClick={handleAddBranch}
-                className="w-full mt-3 flex items-center justify-center gap-2 py-2 rounded-md border border-dashed border-gray-700 text-gray-400 hover:text-blue-400 hover:border-blue-500/50 hover:bg-gray-800/50 transition-all text-sm font-medium cursor-default"
+                className="w-full mt-3 flex items-center justify-center gap-2 py-2 rounded-md border border-dashed border-shell-dark-border text-shell-dark-muted hover:text-shell-accent-text hover:border-shell-accent-border hover:bg-shell-dark-surface transition-all text-sm font-medium cursor-pointer"
             >
                 <Plus className="w-4 h-4" />
                 <span>Add Branch</span>
             </button>
 
-            <Popover.Arrow className="fill-gray-900 stroke-gray-800" />
+            <Popover.Arrow className="fill-shell-dark-panel stroke-shell-dark-border" />
         </Popover.Content>
     );
 }

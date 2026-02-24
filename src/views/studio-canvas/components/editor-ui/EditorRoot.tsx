@@ -8,7 +8,7 @@ interface EditorRootProps {
 
 export function EditorRoot({ children, className }: EditorRootProps) {
     return (
-        <div className={cn("flex flex-col h-full w-full bg-white", className)}>
+        <div className={cn("flex flex-col h-full w-full bg-shell-bg text-shell-text", className)}>
             {children}
         </div>
     );
