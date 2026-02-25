@@ -209,14 +209,9 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
     }, []);
 
     const handleSelectComponent = useCallback((nodeId: string, componentId: string, anchorEl: HTMLElement) => {
-        const currentSelection = selectionRef.current;
-        if (currentSelection?.type === 'component' && currentSelection.nodeId === nodeId && currentSelection.componentId === componentId) {
-            setSelection(null);
-            setSelectionAnchorEl(null);
-        } else {
-            setSelection({ type: 'component', nodeId, componentId });
-            setSelectionAnchorEl(anchorEl);
-        }
+        // Keep card selection sticky so Delete consistently targets the card.
+        setSelection({ type: 'component', nodeId, componentId });
+        setSelectionAnchorEl(anchorEl);
     }, []);
 
     const handleTurnLabelChange = useCallback((nodeId: string, newLabel: string) => {
@@ -803,21 +798,34 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Alt') setIsAltPressed(true);
 
-            // Don't trigger if user is typing in an input
-            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+            const target = e.target as HTMLElement | null;
+            // Don't trigger if user is typing in an editable field.
+            if (
+                target &&
+                (
+                    target instanceof HTMLInputElement ||
+                    target instanceof HTMLTextAreaElement ||
+                    target.isContentEditable
+                )
+            ) {
                 return;
             }
+
+            const currentSelection = selectionRef.current;
 
             if (e.key === 'Escape') {
                 handleDeselect();
             } else if (e.key === 'Delete' || e.key === 'Backspace') {
                 // Only hijack delete if we are deleting a COMPONENT (which React Flow doesn't know about)
-                if (selectionRef.current?.type === 'component') {
+                if (currentSelection?.type === 'component') {
                     e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
                     handleDeleteSelection();
+                    return;
                 }
                 // Otherwise let the event bubble to React Flow to handle Node deletion (single or multi)
-            } else if (selectionRef.current?.type === 'component') {
+            } else if (currentSelection?.type === 'component') {
                 if (e.key === 'ArrowUp') {
                     e.preventDefault();
                     handleMoveComponentUp();
@@ -832,10 +840,11 @@ function CanvasEditorInner({ flow, onUpdateFlow, onBack, onPreview, isPreviewAct
             if (e.key === 'Alt') setIsAltPressed(false);
         };
 
-        window.addEventListener('keydown', handleKeyDown);
+        // Use capture so component-level shortcuts run before React Flow's node delete handler.
+        window.addEventListener('keydown', handleKeyDown, true);
         window.addEventListener('keyup', handleKeyUp);
         return () => {
-            window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('keydown', handleKeyDown, true);
             window.removeEventListener('keyup', handleKeyUp);
         };
     }, [handleDeleteSelection, handleMoveComponentUp, handleMoveComponentDown, handleDeselect]);

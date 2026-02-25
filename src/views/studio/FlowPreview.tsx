@@ -7,6 +7,7 @@ import { InfoMessage } from '@/components/vca-components/info-message/InfoMessag
 import { StatusCard } from '@/components/vca-components/status-card/StatusCard';
 import { PromptGroup } from '@/components/vca-components/prompt-group/PromptGroup';
 import { PhoneFrame } from '@/components/component-library/PhoneFrame';
+import { Split } from 'lucide-react';
 
 import { InlineFeedback } from '@/components/vca-components/inline-feedback';
 import { SelectionList } from '@/components/vca-components/selection-list/SelectionList';
@@ -163,7 +164,7 @@ const PreviewContent = ({
         onVariableUpdate
     });
 
-    const [isPathPickerOpen, setIsPathPickerOpen] = useState(false);
+    const [isPathPanelExpanded, setIsPathPanelExpanded] = useState(false);
 
     const activeInterceptor = [...history]
         .reverse()
@@ -176,9 +177,66 @@ const PreviewContent = ({
 
     useEffect(() => {
         if (activeInterceptor) {
-            setIsPathPickerOpen(false);
+            setIsPathPanelExpanded(true);
         }
     }, [activeInterceptor]);
+
+    useEffect(() => {
+        if (!activeInterceptor && !lastConditionSelection) {
+            setIsPathPanelExpanded(false);
+        }
+    }, [activeInterceptor, lastConditionSelection]);
+
+    const overlaySelection = activeInterceptor
+        ? {
+            mode: 'interceptor' as const,
+            variableName: activeInterceptor.variableName,
+            branches: activeInterceptor.branches,
+            stepId: activeInterceptor.stepId,
+            interceptorId: activeInterceptor.id,
+            selectedLabel: 'Choose a path to continue'
+        }
+        : lastConditionSelection
+            ? {
+                mode: 'selection' as const,
+                variableName: lastConditionSelection.variableName,
+                branches: lastConditionSelection.branches,
+                stepId: lastConditionSelection.stepId,
+                selectedLabel: lastConditionSelection.selectedLabel
+            }
+            : null;
+
+    const listBottomPaddingClass = isPathPanelExpanded
+        ? 'pb-28'
+        : overlaySelection
+            ? 'pb-14'
+            : '';
+
+    const shouldShowFullPathPanel = !!overlaySelection && isPathPanelExpanded;
+    const shouldShowCompactPathPill = !!overlaySelection && !isPathPanelExpanded;
+
+    const handleOverlayResolve = (value: string) => {
+        if (!overlaySelection) return;
+
+        if (overlaySelection.mode === 'interceptor') {
+            resolveInterceptor(
+                overlaySelection.stepId,
+                overlaySelection.variableName,
+                value,
+                overlaySelection.branches,
+                overlaySelection.interceptorId
+            );
+        } else {
+            switchConditionPath(
+                overlaySelection.stepId,
+                overlaySelection.variableName,
+                value,
+                overlaySelection.branches
+            );
+        }
+
+        setIsPathPanelExpanded(false);
+    };
 
 
     // Report Status to Parent (Container)
@@ -220,7 +278,7 @@ const PreviewContent = ({
     // Render logic
     return (
         <div className="relative">
-            <div className={`space-y-4 ${activeInterceptor || (isPathPickerOpen && lastConditionSelection) ? 'pb-28' : lastConditionSelection ? 'pb-14' : ''}`}>
+            <div className={`space-y-4 ${listBottomPaddingClass}`}>
             {/* Disclaimer (Global) */}
             {flow.settings?.showDisclaimer && <Message variant="disclaimer" />}
 
@@ -402,54 +460,52 @@ const PreviewContent = ({
             <div ref={messagesEndRef} className="h-4" />
             </div>
 
-            {activeInterceptor && (
+            {overlaySelection && shouldShowFullPathPanel && (
                 <div className="pointer-events-none absolute inset-x-0 bottom-2 z-30 flex justify-center px-2">
                     <ContextInterceptorMessage
-                        className="pointer-events-auto w-full max-w-[330px]"
-                        variableName={activeInterceptor.variableName}
-                        branches={activeInterceptor.branches}
-                        onResolve={(value) => resolveInterceptor(
-                            activeInterceptor.stepId,
-                            activeInterceptor.variableName,
-                            value,
-                            activeInterceptor.branches,
-                            activeInterceptor.id
-                        )}
+                        className="pointer-events-auto w-full max-w-[360px]"
+                        variableName={overlaySelection.variableName}
+                        branches={overlaySelection.branches}
+                        onResolve={handleOverlayResolve}
+                        onHide={() => setIsPathPanelExpanded(false)}
                     />
                 </div>
             )}
 
-            {!activeInterceptor && isPathPickerOpen && lastConditionSelection && (
-                <div className="pointer-events-none absolute inset-x-0 bottom-2 z-30 flex justify-center px-2">
-                    <ContextInterceptorMessage
-                        className="pointer-events-auto w-full max-w-[330px]"
-                        variableName={lastConditionSelection.variableName}
-                        branches={lastConditionSelection.branches}
-                        onResolve={(value) => {
-                            switchConditionPath(
-                                lastConditionSelection.stepId,
-                                lastConditionSelection.variableName,
-                                value,
-                                lastConditionSelection.branches
-                            );
-                            setIsPathPickerOpen(false);
-                        }}
-                    />
-                </div>
-            )}
-
-            {!activeInterceptor && !isPathPickerOpen && lastConditionSelection && (
+            {shouldShowCompactPathPill && (
                 <div className="pointer-events-none absolute inset-x-0 bottom-2 z-20 flex justify-center px-2">
-                    <div className="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-shell-border bg-shell-bg/95 px-3 py-1.5 shadow-sm backdrop-blur">
-                        <span className="text-[11px] text-shell-muted">Previewing path:</span>
-                        <span className="max-w-[160px] truncate text-xs font-medium text-shell-text" title={lastConditionSelection.selectedLabel}>
-                            {lastConditionSelection.selectedLabel}
-                        </span>
+                    <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => setIsPathPanelExpanded(true)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                setIsPathPanelExpanded(true);
+                            }
+                        }}
+                        className="pointer-events-auto inline-flex max-w-[360px] items-center gap-2 rounded-xl border border-shell-dark-border bg-shell-dark-panel/95 px-3 py-1.5 text-left shadow-2xl backdrop-blur-sm"
+                    >
+                        <Split size={13} className="shrink-0 text-shell-node-condition" />
+                        <div className="min-w-0">
+                            <p className="text-[10px] font-medium uppercase tracking-wide text-shell-dark-muted">
+                                {overlaySelection.mode === 'interceptor' ? 'Preview paused' : 'Preview path'}
+                            </p>
+                            <p
+                                className="max-w-[170px] truncate text-xs font-medium text-shell-dark-text"
+                                title={overlaySelection.selectedLabel}
+                            >
+                                {overlaySelection.selectedLabel}
+                            </p>
+                        </div>
                         <button
-                            onClick={() => setIsPathPickerOpen(true)}
-                            className="text-[11px] font-medium text-shell-accent hover:text-shell-accent-hover"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setIsPathPanelExpanded(true);
+                            }}
+                            className="ml-1 text-[11px] font-medium text-shell-accent hover:text-shell-accent-hover"
                         >
-                            Change
+                            {overlaySelection.mode === 'interceptor' ? 'Open' : 'Change'}
                         </button>
                     </div>
                 </div>

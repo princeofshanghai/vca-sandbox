@@ -210,8 +210,10 @@ export const useSmartFlowEngine = ({
                         // NON-STREAMING (Cards, Prompts, etc.)
                         setVisibleComponentIds(prev => new Set([...prev, component.id]));
 
-                        // Small pause for visual digest, but very fast for prompts
-                        const pause = component.type === 'prompt' ? 100 : 400;
+                        // Keep status cards on screen long enough to reach success before continuing.
+                        const pause = component.type === 'statusCard'
+                            ? 2000
+                            : (component.type === 'prompt' ? 100 : 400);
                         await new Promise((r) => setTimeout(r as TimerHandler, pause));
                     }
 
@@ -446,8 +448,14 @@ export const useSmartFlowEngine = ({
             : (getConditionBranch(branches, { ...(variables || {}), [variableName]: value }) || '');
 
         const selectedBranch = branches.find((branch) => branch.id === selectedBranchId);
-        const selectedLabel = selectedBranch?.condition
-            || (selectedBranch?.logic?.value !== undefined ? String(selectedBranch.logic.value) : 'Path');
+        const selectedPathLabel = selectedBranch?.condition?.trim() || (selectedBranch?.isDefault ? 'Default' : 'Path');
+        const selectedLabel = selectedBranch?.isDefault
+            ? `${selectedPathLabel} (Fallback)`
+            : (
+                selectedBranch?.logic?.variable && selectedBranch.logic?.value !== undefined
+                    ? `${selectedPathLabel} (${selectedBranch.logic.variable} = ${String(selectedBranch.logic.value)})`
+                    : selectedPathLabel
+            );
 
         return {
             stepId,

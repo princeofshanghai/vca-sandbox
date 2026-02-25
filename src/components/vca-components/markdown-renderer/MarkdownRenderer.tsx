@@ -8,6 +8,16 @@ interface MarkdownRendererProps {
 export function MarkdownRenderer({ content, className }: MarkdownRendererProps) {
     if (!content) return null;
 
+    const normalizedContent = content.replace(
+        /\*\*(\s*)([^*\n]+?)(\s*)\*\*/g,
+        (match, leadingSpace, innerText, trailingSpace) => {
+            if (!leadingSpace && !trailingSpace) {
+                return match;
+            }
+            return `${leadingSpace}**${innerText}**${trailingSpace}`;
+        }
+    );
+
     // We bypass cn() for the main typography classes because tailwind-merge
     // incorrectly strips 'text-vca-small-open' in favor of 'text-vca-text'.
     // See docs/archive/Tailwind-Merge-Typography-Fix.md
@@ -57,7 +67,7 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
                     ),
                 }}
             >
-                {content}
+                {normalizedContent}
             </ReactMarkdown>
         </div>
     );

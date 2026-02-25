@@ -93,7 +93,7 @@ export const Message = ({
         {isThinking ? (
           <ThinkingIndicator />
         ) : (
-          <div className="text-vca-text text-vca-small-open w-full">
+          <div className="text-vca-text text-vca-small-open w-full [&_a]:font-semibold [&_a]:no-underline">
             {typeof defaultText === 'string' ? (
               <MarkdownRenderer content={defaultText} />
             ) : (
@@ -107,4 +107,3 @@ export const Message = ({
 };
 
 export default Message;
-

@@ -39,11 +39,11 @@ export function ConditionBranchEditor({
                 {/* Identity Section */}
                 <EditorSection>
                     <EditorField
-                        label="Button Label"
+                        label="Path name (optional)"
                         value={condition}
                         onChange={(val) => onChange({ condition: val })}
-                        placeholder={'e.g. "Premium", "Free plan", "Need verification"'}
-                        hint="This is what people see and click in preview."
+                        placeholder={'e.g. "Premium users", "Free users"'}
+                        hint="This is just for your canvas. Preview buttons now show the rule automatically."
                     />
                 </EditorSection>
 
@@ -51,7 +51,7 @@ export function ConditionBranchEditor({
                 <EditorSection title="Conditions">
                     <div className="space-y-4">
                         <div className="text-[11px] text-shell-muted bg-shell-surface-subtle p-2.5 rounded-lg border border-shell-border-subtle leading-relaxed">
-                            The button label is for preview UI. The match value is what this path checks in your variable.
+                            In preview, people will see choices like "If plan is premium" and "Anything else".
                         </div>
 
                         {/* Status Toggle */}
@@ -63,7 +63,7 @@ export function ConditionBranchEditor({
                                     : 'text-shell-muted hover:text-shell-muted-strong'
                                     }`}
                             >
-                                Always (Default)
+                                Anything else
                             </button>
                             <button
                                 onClick={() => onChange({ isDefault: false })}
@@ -72,13 +72,13 @@ export function ConditionBranchEditor({
                                     : 'text-shell-muted hover:text-shell-muted-strong'
                                     }`}
                             >
-                                When...
+                                Match this value
                             </button>
                         </div>
 
                         {isDefault ? (
                             <div className="text-[11px] text-shell-muted bg-shell-surface-subtle p-3 rounded-lg border border-shell-border-subtle leading-relaxed">
-                                This path will be taken automatically if no other conditions are met.
+                                This path is used when none of the other rules match.
                             </div>
                         ) : (
                             <div className="space-y-3 animate-in fade-in slide-in-from-top-1 pt-1">
@@ -87,7 +87,8 @@ export function ConditionBranchEditor({
                                         If
                                     </div>
                                     <EditorField
-                                        placeholder="[ Attribute key ]"
+                                        label="Field to check"
+                                        placeholder="e.g. plan"
                                         value={logic?.variable || ''}
                                         onChange={(val) => onChange({ logic: { variable: val, value: logic?.value || '', operator: 'eq' } })}
                                     />
@@ -99,7 +100,8 @@ export function ConditionBranchEditor({
                                     </div>
 
                                     <EditorField
-                                        placeholder="[ Match value ]"
+                                        label="Value to match"
+                                        placeholder="e.g. premium"
                                         value={logic?.value || ''}
                                         onChange={(val) => onChange({ logic: { variable: logic?.variable || '', value: val, operator: 'eq' } })}
                                     />
@@ -109,9 +111,9 @@ export function ConditionBranchEditor({
                                     <div className="flex items-start gap-2 p-2.5 bg-shell-accent-soft rounded-lg border border-shell-accent-border">
                                         <ArrowRight size={14} className="text-shell-accent shrink-0 mt-0.5" />
                                         <div>
-                                            <p className="text-[11px] text-shell-accent-text font-medium">Preview behavior</p>
+                                            <p className="text-[11px] text-shell-accent-text font-medium">Preview button text</p>
                                             <p className="text-[10px] text-shell-accent-text/80 leading-tight">
-                                                Shows as <span className="font-semibold text-shell-accent-text">"{condition || 'This path'}"</span> and matches <span className="font-semibold text-shell-accent-text">"{logic.value || 'value'}"</span>.
+                                                Shows as <span className="font-semibold text-shell-accent-text">"If {logic.variable} is {logic.value || 'value'}"</span>.
                                             </p>
                                         </div>
                                     </div>

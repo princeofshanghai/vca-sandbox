@@ -198,7 +198,7 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
     }, [handleBranchDelete, selectedBranchId]);
 
     useEffect(() => {
-        if (!selected || !selectedBranchId) {
+        if (!selectedBranchId) {
             return;
         }
 
@@ -227,7 +227,7 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [handleDeleteSelectedBranch, handleMoveBranch, selected, selectedBranchId]);
+    }, [handleDeleteSelectedBranch, handleMoveBranch, selectedBranchId]);
 
     const branchIds = useMemo(() => branches.map((branch) => branch.id), [branches]);
     const branchLayoutKey = useMemo(() => branchIds.join('|'), [branchIds]);

@@ -1,6 +1,7 @@
 import React from 'react';
 import { cn } from '@/utils';
 import { VcaIcon } from '../icons';
+import { MarkdownRenderer } from '../markdown-renderer/MarkdownRenderer';
 
 export type StatusCardProps = {
     status: 'in-progress' | 'complete' | 'success';
@@ -69,7 +70,11 @@ export const StatusCard = ({
 
                     {(status === 'complete' || status === 'success') && children && (
                         <div className="font-vca-text text-vca-small-open text-vca-text mt-0 space-y-2 [&_a]:text-vca-link [&_a]:font-semibold [&_a]:no-underline hover:[&_a]:underline">
-                            {children}
+                            {typeof children === 'string' ? (
+                                <MarkdownRenderer content={children} />
+                            ) : (
+                                children
+                            )}
                         </div>
                     )}
 

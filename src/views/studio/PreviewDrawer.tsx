@@ -49,7 +49,10 @@ export function PreviewDrawer({
         // 2. Sync immediately to latest data
         setActiveFlow(flow);
 
-        // 3. Trigger reset
+        // 3. Reset simulation variables so required path choices appear again.
+        setSimulationVariables({});
+
+        // 4. Trigger reset
         setResetKey(prev => prev + 1);
     };
 

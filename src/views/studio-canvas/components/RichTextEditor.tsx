@@ -29,6 +29,19 @@ export function RichTextEditor({
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
 
+        const wrapInlineMark = (text: string, marker: '**' | '*') => {
+            // Keep accidental boundary spaces outside markdown markers so parsing stays reliable.
+            const leadingSpace = text.match(/^\s*/)?.[0] || '';
+            const trailingSpace = text.match(/\s*$/)?.[0] || '';
+            const coreText = text.trim();
+
+            if (!coreText) {
+                return text;
+            }
+
+            return `${leadingSpace}${marker}${coreText}${marker}${trailingSpace}`;
+        };
+
         function serialize(node: Node): string {
             if (node.nodeType === Node.TEXT_NODE) {
                 return node.textContent || '';
@@ -51,10 +64,10 @@ export function RichTextEditor({
                     return children.trim() ? `${children}\n\n` : '';
                 case 'strong':
                 case 'b':
-                    return `**${children}**`;
+                    return wrapInlineMark(children, '**');
                 case 'em':
                 case 'i':
-                    return `*${children}*`;
+                    return wrapInlineMark(children, '*');
                 case 'ul':
                 case 'ol':
                     return `${children}\n`;
