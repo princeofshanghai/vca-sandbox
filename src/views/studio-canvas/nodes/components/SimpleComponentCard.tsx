@@ -61,7 +61,7 @@ export const SimpleComponentCard = memo(forwardRef<HTMLDivElement, SimpleCompone
                 const content = component.content as import('../../../studio/types').AIMessageContent;
                 if (!content.text) return null;
                 return (
-                    <div className="px-0.5 py-1 text-sm text-shell-text line-clamp-3 leading-relaxed">
+                    <div className="px-0.5 py-1 text-sm text-shell-text line-clamp-6 leading-relaxed">
                         {stripMarkdown(content.text)}
                     </div>
                 );
@@ -71,7 +71,7 @@ export const SimpleComponentCard = memo(forwardRef<HTMLDivElement, SimpleCompone
                 if (!content.body) return null;
                 return (
                     <div className="px-0.5 py-1 text-sm text-shell-text">
-                        <div className="line-clamp-2 leading-relaxed">{stripMarkdown(content.body)}</div>
+                        <div className="line-clamp-5 leading-relaxed">{stripMarkdown(content.body)}</div>
                     </div>
                 );
             }
