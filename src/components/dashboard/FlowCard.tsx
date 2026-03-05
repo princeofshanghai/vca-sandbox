@@ -18,6 +18,8 @@ interface FlowCardProps {
     folderName?: string;
     onDelete: (id: string) => void;
     onRename: (id: string, newName: string) => void;
+    onDuplicate: (id: string) => void | Promise<void>;
+    isDuplicating?: boolean;
     isTrash?: boolean;
     onRestore?: (id: string) => void;
     onPermanentDelete?: (id: string) => void;
@@ -44,7 +46,16 @@ function getRelativeTimeString(date: number): string {
     return `Edited ${Math.floor(diffInMonths / 12)}y ago`;
 }
 
-export const FlowCard = ({ flow, onDelete, onRename, isTrash, onRestore, onPermanentDelete }: FlowCardProps) => {
+export const FlowCard = ({
+    flow,
+    onDelete,
+    onRename,
+    onDuplicate,
+    isDuplicating,
+    isTrash,
+    onRestore,
+    onPermanentDelete
+}: FlowCardProps) => {
     const navigate = useNavigate();
     const [folders, setFolders] = useState<Folder[]>([]);
     const [isRenaming, setIsRenaming] = useState(false);
@@ -105,6 +116,12 @@ export const FlowCard = ({ flow, onDelete, onRename, isTrash, onRestore, onPerma
     const handlePermanentDelete = (e: React.MouseEvent) => {
         e.stopPropagation();
         onPermanentDelete?.(flow.id);
+    };
+
+    const handleDuplicate = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (isDuplicating) return;
+        void onDuplicate(flow.id);
     };
 
     const handleLoadFolders = async () => {
@@ -275,6 +292,14 @@ export const FlowCard = ({ flow, onDelete, onRename, isTrash, onRestore, onPerma
                                             }}
                                         >
                                             <span>Rename</span>
+                                        </DropdownMenuItem>
+
+                                        <DropdownMenuItem
+                                            className="gap-2"
+                                            disabled={isDuplicating}
+                                            onClick={handleDuplicate}
+                                        >
+                                            <span>{isDuplicating ? 'Duplicating...' : 'Duplicate'}</span>
                                         </DropdownMenuItem>
 
                                         <DropdownMenuItem

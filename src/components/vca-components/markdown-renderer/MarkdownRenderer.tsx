@@ -57,13 +57,13 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
                     ),
                     // Lists
                     ul: ({ node: _node, ...props }) => (
-                        <ul {...props} className="text-vca-small-open text-vca-text list-disc pl-5 my-2 space-y-0.5" />
+                        <ul {...props} className="text-vca-small-open text-vca-text list-disc pl-4 my-2 space-y-1.5" />
                     ),
                     ol: ({ node: _node, ...props }) => (
-                        <ol {...props} className="text-vca-small-open text-vca-text list-decimal pl-5 my-2 space-y-0.5" />
+                        <ol {...props} className="text-vca-small-open text-vca-text list-decimal pl-4 my-2 space-y-1.5 [&>li::marker]:font-vca-text [&>li::marker]:text-vca-small-bold-open" />
                     ),
                     li: ({ node: _node, ...props }) => (
-                        <li {...props} className="pl-1" />
+                        <li {...props} className="pl-0" />
                     ),
                 }}
             >

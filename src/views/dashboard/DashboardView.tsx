@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Component, Menu } from 'lucide-react';
+import { toast } from 'sonner';
 import { cn } from '@/utils/cn';
 import { flowStorage, FlowMetadata, Folder as FolderType } from '@/utils/flowStorage';
 import { FlowCard } from '@/components/dashboard/FlowCard';
@@ -22,6 +23,32 @@ import {
     DialogFooter,
 } from "@/components/ui/dialog";
 
+function getDuplicateBaseTitle(title: string): string {
+    const trimmedTitle = title.trim() || 'Untitled';
+    const copyPatternMatch = trimmedTitle.match(/^(.*) \(Copy(?: \d+)?\)$/i);
+    if (!copyPatternMatch?.[1]) return trimmedTitle;
+    return copyPatternMatch[1].trim() || 'Untitled';
+}
+
+function getDuplicateTitle(baseTitle: string, existingTitles: string[]): string {
+    const normalizedExistingTitles = new Set(
+        existingTitles.map(title => title.trim().toLowerCase())
+    );
+    const normalizedBaseTitle = getDuplicateBaseTitle(baseTitle);
+    const firstDuplicateTitle = `${normalizedBaseTitle} (Copy)`;
+
+    if (!normalizedExistingTitles.has(firstDuplicateTitle.toLowerCase())) {
+        return firstDuplicateTitle;
+    }
+
+    let copyIndex = 2;
+    while (normalizedExistingTitles.has(`${normalizedBaseTitle} (Copy ${copyIndex})`.toLowerCase())) {
+        copyIndex += 1;
+    }
+
+    return `${normalizedBaseTitle} (Copy ${copyIndex})`;
+}
+
 export const DashboardView = () => {
     const navigate = useNavigate();
     const [flows, setFlows] = useState<FlowMetadata[]>([]);
@@ -30,6 +57,7 @@ export const DashboardView = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [showNewFlowDialog, setShowNewFlowDialog] = useState(false);
     const [deleteConfirmation, setDeleteConfirmation] = useState<{ id: string; title: string; isPermanent: boolean } | null>(null);
+    const [duplicatingFlowId, setDuplicatingFlowId] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const { state, setMobileMenuOpen } = useApp();
 
@@ -95,6 +123,50 @@ export const DashboardView = () => {
         await flowStorage.deleteFlow(deleteConfirmation.id, deleteConfirmation.isPermanent);
         setDeleteConfirmation(null);
         loadData();
+    };
+
+    const handleDuplicateFlow = async (id: string) => {
+        if (duplicatingFlowId === id) return;
+        setDuplicatingFlowId(id);
+
+        try {
+            const sourceMetadata = flows.find(flow => flow.id === id);
+            if (!sourceMetadata) {
+                toast.error('Could not find this project. Please refresh and try again.');
+                return;
+            }
+
+            const sourceFlow = await flowStorage.getFlow(id);
+            if (!sourceFlow) {
+                toast.error('Could not load this project. Please try again.');
+                return;
+            }
+
+            const duplicateTitle = getDuplicateTitle(
+                sourceMetadata.title,
+                flows.map(flow => flow.title)
+            );
+            const hasSourceFolder = !!sourceMetadata.folderId && folders.some(folder => folder.id === sourceMetadata.folderId);
+            const duplicateFolderId = hasSourceFolder ? sourceMetadata.folderId : undefined;
+            const duplicatedFlow: Flow = {
+                ...sourceFlow,
+                id: crypto.randomUUID(),
+                title: duplicateTitle,
+                lastModified: Date.now(),
+                is_public: false,
+            };
+
+            await flowStorage.saveFlow({
+                ...duplicatedFlow,
+                folderId: duplicateFolderId,
+            });
+            await loadData();
+        } catch (error) {
+            console.error('Error duplicating flow:', error);
+            toast.error('Failed to duplicate project. Please try again.');
+        } finally {
+            setDuplicatingFlowId(null);
+        }
     };
 
     const filteredFlows = flows.filter(f => {
@@ -235,6 +307,8 @@ export const DashboardView = () => {
                                         folderName={folders.find(f => f.id === flow.folderId)?.name}
                                         onDelete={handleDeleteFlow}
                                         onRename={handleRenameFlow}
+                                        onDuplicate={handleDuplicateFlow}
+                                        isDuplicating={duplicatingFlowId === flow.id}
                                         isTrash={activeFolderId === 'trash'}
                                         onRestore={handleRestoreFlow}
                                         onPermanentDelete={handlePermanentDeleteFlow}

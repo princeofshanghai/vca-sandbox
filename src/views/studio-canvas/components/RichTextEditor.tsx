@@ -141,9 +141,9 @@ export function RichTextEditor({
                 class: cn(
                     "max-w-none outline-none text-[13px] leading-relaxed text-shell-text min-h-[60px] p-2.5",
                     // List Styling
-                    "[&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2",
-                    "[&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-2",
-                    "[&_li]:my-0.5",
+                    "[&_ul]:list-disc [&_ul]:pl-4 [&_ul]:my-2 [&_ul]:space-y-1.5",
+                    "[&_ol]:list-decimal [&_ol]:pl-4 [&_ol]:my-2 [&_ol]:space-y-1.5 [&_ol>li::marker]:font-semibold",
+                    "[&_li]:my-0 [&_li]:pl-0",
                     // Nested Paragraphs in Lists (Fix for "moving down")
                     "[&_li_p]:m-0 [&_li_p]:inline",
                     // Paragraph Styling - Explicitly force 13px to override global 15px p style
