@@ -9,7 +9,6 @@ interface ContextInterceptorMessageProps {
     variableName: string;
     branches: Branch[];
     onResolve: (value: string) => void;
-    onHide?: () => void;
     className?: string;
 }
 
@@ -17,7 +16,6 @@ export function ContextInterceptorMessage({
     variableName,
     branches,
     onResolve,
-    onHide,
     className
 }: ContextInterceptorMessageProps) {
     const [customValue, setCustomValue] = useState('');
@@ -47,22 +45,14 @@ export function ContextInterceptorMessage({
 
     return (
         <div className={cn('animate-in fade-in slide-in-from-bottom-2 duration-300', className)}>
-            <div className="rounded-xl border border-shell-dark-border bg-shell-dark-panel p-3 shadow-2xl backdrop-blur-sm">
-                <div className="mb-2.5 flex items-center justify-between gap-2">
+            <div className="rounded-xl border border-shell-node-condition/35 bg-[rgb(var(--shell-node-condition-surface)/1)] p-3 shadow-sm">
+                <div className="mb-2.5 flex items-center gap-2">
                     <div className="flex min-w-0 items-center gap-2">
                         <Split size={14} className="shrink-0 text-shell-node-condition" />
-                        <p className="truncate text-[13px] font-medium text-shell-dark-text">
+                        <p className="truncate text-[13px] font-medium text-shell-muted-strong">
                             Select path
                         </p>
                     </div>
-                    {onHide && (
-                        <button
-                            onClick={onHide}
-                            className="shrink-0 text-[11px] font-medium text-shell-dark-muted hover:text-shell-dark-text"
-                        >
-                            Hide
-                        </button>
-                    )}
                 </div>
 
                 <div className="space-y-2">
@@ -75,22 +65,20 @@ export function ContextInterceptorMessage({
                                     size="sm"
                                     onClick={() => onResolve(value)}
                                     className={cn(
-                                        'h-8 max-w-full border-shell-dark-border bg-shell-dark-bg px-2.5 text-xs text-shell-dark-text hover:bg-shell-dark-surface',
-                                        isDefault && 'text-shell-dark-muted'
+                                        'h-8 min-w-0 max-w-[170px] border-shell-border bg-shell-bg px-2 text-xs text-shell-text shadow-sm hover:border-shell-node-condition/60 hover:bg-shell-surface',
+                                        isDefault && 'text-shell-muted-strong'
                                     )}
                                 >
-                                    <span className="truncate">{pathLabel}</span>
-                                    <span className="text-shell-dark-muted">(</span>
+                                    <span className="truncate text-[13px] font-medium">{pathLabel}</span>
                                     {isDefault ? (
-                                        <span className="font-mono text-[10px] text-shell-dark-muted">Fallback</span>
+                                        <span className="ml-1 truncate font-mono text-[13px] text-shell-muted-strong">Fallback</span>
                                     ) : (
-                                        <span className="inline-flex min-w-0 items-center gap-1 font-mono text-[10px]">
-                                            <span className="truncate text-shell-dark-muted">{ruleVariable || variableName}</span>
-                                            <span className="text-shell-dark-muted">=</span>
-                                            <span className="truncate text-shell-accent-text">{ruleValue || 'value'}</span>
+                                        <span className="ml-1 inline-flex min-w-0 items-center gap-0.5 font-mono text-[13px]">
+                                            <span className="truncate text-shell-muted-strong">{ruleVariable || variableName}</span>
+                                            <span className="text-shell-muted">=</span>
+                                            <span className="truncate font-semibold text-shell-accent-text">{ruleValue || 'value'}</span>
                                         </span>
                                     )}
-                                    <span className="text-shell-dark-muted">)</span>
                                 </Button>
                             ))}
                         </div>
@@ -103,7 +91,7 @@ export function ContextInterceptorMessage({
                                 value={customValue}
                                 onChange={(e) => setCustomValue(e.target.value)}
                                 placeholder={`Type a value for ${variableName}`}
-                                className="h-7 border-shell-dark-border bg-shell-dark-bg text-xs text-shell-dark-text placeholder:text-shell-dark-muted focus-visible:border-shell-accent focus-visible:ring-shell-accent/30"
+                                className="h-7 border-shell-border bg-shell-bg text-xs text-shell-text placeholder:text-shell-muted focus-visible:border-shell-node-condition focus-visible:ring-shell-node-condition/20"
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter' && customValue.trim()) {
                                         onResolve(customValue.trim());
@@ -113,7 +101,7 @@ export function ContextInterceptorMessage({
                             <Button
                                 size="sm"
                                 onClick={() => customValue.trim() && onResolve(customValue.trim())}
-                                className="h-7 border-0 bg-shell-accent px-3 text-xs text-shell-dark-text hover:bg-shell-accent-hover"
+                                className="h-7 border border-shell-node-condition/50 bg-shell-bg px-3 text-xs text-shell-text hover:bg-shell-surface"
                             >
                                 Continue
                             </Button>

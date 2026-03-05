@@ -24,6 +24,7 @@ export type NavCategory = {
 
 export type NavigationConfig = {
   foundations: NavItem[];
+  atoms: NavCategory[];
   components: NavCategory[];
   patterns: NavItem[];
 };
@@ -39,10 +40,12 @@ const sortItemsAlphabetically = (items: NavItem[]): NavItem[] => {
  * Helper function to sort categories and their items alphabetically
  */
 const sortCategories = (categories: NavCategory[]): NavCategory[] => {
-  return categories.map(category => ({
-    ...category,
-    items: sortItemsAlphabetically(category.items),
-  }));
+  return [...categories]
+    .sort((a, b) => (a.label || '').localeCompare(b.label || ''))
+    .map(category => ({
+      ...category,
+      items: sortItemsAlphabetically(category.items),
+    }));
 };
 
 // Raw navigation data (you can add items in any order)
@@ -56,35 +59,59 @@ const rawNavigation: NavigationConfig = {
     { path: '/foundations/radius', label: 'Border Radius' },
   ],
 
-  // Components Section (organized by category)
-  // Add new components anywhere - they'll be auto-sorted A-Z!
-  components: [
-    // Display Category
+  // Atoms Section (organized by subcategory)
+  // Subcategories and items are auto-sorted A-Z.
+  atoms: [
     {
       label: 'Display',
       items: [
+        { path: '/components/avatar', label: 'Avatar' },
+        { path: '/components/badge', label: 'Badge' },
         { path: '/components/divider', label: 'Divider' },
+        { path: '/components/source-link', label: 'Source Link' },
         { path: '/components/sources', label: 'Sources' },
-        { path: '/components/status-card', label: 'Status Card' },
         { path: '/components/thinking-indicator', label: 'Thinking Indicator' },
       ],
     },
 
-    // Input Category
     {
-      label: 'Input',
+      label: 'Inputs',
       items: [
         { path: '/components/button', label: 'Button' },
         { path: '/components/button-icon', label: 'Button Icon' },
         { path: '/components/button-link', label: 'Button Link' },
-        { path: '/components/checkbox-group', label: 'Checkbox Group (WIP)' },
+        { path: '/components/checkbox', label: 'Checkbox' },
         { path: '/components/feedback', label: 'Feedback' },
         { path: '/components/inline-feedback', label: 'Inline Feedback' },
-        { path: '/components/selection-list', label: 'Selection List (WIP)' },
       ],
     },
 
-    // Layout Category
+    {
+      label: 'Live Agent',
+      items: [
+        { path: '/components/agent-banner', label: 'Agent Banner' },
+        { path: '/components/agent-status', label: 'Agent Status' },
+        { path: '/components/agent-timestamp', label: 'Agent Timestamp' },
+      ],
+    },
+  ],
+
+  // Components Section (organized by subcategory)
+  // Subcategories and items are auto-sorted A-Z.
+  components: [
+    {
+      label: 'Actions',
+      items: [
+        { path: '/components/checkbox-group', label: 'Checkbox Group' },
+        { path: '/components/confirmation-card', label: 'Confirmation Card' },
+        { path: '/components/recommendation-card', label: 'Recommendation Card' },
+        { path: '/components/prompt', label: 'Prompt' },
+        { path: '/components/prompt-group', label: 'Prompt Group' },
+        { path: '/components/selection-list', label: 'Selection List' },
+        { path: '/components/status-card', label: 'Status Card' },
+      ],
+    },
+
     {
       label: 'Layout',
       items: [
@@ -94,29 +121,6 @@ const rawNavigation: NavigationConfig = {
       ],
     },
 
-    // Actions Category
-    {
-      label: 'Actions',
-      items: [
-        { path: '/components/recommendation-card', label: 'Recommendation Card' },
-        { path: '/components/prompt', label: 'Prompt' },
-        { path: '/components/prompt-group', label: 'Prompt Group' },
-      ],
-    },
-
-    // Live Agent Category
-    {
-      label: 'Live Agent',
-      items: [
-        { path: '/components/agent-banner', label: 'Agent Banner' },
-        { path: '/components/agent-status', label: 'Agent Status' },
-        { path: '/components/agent-timestamp', label: 'Agent Timestamp' },
-        { path: '/components/avatar', label: 'Avatar' },
-        { path: '/components/badge', label: 'Badge' },
-      ],
-    },
-
-    // Messages Category
     {
       label: 'Messages',
       items: [
@@ -136,7 +140,7 @@ const rawNavigation: NavigationConfig = {
 // Export sorted navigation (components auto-sorted A-Z within each category)
 export const componentNavigation: NavigationConfig = {
   foundations: rawNavigation.foundations, // Foundations kept as-is
-  components: sortCategories(rawNavigation.components), // Components auto-sorted
+  atoms: sortCategories(rawNavigation.atoms), // Atoms subcategories/items auto-sorted
+  components: sortCategories(rawNavigation.components), // Components subcategories/items auto-sorted
   patterns: rawNavigation.patterns, // Patterns kept as-is (ordered 1-5)
 };
-

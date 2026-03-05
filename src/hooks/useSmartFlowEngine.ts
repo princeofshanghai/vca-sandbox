@@ -746,6 +746,27 @@ export const useSmartFlowEngine = ({
         traverse(stepId, handleId, title);
     };
 
+    const handleConfirmationAction = (
+        stepId: string,
+        componentId: string,
+        action: 'confirm' | 'reject',
+        label?: string
+    ) => {
+        const handleId = `handle-${componentId}-${action}`;
+
+        if (label) {
+            const mockUserStep: UserTurn = {
+                id: `temp-${Date.now()}`,
+                type: 'user-turn',
+                label,
+                inputType: 'button'
+            };
+            setHistory(prev => [...prev, mockUserStep]);
+        }
+
+        traverse(stepId, handleId, label);
+    };
+
     const handleSend = (input: string) => {
         if (!input) return;
 
@@ -767,6 +788,38 @@ export const useSmartFlowEngine = ({
                 traverse(lastRealStep.id, undefined, input);
             }, delay);
         }
+    };
+
+    const handleCheckboxSave = (
+        stepId: string,
+        componentId: string,
+        selectedIds: string[],
+        selectedLabels: string[],
+        saveLabel?: string
+    ) => {
+        const handleId = `handle-${componentId}`;
+        const trimmedLabels = selectedLabels.map((label) => label.trim()).filter(Boolean);
+
+        let userLabel = saveLabel || 'Save';
+        if (trimmedLabels.length > 0) {
+            const previewLabels = trimmedLabels.slice(0, 2).join(', ');
+            const remaining = trimmedLabels.length - 2;
+            userLabel = remaining > 0
+                ? `${previewLabels} +${remaining} more`
+                : previewLabels;
+        } else if (selectedIds.length > 0) {
+            userLabel = `${selectedIds.length} selected`;
+        }
+
+        const mockUserStep: UserTurn = {
+            id: `temp-${Date.now()}`,
+            type: 'user-turn',
+            label: userLabel,
+            inputType: 'button'
+        };
+        setHistory(prev => [...prev, mockUserStep]);
+
+        traverse(stepId, handleId, trimmedLabels.join(', '));
     };
 
     const resolveInterceptor = (stepId: string, variableName: string, value: string, branches: Branch[], interceptorStepId: string) => {
@@ -801,6 +854,8 @@ export const useSmartFlowEngine = ({
         handleSend,
         handlePromptClick,
         handleSelectionItemClick,
+        handleConfirmationAction,
+        handleCheckboxSave,
         resolveInterceptor,
         switchConditionPath,
         lastConditionSelection,

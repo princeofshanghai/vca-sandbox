@@ -1,12 +1,14 @@
 import React from 'react';
 import { VcaIcon } from '../icons';
 import { cn } from '@/utils';
+import { HotspotBeacon } from '../hotspot';
 
 export type PromptProps = {
   children?: React.ReactNode;
   showAiIcon?: boolean;
   onClick?: () => void;
   className?: string;
+  showHotspot?: boolean;
 };
 
 /**
@@ -19,6 +21,7 @@ export const Prompt = ({
   showAiIcon = false,
   onClick,
   className,
+  showHotspot = false,
 }: PromptProps) => {
 
   return (
@@ -26,10 +29,13 @@ export const Prompt = ({
       type="button"
       onClick={onClick}
       className={cn(
-        'bg-vca-surface-tint hover:bg-vca-surface-tint-hover flex gap-vca-xs items-center max-w-[320px] w-fit p-vca-md rounded-vca-md transition-colors cursor-pointer',
+        'relative bg-vca-surface-tint hover:bg-vca-surface-tint-hover flex gap-vca-xs items-center max-w-[320px] w-fit p-vca-md rounded-vca-md transition-colors cursor-pointer',
         className
       )}
     >
+      {showHotspot && (
+        <HotspotBeacon className="left-full ml-1.5 top-1/2 -translate-y-1/2" />
+      )}
       {showAiIcon && (
         <VcaIcon
           icon="signal-ai"
@@ -43,4 +49,3 @@ export const Prompt = ({
     </button>
   );
 };
-

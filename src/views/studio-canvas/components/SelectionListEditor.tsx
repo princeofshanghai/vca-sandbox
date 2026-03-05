@@ -17,6 +17,7 @@ interface SelectionListEditorProps {
     children: React.ReactNode;
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
+    readOnly?: boolean;
 }
 
 type SelectionListItem = SelectionListContent['items'][0];
@@ -44,6 +45,7 @@ const getResolvedVisualType = (item: SelectionListItem): ItemVisualType => {
 interface SelectionListItemRowProps {
     item: SelectionListItem;
     isExpanded: boolean;
+    readOnly?: boolean;
     onToggle: (itemId: string) => void;
     onUpdate: (itemId: string, updates: Partial<SelectionListItem>) => void;
     onDelete: (itemId: string) => void;
@@ -52,6 +54,7 @@ interface SelectionListItemRowProps {
 const SelectionListItemRow = memo(({
     item,
     isExpanded,
+    readOnly = false,
     onToggle,
     onUpdate,
     onDelete,
@@ -62,18 +65,22 @@ const SelectionListItemRow = memo(({
 
     const handleDelete = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
         e.stopPropagation();
+        if (readOnly) return;
         onDelete(item.id);
-    }, [item.id, onDelete]);
+    }, [item.id, onDelete, readOnly]);
 
     const handleTitleChange = useCallback((val: string) => {
+        if (readOnly) return;
         onUpdate(item.id, { title: val });
-    }, [item.id, onUpdate]);
+    }, [item.id, onUpdate, readOnly]);
 
     const handleSubtitleChange = useCallback((val: string) => {
+        if (readOnly) return;
         onUpdate(item.id, { subtitle: val });
-    }, [item.id, onUpdate]);
+    }, [item.id, onUpdate, readOnly]);
 
     const handleVisualTypeChange = useCallback((visualType: ItemVisualType) => {
+        if (readOnly) return;
         if (visualType === 'avatar') {
             onUpdate(item.id, {
                 visualType: 'avatar',
@@ -96,11 +103,12 @@ const SelectionListItemRow = memo(({
             imageUrl: undefined,
             iconName: undefined
         });
-    }, [item.iconName, item.id, onUpdate]);
+    }, [item.iconName, item.id, onUpdate, readOnly]);
 
     const handleIconNameChange = useCallback((iconName: VcaIconName) => {
+        if (readOnly) return;
         onUpdate(item.id, { iconName, visualType: 'icon' });
-    }, [item.id, onUpdate]);
+    }, [item.id, onUpdate, readOnly]);
 
     const currentVisualType = getResolvedVisualType(item);
     const fallbackTone = getFallbackToneFromSeed(item.id || item.title || 'item');
@@ -144,6 +152,7 @@ const SelectionListItemRow = memo(({
                 </div>
                 <button
                     onClick={handleDelete}
+                    disabled={readOnly}
                     className="p-1.5 text-shell-muted hover:text-shell-danger hover:bg-shell-danger-soft rounded transition-all opacity-0 group-hover:opacity-100"
                 >
                     <X className="w-3.5 h-3.5" />
@@ -157,11 +166,13 @@ const SelectionListItemRow = memo(({
                         label="Title"
                         value={item.title}
                         onChange={handleTitleChange}
+                        readOnly={readOnly}
                     />
                     <EditorField
                         label="Subtitle"
                         value={item.subtitle || ''}
                         onChange={handleSubtitleChange}
+                        readOnly={readOnly}
                     />
                     <div className="space-y-1.5">
                         <label className="text-[11px] font-medium text-shell-muted-strong">Visual</label>
@@ -171,6 +182,7 @@ const SelectionListItemRow = memo(({
                                     key={option}
                                     type="button"
                                     onClick={() => handleVisualTypeChange(option)}
+                                    disabled={readOnly}
                                     className={`rounded-md border px-2 py-1.5 text-[11px] font-medium transition-colors ${currentVisualType === option
                                         ? 'border-shell-accent-border bg-shell-accent-soft text-shell-accent-text'
                                         : 'border-shell-border text-shell-muted-strong hover:border-shell-accent-border'
@@ -190,6 +202,7 @@ const SelectionListItemRow = memo(({
                                 className="w-full text-[13px] text-shell-text border border-shell-border rounded-lg p-2.5 bg-shell-bg focus:outline-none focus:border-shell-accent focus:ring-2 focus:ring-shell-accent/20"
                                 value={(item.iconName as VcaIconName) || 'building'}
                                 onChange={(e) => handleIconNameChange(e.target.value as VcaIconName)}
+                                disabled={readOnly}
                             >
                                 {ICON_OPTIONS.map((iconOption) => (
                                     <option key={iconOption} value={iconOption}>
@@ -226,7 +239,14 @@ const PRESETS = {
     ]
 };
 
-export function SelectionListEditor({ component, onChange, children, isOpen, onOpenChange }: SelectionListEditorProps) {
+export function SelectionListEditor({
+    component,
+    onChange,
+    children,
+    isOpen,
+    onOpenChange,
+    readOnly = false,
+}: SelectionListEditorProps) {
     const content = component.content as SelectionListContent;
 
     // Local state for better UX
@@ -246,19 +266,22 @@ export function SelectionListEditor({ component, onChange, children, isOpen, onO
     }, [expandedItemId]);
 
     const handleLayoutChange = useCallback((val: 'list' | 'grid' | 'carousel') => {
+        if (readOnly) return;
         const current = contentRef.current;
         onChangeRef.current({ ...current, layout: val });
-    }, []);
+    }, [readOnly]);
 
     const applyPreset = useCallback((presetKey: keyof typeof PRESETS) => {
+        if (readOnly) return;
         const current = contentRef.current;
         onChangeRef.current({
             ...current,
             items: PRESETS[presetKey].map(item => ({ ...item, id: Math.random().toString(36).substr(2, 9) }))
         });
-    }, []);
+    }, [readOnly]);
 
     const updateItem = useCallback((itemId: string, updates: Partial<SelectionListItem>) => {
+        if (readOnly) return;
         const current = contentRef.current;
         const items = current.items || [];
         const index = items.findIndex(item => item.id === itemId);
@@ -267,18 +290,20 @@ export function SelectionListEditor({ component, onChange, children, isOpen, onO
         const newItems = [...items];
         newItems[index] = { ...newItems[index], ...updates };
         onChangeRef.current({ ...current, items: newItems });
-    }, []);
+    }, [readOnly]);
 
     const deleteItem = useCallback((itemId: string) => {
+        if (readOnly) return;
         const current = contentRef.current;
         const newItems = (current.items || []).filter(item => item.id !== itemId);
         if (expandedItemIdRef.current === itemId) {
             setExpandedItemId(null);
         }
         onChangeRef.current({ ...current, items: newItems });
-    }, []);
+    }, [readOnly]);
 
     const addItem = useCallback(() => {
+        if (readOnly) return;
         const current = contentRef.current;
         const newItem: SelectionListItem = {
             id: Math.random().toString(36).substr(2, 9),
@@ -288,7 +313,7 @@ export function SelectionListEditor({ component, onChange, children, isOpen, onO
         };
         onChangeRef.current({ ...current, items: [...(current.items || []), newItem] });
         setExpandedItemId(newItem.id);
-    }, []);
+    }, [readOnly]);
 
     const handleToggleItem = useCallback((itemId: string) => {
         setExpandedItemId(prev => (prev === itemId ? null : itemId));
@@ -319,6 +344,7 @@ export function SelectionListEditor({ component, onChange, children, isOpen, onO
                             <button
                                 key={opt.id}
                                 onClick={() => handleLayoutChange(opt.id)}
+                                disabled={readOnly}
                                 className={`flex items-center justify-center gap-2 p-1.5 rounded-lg border transition-all ${content.layout === opt.id
                                     ? 'bg-shell-accent-soft border-shell-accent-border text-shell-accent-text'
                                     : 'bg-shell-bg border-shell-border text-shell-muted-strong hover:border-shell-accent-border'
@@ -360,6 +386,7 @@ export function SelectionListEditor({ component, onChange, children, isOpen, onO
                                 key={item.id}
                                 item={item}
                                 isExpanded={expandedItemId === item.id}
+                                readOnly={readOnly}
                                 onToggle={handleToggleItem}
                                 onUpdate={updateItem}
                                 onDelete={deleteItem}
@@ -369,6 +396,7 @@ export function SelectionListEditor({ component, onChange, children, isOpen, onO
 
                     <button
                         onClick={addItem}
+                        disabled={readOnly}
                         className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg border border-dashed border-shell-border text-shell-muted text-xs font-medium hover:border-shell-accent-border hover:text-shell-accent hover:bg-shell-accent-soft transition-all"
                     >
                         <Plus className="w-3.5 h-3.5" />
@@ -386,6 +414,7 @@ export function SelectionListEditor({ component, onChange, children, isOpen, onO
             componentId={component.id}
             editorContent={editorContent}
             width={400}
+            readOnly={readOnly}
         >
             {children}
         </ComponentEditorPopover>

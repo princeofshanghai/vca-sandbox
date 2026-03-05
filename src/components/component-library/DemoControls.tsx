@@ -47,7 +47,7 @@ export function ToggleButtons<T extends string>({
   const useSelect = options.length > 3;
 
   return (
-    <div className={`space-y-1.5 ${disabled ? 'opacity-50' : ''} ${className}`}>
+    <div className={`self-start space-y-1.5 ${disabled ? 'opacity-50' : ''} ${className}`}>
       {label && <Label className="text-xs text-shell-muted">{toSentenceCase(label)}</Label>}
       {useSelect ? (
         <Select value={value} onValueChange={(val) => onChange(val as T)} disabled={disabled}>
@@ -110,7 +110,7 @@ export function FormCheckbox({
   className = '',
 }: FormCheckboxProps) {
   return (
-    <div className={`flex items-center justify-between rounded-md border border-shell-border bg-shell-bg px-3 py-2 ${disabled ? 'opacity-50' : ''} ${className}`}>
+    <div className={`self-start flex items-center justify-between rounded-md border border-shell-border bg-shell-bg px-3 py-2 ${disabled ? 'opacity-50' : ''} ${className}`}>
       <Label htmlFor={id} className="cursor-pointer text-xs text-shell-text">
         {toSentenceCase(label)}
       </Label>
@@ -146,7 +146,7 @@ export function FormInput({
   className = '',
 }: FormInputProps) {
   return (
-    <div className={`space-y-1.5 ${className}`}>
+    <div className={`self-start space-y-1.5 ${className}`}>
       <Label htmlFor={id} className="text-xs text-shell-muted">{toSentenceCase(label)}</Label>
       <Input
         id={id}
@@ -182,7 +182,7 @@ export function FormTextarea({
   className = '',
 }: FormTextareaProps) {
   return (
-    <div className={`space-y-1.5 ${className}`}>
+    <div className={`self-start space-y-1.5 ${className}`}>
       <Label htmlFor={id} className="text-xs text-shell-muted">{toSentenceCase(label)}</Label>
       <Textarea
         id={id}

@@ -4,6 +4,7 @@ import { AppProvider } from '@/contexts/AppContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { LoginView } from './views/auth/LoginView';
 import ShareView from './views/share/ShareView';
+import ShareStudioView from './views/share/ShareStudioView';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { MainLayout } from '@/components/layout/MainLayout';
 import DashboardView from '@/views/dashboard/DashboardView';
@@ -23,6 +24,7 @@ const App = () => {
           <Routes>
             <Route path="/login" element={<LoginView />} />
             <Route path="/share/:id" element={<ShareView />} />
+            <Route path="/share/studio/:id" element={<ShareStudioView />} />
 
             <Route path="/" element={
               <ProtectedRoute>

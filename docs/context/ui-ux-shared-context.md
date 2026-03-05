@@ -86,12 +86,16 @@ Non-trivial usually means:
 - For shell UI requests, default to shell components + shell tokens.
 - If existing pages use mixed hardcoded colors and shell tokens, normalize to shell tokens first.
 - Keep VCA component visual language separate from shell visual language.
+- Do not let broad shell typography selectors style VCA internals in mixed surfaces (for example, Component Library pages that render VCA components inside shell layouts).
+- VCA component text and heading elements should use explicit VCA font classes (`font-vca-text` or `font-vca-display`) when needed to prevent font leakage.
+- Reference for enforcement details: `docs/guidelines/shell-design-system.md`
 
 ## UI QA checklist (for changes)
 1. Check light and dark theme.
 2. Check default, hover, active, focus, disabled states.
 3. Check CTA readability and muted text contrast.
 4. Check border/subtle surface intensity in dark mode.
+5. In Component Library pages, verify VCA component typography does not inherit shell Community Pro heading styles unless intentionally shell content.
 
 ## Quick request template (optional)
 Use this when you want fast, high-quality collaboration:

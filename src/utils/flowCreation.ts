@@ -58,6 +58,7 @@ export function createNewFlow(entryPoint: EntryPointId): Flow {
         settings: {
             showDisclaimer: true,
             simulateThinking: true,
+            showHotspots: true,
             entryPoint,
             productName: entryConfig.productName
         },

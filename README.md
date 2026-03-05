@@ -120,7 +120,7 @@ vca-sandbox-6/
 │   ├── context/                # Project overview and strategy
 │   ├── guidelines/             # UX and visual guidelines
 │   ├── proposals/              # Feature/UI proposals
-│   ├── rules/                  # Working mode rules
+│   ├── rules/                  # Legacy rule stubs
 │   └── setup/                  # Setup and roadmap docs
 └── public/                     # Static assets
 ```
@@ -167,10 +167,12 @@ vca-sandbox-6/
 - [shell-design-system.md](./docs/guidelines/shell-design-system.md) — App shell component contract to prevent UI drift
 - [tailwind-typography-fix.md](./docs/guidelines/tailwind-typography-fix.md) — Typography implementation notes
 
-**Proposals & Rules:**
+**Proposals:**
 - [condition-branch-editor-redesign.md](./docs/proposals/condition-branch-editor-redesign.md) — Condition node UX proposal
-- [confirmation-mode.md](./docs/rules/confirmation-mode.md) — Confirmation mode rules
-- [design-partner-mode.md](./docs/rules/design-partner-mode.md) — Design-partner collaboration rules
+
+**Rules:**
+- [AGENTS.md](./AGENTS.md) — Active collaboration + implementation rules
+- `docs/rules/*.md` are legacy stubs
 
 **Setup Guides:**
 - [share-feature-roadmap.md](./docs/setup/share-feature-roadmap.md) — Share feature logic and roadmap

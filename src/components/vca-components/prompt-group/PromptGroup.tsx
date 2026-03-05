@@ -7,6 +7,7 @@ export type PromptGroupProps = {
     showAiIcon?: boolean;
     onClick?: () => void;
     className?: string;
+    showHotspot?: boolean;
   }>;
   className?: string;
 };
@@ -33,6 +34,7 @@ export const PromptGroup = ({
           showAiIcon={prompt.showAiIcon}
           onClick={prompt.onClick}
           className={prompt.className}
+          showHotspot={prompt.showHotspot}
         >
           {prompt.text}
         </Prompt>
@@ -40,4 +42,3 @@ export const PromptGroup = ({
     </div>
   );
 };
-

@@ -8,6 +8,7 @@ interface ComponentEditorPopoverProps {
     editorContent: ReactNode; // The actual editor form
     width?: number; // Default 360px
     componentId: string; // For preventing close when clicking trigger
+    readOnly?: boolean;
 }
 
 /**
@@ -23,6 +24,7 @@ export function ComponentEditorPopover({
     editorContent,
     width = 360,
     componentId,
+    readOnly = false,
 }: ComponentEditorPopoverProps) {
     return (
         <Popover.Root open={isOpen} onOpenChange={onOpenChange} modal={false}>
@@ -64,7 +66,11 @@ export function ComponentEditorPopover({
                 >
                     {/* Stop event propagation for all interactions inside popover */}
                     <div
-                        className="w-full"
+                        className={`w-full ${readOnly
+                            ? "[&_input]:pointer-events-none [&_textarea]:pointer-events-none [&_select]:pointer-events-none [&_button:not([data-editor-close])]:pointer-events-none [&_input]:select-none [&_textarea]:select-none [&_select]:select-none [&_button:not([data-editor-close])]:cursor-not-allowed [&_button:not([data-editor-close])]:opacity-80"
+                            : ""
+                            }`}
+                        data-readonly={readOnly ? 'true' : 'false'}
                         onPointerDown={(e) => e.stopPropagation()}
                         onClick={(e) => e.stopPropagation()}
                     >

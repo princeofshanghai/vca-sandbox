@@ -42,6 +42,7 @@ import FeedbackComponentView from './components/FeedbackComponentView';
 import ConversationFlowPatternView from './patterns/ConversationFlowPatternView';
 import HumanHandoffPatternView from './patterns/HumanHandoffPatternView';
 import SelectionListComponentView from './components/SelectionListComponentView';
+import ConfirmationCardComponentView from './components/ConfirmationCardComponentView';
 
 
 const ComponentLibraryView = () => {
@@ -49,6 +50,7 @@ const ComponentLibraryView = () => {
   const location = useLocation();
   const { state, setMobileMenuOpen } = useApp();
   const [foundationsExpanded, setFoundationsExpanded] = useState(true);
+  const [atomsExpanded, setAtomsExpanded] = useState(false);
   const [componentsExpanded, setComponentsExpanded] = useState(false);
   const [patternsExpanded, setPatternsExpanded] = useState(false);
   const prevPathnameRef = useRef(location.pathname);
@@ -83,6 +85,9 @@ const ComponentLibraryView = () => {
     </>
   );
 
+  // Scope taller section headers to this sidebar only.
+  const sidebarSectionClass = '[&>button]:min-h-7 [&>button]:gap-1 [&>button>svg]:h-3.5 [&>button>svg]:w-3.5';
+
   return (
     <div className="component-library-scope flex h-full">
       <Sidebar
@@ -96,6 +101,7 @@ const ComponentLibraryView = () => {
           title="Foundations"
           expanded={foundationsExpanded}
           onToggle={() => setFoundationsExpanded(!foundationsExpanded)}
+          className={sidebarSectionClass}
         >
           <NavigationGroup className="mb-6">
             {componentNavigation.foundations.map((item) => (
@@ -106,11 +112,36 @@ const ComponentLibraryView = () => {
           </NavigationGroup>
         </CollapsibleSection>
 
+        {/* Atoms */}
+        <CollapsibleSection
+          title="Atoms"
+          expanded={atomsExpanded}
+          onToggle={() => setAtomsExpanded(!atomsExpanded)}
+          className={sidebarSectionClass}
+        >
+          <div className="mb-6">
+            {componentNavigation.atoms.map((category, categoryIndex) => (
+              <NavigationGroup
+                key={category.label}
+                label={category.label}
+                className={categoryIndex > 0 ? 'mt-6' : ''}
+              >
+                {category.items.map((item) => (
+                  <NavLink key={item.path} to={item.path} isActive={isActive(item.path)}>
+                    {item.label}
+                  </NavLink>
+                ))}
+              </NavigationGroup>
+            ))}
+          </div>
+        </CollapsibleSection>
+
         {/* Components */}
         <CollapsibleSection
           title="Components"
           expanded={componentsExpanded}
           onToggle={() => setComponentsExpanded(!componentsExpanded)}
+          className={sidebarSectionClass}
         >
           <div className="mb-6">
             {componentNavigation.components.map((category, categoryIndex) => (
@@ -134,6 +165,7 @@ const ComponentLibraryView = () => {
           title="Patterns"
           expanded={patternsExpanded}
           onToggle={() => setPatternsExpanded(!patternsExpanded)}
+          className={sidebarSectionClass}
         >
           <NavigationGroup className="mb-6">
             {componentNavigation.patterns.map((item) => (
@@ -187,6 +219,7 @@ const ComponentLibraryView = () => {
           <Route path="prompt" element={<PromptComponentView />} />
           <Route path="prompt-group" element={<PromptGroupComponentView />} />
           <Route path="selection-list" element={<SelectionListComponentView />} />
+          <Route path="confirmation-card" element={<ConfirmationCardComponentView />} />
         </Routes>
       </MainContent>
     </div>

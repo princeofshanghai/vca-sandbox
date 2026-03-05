@@ -16,6 +16,7 @@ interface ConditionBranchEditorProps {
     children: React.ReactNode;
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
+    readOnly?: boolean;
 }
 
 export function ConditionBranchEditor({
@@ -26,7 +27,8 @@ export function ConditionBranchEditor({
     onChange,
     children,
     isOpen,
-    onOpenChange
+    onOpenChange,
+    readOnly = false,
 }: ConditionBranchEditorProps) {
     const editorContent = (
         <EditorRoot>
@@ -44,6 +46,7 @@ export function ConditionBranchEditor({
                         onChange={(val) => onChange({ condition: val })}
                         placeholder={'e.g. "Premium users", "Free users"'}
                         hint="This is just for your canvas. Preview buttons now show the rule automatically."
+                        readOnly={readOnly}
                     />
                 </EditorSection>
 
@@ -57,7 +60,9 @@ export function ConditionBranchEditor({
                         {/* Status Toggle */}
                         <div className="flex bg-shell-surface-subtle p-1 rounded-lg">
                             <button
+                                type="button"
                                 onClick={() => onChange({ isDefault: true })}
+                                disabled={readOnly}
                                 className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-all ${isDefault
                                     ? 'bg-shell-bg border border-shell-border shadow-sm text-shell-text'
                                     : 'text-shell-muted hover:text-shell-muted-strong'
@@ -66,7 +71,9 @@ export function ConditionBranchEditor({
                                 Anything else
                             </button>
                             <button
+                                type="button"
                                 onClick={() => onChange({ isDefault: false })}
+                                disabled={readOnly}
                                 className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-all ${!isDefault
                                     ? 'bg-shell-bg border border-shell-border shadow-sm text-shell-text'
                                     : 'text-shell-muted hover:text-shell-muted-strong'
@@ -91,6 +98,7 @@ export function ConditionBranchEditor({
                                         placeholder="e.g. plan"
                                         value={logic?.variable || ''}
                                         onChange={(val) => onChange({ logic: { variable: val, value: logic?.value || '', operator: 'eq' } })}
+                                        readOnly={readOnly}
                                     />
 
                                     <div className="flex items-center gap-2">
@@ -104,6 +112,7 @@ export function ConditionBranchEditor({
                                         placeholder="e.g. premium"
                                         value={logic?.value || ''}
                                         onChange={(val) => onChange({ logic: { variable: logic?.variable || '', value: val, operator: 'eq' } })}
+                                        readOnly={readOnly}
                                     />
                                 </div>
 
@@ -134,6 +143,7 @@ export function ConditionBranchEditor({
             componentId={branchId}
             editorContent={editorContent}
             width={320}
+            readOnly={readOnly}
         >
             {children}
         </ComponentEditorPopover>

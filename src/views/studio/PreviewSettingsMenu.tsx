@@ -33,6 +33,15 @@ export const PreviewSettingsMenu = ({
 }: PreviewSettingsMenuProps) => {
 
     const [isOpen, setIsOpen] = useState(false);
+    const updateFlowSetting = (key: 'showDisclaimer' | 'simulateThinking' | 'showHotspots') => {
+        onUpdateFlow({
+            ...flow,
+            settings: {
+                ...flow.settings,
+                [key]: !(flow.settings?.[key] ?? true)
+            }
+        });
+    };
 
     const darkMenuClass = darkTheme
         ? "border-shell-dark-border bg-shell-dark-panel text-shell-dark-text shadow-shell-lg"
@@ -45,7 +54,12 @@ export const PreviewSettingsMenu = ({
         : undefined;
 
     const triggerClass = darkTheme
-        ? "h-7 gap-2 px-3 text-xs font-medium bg-transparent border border-shell-dark-border text-shell-dark-muted hover:text-shell-dark-text hover:border-shell-dark-border-strong hover:bg-shell-dark-surface rounded-md transition-colors"
+        ? iconOnly
+            ? cn(
+                "h-7 w-7 border border-transparent text-shell-dark-muted hover:text-shell-dark-text hover:bg-shell-dark-surface data-[state=open]:bg-shell-dark-accent-soft data-[state=open]:text-shell-dark-accent transition-colors",
+                rounded ? "rounded-full" : "rounded-md"
+            )
+            : "h-7 gap-2 px-3 text-xs font-medium bg-transparent border border-shell-dark-border text-shell-dark-muted hover:text-shell-dark-text hover:border-shell-dark-border-strong hover:bg-shell-dark-surface rounded-md transition-colors"
         : iconOnly
             ? cn(
                 "h-8 w-8 text-shell-muted hover:text-shell-text hover:bg-shell-surface hover:shadow-sm transition-all",
@@ -80,16 +94,7 @@ export const PreviewSettingsMenu = ({
                 <DropdownMenuCheckboxItem
                     className={cn("justify-between", darkMenuItemClass)}
                     checked={flow.settings?.showDisclaimer ?? true}
-                    onCheckedChange={() => {
-                        const newFlow = {
-                            ...flow,
-                            settings: {
-                                ...flow.settings,
-                                showDisclaimer: !(flow.settings?.showDisclaimer ?? true)
-                            }
-                        };
-                        onUpdateFlow(newFlow);
-                    }}
+                    onCheckedChange={() => updateFlowSetting('showDisclaimer')}
                 >
                     <span>Show disclaimer</span>
                 </DropdownMenuCheckboxItem>
@@ -97,18 +102,17 @@ export const PreviewSettingsMenu = ({
                 <DropdownMenuCheckboxItem
                     className={cn("justify-between", darkMenuItemClass)}
                     checked={flow.settings?.simulateThinking ?? true}
-                    onCheckedChange={() => {
-                        const newFlow = {
-                            ...flow,
-                            settings: {
-                                ...flow.settings,
-                                simulateThinking: !(flow.settings?.simulateThinking ?? true)
-                            }
-                        };
-                        onUpdateFlow(newFlow);
-                    }}
+                    onCheckedChange={() => updateFlowSetting('simulateThinking')}
                 >
                     <span>Simulate thinking</span>
+                </DropdownMenuCheckboxItem>
+
+                <DropdownMenuCheckboxItem
+                    className={cn("justify-between", darkMenuItemClass)}
+                    checked={flow.settings?.showHotspots ?? true}
+                    onCheckedChange={() => updateFlowSetting('showHotspots')}
+                >
+                    <span>Show hotspots</span>
                 </DropdownMenuCheckboxItem>
             </DropdownMenuContent>
         </DropdownMenu>

@@ -24,6 +24,7 @@ export function EditorHeader({ title, onClose, className, actions }: EditorHeade
                 {onClose && (
                     <button
                         onClick={onClose}
+                        data-editor-close
                         className="p-1.5 text-shell-muted hover:text-shell-text hover:bg-shell-surface-subtle rounded-md transition-colors"
                     >
                         <X size={16} />

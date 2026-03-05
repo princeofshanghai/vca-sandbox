@@ -32,6 +32,7 @@ export const INITIAL_FLOW: Flow = {
     settings: {
         showDisclaimer: true,
         simulateThinking: true,
+        showHotspots: true,
         entryPoint: 'custom',
         productName: 'LinkedIn'
     },

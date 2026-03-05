@@ -47,9 +47,6 @@ export const DemoSection = ({
 
             {/* Controls area */}
             <div className="bg-shell-bg p-4">
-              <p className="mb-3 text-xs font-medium text-shell-muted">
-                Controls
-              </p>
               {controls}
             </div>
           </>

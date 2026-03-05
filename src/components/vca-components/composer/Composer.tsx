@@ -1,6 +1,8 @@
 import { cn } from '@/utils';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import TextareaAutosize from 'react-textarea-autosize';
 import { ButtonIcon } from '../buttons/ButtonIcon';
+import { HotspotBeacon } from '../hotspot';
 
 export type ComposerStatus = 'default' | 'active' | 'typing' | 'multiline' | 'disabled' | 'stop';
 
@@ -13,6 +15,9 @@ export type ComposerProps = {
   onStop?: () => void;
   onAttachment?: () => void;
   onChange?: (value: string) => void;
+  showInteractionHotspot?: boolean;
+  interactionSuggestions?: string[];
+  onUseSuggestion?: (value: string) => void;
   className?: string;
 };
 
@@ -29,8 +34,41 @@ export const Composer = ({
   onStop,
   onAttachment,
   onChange,
+  showInteractionHotspot = false,
+  interactionSuggestions = [],
+  onUseSuggestion,
   className,
 }: ComposerProps) => {
+  const [isHotspotOpen, setIsHotspotOpen] = useState(false);
+  const interactionRef = useRef<HTMLDivElement>(null);
+  const canShowHotspot = showInteractionHotspot && status !== 'stop' && status !== 'disabled';
+  const hasSuggestions = interactionSuggestions.length > 0;
+  const uniqueSuggestions = useMemo(
+    () => Array.from(new Set(interactionSuggestions.map((value) => value.trim()).filter(Boolean))),
+    [interactionSuggestions]
+  );
+
+  useEffect(() => {
+    if (!isHotspotOpen) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (target && interactionRef.current && !interactionRef.current.contains(target)) {
+        setIsHotspotOpen(false);
+      }
+    };
+
+    window.addEventListener('pointerdown', handlePointerDown);
+    return () => {
+      window.removeEventListener('pointerdown', handlePointerDown);
+    };
+  }, [isHotspotOpen]);
+
+  useEffect(() => {
+    if (!canShowHotspot) {
+      setIsHotspotOpen(false);
+    }
+  }, [canShowHotspot]);
 
   // Stop state - shows "Stop answering" with loading spinner
   if (status === 'stop') {
@@ -85,12 +123,19 @@ export const Composer = ({
             isActive && 'border-vca-border-active',
             !isActive && !isDisabled && 'border-vca-border-subtle',
             isDisabled && 'border-vca-border-subtle bg-vca-background-disabled'
-          )}>
+          )}
+            ref={interactionRef}
+          >
             <div className="flex items-end flex-1 min-h-[21px]">
               {/* Auto-resizing textarea using battle-tested library */}
               <TextareaAutosize
                 value={value}
                 onChange={(e) => onChange?.(e.target.value)}
+                onFocus={() => {
+                  if (canShowHotspot) {
+                    setIsHotspotOpen(true);
+                  }
+                }}
                 onKeyDown={(e) => {
                   // Enter without Shift = send message
                   if (e.key === 'Enter' && !e.shiftKey) {
@@ -123,6 +168,53 @@ export const Composer = ({
                 />
               </div>
             )}
+
+            {canShowHotspot && (
+              <div
+                className={cn(
+                  'absolute z-20',
+                  hasMultipleLines ? 'bottom-1.5 right-8' : 'right-8 top-1/2 -translate-y-1/2'
+                )}
+              >
+                <button
+                  type="button"
+                  className="relative block h-5 w-5 cursor-pointer"
+                  onClick={() => setIsHotspotOpen((current) => !current)}
+                  aria-label="Show typing suggestions"
+                >
+                  <HotspotBeacon className="left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" />
+                </button>
+
+                {isHotspotOpen && (
+                  <div
+                    className="absolute bottom-full right-0 mb-2 w-[280px] rounded-xl border border-vca-border-faint bg-white/95 p-1.5 shadow-[0_10px_26px_rgba(15,23,42,0.14)] backdrop-blur"
+                  >
+                    <p className="px-2 pb-0.5 text-vca-xsmall text-vca-text-meta">Type directly or choose below</p>
+                    {hasSuggestions ? (
+                      <div className="mt-1 max-h-44 space-y-0.5 overflow-y-auto pr-0.5">
+                        {uniqueSuggestions.map((suggestion, index) => (
+                          <button
+                            key={`${suggestion}-${index}`}
+                            type="button"
+                            className="w-full rounded-lg px-2 py-2 text-left font-vca-text text-vca-xsmall text-vca-text transition-colors hover:bg-vca-background-transparent-hover"
+                            onClick={() => {
+                              onUseSuggestion?.(suggestion);
+                              setIsHotspotOpen(false);
+                            }}
+                          >
+                            <span className="block truncate">{suggestion}</span>
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mt-1 px-2 pb-1 text-vca-xsmall text-vca-text-meta">
+                        Type a message to continue.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div className={cn('shrink-0', hasMultipleLines && 'pb-vca-s')}>
@@ -141,4 +233,3 @@ export const Composer = ({
     </div>
   );
 };
-

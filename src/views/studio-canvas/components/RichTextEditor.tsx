@@ -14,6 +14,7 @@ interface RichTextEditorProps {
     placeholder?: string;
     className?: string;
     autoFocus?: boolean;
+    readOnly?: boolean;
 }
 
 export function RichTextEditor({
@@ -21,7 +22,8 @@ export function RichTextEditor({
     onChange,
     placeholder = 'Write something...',
     className,
-    autoFocus = false
+    autoFocus = false,
+    readOnly = false,
 }: RichTextEditorProps) {
 
     // --- HTML <-> Markdown Conversion (Robust DOM Approach) ---
@@ -155,9 +157,11 @@ export function RichTextEditor({
         },
         content: markdownToHtml(value),
         onUpdate: ({ editor }) => {
+            if (readOnly) return;
             onChange(htmlToMarkdown(editor.getHTML()));
         },
         autofocus: autoFocus ? 'end' : false,
+        editable: !readOnly,
     });
 
     // Sync external value changes
@@ -172,6 +176,7 @@ export function RichTextEditor({
     }
 
     const setLink = () => {
+        if (readOnly) return;
         const previousUrl = editor.getAttributes('link').href;
         const url = window.prompt('URL', previousUrl);
         if (url === null) return;
@@ -186,12 +191,13 @@ export function RichTextEditor({
         <div
             className={cn(
                 "border border-shell-border rounded-lg bg-shell-bg overflow-hidden transition-all focus-within:ring-2 focus-within:ring-shell-accent/20 focus-within:border-shell-accent",
+                readOnly ? "focus-within:ring-0 focus-within:border-shell-border" : "",
                 className
             )}
             onKeyDown={(e) => e.stopPropagation()}
         >
             {/* Bubble Menu */}
-            {editor && (
+            {editor && !readOnly && (
                 <BubbleMenu className="flex bg-shell-surface shadow-xl border border-shell-border rounded-lg overflow-hidden" editor={editor}>
                     <button onClick={() => editor.chain().focus().toggleBold().run()} className={cn("p-2 hover:bg-shell-surface-subtle", editor.isActive('bold') ? 'text-shell-accent' : 'text-shell-muted-strong')}>
                         <Bold size={14} />

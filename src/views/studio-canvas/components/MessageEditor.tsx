@@ -13,9 +13,17 @@ interface MessageEditorProps {
     children: React.ReactNode;
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
+    readOnly?: boolean;
 }
 
-export function MessageEditor({ component, onChange, children, isOpen, onOpenChange }: MessageEditorProps) {
+export function MessageEditor({
+    component,
+    onChange,
+    children,
+    isOpen,
+    onOpenChange,
+    readOnly = false,
+}: MessageEditorProps) {
     const content = component.content as AIMessageContent;
 
     // Local state to prevent cursor jumping
@@ -28,6 +36,7 @@ export function MessageEditor({ component, onChange, children, isOpen, onOpenCha
     }, [component.id]);
 
     const handleTextChange = (value: string) => {
+        if (readOnly) return;
         setLocalText(value);
         onChange({ ...content, text: value });
     };
@@ -46,6 +55,7 @@ export function MessageEditor({ component, onChange, children, isOpen, onOpenCha
                         value={localText}
                         onChange={handleTextChange}
                         placeholder="Type your message here..."
+                        readOnly={readOnly}
                     />
                 </div>
             </EditorContent>
@@ -59,6 +69,7 @@ export function MessageEditor({ component, onChange, children, isOpen, onOpenCha
             componentId={component.id}
             editorContent={editorContent}
             width={400} // Increased width for better writing experience
+            readOnly={readOnly}
         >
             {children}
         </ComponentEditorPopover>

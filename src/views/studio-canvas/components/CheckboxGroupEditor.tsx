@@ -14,6 +14,7 @@ interface CheckboxGroupEditorProps {
     children: React.ReactNode;
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
+    readOnly?: boolean;
 }
 
 // Mock Presets for Checkboxes
@@ -36,7 +37,14 @@ const PRESETS = {
     ]
 };
 
-export function CheckboxGroupEditor({ component, onChange, children, isOpen, onOpenChange }: CheckboxGroupEditorProps) {
+export function CheckboxGroupEditor({
+    component,
+    onChange,
+    children,
+    isOpen,
+    onOpenChange,
+    readOnly = false,
+}: CheckboxGroupEditorProps) {
     const content = component.content as CheckboxGroupContent;
 
     // Local state for better UX
@@ -52,21 +60,25 @@ export function CheckboxGroupEditor({ component, onChange, children, isOpen, onO
     }, [component.id, content.title, content.description, content.saveLabel]);
 
     const handleTitleChange = (val: string) => {
+        if (readOnly) return;
         setLocalTitle(val);
         onChange({ ...content, title: val });
     };
 
     const handleDescriptionChange = (val: string) => {
+        if (readOnly) return;
         setLocalDescription(val);
         onChange({ ...content, description: val });
     };
 
     const handleSaveLabelChange = (val: string) => {
+        if (readOnly) return;
         setLocalSaveLabel(val);
         onChange({ ...content, saveLabel: val });
     };
 
     const applyPreset = (presetKey: keyof typeof PRESETS) => {
+        if (readOnly) return;
         onChange({
             ...content,
             options: PRESETS[presetKey].map(opt => ({ ...opt, id: Math.random().toString(36).substr(2, 9) }))
@@ -74,17 +86,20 @@ export function CheckboxGroupEditor({ component, onChange, children, isOpen, onO
     };
 
     const updateOption = (index: number, updates: Partial<CheckboxGroupContent['options'][0]>) => {
+        if (readOnly) return;
         const newOptions = [...(content.options || [])];
         newOptions[index] = { ...newOptions[index], ...updates };
         onChange({ ...content, options: newOptions });
     };
 
     const deleteOption = (index: number) => {
+        if (readOnly) return;
         const newOptions = [...(content.options || [])].filter((_, i) => i !== index);
         onChange({ ...content, options: newOptions });
     };
 
     const addOption = () => {
+        if (readOnly) return;
         const newOption = {
             id: Math.random().toString(36).substr(2, 9),
             label: 'New Option',
@@ -129,18 +144,21 @@ export function CheckboxGroupEditor({ component, onChange, children, isOpen, onO
                         value={localTitle}
                         onChange={handleTitleChange}
                         placeholder="e.g. Which topics interest you?"
+                        readOnly={readOnly}
                     />
                     <EditorField
                         label="Description (Optional)"
                         value={localDescription}
                         onChange={handleDescriptionChange}
                         placeholder="Select all that apply."
+                        readOnly={readOnly}
                     />
                     <EditorField
                         label="Save Button Label"
                         value={localSaveLabel}
                         onChange={handleSaveLabelChange}
                         placeholder="Save"
+                        readOnly={readOnly}
                     />
                 </EditorSection>
 
@@ -150,6 +168,7 @@ export function CheckboxGroupEditor({ component, onChange, children, isOpen, onO
                     action={
                         <button
                             onClick={addOption}
+                            disabled={readOnly}
                             className="flex items-center gap-1 text-[10px] text-shell-accent hover:text-shell-accent-hover font-medium"
                         >
                             <Plus size={12} />
@@ -178,6 +197,7 @@ export function CheckboxGroupEditor({ component, onChange, children, isOpen, onO
                                     </div>
                                     <button
                                         onClick={(e) => { e.stopPropagation(); deleteOption(idx); }}
+                                        disabled={readOnly}
                                         className="p-1.5 text-shell-muted hover:text-shell-danger hover:bg-shell-danger-soft rounded transition-all opacity-0 group-hover:opacity-100"
                                     >
                                         <X className="w-3.5 h-3.5" />
@@ -191,12 +211,14 @@ export function CheckboxGroupEditor({ component, onChange, children, isOpen, onO
                                             label="Label"
                                             value={option.label}
                                             onChange={(val) => updateOption(idx, { label: val })}
+                                            readOnly={readOnly}
                                         />
                                         <EditorField
                                             label="Description (Optional)"
                                             value={option.description || ''}
                                             onChange={(val) => updateOption(idx, { description: val })}
                                             placeholder="Add extra detail..."
+                                            readOnly={readOnly}
                                         />
                                     </div>
                                 )}
@@ -220,6 +242,7 @@ export function CheckboxGroupEditor({ component, onChange, children, isOpen, onO
             componentId={component.id}
             editorContent={editorContent}
             width={400}
+            readOnly={readOnly}
         >
             {children}
         </ComponentEditorPopover>

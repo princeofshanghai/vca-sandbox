@@ -3,6 +3,7 @@ import { cn } from '@/utils';
 import { VcaIcon, VcaIconName } from '../icons';
 import { ButtonLink } from '../buttons/ButtonLink';
 import { Avatar, AvatarFallbackTone } from '../avatar';
+import { HotspotBeacon } from '../hotspot';
 
 export type SelectionItemVisualType = 'avatar' | 'icon' | 'none';
 
@@ -28,7 +29,7 @@ export interface SelectionItem {
 }
 
 export interface SelectionListProps {
-    items: SelectionItem[];
+  items: SelectionItem[];
     /**
      * Layout mode for the selection list.
      * 'list' - Standard vertical stack.
@@ -42,9 +43,10 @@ export interface SelectionListProps {
      * Maximum number of items to show initially.
      * If items.length exceeds this, a "Show more" button will appear.
      */
-    maxDisplayed?: number;
+  maxDisplayed?: number;
+  hotspotItemIds?: string[];
 
-    className?: string;
+  className?: string;
 }
 
 /**
@@ -55,6 +57,7 @@ export const SelectionList = ({
     layout = 'list',
     onSelect,
     maxDisplayed,
+    hotspotItemIds = [],
     className,
 }: SelectionListProps) => {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -87,6 +90,7 @@ export const SelectionList = ({
         <div className={cn("selection-list-container", className)}>
             <div className={cn(containerLayoutStyles[layout])}>
                 {displayedItems.map((item) => {
+                    const showHotspot = hotspotItemIds.includes(item.id);
                     const resolvedVisualType: SelectionItemVisualType =
                         item.imageUrl
                             ? 'avatar'
@@ -108,6 +112,9 @@ export const SelectionList = ({
                             )}
                             type="button"
                         >
+                            {showHotspot && (
+                                <HotspotBeacon className="-right-2 top-1/2 -translate-y-1/2" />
+                            )}
                             {(showAvatar || showIcon) && (
                                 <div className={cn(
                                     "relative shrink-0 flex items-center justify-center",

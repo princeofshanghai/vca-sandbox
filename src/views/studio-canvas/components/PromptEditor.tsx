@@ -14,9 +14,18 @@ interface PromptEditorProps {
     children: React.ReactNode;
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
+    readOnly?: boolean;
 }
 
-export function PromptEditor({ component, entryPoint, onChange, children, isOpen, onOpenChange }: PromptEditorProps) {
+export function PromptEditor({
+    component,
+    entryPoint,
+    onChange,
+    children,
+    isOpen,
+    onOpenChange,
+    readOnly = false,
+}: PromptEditorProps) {
     const content = component.content as PromptContent;
 
     // Local state to prevent cursor jumping
@@ -29,6 +38,7 @@ export function PromptEditor({ component, entryPoint, onChange, children, isOpen
     }, [component.id]);
 
     const handleTextChange = (value: string) => {
+        if (readOnly) return;
         setLocalText(value);
         onChange({ ...content, text: value });
     };
@@ -67,6 +77,7 @@ export function PromptEditor({ component, entryPoint, onChange, children, isOpen
                     type="textarea"
                     minRows={2}
                     hint="Instructions for how the AI should behave in this turn."
+                    readOnly={readOnly}
                 />
             </EditorContent>
         </EditorRoot>
@@ -79,6 +90,7 @@ export function PromptEditor({ component, entryPoint, onChange, children, isOpen
             componentId={component.id}
             editorContent={editorContent}
             width={400}
+            readOnly={readOnly}
         >
             {children}
         </ComponentEditorPopover>

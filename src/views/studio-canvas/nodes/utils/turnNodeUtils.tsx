@@ -1,5 +1,14 @@
-import { MessageSquare, MessageCirclePlus, MessageSquareText, Zap, LayoutList, CheckSquare } from 'lucide-react';
-import { Component, AIMessageContent, PromptContent, AIInfoContent, AIStatusContent, SelectionListContent, CheckboxGroupContent } from '../../../studio/types';
+import { MessageSquare, MessageCirclePlus, MessageSquareText, Zap, LayoutList, CheckSquare, User } from 'lucide-react';
+import {
+    Component,
+    AIMessageContent,
+    PromptContent,
+    AIInfoContent,
+    AIStatusContent,
+    SelectionListContent,
+    ConfirmationCardContent,
+    CheckboxGroupContent
+} from '../../../studio/types';
 
 // Capitalize phase for display
 export const formatPhase = (phase?: string): string => {
@@ -50,6 +59,14 @@ export const getComponentDisplay = (component: Component): { icon: JSX.Element; 
                 icon: <LayoutList className="w-4 h-4" />,
                 label: 'Selection List',
                 detail: `${listContent.items?.length || 0} items`
+            };
+        }
+        case 'confirmationCard': {
+            const confirmationContent = component.content as ConfirmationCardContent;
+            return {
+                icon: <User className="w-4 h-4" />,
+                label: 'Confirmation Card',
+                detail: confirmationContent.item?.title || 'Candidate'
             };
         }
         case 'checkboxGroup': {

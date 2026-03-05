@@ -12,6 +12,7 @@ interface TurnNodeData {
     components?: Component[];
     selectedComponentId?: string;
     entryPoint?: string;
+    readOnly?: boolean;
 
     onSelectComponent?: (nodeId: string, componentId: string, anchorEl: HTMLElement) => void;
     onDeselect?: () => void;
@@ -19,6 +20,12 @@ interface TurnNodeData {
 
     onLabelChange?: (nodeId: string, newLabel: string) => void;
     onComponentUpdate?: (nodeId: string, componentId: string, updates: Partial<Component>) => void;
+    onQuickCreateFromHandle?: (
+        nodeId: string,
+        handleId: string | null,
+        handleEl?: HTMLElement | null,
+        pointerClient?: { x: number; y: number }
+    ) => void;
 }
 
 export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
@@ -42,7 +49,7 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
 
 
     const handleLabelSave = () => {
-        if (editedLabel.trim() !== (typedData.label || '')) {
+        if (!typedData.readOnly && editedLabel.trim() !== (typedData.label || '')) {
             typedData.onLabelChange?.(nodeId, editedLabel.trim());
         }
         setIsEditingLabel(false);
@@ -72,6 +79,7 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
     const accentClassName = isAI ? 'text-shell-accent' : 'text-shell-node-user';
     const handleClassName = isAI ? '!bg-shell-accent' : '!bg-shell-node-user';
     const labelInputBorderClassName = isAI ? 'border-shell-accent' : 'border-shell-node-user';
+    const createHandlePreviewClassName = isAI ? 'flow-create-handle flow-create-handle-neutral' : '';
 
     return (
         <div
@@ -105,15 +113,17 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
                             onKeyDown={handleLabelKeyDown}
                             className={`w-full h-full text-xs font-medium text-shell-text bg-transparent border rounded px-1 outline-none nodrag ${labelInputBorderClassName}`}
                             onClick={(e) => e.stopPropagation()}
+                            readOnly={typedData.readOnly}
                         />
                     ) : (
                         <div
-                            className={`w-full h-full flex items-center text-xs font-medium truncate rounded transition-colors cursor-text ${!typedData.label ? 'text-shell-muted' : 'text-shell-muted-strong hover:text-shell-text'}`}
+                            className={`w-full h-full flex items-center text-xs font-medium truncate rounded transition-colors ${typedData.readOnly ? 'cursor-default text-shell-muted-strong' : 'cursor-text'} ${!typedData.label ? 'text-shell-muted' : 'text-shell-muted-strong hover:text-shell-text'}`}
                             onClick={(e) => {
                                 e.stopPropagation();
+                                if (typedData.readOnly) return;
                                 setIsEditingLabel(true);
                             }}
-                            title="Click to rename"
+                            title={typedData.readOnly ? undefined : 'Click to rename'}
                         >
                             {typedData.label || (isAI ? 'AI Turn' : 'User Turn')}
                         </div>
@@ -126,7 +136,7 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
                 type="target"
                 id="main-input"
                 position={Position.Left}
-                className={`${handleClassName} !w-3 !h-3 !border-2 !border-shell-bg !z-50`}
+                className={`${handleClassName} !w-3.5 !h-3.5 !border-2 !border-shell-bg !z-50`}
                 style={{ top: 19 }}
             />
 
@@ -143,6 +153,8 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
                     onDeselect={typedData.onDeselect}
                     onComponentReorder={typedData.onComponentReorder}
                     onComponentUpdate={typedData.onComponentUpdate}
+                    readOnly={typedData.readOnly}
+                    onQuickCreateFromHandle={typedData.onQuickCreateFromHandle}
                 />
             </div>
 
@@ -151,8 +163,20 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
                 type="source"
                 id="main-output"
                 position={Position.Right}
-                className={`${handleClassName} !w-3 !h-3 !border-2 !border-shell-bg !z-50`}
+                className={`${handleClassName} ${createHandlePreviewClassName} !w-3.5 !h-3.5 !border-2 !border-shell-bg !z-50`}
                 style={{ top: 19 }}
+                onClick={(event) => {
+                    event.stopPropagation();
+                    if (typedData.readOnly) return;
+                    if (isAI) {
+                        typedData.onQuickCreateFromHandle?.(
+                            nodeId,
+                            'main-output',
+                            event.currentTarget as HTMLElement,
+                            { x: event.clientX, y: event.clientY }
+                        );
+                    }
+                }}
             />
         </div >
     );

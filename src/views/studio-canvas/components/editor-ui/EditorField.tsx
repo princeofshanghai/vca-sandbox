@@ -17,6 +17,8 @@ interface EditorFieldProps {
     onKeyDown?: (e: React.KeyboardEvent) => void;
     autoFocus?: boolean;
     renderInput?: boolean;
+    readOnly?: boolean;
+    disabled?: boolean;
 }
 
 export const EditorField = ({
@@ -33,7 +35,9 @@ export const EditorField = ({
     children,
     onKeyDown,
     autoFocus,
-    renderInput = true
+    renderInput = true,
+    readOnly = false,
+    disabled = false,
 }: EditorFieldProps) => {
     const handleInputKeyDown = (e: React.KeyboardEvent) => {
         e.stopPropagation();
@@ -66,9 +70,11 @@ export const EditorField = ({
                     minRows={minRows}
                     onKeyDown={handleInputKeyDown}
                     autoFocus={autoFocus}
+                    readOnly={readOnly}
+                    disabled={disabled}
                     className={cn(
                         "w-full text-[13px] text-shell-text border rounded-lg p-2.5 resize-none leading-relaxed transition-all",
-                        "placeholder:text-shell-muted focus:outline-none",
+                        "placeholder:text-shell-muted focus:outline-none disabled:cursor-not-allowed disabled:opacity-80",
                         error
                             ? "border-shell-danger-border focus:border-shell-danger focus:ring-2 focus:ring-shell-danger/20 bg-shell-danger-soft/20"
                             : "border-shell-border focus:border-shell-accent focus:ring-2 focus:ring-shell-accent/20 bg-shell-bg"
@@ -83,9 +89,11 @@ export const EditorField = ({
                     placeholder={placeholder}
                     onKeyDown={handleInputKeyDown}
                     autoFocus={autoFocus}
+                    readOnly={readOnly}
+                    disabled={disabled}
                     className={cn(
                         "w-full text-[13px] text-shell-text border rounded-lg p-2.5 transition-all",
-                        "placeholder:text-shell-muted focus:outline-none",
+                        "placeholder:text-shell-muted focus:outline-none disabled:cursor-not-allowed disabled:opacity-80",
                         error
                             ? "border-shell-danger-border focus:border-shell-danger focus:ring-2 focus:ring-shell-danger/20 bg-shell-danger-soft/20"
                             : "border-shell-border focus:border-shell-accent focus:ring-2 focus:ring-shell-accent/20 bg-shell-bg"

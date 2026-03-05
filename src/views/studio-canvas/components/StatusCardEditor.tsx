@@ -16,9 +16,17 @@ interface StatusCardEditorProps {
     children: React.ReactNode;
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
+    readOnly?: boolean;
 }
 
-export function StatusCardEditor({ component, onChange, children, isOpen, onOpenChange }: StatusCardEditorProps) {
+export function StatusCardEditor({
+    component,
+    onChange,
+    children,
+    isOpen,
+    onOpenChange,
+    readOnly = false,
+}: StatusCardEditorProps) {
     const content = component.content as AIStatusContent;
     // Local state for all fields
     const [localLoadingTitle, setLocalLoadingTitle] = useState(content.loadingTitle || '');
@@ -37,16 +45,19 @@ export function StatusCardEditor({ component, onChange, children, isOpen, onOpen
     }, [component.id]);
 
     const handleLoadingTitleChange = (value: string) => {
+        if (readOnly) return;
         setLocalLoadingTitle(value);
         onChange({ ...content, loadingTitle: value });
     };
 
     const handleSuccessTitleChange = (value: string) => {
+        if (readOnly) return;
         setLocalSuccessTitle(value);
         onChange({ ...content, successTitle: value });
     };
 
     const handleSuccessDescChange = (value: string) => {
+        if (readOnly) return;
         setLocalSuccessDesc(value);
         onChange({ ...content, successDescription: value });
     };
@@ -66,6 +77,7 @@ export function StatusCardEditor({ component, onChange, children, isOpen, onOpen
                         value={localLoadingTitle}
                         onChange={handleLoadingTitleChange}
                         placeholder="e.g., Removing user..."
+                        readOnly={readOnly}
                     />
 
                     <EditorField
@@ -73,6 +85,7 @@ export function StatusCardEditor({ component, onChange, children, isOpen, onOpen
                         value={localSuccessTitle}
                         onChange={handleSuccessTitleChange}
                         placeholder="e.g., User removed from Flexis Recruiter"
+                        readOnly={readOnly}
                     />
 
                     <EditorField label="Success description" renderInput={false}>
@@ -80,6 +93,7 @@ export function StatusCardEditor({ component, onChange, children, isOpen, onOpen
                             value={localSuccessDesc}
                             onChange={handleSuccessDescChange}
                             placeholder="Provide additional context or next steps..."
+                            readOnly={readOnly}
                         />
                     </EditorField>
                 </EditorSection>
@@ -94,9 +108,9 @@ export function StatusCardEditor({ component, onChange, children, isOpen, onOpen
             componentId={component.id}
             editorContent={editorContent}
             width={400}
+            readOnly={readOnly}
         >
             {children}
         </ComponentEditorPopover>
     );
 }
-

@@ -1,39 +1,28 @@
 # AGENTS.md
 
-## User Profile
-- The user is a non-technical designer with no coding experience.
-- Use plain English, minimal jargon, and behavior-focused explanations.
+## User + Language
+- User is a non-technical designer; explain in plain English with minimal jargon.
+- Focus on behavior and product outcomes, not implementation detail.
 
-## Collaboration Workflow
-- For non-trivial requests, do not code immediately.
-- First: analyze the request and inspect relevant files.
-- Then: restate understanding, share proposed approach, risks, and tradeoffs in simple language.
-- Wait for explicit user confirmation before editing files.
-- Non-trivial includes multi-file changes, architecture/data changes, risky refactors, unclear requirements, or anything with meaningful product impact.
-- For clearly trivial requests, proceed directly and explain what changed.
+## Workflow for Non-Trivial Work
+- Non-trivial includes multi-file changes, architecture/data changes, risky refactors, unclear requirements, or meaningful product impact.
+- Before editing files: inspect relevant code/docs, restate understanding, propose approach with tradeoffs, separate UX vs system implications, and wait for explicit confirmation.
+- For trivial requests, implement directly and explain what changed.
+- In each non-trivial response, include exactly: `AGENTS.md applied.`
 
-## Design Partner Rules
-- Think like a UX/UI design partner, not just an implementer.
-- Challenge assumptions when a better UX pattern exists.
-- Identify edge cases and cover happy, loading, empty, and error states before implementation.
-- For UX/UI recommendations, always provide 2-3 options with brief pros/cons and one clear recommendation.
+## Design Partner Expectations
+- Challenge assumptions when a stronger UX pattern exists.
+- Cover happy, loading, empty, and error states before implementation.
+- For UX/UI recommendations, provide 2-3 options with brief pros/cons and one recommendation.
 
-## Design System and Reuse
-- Prioritize reusability and componentization.
-- Keep solutions aligned with the design system (tokens, spacing, typography, color, interaction patterns).
-- Prefer consistent patterns over one-off custom UI.
-- Treat Component Library shell/docs pages as shell surfaces too; avoid hardcoded light palette classes there.
-- For dark theme updates, explicitly check contrast for:
-  - primary CTA text
-  - borders/dividers
-  - muted/supporting text
+## Reuse + Design System
+- Prioritize reusable components over one-off UI.
+- Keep shell/docs surfaces aligned with design system tokens and interaction patterns.
+- Avoid hardcoded palette classes on shell/docs surfaces; prefer shell tokens.
 - Keep `Login` and `Share` as always-cinematic dark surfaces unless explicitly requested otherwise.
+- For dark theme updates, verify contrast for primary CTA text, borders/dividers, and muted/supporting text.
 
-## Change Safety
-- Prefer small, reversible edits.
-- Ask before major refactors or disruptive changes.
+## Safety + Delivery
+- Prefer small, reversible edits; ask before major refactors or disruptive changes.
 - Never run destructive git/file operations unless explicitly requested.
-
-## Delivery
-- Summarize in plain language: what changed, why it changed, and what to review.
-- Include touched file paths.
+- In delivery, include: what changed, why, touched file paths, potential downstream impact, and what to review carefully.

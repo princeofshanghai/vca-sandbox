@@ -6,12 +6,14 @@ import { CARD_EDGE_OUTPUT_HANDLE_OFFSET_PX } from './handleOffsets';
 interface BranchCardProps extends React.HTMLAttributes<HTMLDivElement> {
     branch: Branch;
     isSelected: boolean;
+    readOnly?: boolean;
     onClick: () => void;
 }
 
 export const BranchCard = memo(forwardRef<HTMLDivElement, BranchCardProps>(({
     branch,
     isSelected,
+    readOnly = false,
     onClick,
     ...props
 }, ref) => {
@@ -65,6 +67,7 @@ export const BranchCard = memo(forwardRef<HTMLDivElement, BranchCardProps>(({
                 showOutputHandle={true}
                 outputHandleId={branch.id}
                 outputHandleOffsetPx={CARD_EDGE_OUTPUT_HANDLE_OFFSET_PX}
+                outputHandleClassName={readOnly ? undefined : 'flow-create-handle flow-create-handle-neutral'}
             >
                 {renderContent()}
             </StudioCard>

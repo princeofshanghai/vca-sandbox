@@ -24,6 +24,9 @@ export type ContainerProps = {
   onComposerChange?: (value: string) => void;
   onComposerSend?: () => void;
   onStop?: () => void;
+  composerHotspotVisible?: boolean;
+  composerHotspotSuggestions?: string[];
+  onComposerHotspotUse?: (value: string) => void;
   hideHeader?: boolean;
 };
 
@@ -52,6 +55,9 @@ export const Container = ({
 
   onComposerSend: externalOnComposerSend,
   onStop: externalOnStop,
+  composerHotspotVisible = false,
+  composerHotspotSuggestions = [],
+  onComposerHotspotUse,
   hideHeader = false,
 }: ContainerProps) => {
   // Interactive composer state (simplified - library handles auto-resize)
@@ -127,9 +133,11 @@ export const Container = ({
         onSend={handleSend}
         onStop={externalOnStop}
         onAttachment={onAttachment}
+        showInteractionHotspot={composerHotspotVisible}
+        interactionSuggestions={composerHotspotSuggestions}
+        onUseSuggestion={onComposerHotspotUse}
         className="shrink-0"
       />
     </div>
   );
 };
-

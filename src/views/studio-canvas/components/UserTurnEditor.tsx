@@ -16,6 +16,7 @@ interface UserTurnEditorProps {
     children: React.ReactNode;
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
+    readOnly?: boolean;
 }
 
 export const UserTurnEditor = ({
@@ -27,7 +28,8 @@ export const UserTurnEditor = ({
     promptText,
     children,
     isOpen,
-    onOpenChange
+    onOpenChange,
+    readOnly = false,
 }: UserTurnEditorProps) => {
     // We don't need the ref for focus anymore as EditorField handles it via autoFocus or props if needed,
     // but the original had manual focus logic. 
@@ -78,6 +80,7 @@ export const UserTurnEditor = ({
                             minRows={3}
                             autoFocus={true}
                             hint="Enter the keywords or sentences the user might type here."
+                            readOnly={readOnly}
                         />
                     </div>
                 )}
@@ -89,6 +92,7 @@ export const UserTurnEditor = ({
                         value={triggerValue}
                         onChange={(val) => onChange({ triggerValue: val })}
                         autoFocus={true}
+                        readOnly={readOnly}
                     />
                 )}
 
@@ -115,6 +119,7 @@ export const UserTurnEditor = ({
             componentId={nodeId}
             editorContent={editorContent}
             width={320}
+            readOnly={readOnly}
         >
             {children}
         </ComponentEditorPopover>

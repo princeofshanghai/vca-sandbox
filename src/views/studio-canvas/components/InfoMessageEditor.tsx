@@ -15,10 +15,18 @@ interface InfoMessageEditorProps {
     children: React.ReactNode;
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
+    readOnly?: boolean;
 }
 
 
-export function InfoMessageEditor({ component, onChange, children, isOpen, onOpenChange }: InfoMessageEditorProps) {
+export function InfoMessageEditor({
+    component,
+    onChange,
+    children,
+    isOpen,
+    onOpenChange,
+    readOnly = false,
+}: InfoMessageEditorProps) {
     const content = component.content as AIInfoContent;
 
     // --- State Management ---
@@ -34,11 +42,13 @@ export function InfoMessageEditor({ component, onChange, children, isOpen, onOpe
     // --- Handlers ---
 
     const handleBodyChange = (value: string) => {
+        if (readOnly) return;
         setLocalBody(value);
         onChange({ ...content, body: value });
     };
 
     const updateSources = (newSources: AIInfoContent['sources']) => {
+        if (readOnly) return;
         onChange({ ...content, sources: newSources });
     };
 
@@ -59,6 +69,7 @@ export function InfoMessageEditor({ component, onChange, children, isOpen, onOpe
                             value={localBody}
                             onChange={handleBodyChange}
                             placeholder="Type your message here..."
+                            readOnly={readOnly}
                         />
                     </EditorField>
                 </EditorSection>
@@ -86,6 +97,7 @@ export function InfoMessageEditor({ component, onChange, children, isOpen, onOpe
                                         updateSources(s);
                                     }}
                                     placeholder="Label (e.g. Wikipedia)"
+                                    readOnly={readOnly}
                                 />
                                 <EditorField
                                     value={source.url || ''}
@@ -106,6 +118,7 @@ export function InfoMessageEditor({ component, onChange, children, isOpen, onOpe
                                         updateSources(s);
                                     }}
                                     placeholder="URL (https://...)"
+                                    readOnly={readOnly}
                                 />
                             </div>
                         ))}
@@ -130,6 +143,7 @@ export function InfoMessageEditor({ component, onChange, children, isOpen, onOpe
             componentId={component.id}
             editorContent={editorContent}
             width={400}
+            readOnly={readOnly}
         >
             {children}
         </ComponentEditorPopover>

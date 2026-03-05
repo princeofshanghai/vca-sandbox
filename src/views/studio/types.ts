@@ -56,6 +56,7 @@ export type Block = UserBlock | AIBlock;
 export interface GlobalSettings {
     showDisclaimer: boolean;
     simulateThinking: boolean;
+    showHotspots?: boolean;
     entryPoint: string; // Entry point ID (admin-center, recruiter, etc.)
     productName: string; // Display name for the product
 }
@@ -87,7 +88,14 @@ export interface Flow {
 // ============================================
 
 // Component types match the old AIBlockVariant
-export type ComponentType = 'message' | 'infoMessage' | 'statusCard' | 'prompt' | 'selectionList' | 'checkboxGroup';
+export type ComponentType =
+    | 'message'
+    | 'infoMessage'
+    | 'statusCard'
+    | 'prompt'
+    | 'selectionList'
+    | 'confirmationCard'
+    | 'checkboxGroup';
 
 // Component content union
 export type ComponentContent =
@@ -96,6 +104,7 @@ export type ComponentContent =
     | AIStatusContent
     | PromptContent
     | SelectionListContent
+    | ConfirmationCardContent
     | CheckboxGroupContent;
 
 // Individual prompt component
@@ -116,6 +125,13 @@ export interface SelectionListContent {
         visualType?: 'avatar' | 'icon' | 'none';
         disabled?: boolean;
     }[];
+}
+
+// Confirmation Card Content
+export interface ConfirmationCardContent {
+    item: SelectionListContent['items'][0];
+    confirmLabel?: string;
+    rejectLabel?: string;
 }
 
 // Checkbox Group Content

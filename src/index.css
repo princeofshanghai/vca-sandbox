@@ -38,17 +38,20 @@
     --shell-danger-border: 254 202 202;
     --shell-canvas: 245 245 247;
     --shell-canvas-grid: 180 179 168;
-    --shell-flow-edge: 156 163 175;
-    --shell-flow-edge-hover: 75 85 99;
-    --shell-flow-edge-selected: 37 99 235;
-    --shell-flow-edge-marker: 148 163 184;
+    --shell-flow-edge: 107 114 128;
+    --shell-flow-edge-hover: 55 65 81;
+    --shell-flow-edge-selected: 29 78 216;
+    --shell-flow-edge-marker: 100 116 139;
     --shell-scrollbar-thumb: 203 213 225;
     --shell-scrollbar-thumb-hover: 148 163 184;
     --shell-node-ai-surface: 245 248 255;
     --shell-node-user-surface: 249 245 255;
     --shell-node-condition-surface: 255 249 240;
+    --shell-node-start-surface: 236 253 245;
     --shell-node-user: 147 51 234;
     --shell-node-condition: 245 158 11;
+    --shell-node-start: 16 185 129;
+    --shell-node-start-text: 6 95 70;
     --shell-node-note: 202 138 4;
 
     /* Always-dark cinematic tokens */
@@ -100,17 +103,20 @@
     --shell-danger-border: 175 76 76;
     --shell-canvas: 15 16 19;
     --shell-canvas-grid: 47 49 56;
-    --shell-flow-edge: 82 86 96;
-    --shell-flow-edge-hover: 120 125 136;
-    --shell-flow-edge-selected: 82 139 255;
-    --shell-flow-edge-marker: 124 129 140;
+    --shell-flow-edge: 121 129 145;
+    --shell-flow-edge-hover: 161 169 186;
+    --shell-flow-edge-selected: 130 170 255;
+    --shell-flow-edge-marker: 128 138 158;
     --shell-scrollbar-thumb: 75 85 99;
     --shell-scrollbar-thumb-hover: 107 114 128;
     --shell-node-ai-surface: 22 28 39;
     --shell-node-user-surface: 29 23 39;
     --shell-node-condition-surface: 37 31 24;
+    --shell-node-start-surface: 19 39 31;
     --shell-node-user: 192 132 252;
     --shell-node-condition: 251 191 36;
+    --shell-node-start: 52 211 153;
+    --shell-node-start-text: 167 243 208;
     --shell-node-note: 250 204 21;
   }
 
@@ -282,6 +288,16 @@
     scrollbar-width: thin;
     scrollbar-color: rgb(var(--shell-scrollbar-thumb) / 1) transparent;
   }
+
+  .hotspot-ripple-animation {
+    animation: hotspot-ripple 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+    transform-origin: center;
+  }
+
+  .hotspot-dot-pulse-animation {
+    animation: hotspot-dot-pulse 2s ease-in-out infinite;
+    transform-origin: center;
+  }
 }
 
 @layer components {
@@ -291,19 +307,83 @@
 }
 
 /* React Flow Edge Styling Overrides */
-.react-flow__edge-path {
+.react-flow.bg-shell-canvas {
+  --xy-edge-stroke-width-default: 2.25;
+}
+
+.react-flow .react-flow__edge-path {
   stroke: rgb(var(--shell-flow-edge) / 1);
-  stroke-width: 1.5px;
+  stroke-width: 2.25px;
   transition: stroke 0.2s, stroke-width 0.2s;
   cursor: pointer;
 }
 
-.react-flow__edge:hover .react-flow__edge-path {
+.react-flow .react-flow__edge:hover .react-flow__edge-path {
   stroke: rgb(var(--shell-flow-edge-hover) / 1);
-  stroke-width: 2px;
+  stroke-width: 2.85px;
 }
 
-.react-flow__edge.selected .react-flow__edge-path {
+.react-flow .react-flow__edge.selected .react-flow__edge-path {
   stroke: rgb(var(--shell-flow-edge-selected) / 1);
-  stroke-width: 2.5px;
+  stroke-width: 3.5px;
+}
+
+.react-flow .react-flow__edge .react-flow__arrowhead polyline {
+  stroke: rgb(var(--shell-flow-edge-marker) / 1);
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 0.2s, fill 0.2s;
+}
+
+.react-flow .react-flow__edge .react-flow__arrowhead polyline.arrowclosed {
+  fill: rgb(var(--shell-flow-edge-marker) / 1);
+}
+
+.react-flow .react-flow__edge:hover .react-flow__arrowhead polyline {
+  stroke: rgb(var(--shell-flow-edge-hover) / 1);
+}
+
+.react-flow .react-flow__edge:hover .react-flow__arrowhead polyline.arrowclosed {
+  fill: rgb(var(--shell-flow-edge-hover) / 1);
+}
+
+.react-flow .react-flow__edge.selected .react-flow__arrowhead polyline {
+  stroke: rgb(var(--shell-flow-edge-selected) / 1);
+}
+
+.react-flow .react-flow__edge.selected .react-flow__arrowhead polyline.arrowclosed {
+  fill: rgb(var(--shell-flow-edge-selected) / 1);
+}
+
+@keyframes hotspot-ripple {
+  0% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(3);
+  }
+}
+
+@keyframes hotspot-dot-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.72;
+  }
+
+  50% {
+    transform: scale(1.12);
+    opacity: 0.86;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hotspot-ripple-animation,
+  .hotspot-dot-pulse-animation {
+    animation: none !important;
+  }
 }

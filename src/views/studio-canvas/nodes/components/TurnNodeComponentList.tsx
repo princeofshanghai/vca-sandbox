@@ -24,6 +24,7 @@ import { PromptEditor } from '../../components/PromptEditor';
 import { InfoMessageEditor } from '../../components/InfoMessageEditor';
 import { StatusCardEditor } from '../../components/StatusCardEditor';
 import { SelectionListEditor } from '../../components/SelectionListEditor';
+import { ConfirmationCardEditor } from '../../components/ConfirmationCardEditor';
 import { CheckboxGroupEditor } from '../../components/CheckboxGroupEditor';
 
 const HANDLE_SYNC_WINDOW_MS = 280;
@@ -55,11 +56,18 @@ interface TurnNodeComponentListProps {
     components: Component[];
     selectedComponentId?: string;
     entryPoint?: string;
+    readOnly?: boolean;
     surfaceClassName?: string;
     onSelectComponent?: (nodeId: string, componentId: string, anchorEl: HTMLElement) => void;
     onDeselect?: () => void;
     onComponentUpdate?: (nodeId: string, componentId: string, updates: Partial<Component>) => void;
     onComponentReorder?: (nodeId: string, activeComponentId: string, overComponentId: string) => void;
+    onQuickCreateFromHandle?: (
+        nodeId: string,
+        handleId: string | null,
+        handleEl?: HTMLElement | null,
+        pointerClient?: { x: number; y: number }
+    ) => void;
 }
 
 interface ComponentRowProps {
@@ -67,9 +75,16 @@ interface ComponentRowProps {
     component: Component;
     isSelected: boolean;
     entryPoint?: string;
+    readOnly?: boolean;
     onSelectComponent?: (nodeId: string, componentId: string, anchorEl: HTMLElement) => void;
     onDeselect?: () => void;
     onComponentUpdate?: (nodeId: string, componentId: string, updates: Partial<Component>) => void;
+    onQuickCreateFromHandle?: (
+        nodeId: string,
+        handleId: string | null,
+        handleEl?: HTMLElement | null,
+        pointerClient?: { x: number; y: number }
+    ) => void;
     lastDragAt: number;
 }
 
@@ -78,9 +93,11 @@ const ComponentRow = memo(({
     component,
     isSelected,
     entryPoint,
+    readOnly = false,
     onSelectComponent,
     onDeselect,
     onComponentUpdate,
+    onQuickCreateFromHandle,
     lastDragAt,
 }: ComponentRowProps) => {
     const display = useMemo(() => getComponentDisplay(component), [component]);
@@ -101,15 +118,18 @@ const ComponentRow = memo(({
     }, [isSelected, onDeselect]);
 
     const handleComponentChange = useCallback((updates: Record<string, unknown>) => {
+        if (readOnly) return;
         onComponentUpdate?.(nodeId, component.id, { content: { ...component.content, ...updates } });
-    }, [component, nodeId, onComponentUpdate]);
+    }, [component, nodeId, onComponentUpdate, readOnly]);
 
     const card = (
         <SimpleComponentCard
             component={component}
             display={display}
             isSelected={isSelected}
+            readOnly={readOnly}
             onClick={handleClick}
+            onHandleClick={(handleId, handleEl, pointerClient) => onQuickCreateFromHandle?.(nodeId, handleId, handleEl, pointerClient)}
         />
     );
 
@@ -120,6 +140,7 @@ const ComponentRow = memo(({
                 onChange={handleComponentChange}
                 isOpen={isSelected}
                 onOpenChange={handleOpenChange}
+                readOnly={readOnly}
             >
                 {card}
             </MessageEditor>
@@ -134,6 +155,7 @@ const ComponentRow = memo(({
                 onChange={handleComponentChange}
                 isOpen={isSelected}
                 onOpenChange={handleOpenChange}
+                readOnly={readOnly}
             >
                 {card}
             </PromptEditor>
@@ -147,6 +169,7 @@ const ComponentRow = memo(({
                 onChange={handleComponentChange}
                 isOpen={isSelected}
                 onOpenChange={handleOpenChange}
+                readOnly={readOnly}
             >
                 {card}
             </InfoMessageEditor>
@@ -160,6 +183,7 @@ const ComponentRow = memo(({
                 onChange={handleComponentChange}
                 isOpen={isSelected}
                 onOpenChange={handleOpenChange}
+                readOnly={readOnly}
             >
                 {card}
             </StatusCardEditor>
@@ -173,9 +197,24 @@ const ComponentRow = memo(({
                 onChange={handleComponentChange}
                 isOpen={isSelected}
                 onOpenChange={handleOpenChange}
+                readOnly={readOnly}
             >
                 {card}
             </SelectionListEditor>
+        );
+    }
+
+    if (component.type === 'confirmationCard') {
+        return (
+            <ConfirmationCardEditor
+                component={component}
+                onChange={handleComponentChange}
+                isOpen={isSelected}
+                onOpenChange={handleOpenChange}
+                readOnly={readOnly}
+            >
+                {card}
+            </ConfirmationCardEditor>
         );
     }
 
@@ -186,6 +225,7 @@ const ComponentRow = memo(({
                 onChange={handleComponentChange}
                 isOpen={isSelected}
                 onOpenChange={handleOpenChange}
+                readOnly={readOnly}
             >
                 {card}
             </CheckboxGroupEditor>
@@ -235,14 +275,16 @@ export const TurnNodeComponentList = ({
     components,
     selectedComponentId,
     entryPoint,
+    readOnly = false,
     surfaceClassName = 'bg-shell-bg',
     onSelectComponent,
     onDeselect,
     onComponentUpdate,
-    onComponentReorder
+    onComponentReorder,
+    onQuickCreateFromHandle,
 }: TurnNodeComponentListProps) => {
     const [lastDragAt, setLastDragAt] = useState(0);
-    const canReorder = components.length > 1;
+    const canReorder = !readOnly && components.length > 1;
     const updateNodeInternals = useUpdateNodeInternals();
 
     const sensors = useSensors(
@@ -279,13 +321,14 @@ export const TurnNodeComponentList = ({
     }, [componentLayoutKey, nodeId, updateNodeInternals]);
 
     const handleDragEnd = useCallback((event: DragEndEvent) => {
+        if (readOnly) return;
         setLastDragAt(Date.now());
 
         const { active, over } = event;
         if (!over || active.id === over.id) return;
 
         onComponentReorder?.(nodeId, String(active.id), String(over.id));
-    }, [nodeId, onComponentReorder]);
+    }, [nodeId, onComponentReorder, readOnly]);
 
     const handleDragStart = useCallback(() => {
         setLastDragAt(Date.now());
@@ -300,9 +343,9 @@ export const TurnNodeComponentList = ({
             <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
-                onDragStart={handleDragStart}
-                onDragCancel={handleDragCancel}
-                onDragEnd={handleDragEnd}
+                onDragStart={readOnly ? undefined : handleDragStart}
+                onDragCancel={readOnly ? undefined : handleDragCancel}
+                onDragEnd={readOnly ? undefined : handleDragEnd}
             >
                 <SortableContext items={componentIds} strategy={verticalListSortingStrategy}>
                     <div className="flex flex-col gap-3">
@@ -317,9 +360,11 @@ export const TurnNodeComponentList = ({
                                     component={component}
                                     isSelected={selectedComponentId === component.id}
                                     entryPoint={entryPoint}
+                                    readOnly={readOnly}
                                     onSelectComponent={onSelectComponent}
                                     onDeselect={onDeselect}
                                     onComponentUpdate={onComponentUpdate}
+                                    onQuickCreateFromHandle={onQuickCreateFromHandle}
                                     lastDragAt={lastDragAt}
                                 />
                             </SortableComponentRow>

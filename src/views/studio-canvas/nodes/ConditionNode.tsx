@@ -24,6 +24,7 @@ const HANDLE_SYNC_WINDOW_MS = 280;
 interface ConditionNodeData {
     label: string;
     branches?: Branch[];
+    readOnly?: boolean;
     onLabelChange?: (nodeId: string, newLabel: string) => void;
     onUpdateBranches?: (nodeId: string, branches: Branch[]) => void;
 }
@@ -119,7 +120,7 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
     }, [isEditingLabel]);
 
     const handleLabelSave = () => {
-        if (editedLabel.trim() !== (typedData.label || '')) {
+        if (!typedData.readOnly && editedLabel.trim() !== (typedData.label || '')) {
             typedData.onLabelChange?.(nodeId, editedLabel.trim());
         }
         setIsEditingLabel(false);
@@ -135,6 +136,8 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
     };
 
     const handleBranchUpdate = useCallback((branchId: string, updates: Partial<Branch>) => {
+        if (typedData.readOnly) return;
+
         const newBranches = branches.map(b =>
             b.id === branchId ? { ...b, ...updates } : b
         );
@@ -142,6 +145,7 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
     }, [branches, nodeId, typedData]);
 
     const handleBranchDelete = useCallback((branchId: string) => {
+        if (typedData.readOnly) return;
         if (branches.length <= 1) {
             return;
         }
@@ -151,6 +155,7 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
     }, [branches, nodeId, typedData]);
 
     const handleBranchReorder = useCallback((activeBranchId: string, overBranchId: string) => {
+        if (typedData.readOnly) return;
         if (activeBranchId === overBranchId) return;
 
         const oldIndex = branches.findIndex((branch) => branch.id === activeBranchId);
@@ -164,20 +169,23 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
     }, [branches, nodeId, typedData]);
 
     const handleDragStart = useCallback(() => {
+        if (typedData.readOnly) return;
         setLastDragAt(Date.now());
-    }, []);
+    }, [typedData.readOnly]);
 
     const handleDragCancel = useCallback(() => {
+        if (typedData.readOnly) return;
         setLastDragAt(Date.now());
-    }, []);
+    }, [typedData.readOnly]);
 
     const handleDragEnd = useCallback((event: DragEndEvent) => {
+        if (typedData.readOnly) return;
         setLastDragAt(Date.now());
         const { active, over } = event;
         if (!over || active.id === over.id) return;
 
         handleBranchReorder(String(active.id), String(over.id));
-    }, [handleBranchReorder]);
+    }, [handleBranchReorder, typedData.readOnly]);
 
     const handleMoveBranch = useCallback((direction: 'up' | 'down') => {
         if (!selectedBranchId) return;
@@ -198,6 +206,7 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
     }, [handleBranchDelete, selectedBranchId]);
 
     useEffect(() => {
+        if (typedData.readOnly) return;
         if (!selectedBranchId) {
             return;
         }
@@ -227,7 +236,7 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [handleDeleteSelectedBranch, handleMoveBranch, selectedBranchId]);
+    }, [handleDeleteSelectedBranch, handleMoveBranch, selectedBranchId, typedData.readOnly]);
 
     const branchIds = useMemo(() => branches.map((branch) => branch.id), [branches]);
     const branchLayoutKey = useMemo(() => branchIds.join('|'), [branchIds]);
@@ -281,15 +290,17 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
                         onKeyDown={handleLabelKeyDown}
                         className="w-full h-full text-xs font-medium text-shell-text bg-transparent border border-shell-node-condition rounded px-1 outline-none nodrag"
                         onClick={(e) => e.stopPropagation()}
+                        readOnly={typedData.readOnly}
                     />
                 ) : (
                     <div
-                        className={`w-full h-full flex items-center text-xs font-medium truncate rounded transition-colors cursor-text ${!typedData.label ? 'text-shell-muted' : 'text-shell-muted-strong hover:text-shell-text'}`}
+                        className={`w-full h-full flex items-center text-xs font-medium truncate rounded transition-colors ${typedData.readOnly ? 'cursor-default text-shell-muted-strong' : 'cursor-text'} ${!typedData.label ? 'text-shell-muted' : 'text-shell-muted-strong hover:text-shell-text'}`}
                         onClick={(e) => {
                             e.stopPropagation();
+                            if (typedData.readOnly) return;
                             setIsEditingLabel(true);
                         }}
-                        title="Click to rename"
+                        title={typedData.readOnly ? undefined : 'Click to rename'}
                     >
                         {typedData.label || 'Condition'}
                     </div>
@@ -300,7 +311,7 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
             <Handle
                 type="target"
                 position={Position.Left}
-                className="!bg-shell-node-condition !w-3 !h-3 !border-2 !border-shell-bg"
+                className="!bg-shell-node-condition !w-3.5 !h-3.5 !border-2 !border-shell-bg"
             />
 
             {/* Wrapper for branch rows */}
@@ -315,7 +326,11 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
                     <SortableContext items={branchIds} strategy={verticalListSortingStrategy}>
                         <div className="flex flex-col gap-2">
                             {branches.map((branch) => (
-                                <SortableBranchRow key={branch.id} branchId={branch.id} disabled={!canReorderBranches}>
+                                <SortableBranchRow
+                                    key={branch.id}
+                                    branchId={branch.id}
+                                    disabled={typedData.readOnly || !canReorderBranches}
+                                >
                                     <ConditionBranchEditor
                                         branchId={branch.id}
                                         condition={branch.condition}
@@ -324,10 +339,12 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
                                         onChange={(u) => handleBranchUpdate(branch.id, u)}
                                         isOpen={selectedBranchId === branch.id}
                                         onOpenChange={(open) => !open && setSelectedBranchId(null)}
+                                        readOnly={typedData.readOnly}
                                     >
                                         <BranchCard
                                             branch={branch}
                                             isSelected={selectedBranchId === branch.id}
+                                            readOnly={typedData.readOnly}
                                             onClick={() => {
                                                 if (Date.now() - lastDragAt < 180) {
                                                     return;

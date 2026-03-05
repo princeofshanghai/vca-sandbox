@@ -1,6 +1,6 @@
 import * as HoverCard from '@radix-ui/react-hover-card';
 import * as Popover from '@radix-ui/react-popover';
-import { MessageSquare, MessageCirclePlus, MessageSquareText, Zap, LayoutList, CheckSquare } from 'lucide-react';
+import { MessageSquare, MessageCirclePlus, MessageSquareText, Zap, LayoutList, CheckSquare, User } from 'lucide-react';
 import { toast } from 'sonner';
 import type { ComponentType } from '../../studio/types';
 import { Message } from '@/components/vca-components/messages/Message';
@@ -93,6 +93,24 @@ const componentOptions: ComponentOption[] = [
                 <div className="flex items-center gap-2 p-2 rounded border border-shell-border bg-shell-bg">
                     <div className="w-6 h-6 rounded-full bg-shell-surface" />
                     <div className="flex-1 h-2 bg-shell-surface rounded w-2/3" />
+                </div>
+            </div>
+        ),
+    },
+    {
+        type: 'confirmationCard',
+        icon: <User className="w-4 h-4" />,
+        name: 'Confirmation Card',
+        description: 'Read-only candidate card with Yes/No confirmation actions',
+        previewComponent: (
+            <div className="w-[300px] flex flex-col gap-2 p-2">
+                <div className="flex items-center gap-2 p-2 rounded border border-shell-border bg-shell-bg">
+                    <div className="w-6 h-6 rounded-full bg-shell-surface" />
+                    <div className="flex-1 h-2 bg-shell-surface rounded w-2/3" />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                    <div className="h-7 rounded bg-shell-accent/20 border border-shell-accent/40" />
+                    <div className="h-7 rounded bg-shell-surface border border-shell-border" />
                 </div>
             </div>
         ),

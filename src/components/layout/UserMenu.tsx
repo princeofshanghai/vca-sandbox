@@ -10,6 +10,7 @@ import { ShellIconButton } from '@/components/shell';
 import { ActionTooltip } from '@/views/studio-canvas/components/ActionTooltip';
 import { useApp } from '@/contexts/AppContext';
 import { Switch } from '@/components/ui/switch';
+import { getUserAvatarUrl, getUserInitials } from '@/utils/userIdentity';
 
 export function UserMenu() {
     const { user, signOut } = useAuth();
@@ -17,18 +18,8 @@ export function UserMenu() {
 
     if (!user?.email) return null;
 
-    const getInitials = () => {
-        if (user.user_metadata?.full_name) {
-            const names = user.user_metadata.full_name.split(' ');
-            if (names.length >= 2) {
-                return (names[0][0] + names[names.length - 1][0]).toUpperCase();
-            }
-            return names[0].slice(0, 2).toUpperCase();
-        }
-        return (user.email || '').slice(0, 2).toUpperCase();
-    };
-
-    const initials = getInitials();
+    const initials = getUserInitials(user);
+    const avatarUrl = getUserAvatarUrl(user);
     const isDarkMode = state.theme === 'dark';
 
     const updateTheme = (checked: boolean) => {
@@ -40,8 +31,18 @@ export function UserMenu() {
             <ActionTooltip content={user.email} side="bottom">
                 <DropdownMenuTrigger asChild>
                     <ShellIconButton aria-label="Open user menu" className="h-9 w-9">
-                        <div className="h-7 w-7 rounded-full bg-[radial-gradient(circle_at_18%_20%,rgb(var(--shell-accent))_0%,rgb(var(--shell-accent-hover))_45%,rgb(var(--shell-muted-strong))_100%)] flex items-center justify-center text-shell-dark-text font-bold text-[10px] tracking-wide">
-                            {initials}
+                        <div className="h-7 w-7 rounded-full overflow-hidden border border-shell-border/70 bg-shell-surface">
+                            {avatarUrl ? (
+                                <img
+                                    src={avatarUrl}
+                                    alt="Your profile photo"
+                                    className="h-full w-full object-cover"
+                                />
+                            ) : (
+                                <div className="h-full w-full bg-[radial-gradient(circle_at_18%_20%,rgb(var(--shell-accent))_0%,rgb(var(--shell-accent-hover))_45%,rgb(var(--shell-muted-strong))_100%)] flex items-center justify-center text-shell-dark-text font-bold text-[10px] tracking-wide">
+                                    {initials}
+                                </div>
+                            )}
                         </div>
                     </ShellIconButton>
                 </DropdownMenuTrigger>

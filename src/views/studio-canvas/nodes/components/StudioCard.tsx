@@ -27,6 +27,10 @@ interface StudioCardProps {
     outputHandleId?: string;
     /** Right offset in px for the output handle */
     outputHandleOffsetPx?: number;
+    /** Optional className for the output handle */
+    outputHandleClassName?: string;
+    /** Optional click handler for output handle */
+    outputHandleOnClick?: (event: React.MouseEvent) => void;
     /** Whether to allow content to overflow (e.g. for inner handles) */
     overflowVisible?: boolean;
     /** Additional classes for the root element */
@@ -45,6 +49,8 @@ export const StudioCard = memo(({
     showOutputHandle,
     outputHandleId,
     outputHandleOffsetPx = 7,
+    outputHandleClassName,
+    outputHandleOnClick,
     className,
     isPlaceholder = false,
     overflowVisible = false
@@ -86,6 +92,11 @@ export const StudioCard = memo(({
         <div
             id={id}
             onClick={(e) => {
+                const target = e.target as HTMLElement | null;
+                if (target?.closest('.react-flow__handle')) {
+                    // Clicking a connection handle should not select/open the card.
+                    return;
+                }
                 e.stopPropagation();
                 onClick?.();
             }}
@@ -100,7 +111,7 @@ export const StudioCard = memo(({
                 <Handle
                     type="target"
                 position={Position.Left}
-                className={cn("!w-3 !h-3 !border-2 !border-shell-bg !-left-[7px] !top-1/2 !-translate-y-1/2 !z-30 transition-transform hover:scale-125", activeTheme.handle)}
+                className={cn("!w-3.5 !h-3.5 !border-2 !border-shell-bg !-left-[7px] !top-1/2 !-translate-y-1/2 !z-30 transition-transform hover:scale-125", activeTheme.handle)}
             />
             )}
 
@@ -147,7 +158,8 @@ export const StudioCard = memo(({
                     position={Position.Right}
                     id={outputHandleId}
                     style={{ right: -outputHandleOffsetPx }}
-                    className={cn("!w-3 !h-3 !border-2 !border-shell-bg !top-1/2 !-translate-y-1/2 !z-30 transition-transform hover:scale-125", activeTheme.handle)}
+                    className={cn("!w-3.5 !h-3.5 !border-2 !border-shell-bg !top-1/2 !-translate-y-1/2 !z-30 transition-transform hover:scale-125", activeTheme.handle, outputHandleClassName)}
+                    onClick={outputHandleOnClick}
                 />
             )}
         </div>

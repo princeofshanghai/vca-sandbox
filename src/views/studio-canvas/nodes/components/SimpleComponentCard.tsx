@@ -12,7 +12,13 @@ interface SimpleComponentCardProps {
     component: Component;
     display: { icon: JSX.Element; label: string; detail?: string };
     isSelected: boolean;
+    readOnly?: boolean;
     onClick: () => void;
+    onHandleClick?: (
+        handleId: string,
+        handleEl?: HTMLElement | null,
+        pointerClient?: { x: number; y: number }
+    ) => void;
 }
 
 const stripMarkdown = (text?: string): string => {
@@ -42,8 +48,12 @@ export const SimpleComponentCard = memo(forwardRef<HTMLDivElement, SimpleCompone
     component,
     display,
     isSelected,
+    readOnly = false,
     onClick,
+    onHandleClick,
 }, ref) => {
+    const handlePreviewClass = readOnly ? '' : 'flow-create-handle flow-create-handle-accent';
+
     // Render specific content based on type
     const renderContent = () => {
         switch (component.type) {
@@ -112,10 +122,77 @@ export const SimpleComponentCard = memo(forwardRef<HTMLDivElement, SimpleCompone
                                     position={Position.Right}
                                     id={`handle-${component.id}-${item.id}`}
                                     style={{ right: -SELECTION_ITEM_EDGE_OUTPUT_HANDLE_OFFSET_PX }}
-                                    className="!bg-shell-accent !w-2.5 !h-2.5 !border-2 !border-shell-bg !top-1/2 !-translate-y-1/2 !z-30 transition-transform hover:scale-125"
+                                    className={`${handlePreviewClass} !bg-shell-accent !w-3.5 !h-3.5 !border-2 !border-shell-bg !top-1/2 !-translate-y-1/2 !z-30 transition-transform hover:scale-125`}
+                                    onClick={(event) => {
+                                        event.stopPropagation();
+                                        if (readOnly) return;
+                                        onHandleClick?.(
+                                            `handle-${component.id}-${item.id}`,
+                                            event.currentTarget as HTMLElement,
+                                            { x: event.clientX, y: event.clientY }
+                                        );
+                                    }}
                                 />
                             </div>
                         ))}
+                    </div>
+                );
+            }
+            case 'confirmationCard': {
+                const content = component.content as import('../../../studio/types').ConfirmationCardContent;
+                return (
+                    <div className="flex flex-col gap-1.5">
+                        <div className="rounded border border-shell-border/70 bg-shell-surface px-3 py-2.5 text-sm text-shell-muted-strong shadow-sm group-hover:border-shell-accent-border transition-colors">
+                            <span className="truncate block max-w-[180px]" title={content.item?.title}>
+                                {content.item?.title || 'Candidate name'}
+                            </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-1.5">
+                            <div className="relative flex items-center justify-center rounded border border-shell-accent-border/70 bg-shell-accent-soft px-2 py-2 text-[11px] font-medium text-shell-accent-text">
+                                <span className="truncate max-w-[100px]" title={content.confirmLabel || 'Yes, confirm'}>
+                                    {content.confirmLabel || 'Yes, confirm'}
+                                </span>
+                                <Handle
+                                    type="source"
+                                    position={Position.Right}
+                                    id={`handle-${component.id}-confirm`}
+                                    style={{ right: -SELECTION_ITEM_EDGE_OUTPUT_HANDLE_OFFSET_PX }}
+                                    className={`${handlePreviewClass} !bg-shell-accent !w-3.5 !h-3.5 !border-2 !border-shell-bg !top-1/2 !-translate-y-1/2 !z-30 transition-transform hover:scale-125`}
+                                    onClick={(event) => {
+                                        event.stopPropagation();
+                                        if (readOnly) return;
+                                        onHandleClick?.(
+                                            `handle-${component.id}-confirm`,
+                                            event.currentTarget as HTMLElement,
+                                            { x: event.clientX, y: event.clientY }
+                                        );
+                                    }}
+                                />
+                            </div>
+
+                            <div className="relative flex items-center justify-center rounded border border-shell-border/70 bg-shell-bg px-2 py-2 text-[11px] font-medium text-shell-muted-strong">
+                                <span className="truncate max-w-[100px]" title={content.rejectLabel || 'No, not this person'}>
+                                    {content.rejectLabel || 'No, not this person'}
+                                </span>
+                                <Handle
+                                    type="source"
+                                    position={Position.Right}
+                                    id={`handle-${component.id}-reject`}
+                                    style={{ right: -SELECTION_ITEM_EDGE_OUTPUT_HANDLE_OFFSET_PX }}
+                                    className={`${handlePreviewClass} !bg-shell-accent !w-3.5 !h-3.5 !border-2 !border-shell-bg !top-1/2 !-translate-y-1/2 !z-30 transition-transform hover:scale-125`}
+                                    onClick={(event) => {
+                                        event.stopPropagation();
+                                        if (readOnly) return;
+                                        onHandleClick?.(
+                                            `handle-${component.id}-reject`,
+                                            event.currentTarget as HTMLElement,
+                                            { x: event.clientX, y: event.clientY }
+                                        );
+                                    }}
+                                />
+                            </div>
+                        </div>
                     </div>
                 );
             }
@@ -152,6 +229,10 @@ export const SimpleComponentCard = memo(forwardRef<HTMLDivElement, SimpleCompone
                 const content = component.content as import('../../../studio/types').AIStatusContent;
                 return !content.loadingTitle && !content.successTitle;
             }
+            case 'confirmationCard': {
+                const content = component.content as import('../../../studio/types').ConfirmationCardContent;
+                return !content.item?.title;
+            }
             default:
                 return false;
         }
@@ -165,6 +246,7 @@ export const SimpleComponentCard = memo(forwardRef<HTMLDivElement, SimpleCompone
                 case 'infoMessage': return 'Add Info Message';
                 case 'prompt': return 'Add Prompt';
                 case 'statusCard': return 'Add Status Card';
+                case 'confirmationCard': return 'Add Confirmation Card';
                 default: return display.label;
             }
         }
@@ -182,8 +264,18 @@ export const SimpleComponentCard = memo(forwardRef<HTMLDivElement, SimpleCompone
                 showOutputHandle={hasOutputHandle}
                 outputHandleId={`handle-${component.id}`}
                 outputHandleOffsetPx={CARD_EDGE_OUTPUT_HANDLE_OFFSET_PX}
+                outputHandleClassName={readOnly ? undefined : 'flow-create-handle flow-create-handle-accent'}
+                outputHandleOnClick={(event) => {
+                    event.stopPropagation();
+                    if (readOnly) return;
+                    onHandleClick?.(
+                        `handle-${component.id}`,
+                        event.currentTarget as HTMLElement,
+                        { x: event.clientX, y: event.clientY }
+                    );
+                }}
                 isPlaceholder={isEmpty()}
-                overflowVisible={component.type === 'selectionList'}
+                overflowVisible={component.type === 'selectionList' || component.type === 'confirmationCard'}
             >
                 {renderContent()}
             </StudioCard>

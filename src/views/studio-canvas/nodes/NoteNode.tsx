@@ -5,6 +5,7 @@ import { StickyNote } from 'lucide-react';
 interface NoteNodeData {
     label?: string;
     content: string;
+    readOnly?: boolean;
     onLabelChange?: (nodeId: string, newLabel: string) => void;
     onContentChange?: (nodeId: string, newContent: string) => void;
 }
@@ -48,6 +49,8 @@ export const NoteNode = memo(({ id, data, selected }: NodeProps) => {
     const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        if (typedData.readOnly) return;
+
         const newValue = e.target.value;
         setLocalContent(newValue);
 
@@ -74,6 +77,8 @@ export const NoteNode = memo(({ id, data, selected }: NodeProps) => {
 
     // Commit on blur (and clear pending debounce to avoid double update)
     const handleContentBlur = () => {
+        if (typedData.readOnly) return;
+
         if (debounceTimeoutRef.current) {
             clearTimeout(debounceTimeoutRef.current);
             debounceTimeoutRef.current = null;
@@ -84,7 +89,7 @@ export const NoteNode = memo(({ id, data, selected }: NodeProps) => {
     };
 
     const handleLabelSave = () => {
-        if (editedLabel.trim() !== (typedData.label || '')) {
+        if (!typedData.readOnly && editedLabel.trim() !== (typedData.label || '')) {
             typedData.onLabelChange?.(id, editedLabel.trim());
         }
         setIsEditingLabel(false);
@@ -128,15 +133,17 @@ export const NoteNode = memo(({ id, data, selected }: NodeProps) => {
                         onKeyDown={handleLabelKeyDown}
                         className="w-full h-full text-xs font-medium text-shell-text bg-transparent border border-yellow-500 rounded px-1 outline-none nodrag"
                         onClick={(e) => e.stopPropagation()}
+                        readOnly={typedData.readOnly}
                     />
                 ) : (
                     <div
-                        className={`w-full h-full flex items-center text-xs font-medium truncate rounded transition-colors cursor-text ${!typedData.label ? 'text-shell-muted' : 'text-shell-muted-strong hover:text-shell-text'}`}
+                        className={`w-full h-full flex items-center text-xs font-medium truncate rounded transition-colors ${typedData.readOnly ? 'cursor-default text-shell-muted-strong' : 'cursor-text'} ${!typedData.label ? 'text-shell-muted' : 'text-shell-muted-strong hover:text-shell-text'}`}
                         onClick={(e) => {
                             e.stopPropagation();
+                            if (typedData.readOnly) return;
                             setIsEditingLabel(true);
                         }}
-                        title="Click to rename"
+                        title={typedData.readOnly ? undefined : 'Click to rename'}
                     >
                         {typedData.label || 'Sticky Note'}
                     </div>
@@ -154,6 +161,7 @@ export const NoteNode = memo(({ id, data, selected }: NodeProps) => {
                     className="w-full bg-transparent border-none resize-none outline-none text-sm text-shell-muted-strong placeholder-yellow-800/30 leading-relaxed overflow-hidden min-h-[80px] nodrag"
                     spellCheck={false}
                     rows={1}
+                    readOnly={typedData.readOnly}
                 />
             </div>
         </div>

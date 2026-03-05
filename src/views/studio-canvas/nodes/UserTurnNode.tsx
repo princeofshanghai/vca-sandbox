@@ -7,6 +7,7 @@ interface UserTurnNodeData {
     label?: string;
     inputType?: 'text' | 'prompt' | 'button';
     triggerValue?: string;
+    readOnly?: boolean;
     onUpdate?: (nodeId: string, updates: { label?: string; inputType?: 'text' | 'button' | 'prompt'; triggerValue?: string }) => void;
 }
 
@@ -34,6 +35,8 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
     }, [isEditingLabel]);
 
     const handleUpdate = (updates: { label?: string; inputType?: 'text' | 'button' | 'prompt'; triggerValue?: string }) => {
+        if (typedData.readOnly) return;
+
         // Persist to Flow Model
         if (typedData.onUpdate) {
             typedData.onUpdate(id, updates);
@@ -146,6 +149,7 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
             promptText={promptText || undefined}
             isOpen={isEditorOpen}
             onOpenChange={setIsEditorOpen}
+            readOnly={typedData.readOnly}
         >
             <div
                 id={`node-${id}`}
@@ -178,15 +182,17 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
                             onKeyDown={handleLabelKeyDown}
                             className="w-full h-full text-xs font-medium text-shell-text bg-transparent border border-shell-node-user rounded px-1 outline-none nodrag"
                             onClick={(e) => e.stopPropagation()}
+                            readOnly={typedData.readOnly}
                         />
                     ) : (
                         <div
-                            className={`w-full h-full flex items-center text-xs font-medium truncate rounded transition-colors cursor-text ${!typedData.label ? 'text-shell-muted' : 'text-shell-muted-strong hover:text-shell-text border border-transparent hover:border-shell-border/70'}`}
+                            className={`w-full h-full flex items-center text-xs font-medium truncate rounded transition-colors ${typedData.readOnly ? 'cursor-default text-shell-muted-strong border border-transparent' : 'cursor-text'} ${!typedData.label ? 'text-shell-muted' : 'text-shell-muted-strong hover:text-shell-text border border-transparent hover:border-shell-border/70'}`}
                             onClick={(e) => {
                                 e.stopPropagation();
+                                if (typedData.readOnly) return;
                                 setIsEditingLabel(true);
                             }}
-                            title="Click to rename"
+                            title={typedData.readOnly ? undefined : 'Click to rename'}
                         >
                             {typedData.label || 'User Turn'}
                         </div>
@@ -198,7 +204,7 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
                     type="target"
                     id="user-input"
                     position={Position.Left}
-                    className="!bg-shell-node-user !w-3 !h-3 !border-2 !border-shell-bg !z-50"
+                    className="!bg-shell-node-user !w-3.5 !h-3.5 !border-2 !border-shell-bg !z-50"
                 />
 
                 {/* Wrapper ID for Popover to detect clicks inside */}
@@ -214,7 +220,7 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
                     type="source"
                     id="user-output"
                     position={Position.Right}
-                    className="!bg-shell-node-user !w-3 !h-3 !border-2 !border-shell-bg !z-50"
+                    className="flow-create-handle flow-create-handle-neutral !bg-shell-node-user !w-3.5 !h-3.5 !border-2 !border-shell-bg !z-50"
                 />
             </div >
         </UserTurnEditor>

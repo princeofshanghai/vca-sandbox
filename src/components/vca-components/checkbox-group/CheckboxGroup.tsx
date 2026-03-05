@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { cn } from '@/utils';
 import { Checkbox } from '../checkbox/Checkbox';
 import { Button } from '../buttons/Button';
+import { HotspotBeacon } from '../hotspot';
 
 export interface CheckboxOption {
     id: string;
@@ -31,6 +32,8 @@ export interface CheckboxGroupProps {
     saveLabel?: string;
     /** Label for secondary action */
     cancelLabel?: string;
+    showOptionHotspots?: boolean;
+    showSaveHotspot?: boolean;
     /** Additional classes */
     className?: string;
 }
@@ -46,6 +49,8 @@ export const CheckboxGroup = ({
     onCancel,
     saveLabel = 'Save',
     cancelLabel = 'Cancel',
+    showOptionHotspots = false,
+    showSaveHotspot = false,
     className,
 }: CheckboxGroupProps) => {
     // Determine if controlled or uncontrolled
@@ -81,9 +86,9 @@ export const CheckboxGroup = ({
             {(title || description) && (
                 <div className="space-y-1">
                     {title && (
-                        <h3 className="text-vca-medium-bold text-gray-900">
+                        <p className="font-vca-text text-vca-medium-bold text-gray-900">
                             {title}
-                        </h3>
+                        </p>
                     )}
                     {description && (
                         <p className="text-vca-text-meta text-vca-small">
@@ -96,15 +101,19 @@ export const CheckboxGroup = ({
             {/* List */}
             <div className="flex flex-col space-y-4">
                 {options.map((option) => (
-                    <Checkbox
-                        key={option.id}
-                        id={option.id}
-                        label={option.label}
-                        description={option.description}
-                        disabled={option.disabled}
-                        checked={selectedIds.includes(option.id)}
-                        onCheckedChange={(checked) => handleToggle(option.id, checked)}
-                    />
+                    <div key={option.id} className="relative">
+                        {showOptionHotspots && !option.disabled && (
+                            <HotspotBeacon className="-right-2 top-1/2 -translate-y-1/2" />
+                        )}
+                        <Checkbox
+                            id={option.id}
+                            label={option.label}
+                            description={option.description}
+                            disabled={option.disabled}
+                            checked={selectedIds.includes(option.id)}
+                            onCheckedChange={(checked) => handleToggle(option.id, checked)}
+                        />
+                    </div>
                 ))}
             </div>
 
@@ -112,13 +121,18 @@ export const CheckboxGroup = ({
             {(onSave || onCancel) && (
                 <div className="flex items-center gap-2 pt-2">
                     {onSave && (
-                        <Button
-                            variant="primary"
-                            emphasis={true}
-                            onClick={() => onSave(selectedIds)}
-                        >
-                            {saveLabel}
-                        </Button>
+                        <div className="relative">
+                            {showSaveHotspot && (
+                                <HotspotBeacon className="-right-2 top-1/2 -translate-y-1/2" />
+                            )}
+                            <Button
+                                variant="primary"
+                                emphasis={true}
+                                onClick={() => onSave(selectedIds)}
+                            >
+                                {saveLabel}
+                            </Button>
+                        </div>
                     )}
                     {onCancel && (
                         <Button
