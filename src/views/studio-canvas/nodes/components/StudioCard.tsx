@@ -1,4 +1,4 @@
-import { memo, ReactNode } from 'react';
+import { memo, type MouseEvent, ReactNode } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { cn } from '@/utils/cn';
 
@@ -14,7 +14,7 @@ interface StudioCardProps {
     /** Content to display in the body */
     children: ReactNode;
     /** Optional click handler */
-    onClick?: () => void;
+    onClick?: (event: MouseEvent<HTMLDivElement>) => void;
     /** Optional ID for the root element */
     id?: string;
     /** Whether to show the input handle (left) */
@@ -98,7 +98,7 @@ export const StudioCard = memo(({
                     return;
                 }
                 e.stopPropagation();
-                onClick?.();
+                onClick?.(e);
             }}
             className={cn(
                 "flex flex-col gap-0 rounded-md border transition-all z-20 relative cursor-pointer nodrag group bg-shell-bg",

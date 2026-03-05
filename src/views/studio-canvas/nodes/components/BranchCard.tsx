@@ -7,14 +7,14 @@ interface BranchCardProps extends React.HTMLAttributes<HTMLDivElement> {
     branch: Branch;
     isSelected: boolean;
     readOnly?: boolean;
-    onClick: () => void;
+    onCardClick: (anchorEl: HTMLElement) => void;
 }
 
 export const BranchCard = memo(forwardRef<HTMLDivElement, BranchCardProps>(({
     branch,
     isSelected,
     readOnly = false,
-    onClick,
+    onCardClick,
     ...props
 }, ref) => {
 
@@ -63,7 +63,7 @@ export const BranchCard = memo(forwardRef<HTMLDivElement, BranchCardProps>(({
                 title={branch.condition}
                 theme="amber"
                 selected={isSelected}
-                onClick={onClick}
+                onClick={(event) => onCardClick(event.currentTarget as HTMLElement)}
                 showOutputHandle={true}
                 outputHandleId={branch.id}
                 outputHandleOffsetPx={CARD_EDGE_OUTPUT_HANDLE_OFFSET_PX}

@@ -24,9 +24,12 @@ const HANDLE_SYNC_WINDOW_MS = 280;
 interface ConditionNodeData {
     label: string;
     branches?: Branch[];
+    selectedBranchId?: string;
     readOnly?: boolean;
     onLabelChange?: (nodeId: string, newLabel: string) => void;
     onUpdateBranches?: (nodeId: string, branches: Branch[]) => void;
+    onSelectBranch?: (nodeId: string, branchId: string, anchorEl: HTMLElement) => void;
+    onDeselect?: () => void;
 }
 
 const isNonDraggableTarget = (target: HTMLElement | null): boolean => {
@@ -98,8 +101,7 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
     const [editedLabel, setEditedLabel] = useState(typedData.label || '');
     const labelInputRef = useRef<HTMLInputElement>(null);
 
-    // Branch selection state
-    const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
+    const selectedBranchId = typedData.selectedBranchId ?? null;
     const [lastDragAt, setLastDragAt] = useState(0);
 
     const sensors = useSensors(
@@ -144,16 +146,6 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
         typedData.onUpdateBranches?.(nodeId, newBranches);
     }, [branches, nodeId, typedData]);
 
-    const handleBranchDelete = useCallback((branchId: string) => {
-        if (typedData.readOnly) return;
-        if (branches.length <= 1) {
-            return;
-        }
-        const newBranches = branches.filter(b => b.id !== branchId);
-        typedData.onUpdateBranches?.(nodeId, newBranches);
-        setSelectedBranchId((current) => (current === branchId ? null : current));
-    }, [branches, nodeId, typedData]);
-
     const handleBranchReorder = useCallback((activeBranchId: string, overBranchId: string) => {
         if (typedData.readOnly) return;
         if (activeBranchId === overBranchId) return;
@@ -186,57 +178,6 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
 
         handleBranchReorder(String(active.id), String(over.id));
     }, [handleBranchReorder, typedData.readOnly]);
-
-    const handleMoveBranch = useCallback((direction: 'up' | 'down') => {
-        if (!selectedBranchId) return;
-
-        const currentIndex = branches.findIndex((branch) => branch.id === selectedBranchId);
-        if (currentIndex === -1) return;
-
-        const nextIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
-        if (nextIndex < 0 || nextIndex >= branches.length) return;
-
-        const overBranchId = branches[nextIndex].id;
-        handleBranchReorder(selectedBranchId, overBranchId);
-    }, [branches, handleBranchReorder, selectedBranchId]);
-
-    const handleDeleteSelectedBranch = useCallback(() => {
-        if (!selectedBranchId) return;
-        handleBranchDelete(selectedBranchId);
-    }, [handleBranchDelete, selectedBranchId]);
-
-    useEffect(() => {
-        if (typedData.readOnly) return;
-        if (!selectedBranchId) {
-            return;
-        }
-
-        const handleKeyDown = (event: KeyboardEvent) => {
-            const target = event.target as HTMLElement | null;
-            if (target && (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target.isContentEditable)) {
-                return;
-            }
-
-            if (event.key === 'ArrowUp') {
-                event.preventDefault();
-                handleMoveBranch('up');
-            } else if (event.key === 'ArrowDown') {
-                event.preventDefault();
-                handleMoveBranch('down');
-            } else if (event.key === 'Delete' || event.key === 'Backspace') {
-                // Branch delete should not bubble to React Flow node deletion.
-                event.preventDefault();
-                event.stopPropagation();
-                event.stopImmediatePropagation();
-                handleDeleteSelectedBranch();
-            }
-        };
-
-        window.addEventListener('keydown', handleKeyDown);
-        return () => {
-            window.removeEventListener('keydown', handleKeyDown);
-        };
-    }, [handleDeleteSelectedBranch, handleMoveBranch, selectedBranchId, typedData.readOnly]);
 
     const branchIds = useMemo(() => branches.map((branch) => branch.id), [branches]);
     const branchLayoutKey = useMemo(() => branchIds.join('|'), [branchIds]);
@@ -338,18 +279,22 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
                                         isDefault={branch.isDefault}
                                         onChange={(u) => handleBranchUpdate(branch.id, u)}
                                         isOpen={selectedBranchId === branch.id}
-                                        onOpenChange={(open) => !open && setSelectedBranchId(null)}
+                                        onOpenChange={(open) => {
+                                            if (!open) {
+                                                typedData.onDeselect?.();
+                                            }
+                                        }}
                                         readOnly={typedData.readOnly}
                                     >
                                         <BranchCard
                                             branch={branch}
                                             isSelected={selectedBranchId === branch.id}
                                             readOnly={typedData.readOnly}
-                                            onClick={() => {
+                                            onCardClick={(anchorEl) => {
                                                 if (Date.now() - lastDragAt < 180) {
                                                     return;
                                                 }
-                                                setSelectedBranchId(branch.id);
+                                                typedData.onSelectBranch?.(nodeId, branch.id, anchorEl);
                                             }}
                                         />
                                     </ConditionBranchEditor>

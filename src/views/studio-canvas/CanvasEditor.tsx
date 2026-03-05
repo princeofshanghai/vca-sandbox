@@ -125,6 +125,7 @@ const QUICK_CONNECT_HORIZONTAL_OFFSET_PX = 320;
 const HANDLE_HOVER_SUPPRESSION_MS = 900;
 const HANDLE_HOVER_SUPPRESSION_MIN_MS = 550;
 const HANDLE_HOVER_SUPPRESSION_MOVE_PX = 6;
+const NODE_PASTE_OFFSET_PX = 40;
 type ConnectionDropBehavior = 'popover' | 'auto-user-turn';
 
 interface ConnectionGestureState {
@@ -178,6 +179,94 @@ const getQuickAddPreviewVariant = (type: QuickAddNodeType | null): ConnectionPre
     return 'neutral';
 };
 
+type ClipboardNodeStep = Turn | UserTurn | Condition | Note;
+type CanvasClipboardPayload =
+    | { type: 'node'; step: ClipboardNodeStep; pasteCount: number }
+    | { type: 'component'; component: Component }
+    | { type: 'branch'; branch: Branch };
+
+const cloneValue = <T,>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
+
+const withCopySuffix = (label: string | undefined, fallback: string): string => {
+    const baseLabel = label?.trim() ? label.trim() : fallback;
+    if (baseLabel.endsWith(' (Copy)')) {
+        return baseLabel;
+    }
+    return `${baseLabel} (Copy)`;
+};
+
+const cloneComponentForPaste = (component: Component): Component => ({
+    ...cloneValue(component),
+    id: `component-${crypto.randomUUID()}`,
+});
+
+const cloneBranchForPaste = (branch: Branch): Branch => ({
+    ...cloneValue(branch),
+    id: `branch-${crypto.randomUUID()}`,
+});
+
+const cloneNodeStepForPaste = (step: ClipboardNodeStep, pasteCount: number): ClipboardNodeStep => {
+    const offset = NODE_PASTE_OFFSET_PX * Math.max(1, pasteCount);
+
+    if (step.type === 'turn') {
+        const clonedStep = cloneValue(step);
+        return {
+            ...clonedStep,
+            id: crypto.randomUUID(),
+            label: withCopySuffix(clonedStep.label, 'AI Turn'),
+            position: {
+                x: (clonedStep.position?.x ?? 250) + offset,
+                y: (clonedStep.position?.y ?? 0) + offset,
+            },
+            components: clonedStep.components.map((component) => ({
+                ...component,
+                id: `component-${crypto.randomUUID()}`,
+            })),
+        };
+    }
+
+    if (step.type === 'condition') {
+        const clonedStep = cloneValue(step);
+        return {
+            ...clonedStep,
+            id: crypto.randomUUID(),
+            label: withCopySuffix(clonedStep.label, 'Condition'),
+            position: {
+                x: (clonedStep.position?.x ?? 250) + offset,
+                y: (clonedStep.position?.y ?? 0) + offset,
+            },
+            branches: clonedStep.branches.map((branch) => ({
+                ...branch,
+                id: `branch-${crypto.randomUUID()}`,
+            })),
+        };
+    }
+
+    if (step.type === 'user-turn') {
+        const clonedStep = cloneValue(step);
+        return {
+            ...clonedStep,
+            id: crypto.randomUUID(),
+            label: withCopySuffix(clonedStep.label, 'User Turn'),
+            position: {
+                x: (clonedStep.position?.x ?? 250) + offset,
+                y: (clonedStep.position?.y ?? 0) + offset,
+            },
+        };
+    }
+
+    const clonedStep = cloneValue(step);
+    return {
+        ...clonedStep,
+        id: crypto.randomUUID(),
+        label: withCopySuffix(clonedStep.label, 'Sticky note'),
+        position: {
+            x: (clonedStep.position?.x ?? 250) + offset,
+            y: (clonedStep.position?.y ?? 0) + offset,
+        },
+    };
+};
+
 export function CanvasEditor(props: CanvasEditorProps) {
     return (
         <ReactFlowProvider>
@@ -204,6 +293,7 @@ function CanvasEditorInner({
 
     const selectionRef = useRef<SelectionState | null>(selection);
     const flowRef = useRef(flow);
+    const clipboardRef = useRef<CanvasClipboardPayload | null>(null);
     const connectionGestureRef = useRef<ConnectionGestureState | null>(null);
     const hoverPreviewSuppressionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const hoverPreviewSuppressionOriginRef = useRef<{ x: number; y: number } | null>(null);
@@ -436,6 +526,11 @@ function CanvasEditorInner({
     const handleSelectComponent = useCallback((nodeId: string, componentId: string, anchorEl: HTMLElement) => {
         // Keep card selection sticky so Delete consistently targets the card.
         setSelection({ type: 'component', nodeId, componentId });
+        setSelectionAnchorEl(anchorEl);
+    }, []);
+
+    const handleSelectBranch = useCallback((nodeId: string, branchId: string, anchorEl: HTMLElement) => {
+        setSelection({ type: 'branch', nodeId, branchId });
         setSelectionAnchorEl(anchorEl);
     }, []);
 
@@ -972,9 +1067,12 @@ function CanvasEditorInner({
                     data: {
                         label: step.label,
                         branches: step.branches,
+                        selectedBranchId: undefined,
                         readOnly: isReadOnly,
                         onLabelChange: handleConditionLabelChange,
                         onUpdateBranches: handleConditionUpdateBranches,
+                        onSelectBranch: handleSelectBranch,
+                        onDeselect: handleDeselect,
                     },
                 };
             } else if (step.type === 'note') {
@@ -1011,6 +1109,7 @@ function CanvasEditorInner({
         handleDeselect,
         handleNoteContentChange,
         handleNoteLabelChange,
+        handleSelectBranch,
         handleSelectComponent,
         handleTurnComponentReorder,
         handleTurnComponentUpdate,
@@ -1078,13 +1177,20 @@ function CanvasEditorInner({
             return baseNodes.map(newNode => {
                 const existingNode = currentNodeMap.get(newNode.id);
                 if (existingNode) {
-                    const existingData = existingNode.data as { selectedComponentId?: string } | undefined;
-                    const nextData = newNode.type === 'turn'
-                        ? {
+                    const existingData = existingNode.data as { selectedComponentId?: string; selectedBranchId?: string } | undefined;
+                    let nextData: unknown = newNode.data;
+
+                    if (newNode.type === 'turn') {
+                        nextData = {
                             ...(newNode.data as Record<string, unknown>),
-                            selectedComponentId: existingData?.selectedComponentId
-                        }
-                        : newNode.data;
+                            selectedComponentId: existingData?.selectedComponentId,
+                        };
+                    } else if (newNode.type === 'condition') {
+                        nextData = {
+                            ...(newNode.data as Record<string, unknown>),
+                            selectedBranchId: existingData?.selectedBranchId,
+                        };
+                    }
 
                     return {
                         ...newNode,
@@ -1103,30 +1209,50 @@ function CanvasEditorInner({
         });
     }, [baseNodes, setNodes]);
 
-    // Sync selected component without rebuilding all node data
+    // Sync selected component/branch without rebuilding all node data.
     useEffect(() => {
-        const selectedNodeId = selection?.type === 'component' ? selection.nodeId : null;
+        const selectedComponentNodeId = selection?.type === 'component' ? selection.nodeId : null;
         const selectedComponentId = selection?.type === 'component' ? selection.componentId : undefined;
+        const selectedBranchNodeId = selection?.type === 'branch' ? selection.nodeId : null;
+        const selectedBranchId = selection?.type === 'branch' ? selection.branchId : undefined;
 
         setNodes((currentNodes) => {
             let didChange = false;
             const nextNodes = currentNodes.map(node => {
-                if (node.type !== 'turn') return node;
-                const data = node.data as { selectedComponentId?: string };
-                const nextSelected = node.id === selectedNodeId ? selectedComponentId : undefined;
-                if (data.selectedComponentId === nextSelected) {
-                    return node;
+                if (node.type === 'turn') {
+                    const data = node.data as { selectedComponentId?: string };
+                    const nextSelected = node.id === selectedComponentNodeId ? selectedComponentId : undefined;
+                    if (data.selectedComponentId === nextSelected) {
+                        return node;
+                    }
+                    didChange = true;
+                    return {
+                        ...node,
+                        data: { ...data, selectedComponentId: nextSelected }
+                    };
                 }
-                didChange = true;
-                return {
-                    ...node,
-                    data: { ...data, selectedComponentId: nextSelected }
-                };
+
+                if (node.type === 'condition') {
+                    const data = node.data as { selectedBranchId?: string };
+                    const nextSelected = node.id === selectedBranchNodeId ? selectedBranchId : undefined;
+                    if (data.selectedBranchId === nextSelected) {
+                        return node;
+                    }
+                    didChange = true;
+                    return {
+                        ...node,
+                        data: { ...data, selectedBranchId: nextSelected }
+                    };
+                }
+
+                return node;
             });
 
             return didChange ? nextNodes : currentNodes;
         });
     }, [selection, setNodes]);
+
+    const selectedNodeId = selection?.type === 'node' ? selection.nodeId : null;
 
     // Save positions when dragging stops
     const onNodeDragStop = useCallback((_: React.MouseEvent, _node: Node, nodes: Node[]) => {
@@ -1331,8 +1457,9 @@ function CanvasEditorInner({
             lastModified: Date.now()
         });
 
-        // If the custom selection was one of the deleted nodes, clear it
-        if (selectionRef.current?.type === 'node' && deletedIds.has(selectionRef.current.nodeId)) {
+        // If the custom selection was tied to a deleted node, clear it.
+        const currentSelection = selectionRef.current;
+        if (currentSelection && deletedIds.has(currentSelection.nodeId)) {
             handleDeselect();
         }
     }, [onUpdateFlow, handleDeselect]); // flowRef used inside
@@ -1366,16 +1493,310 @@ function CanvasEditorInner({
             applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
             handleDeselect();
         }
-    }, [onUpdateFlow, handleDeselect]);
+    }, [applyFlowUpdate, handleDeselect]);
 
-    // Manual delete trigger (only needed for components now, or external buttons)
+    const moveSelectedBranch = useCallback((direction: 'up' | 'down') => {
+        const currentSelection = selectionRef.current;
+        const currentFlow = flowRef.current;
+
+        if (currentSelection?.type !== 'branch') {
+            return;
+        }
+
+        let didMove = false;
+        const updatedSteps = currentFlow.steps?.map((step) => {
+            if (step.id !== currentSelection.nodeId || step.type !== 'condition') {
+                return step;
+            }
+
+            const currentIndex = step.branches.findIndex((branch) => branch.id === currentSelection.branchId);
+            if (currentIndex === -1) {
+                return step;
+            }
+
+            const nextIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+            if (nextIndex < 0 || nextIndex >= step.branches.length) {
+                return step;
+            }
+
+            const reorderedBranches = [...step.branches];
+            const [movedBranch] = reorderedBranches.splice(currentIndex, 1);
+            reorderedBranches.splice(nextIndex, 0, movedBranch);
+            didMove = true;
+
+            return {
+                ...step,
+                branches: reorderedBranches,
+            };
+        });
+
+        if (!didMove) {
+            return;
+        }
+
+        applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
+    }, [applyFlowUpdate]);
+
+    const handleDeleteBranch = useCallback(() => {
+        const currentSelection = selectionRef.current;
+        const currentFlow = flowRef.current;
+
+        if (currentSelection?.type !== 'branch') {
+            return;
+        }
+
+        let didDelete = false;
+        const updatedSteps = currentFlow.steps?.map((step) => {
+            if (step.id !== currentSelection.nodeId || step.type !== 'condition') {
+                return step;
+            }
+
+            if (step.branches.length <= 1) {
+                return step;
+            }
+
+            const nextBranches = step.branches.filter((branch) => branch.id !== currentSelection.branchId);
+            if (nextBranches.length === step.branches.length) {
+                return step;
+            }
+
+            didDelete = true;
+            return {
+                ...step,
+                branches: nextBranches,
+            };
+        });
+
+        if (!didDelete) {
+            return;
+        }
+
+        applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
+        handleDeselect();
+    }, [applyFlowUpdate, handleDeselect]);
+
+    const handleCopySelection = useCallback((): boolean => {
+        const currentSelection = selectionRef.current;
+        const currentFlow = flowRef.current;
+        if (!currentSelection) {
+            return false;
+        }
+
+        if (currentSelection.type === 'node') {
+            const selectedStep = currentFlow.steps?.find((step) => step.id === currentSelection.nodeId);
+            if (!selectedStep || selectedStep.type === 'start') {
+                return false;
+            }
+
+            clipboardRef.current = {
+                type: 'node',
+                step: cloneValue(selectedStep),
+                pasteCount: 0,
+            };
+            return true;
+        }
+
+        if (currentSelection.type === 'component') {
+            const selectedStep = currentFlow.steps?.find((step) => step.id === currentSelection.nodeId && step.type === 'turn');
+            if (!selectedStep || selectedStep.type !== 'turn') {
+                return false;
+            }
+
+            const selectedComponent = selectedStep.components.find((component) => component.id === currentSelection.componentId);
+            if (!selectedComponent) {
+                return false;
+            }
+
+            clipboardRef.current = {
+                type: 'component',
+                component: cloneValue(selectedComponent),
+            };
+            return true;
+        }
+
+        const selectedStep = currentFlow.steps?.find((step) => step.id === currentSelection.nodeId && step.type === 'condition');
+        if (!selectedStep || selectedStep.type !== 'condition') {
+            return false;
+        }
+
+        const selectedBranch = selectedStep.branches.find((branch) => branch.id === currentSelection.branchId);
+        if (!selectedBranch) {
+            return false;
+        }
+
+        clipboardRef.current = {
+            type: 'branch',
+            branch: cloneValue(selectedBranch),
+        };
+        return true;
+    }, []);
+
+    const handlePasteSelection = useCallback((): boolean => {
+        if (isReadOnly) {
+            return false;
+        }
+
+        const clipboard = clipboardRef.current;
+        if (!clipboard) {
+            return false;
+        }
+
+        const currentFlow = flowRef.current;
+        const currentSteps = currentFlow.steps || [];
+
+        if (clipboard.type === 'node') {
+            const nextPasteCount = clipboard.pasteCount + 1;
+            const newStep = cloneNodeStepForPaste(clipboard.step, nextPasteCount);
+            clipboardRef.current = {
+                ...clipboard,
+                pasteCount: nextPasteCount,
+            };
+
+            applyFlowUpdate({
+                ...currentFlow,
+                steps: [...currentSteps, newStep],
+                lastModified: Date.now(),
+            });
+            setSelection({ type: 'node', nodeId: newStep.id });
+            setSelectionAnchorEl(null);
+            return true;
+        }
+
+        if (clipboard.type === 'component') {
+            const currentSelection = selectionRef.current;
+            if (!currentSelection) {
+                return false;
+            }
+
+            const targetNodeId =
+                currentSelection.type === 'component' || currentSelection.type === 'node'
+                    ? currentSelection.nodeId
+                    : null;
+            const insertAfterComponentId =
+                currentSelection.type === 'component'
+                    ? currentSelection.componentId
+                    : null;
+
+            if (!targetNodeId) {
+                return false;
+            }
+
+            let newComponentId: string | null = null;
+            let didPaste = false;
+            const updatedSteps = currentSteps.map((step) => {
+                if (step.id !== targetNodeId || step.type !== 'turn') {
+                    return step;
+                }
+
+                const pastedComponent = cloneComponentForPaste(clipboard.component);
+                const nextComponents = [...step.components];
+
+                if (insertAfterComponentId) {
+                    const componentIndex = step.components.findIndex((component) => component.id === insertAfterComponentId);
+                    if (componentIndex === -1) {
+                        return step;
+                    }
+                    nextComponents.splice(componentIndex + 1, 0, pastedComponent);
+                } else {
+                    nextComponents.push(pastedComponent);
+                }
+
+                newComponentId = pastedComponent.id;
+                didPaste = true;
+
+                return {
+                    ...step,
+                    components: nextComponents,
+                };
+            });
+
+            if (!didPaste || !newComponentId) {
+                return false;
+            }
+
+            applyFlowUpdate({
+                ...currentFlow,
+                steps: updatedSteps,
+                lastModified: Date.now(),
+            });
+            setSelection({ type: 'component', nodeId: targetNodeId, componentId: newComponentId });
+            setSelectionAnchorEl(null);
+            return true;
+        }
+
+        const currentSelection = selectionRef.current;
+        if (!currentSelection) {
+            return false;
+        }
+
+        const targetNodeId =
+            currentSelection.type === 'branch' || currentSelection.type === 'node'
+                ? currentSelection.nodeId
+                : null;
+        const insertAfterBranchId =
+            currentSelection.type === 'branch'
+                ? currentSelection.branchId
+                : null;
+
+        if (!targetNodeId) {
+            return false;
+        }
+
+        let newBranchId: string | null = null;
+        let didPaste = false;
+        const updatedSteps = currentSteps.map((step) => {
+            if (step.id !== targetNodeId || step.type !== 'condition') {
+                return step;
+            }
+
+            const pastedBranch = cloneBranchForPaste(clipboard.branch);
+            const nextBranches = [...step.branches];
+
+            if (insertAfterBranchId) {
+                const branchIndex = step.branches.findIndex((branch) => branch.id === insertAfterBranchId);
+                if (branchIndex === -1) {
+                    return step;
+                }
+                nextBranches.splice(branchIndex + 1, 0, pastedBranch);
+            } else {
+                nextBranches.push(pastedBranch);
+            }
+
+            newBranchId = pastedBranch.id;
+            didPaste = true;
+
+            return {
+                ...step,
+                branches: nextBranches,
+            };
+        });
+
+        if (!didPaste || !newBranchId) {
+            return false;
+        }
+
+        applyFlowUpdate({
+            ...currentFlow,
+            steps: updatedSteps,
+            lastModified: Date.now(),
+        });
+        setSelection({ type: 'branch', nodeId: targetNodeId, branchId: newBranchId });
+        setSelectionAnchorEl(null);
+        return true;
+    }, [applyFlowUpdate, isReadOnly]);
+
+    // Manual delete trigger for nested selections (cards and branch cards).
     const handleDeleteSelection = useCallback(() => {
         const currentSelection = selectionRef.current;
         if (currentSelection?.type === 'component') {
             handleDeleteComponent();
+            return;
+        }
+        if (currentSelection?.type === 'branch') {
+            handleDeleteBranch();
         }
         // For nodes, we let React Flow handle it via the Delete key -> onNodesDelete
-    }, [handleDeleteComponent]);
+    }, [handleDeleteBranch, handleDeleteComponent]);
 
     const [isAltPressed, setIsAltPressed] = useState(false);
 
@@ -1398,12 +1819,34 @@ function CanvasEditorInner({
             }
 
             const currentSelection = selectionRef.current;
+            const isMetaOrCtrl = e.metaKey || e.ctrlKey;
+            const keyLower = e.key.toLowerCase();
+
+            if (isMetaOrCtrl && keyLower === 'c' && !e.altKey) {
+                const didCopy = handleCopySelection();
+                if (didCopy) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                }
+                return;
+            }
+
+            if (isMetaOrCtrl && keyLower === 'v' && !e.altKey) {
+                const didPaste = handlePasteSelection();
+                if (didPaste) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                }
+                return;
+            }
 
             if (e.key === 'Escape') {
                 handleDeselect();
             } else if (e.key === 'Delete' || e.key === 'Backspace') {
-                // Only hijack delete if we are deleting a COMPONENT (which React Flow doesn't know about)
-                if (currentSelection?.type === 'component') {
+                // Only hijack delete for nested cards (React Flow only knows about node deletion).
+                if (currentSelection?.type === 'component' || currentSelection?.type === 'branch') {
                     e.preventDefault();
                     e.stopPropagation();
                     e.stopImmediatePropagation();
@@ -1411,13 +1854,21 @@ function CanvasEditorInner({
                     return;
                 }
                 // Otherwise let the event bubble to React Flow to handle Node deletion (single or multi)
-            } else if (currentSelection?.type === 'component') {
+            } else if (currentSelection?.type === 'component' || currentSelection?.type === 'branch') {
                 if (e.key === 'ArrowUp') {
                     e.preventDefault();
-                    handleMoveComponentUp();
+                    if (currentSelection.type === 'component') {
+                        handleMoveComponentUp();
+                    } else {
+                        moveSelectedBranch('up');
+                    }
                 } else if (e.key === 'ArrowDown') {
                     e.preventDefault();
-                    handleMoveComponentDown();
+                    if (currentSelection.type === 'component') {
+                        handleMoveComponentDown();
+                    } else {
+                        moveSelectedBranch('down');
+                    }
                 }
             }
         };
@@ -1433,7 +1884,7 @@ function CanvasEditorInner({
             window.removeEventListener('keydown', handleKeyDown, true);
             window.removeEventListener('keyup', handleKeyUp);
         };
-    }, [handleDeleteSelection, handleMoveComponentUp, handleMoveComponentDown, handleDeselect]);
+    }, [handleCopySelection, handleDeleteSelection, handleDeselect, handleMoveComponentDown, handleMoveComponentUp, handlePasteSelection, moveSelectedBranch]);
 
     // Node Cloning Logic
     const onNodeDragStart = useCallback((event: React.MouseEvent, node: Node) => {
@@ -1619,8 +2070,6 @@ function CanvasEditorInner({
     const connectionLineWithPreview = useCallback((props: ConnectionLineComponentProps) => (
         <ConnectionLine {...props} />
     ), []);
-
-    const selectedNodeId = selection?.type === 'node' ? selection.nodeId : null;
 
     // Get current input type for toolbar (User Turn)
     const currentUserTurnInputType = selectedNodeId
