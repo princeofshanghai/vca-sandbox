@@ -564,11 +564,7 @@ export const useSmartFlowEngine = ({
                 // Standard Deterministic Traversal
                 connection = flow.connections?.find(c =>
                     c.source === currentId &&
-                    (
-                        currentHandle
-                            ? c.sourceHandle === currentHandle
-                            : (!c.sourceHandle || c.sourceHandle === 'main-output')
-                    )
+                    (currentHandle ? c.sourceHandle === currentHandle : true)
                 );
             }
 
