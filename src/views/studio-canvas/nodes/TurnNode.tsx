@@ -153,7 +153,6 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
                     onDeselect={typedData.onDeselect}
                     onComponentReorder={typedData.onComponentReorder}
                     onComponentUpdate={typedData.onComponentUpdate}
-                    isAiTurn={isAI}
                     readOnly={typedData.readOnly}
                     onQuickCreateFromHandle={typedData.onQuickCreateFromHandle}
                 />

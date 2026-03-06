@@ -137,11 +137,11 @@ export const StudioCard = memo(({
                     {isPlaceholder ? (
                         <div className="flex items-center gap-2">
                             {icon && (
-                                <span className="flex-shrink-0 text-shell-muted">
+                                <span className="flex-shrink-0 text-shell-text">
                                     {icon}
                                 </span>
                             )}
-                            <span className="text-sm font-medium text-shell-muted">
+                            <span className="text-sm font-medium text-shell-text">
                                 {title}
                             </span>
                         </div>

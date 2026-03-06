@@ -1,6 +1,6 @@
 // Layout constants for inner cards inside canvas nodes.
-// Node wrappers use 24px horizontal padding (`p-6` / `px-6`).
-const NODE_CARD_HORIZONTAL_GUTTER_PX = 24;
+// Node wrappers use 20px horizontal padding (`p-5` / `px-5`).
+const NODE_CARD_HORIZONTAL_GUTTER_PX = 20;
 const DEFAULT_HANDLE_SIZE_PX = 14; // `w-3.5 h-3.5`
 const SELECTION_ITEM_HANDLE_SIZE_PX = 14; // `w-3.5 h-3.5`
 const CARD_BODY_PADDING_RIGHT_PX = 12; // `p-3`

@@ -6,7 +6,6 @@ import * as Popover from '@radix-ui/react-popover';
 import { AddComponentContent } from './AddComponentPopover';
 import { ActionTooltip } from './ActionTooltip';
 import { Branch } from '../../studio/types'; // Import Branch type
-import { useEffect, useState } from 'react';
 
 interface ContextToolbarProps {
     selection: SelectionState;
@@ -16,8 +15,6 @@ interface ContextToolbarProps {
     onChangeUserTurnInputType?: (type: 'text' | 'prompt' | 'button') => void;
     currentBranches?: Branch[];
     onUpdateBranches?: (branches: Branch[]) => void;
-    autoOpenAddComponentPopover?: boolean;
-    onAutoOpenAddComponentHandled?: () => void;
 }
 
 
@@ -30,24 +27,10 @@ export function ContextToolbar({
     onChangeUserTurnInputType,
     currentBranches,
     onUpdateBranches,
-    autoOpenAddComponentPopover = false,
-    onAutoOpenAddComponentHandled,
     isAiTurn = false, // New prop
 }: ContextToolbarProps & { isAiTurn?: boolean }) {
     // Subscribe to viewport transform changes to update toolbar position
     useStore((state) => state.transform);
-    const [isAddComponentPopoverOpen, setIsAddComponentPopoverOpen] = useState(false);
-    const selectedNodeId = selection.type === 'node' ? selection.nodeId : null;
-
-    useEffect(() => {
-        setIsAddComponentPopoverOpen(false);
-    }, [selectedNodeId]);
-
-    useEffect(() => {
-        if (!isAiTurn || !autoOpenAddComponentPopover) return;
-        setIsAddComponentPopoverOpen(true);
-        onAutoOpenAddComponentHandled?.();
-    }, [autoOpenAddComponentPopover, isAiTurn, onAutoOpenAddComponentHandled]);
 
     // Calculate toolbar position
     const getToolbarStyle = (): React.CSSProperties => {
@@ -82,26 +65,19 @@ export function ContextToolbar({
                 <div className="bg-shell-dark-panel rounded-xl shadow-2xl px-2 py-1.5 flex items-center gap-1 border border-shell-dark-border">
                     {/* Add Component Popover (Only for AI Turns) */}
                     {isAiTurn && (
-                        <Popover.Root open={isAddComponentPopoverOpen} onOpenChange={setIsAddComponentPopoverOpen}>
+                        <Popover.Root>
                             <ActionTooltip content="Add component">
                                 <Popover.Trigger asChild>
                                     <button
-                                        className="flex items-center px-3 py-1.5 text-shell-dark-text hover:bg-shell-dark-surface rounded transition-colors text-sm cursor-pointer"
+                                        className="flex items-center gap-1.5 px-3 py-1.5 text-shell-dark-text hover:bg-shell-dark-surface rounded transition-colors text-sm cursor-pointer"
                                     >
-                                        <span className="flex items-center gap-0.5">
-                                            <Plus className="w-3 h-3 text-shell-dark-muted" />
-                                            <Component className="w-4 h-4" />
-                                        </span>
+                                        <Plus className="w-3 h-3 text-shell-dark-muted" />
+                                        <Component className="w-4 h-4" />
                                     </button>
                                 </Popover.Trigger>
                             </ActionTooltip>
                             <Popover.Portal>
-                                <AddComponentContent
-                                    onAdd={(type) => {
-                                        onAddComponent(type);
-                                        setIsAddComponentPopoverOpen(false);
-                                    }}
-                                />
+                                <AddComponentContent onAdd={onAddComponent} />
                             </Popover.Portal>
                         </Popover.Root>
                     )}
@@ -133,33 +109,24 @@ export function ContextToolbar({
                                     className="bg-shell-dark-panel border border-shell-dark-border rounded-lg shadow-xl p-1 z-[1001] min-w-[140px] animate-in fade-in zoom-in-98 duration-100 ease-out"
                                 >
                                     <button
-                                        className={`group w-full px-2 py-1.5 text-xs text-left rounded transition-colors cursor-pointer flex items-center gap-2 ${currentUserTurnInputType === 'text'
-                                            ? 'bg-shell-accent text-white font-medium'
-                                            : 'text-shell-dark-text hover:bg-shell-accent hover:text-white'
-                                            }`}
+                                        className={`w-full px-2 py-1.5 text-xs text-left hover:bg-shell-dark-surface rounded transition-colors cursor-pointer flex items-center gap-2 ${currentUserTurnInputType === 'text' ? 'bg-shell-accent-soft text-shell-accent-text font-medium' : 'text-shell-dark-muted'}`}
                                         onClick={() => onChangeUserTurnInputType('text')}
                                     >
-                                        <ALargeSmall className={`w-3.5 h-3.5 ${currentUserTurnInputType === 'text' ? 'text-white' : 'text-shell-dark-muted group-hover:text-white'}`} />
+                                        <ALargeSmall className="w-3.5 h-3.5" />
                                         <span>User message</span>
                                     </button>
                                     <button
-                                        className={`group w-full px-2 py-1.5 text-xs text-left rounded transition-colors cursor-pointer flex items-center gap-2 ${currentUserTurnInputType === 'button'
-                                            ? 'bg-shell-accent text-white font-medium'
-                                            : 'text-shell-dark-text hover:bg-shell-accent hover:text-white'
-                                            }`}
+                                        className={`w-full px-2 py-1.5 text-xs text-left hover:bg-shell-dark-surface rounded transition-colors cursor-pointer flex items-center gap-2 ${currentUserTurnInputType === 'button' ? 'bg-shell-accent-soft text-shell-accent-text font-medium' : 'text-shell-dark-muted'}`}
                                         onClick={() => onChangeUserTurnInputType('button')}
                                     >
-                                        <MousePointerClick className={`w-3.5 h-3.5 ${currentUserTurnInputType === 'button' ? 'text-white' : 'text-shell-dark-muted group-hover:text-white'}`} />
+                                        <MousePointerClick className="w-3.5 h-3.5" />
                                         <span>Click button</span>
                                     </button>
                                     <button
-                                        className={`group w-full px-2 py-1.5 text-xs text-left rounded transition-colors cursor-pointer flex items-center gap-2 ${currentUserTurnInputType === 'prompt'
-                                            ? 'bg-shell-accent text-white font-medium'
-                                            : 'text-shell-dark-text hover:bg-shell-accent hover:text-white'
-                                            }`}
+                                        className={`w-full px-2 py-1.5 text-xs text-left hover:bg-shell-dark-surface rounded transition-colors cursor-pointer flex items-center gap-2 ${currentUserTurnInputType === 'prompt' ? 'bg-shell-accent-soft text-shell-accent-text font-medium' : 'text-shell-dark-muted'}`}
                                         onClick={() => onChangeUserTurnInputType('prompt')}
                                     >
-                                        <MessageCirclePlus className={`w-3.5 h-3.5 ${currentUserTurnInputType === 'prompt' ? 'text-white' : 'text-shell-dark-muted group-hover:text-white'}`} />
+                                        <MessageCirclePlus className="w-3.5 h-3.5" />
                                         <span>Click prompt</span>
                                     </button>
                                     <Popover.Arrow className="fill-shell-dark-panel stroke-shell-dark-border" />

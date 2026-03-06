@@ -6,7 +6,6 @@ import { Flow } from '@/views/studio/types';
 import { INITIAL_FLOW } from '@/utils/flowStorage';
 import { supabase } from '@/lib/supabase';
 import { PreviewDrawer } from '@/views/studio/PreviewDrawer';
-import { ShellButton } from '@/components/shell/ShellButton';
 
 export const ShareStudioView = () => {
     const navigate = useNavigate();
@@ -87,9 +86,12 @@ export const ShareStudioView = () => {
                     </div>
                     <h1 className="text-xl font-semibold text-shell-text mb-2">Access Denied</h1>
                     <p className="text-shell-muted mb-6">{error || 'Unable to load flow.'}</p>
-                    <ShellButton onClick={() => navigate('/')}>
+                    <button
+                        onClick={() => navigate('/')}
+                        className="px-4 py-2 bg-shell-text text-shell-bg rounded-lg font-medium hover:opacity-90 transition-opacity"
+                    >
                         Go Home
-                    </ShellButton>
+                    </button>
                 </div>
             </div>
         );

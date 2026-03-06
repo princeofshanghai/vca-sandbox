@@ -16,22 +16,12 @@ interface ComponentOption {
     description: string;
 }
 
-interface ComponentSection {
-    label: 'Messages' | 'Actions';
-    options: ComponentOption[];
-}
-
-const HOVER_CARD_WIDTH_PX = 320;
-const HOVER_CARD_PREVIEW_MIN_HEIGHT_PX = 140;
-const HOVER_CARD_PREVIEW_SCALE = 0.85;
-const HOVER_CARD_PREVIEW_BACKGROUND = '#f3f4f6';
-
 const componentOptions: ComponentOption[] = [
     {
         type: 'message',
         icon: <MessageSquare className="w-4 h-4" />,
         name: 'Message',
-        description: 'Basic AI text message',
+        description: 'Best for conversational chitchat',
         previewComponent: (
             <div className="w-[280px]">
                 <Message
@@ -45,7 +35,7 @@ const componentOptions: ComponentOption[] = [
         type: 'prompt',
         icon: <MessageCirclePlus className="w-4 h-4" />,
         name: 'Prompt',
-        description: 'Suggested quick actions',
+        description: 'Suggested user actions',
         previewComponent: (
             <div className="w-[280px]">
                 <PromptGroup
@@ -62,7 +52,7 @@ const componentOptions: ComponentOption[] = [
         type: 'infoMessage',
         icon: <MessageSquareText className="w-4 h-4" />,
         name: 'Info Message',
-        description: 'Long form AI message with sources',
+        description: 'Long-form answers with sources',
         previewComponent: (
             <div className="w-[300px]">
                 <InfoMessage
@@ -77,7 +67,7 @@ const componentOptions: ComponentOption[] = [
         type: 'statusCard',
         icon: <Zap className="w-4 h-4" />,
         name: 'Status Card',
-        description: 'Shows progress bar for an agent action',
+        description: 'Visualize tool usage or processes',
         previewComponent: (
             <div className="w-[300px]">
                 <StatusCard
@@ -93,7 +83,7 @@ const componentOptions: ComponentOption[] = [
         type: 'selectionList',
         icon: <LayoutList className="w-4 h-4" />,
         name: 'Selection List',
-        description: 'Select one from a list of options',
+        description: 'User selection from a list (users, accounts)',
         previewComponent: (
             <div className="w-[300px] flex flex-col gap-2 p-2">
                 <div className="flex items-center gap-2 p-2 rounded border border-shell-border bg-shell-bg">
@@ -111,7 +101,7 @@ const componentOptions: ComponentOption[] = [
         type: 'confirmationCard',
         icon: <User className="w-4 h-4" />,
         name: 'Confirmation Card',
-        description: 'Displays rich content cards with CTAs',
+        description: 'Read-only candidate card with Yes/No confirmation actions',
         previewComponent: (
             <div className="w-[300px] flex flex-col gap-2 p-2">
                 <div className="flex items-center gap-2 p-2 rounded border border-shell-border bg-shell-bg">
@@ -129,7 +119,7 @@ const componentOptions: ComponentOption[] = [
         type: 'checkboxGroup',
         icon: <CheckSquare className="w-4 h-4" />,
         name: 'Checkbox Group',
-        description: 'Select multiple options in a list',
+        description: 'Multiple selection (e.g. "Select all that apply")',
         previewComponent: (
             <div className="w-[300px] flex flex-col gap-2 p-2">
                 <div className="text-xs font-bold mb-1">Select topics:</div>
@@ -149,23 +139,6 @@ const componentOptions: ComponentOption[] = [
     },
 ];
 
-const componentOptionByType = new Map<ComponentType, ComponentOption>(
-    componentOptions.map((option) => [option.type, option])
-);
-
-const messageSectionOptions: ComponentOption[] = (['message', 'infoMessage'] as const)
-    .map((type) => componentOptionByType.get(type))
-    .filter((option): option is ComponentOption => Boolean(option));
-
-const actionSectionOptions: ComponentOption[] = componentOptions
-    .filter((option) => option.type !== 'message' && option.type !== 'infoMessage')
-    .sort((a, b) => a.name.localeCompare(b.name));
-
-const componentSections: ComponentSection[] = [
-    { label: 'Messages', options: messageSectionOptions },
-    { label: 'Actions', options: actionSectionOptions },
-];
-
 const ComponentOptionCard = ({
     option,
     onClick,
@@ -179,47 +152,37 @@ const ComponentOptionCard = ({
         <HoverCard.Trigger asChild>
             <button
                 onClick={onClick}
-                className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-shell-accent focus-visible:bg-shell-accent transition-colors text-left w-full group cursor-pointer"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-shell-surface-subtle transition-colors text-left w-full group cursor-pointer"
             >
-                <div className="text-shell-dark-muted group-hover:text-white transition-colors">
+                <div className="text-shell-muted group-hover:text-shell-accent transition-colors">
                     {option.icon}
                 </div>
-                <span className="text-xs font-medium text-shell-dark-text group-hover:text-white transition-colors">
+                <span className="text-xs font-medium text-shell-muted-strong group-hover:text-shell-text transition-colors">
                     {option.name}
                 </span>
             </button>
         </HoverCard.Trigger>
         <HoverCard.Portal>
             <HoverCard.Content
-                className="max-w-[calc(100vw-2rem)] bg-shell-dark-panel rounded-xl shadow-2xl border border-shell-dark-border p-0 z-[1002] animate-in fade-in zoom-in-95 overflow-hidden"
-                style={{ width: `${HOVER_CARD_WIDTH_PX}px` }}
+                className="w-[240px] bg-shell-bg rounded-xl shadow-2xl border border-shell-border p-0 z-[1002] animate-in fade-in zoom-in-95 overflow-hidden"
                 sideOffset={8}
                 side={side}
             >
                 <div className="flex flex-col">
                     {/* Content Area */}
                     <div className="p-3 space-y-3">
-                        <div
-                            className="relative w-full flex justify-center py-3 items-center rounded-lg border border-shell-border shadow-sm"
-                            style={{
-                                minHeight: `${HOVER_CARD_PREVIEW_MIN_HEIGHT_PX}px`,
-                                backgroundColor: HOVER_CARD_PREVIEW_BACKGROUND,
-                            }}
-                        >
-                            <div
-                                className="origin-center transform-gpu pointer-events-none select-none w-full flex justify-center"
-                                style={{ transform: `scale(${HOVER_CARD_PREVIEW_SCALE})` }}
-                            >
+                        <div className="relative w-full flex justify-center py-3 min-h-[100px] items-center bg-shell-surface-subtle rounded-lg border border-shell-border shadow-sm">
+                            <div className="origin-center scale-[0.7] transform-gpu pointer-events-none select-none w-full flex justify-center">
                                 {option.previewComponent}
                             </div>
                         </div>
 
-                        <p className="text-xs text-left text-shell-dark-muted leading-relaxed px-2">
+                        <p className="text-[10px] text-center text-shell-muted leading-relaxed px-2 italic">
                             {option.description}
                         </p>
                     </div>
                 </div>
-                <HoverCard.Arrow className="fill-shell-dark-panel stroke-shell-dark-border" />
+                <HoverCard.Arrow className="fill-shell-bg stroke-shell-border" />
             </HoverCard.Content>
         </HoverCard.Portal>
     </HoverCard.Root>
@@ -232,34 +195,22 @@ export function AddComponentContent({ onAdd }: { onAdd: (type: ComponentType) =>
             sideOffset={8}
             align="center"
             onOpenAutoFocus={(e: Event) => e.preventDefault()}
-            className="bg-shell-dark-panel border border-shell-dark-border rounded-xl shadow-2xl p-2 w-[220px] z-[1001] animate-in fade-in zoom-in-95 duration-200 ease-out"
+            className="bg-shell-bg border border-shell-border rounded-xl shadow-2xl p-1 w-[200px] z-[1001] animate-in fade-in zoom-in-95 duration-200 ease-out"
         >
             <div className="flex flex-col">
-                {componentSections.map((section, sectionIndex) => (
-                    <div
-                        key={section.label}
-                        className={sectionIndex === 0 ? '' : 'mt-3 pt-3 border-t border-shell-dark-border'}
-                    >
-                        <div className="px-2.5 pb-1.5 text-[11px] font-semibold text-shell-dark-muted">
-                            {section.label}
-                        </div>
-                        <div className="flex flex-col gap-0.5">
-                            {section.options.map((option) => (
-                                <ComponentOptionCard
-                                    key={option.type}
-                                    option={option}
-                                    onClick={() => {
-                                        onAdd(option.type);
-                                        toast(`Added ${option.name}`);
-                                    }}
-                                    side="right"
-                                />
-                            ))}
-                        </div>
-                    </div>
+                {componentOptions.map((option) => (
+                    <ComponentOptionCard
+                        key={option.type}
+                        option={option}
+                        onClick={() => {
+                            onAdd(option.type);
+                            toast(`Added ${option.name}`);
+                        }}
+                        side="right"
+                    />
                 ))}
             </div>
-            <Popover.Arrow className="fill-shell-dark-panel stroke-shell-dark-border" />
+            <Popover.Arrow className="fill-shell-bg stroke-shell-border" />
         </Popover.Content>
     );
 }

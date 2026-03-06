@@ -11,19 +11,6 @@ interface UserTurnNodeData {
     onUpdate?: (nodeId: string, updates: { label?: string; inputType?: 'text' | 'button' | 'prompt'; triggerValue?: string }) => void;
 }
 
-interface LinkedTurnComponent {
-    id: string;
-    type: string;
-    content?: {
-        text?: string;
-        items?: Array<{ id: string; title: string }>;
-        confirmLabel?: string;
-        rejectLabel?: string;
-        title?: string;
-        saveLabel?: string;
-    };
-}
-
 export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
     const typedData = data as unknown as UserTurnNodeData;
     const { updateNodeData } = useReactFlow();
@@ -87,56 +74,20 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
         }
     };
 
-    const getLinkedSource = () => {
+    const getLinkedPromptText = () => {
         if (!isLinked || !sourceNode || !connections[0]?.sourceHandle) return null;
 
         const handleId = connections[0].sourceHandle;
         if (!handleId.startsWith('handle-')) return null;
 
-        const handlePath = handleId.slice('handle-'.length);
-        const components = (sourceNode.data as { components?: LinkedTurnComponent[] })?.components;
-        if (!components) return null;
+        const componentId = handleId.replace('handle-', '');
+        // Safety cast for source node data
+        const components = (sourceNode.data as { components?: Array<{ id: string; type: string; content?: { text?: string } }> })?.components;
 
-        const component = components.find((candidate) =>
-            handlePath === candidate.id || handlePath.startsWith(`${candidate.id}-`)
-        );
-        if (!component) return null;
-
-        return { handleId, component };
-    };
-
-    const getLinkedPromptText = () => {
-        const linkedSource = getLinkedSource();
-        if (!linkedSource || linkedSource.component.type !== 'prompt') return null;
-
-        return linkedSource.component.content?.text || null;
-    };
-
-    const getLinkedButtonText = () => {
-        const linkedSource = getLinkedSource();
-        if (!linkedSource) return null;
-
-        const { component, handleId } = linkedSource;
-
-        if (component.type === 'selectionList') {
-            const itemId = handleId.split(`${component.id}-`)[1];
-            if (!itemId) return null;
-
-            const selectedItem = component.content?.items?.find((item) => item.id === itemId);
-            return selectedItem?.title || null;
+        const component = components?.find(c => c.id === componentId);
+        if (component?.type === 'prompt') {
+            return component.content?.text;
         }
-
-        if (component.type === 'confirmationCard') {
-            const actionId = handleId.split(`${component.id}-`)[1];
-            return actionId === 'reject'
-                ? (component.content?.rejectLabel || 'No, not this person')
-                : (component.content?.confirmLabel || 'Yes, confirm');
-        }
-
-        if (component.type === 'checkboxGroup') {
-            return component.content?.saveLabel || component.content?.title || 'Save';
-        }
-
         return null;
     };
 
@@ -157,14 +108,12 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
         }
 
         if (inputType === 'button') {
-            const linkedButtonText = getLinkedButtonText();
-            const buttonLabel = linkedButtonText || val;
-            const hasLabel = !!buttonLabel;
+            const hasLabel = !!val;
             return (
                 <div className="flex items-center gap-2 text-sm py-1">
                     <MousePointerClick className={`w-4 h-4 ${hasLabel ? 'text-shell-node-user' : 'text-shell-muted'}`} />
                     <span className={`truncate ${hasLabel ? 'text-shell-text font-medium' : 'text-shell-muted'}`}>
-                        {buttonLabel ? `User clicks ${buttonLabel}` : 'Which button does the user click?'}
+                        {val ? `User clicks ${val}` : 'Which button does the user click?'}
                     </span>
                 </div>
             );
