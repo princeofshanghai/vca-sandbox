@@ -214,6 +214,7 @@ export const ShareView = () => {
     const [threads, setThreads] = useState<FlowCommentThread[]>([]);
     const [commentsLoading, setCommentsLoading] = useState(false);
     const [commentsError, setCommentsError] = useState<string | null>(null);
+    const [hasLoadedCommentsOnce, setHasLoadedCommentsOnce] = useState(false);
 
     const [isPanelOpen, setIsPanelOpen] = useState(false);
     const [commentMode, setCommentMode] = useState<CommentMode>('off');
@@ -239,11 +240,13 @@ export const ShareView = () => {
     const newCommentTextareaRef = useRef<HTMLTextAreaElement | null>(null);
     const replyTextareaRef = useRef<HTMLTextAreaElement | null>(null);
     const commentsRequestSeqRef = useRef(0);
+    const hasHandledInitialPanelVisibilityRef = useRef(false);
 
     const commenterName = useMemo(() => getUserDisplayName(user), [user]);
     const commenterAvatarUrl = useMemo(() => getUserAvatarUrl(user), [user]);
 
     const openCommentsWorkspace = useCallback(() => {
+        hasHandledInitialPanelVisibilityRef.current = true;
         setIsPanelOpen(true);
         setCommentMode('placing');
         setPendingPin(null);
@@ -252,6 +255,7 @@ export const ShareView = () => {
     }, []);
 
     const closeCommentsWorkspace = useCallback(() => {
+        hasHandledInitialPanelVisibilityRef.current = true;
         setIsPanelOpen(false);
         setCommentMode('off');
         setPendingPin(null);
@@ -291,8 +295,11 @@ export const ShareView = () => {
                 setCommentsError(friendlyCommentsError(commentsLoadError));
                 setThreads([]);
             } finally {
-                if (requestId === commentsRequestSeqRef.current && showLoader) {
-                    setCommentsLoading(false);
+                if (requestId === commentsRequestSeqRef.current) {
+                    if (showLoader) {
+                        setCommentsLoading(false);
+                    }
+                    setHasLoadedCommentsOnce(true);
                 }
             }
         },
@@ -350,7 +357,9 @@ export const ShareView = () => {
 
     useEffect(() => {
         if (!id) return;
-        loadComments(id, { showLoader: true });
+        hasHandledInitialPanelVisibilityRef.current = false;
+        setHasLoadedCommentsOnce(false);
+        void loadComments(id, { showLoader: true });
     }, [id, loadComments]);
 
     useEffect(() => {
@@ -385,6 +394,24 @@ export const ShareView = () => {
     }, [id, isPanelOpen, loadComments]);
 
     const listThreads = useMemo(() => threads.filter((thread) => hasValidPin(thread.root)), [threads]);
+
+    useEffect(() => {
+        if (!id || !hasLoadedCommentsOnce) return;
+        if (hasHandledInitialPanelVisibilityRef.current) return;
+
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('comments') === '1') {
+            hasHandledInitialPanelVisibilityRef.current = true;
+            return;
+        }
+
+        if (listThreads.length > 0) {
+            setIsPanelOpen(true);
+            setCommentMode('off');
+        }
+
+        hasHandledInitialPanelVisibilityRef.current = true;
+    }, [id, hasLoadedCommentsOnce, listThreads.length]);
 
     useEffect(() => {
         if (!activeThreadId) return;

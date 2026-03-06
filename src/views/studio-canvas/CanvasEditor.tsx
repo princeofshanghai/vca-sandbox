@@ -42,7 +42,7 @@ import {
     CONNECTION_PREVIEW_HOVER_CARD_OFFSET_X_PX
 } from './components/connectionPreviewConstants';
 import { ShareDialog } from '../studio/components/ShareDialog';
-import { ArrowLeft, Play, PanelRightOpen, ExternalLink, Download, Upload, FileJson } from 'lucide-react';
+import { ArrowLeft, Play, PanelRightOpen, ExternalLink, Download } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -290,6 +290,7 @@ function CanvasEditorInner({
     // Selection state
     const [selection, setSelection] = useState<SelectionState | null>(null);
     const [selectionAnchorEl, setSelectionAnchorEl] = useState<HTMLElement | null>(null);
+    const [pendingAutoOpenAddComponentNodeId, setPendingAutoOpenAddComponentNodeId] = useState<string | null>(null);
 
     const selectionRef = useRef<SelectionState | null>(selection);
     const flowRef = useRef(flow);
@@ -470,68 +471,48 @@ function CanvasEditorInner({
         URL.revokeObjectURL(url);
     };
 
-    const handleImportJSON = () => {
-        if (isReadOnly) return;
+    const focusNodeWithToolbar = useCallback((nodeId: string, openAddComponentPopover = false) => {
+        let attempts = 0;
+        const maxAttempts = 24;
 
-        // Create file input
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'application/json,.json';
+        const syncSelectionToNode = () => {
+            const nodeEl = document.getElementById(`node-${nodeId}`) as HTMLElement | null;
+            if (nodeEl || attempts >= maxAttempts) {
+                setSelection({ type: 'node', nodeId });
+                setSelectionAnchorEl(nodeEl);
+                setPendingAutoOpenAddComponentNodeId(openAddComponentPopover ? nodeId : null);
+                return;
+            }
 
-        input.onchange = (e) => {
-            const file = (e.target as HTMLInputElement).files?.[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                try {
-                    const importedData = JSON.parse(event.target?.result as string);
-
-                    // Validate basic structure
-                    if (!importedData.steps || !importedData.settings) {
-                        alert('Invalid flow file format. Missing required fields.');
-                        return;
-                    }
-
-                    // Update flow with imported data
-                    const updatedFlow: Flow = {
-                        ...flow,
-                        title: importedData.title || flow.title,
-                        description: importedData.description,
-                        settings: importedData.settings,
-                        steps: importedData.steps,
-                        connections: importedData.connections || [],
-                        lastModified: Date.now(),
-                    };
-
-                    applyFlowUpdate(updatedFlow);
-
-                } catch (error) {
-                    console.error('Error importing flow:', error);
-                    alert('Failed to import flow. Please check the file format.');
-                }
-            };
-
-            reader.readAsText(file);
+            attempts += 1;
+            requestAnimationFrame(syncSelectionToNode);
         };
 
-        input.click();
-    };
+        requestAnimationFrame(syncSelectionToNode);
+    }, []);
+
+    const isEmptyAiTurnNode = useCallback((nodeId: string): boolean => {
+        const step = flowRef.current.steps?.find((candidate) => candidate.id === nodeId);
+        return Boolean(step && step.type === 'turn' && step.speaker === 'ai' && step.components.length === 0);
+    }, []);
 
     const handleDeselect = useCallback(() => {
         setSelection(null);
         setSelectionAnchorEl(null);
+        setPendingAutoOpenAddComponentNodeId(null);
     }, []);
 
     const handleSelectComponent = useCallback((nodeId: string, componentId: string, anchorEl: HTMLElement) => {
         // Keep card selection sticky so Delete consistently targets the card.
         setSelection({ type: 'component', nodeId, componentId });
         setSelectionAnchorEl(anchorEl);
+        setPendingAutoOpenAddComponentNodeId(null);
     }, []);
 
     const handleSelectBranch = useCallback((nodeId: string, branchId: string, anchorEl: HTMLElement) => {
         setSelection({ type: 'branch', nodeId, branchId });
         setSelectionAnchorEl(anchorEl);
+        setPendingAutoOpenAddComponentNodeId(null);
     }, []);
 
     const handleTurnLabelChange = useCallback((nodeId: string, newLabel: string) => {
@@ -543,7 +524,7 @@ function CanvasEditorInner({
                 : s
         );
         applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
-    }, [onUpdateFlow]);
+    }, [applyFlowUpdate]);
 
     const handleTurnComponentUpdate = useCallback((nodeId: string, componentId: string, updates: Partial<Component>) => {
         const currentFlow = flowRef.current;
@@ -562,7 +543,7 @@ function CanvasEditorInner({
             return s;
         });
         applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
-    }, [onUpdateFlow]);
+    }, [applyFlowUpdate]);
 
     const handleTurnComponentReorder = useCallback((nodeId: string, activeComponentId: string, overComponentId: string) => {
         if (activeComponentId === overComponentId) return;
@@ -597,7 +578,7 @@ function CanvasEditorInner({
         if (!didReorder) return;
 
         applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
-    }, [onUpdateFlow]);
+    }, [applyFlowUpdate]);
 
     const handleUserTurnUpdate = useCallback((nodeId: string, updates: Partial<UserTurn>) => {
         const currentFlow = flowRef.current;
@@ -608,7 +589,7 @@ function CanvasEditorInner({
                 : s
         );
         applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
-    }, [onUpdateFlow]);
+    }, [applyFlowUpdate]);
 
     const handleConditionLabelChange = useCallback((nodeId: string, newLabel: string) => {
         const currentFlow = flowRef.current;
@@ -619,7 +600,7 @@ function CanvasEditorInner({
                 : s
         );
         applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
-    }, [onUpdateFlow]);
+    }, [applyFlowUpdate]);
 
     const handleConditionUpdateBranches = useCallback((nodeId: string, branches: Branch[]) => {
         const currentFlow = flowRef.current;
@@ -630,7 +611,7 @@ function CanvasEditorInner({
                 : s
         );
         applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
-    }, [onUpdateFlow]);
+    }, [applyFlowUpdate]);
 
     const handleNoteLabelChange = useCallback((nodeId: string, newLabel: string) => {
         const currentFlow = flowRef.current;
@@ -641,7 +622,7 @@ function CanvasEditorInner({
                 : s
         );
         applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
-    }, [onUpdateFlow]);
+    }, [applyFlowUpdate]);
 
     const handleNoteContentChange = useCallback((nodeId: string, newContent: string) => {
         const currentFlow = flowRef.current;
@@ -652,7 +633,7 @@ function CanvasEditorInner({
                 : s
         );
         applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
-    }, [onUpdateFlow]);
+    }, [applyFlowUpdate]);
 
     const resolveDefaultUserTurnInputType = useCallback((
         sourceNodeId: string,
@@ -715,11 +696,7 @@ function CanvasEditorInner({
                 type: 'turn',
                 speaker: 'ai',
                 label: `AI Turn ${aiTurnCount}`,
-                components: [{
-                    id: crypto.randomUUID(),
-                    type: 'message',
-                    content: getDefaultContent('message'),
-                }],
+                components: [],
                 position,
             };
         } else if (targetType === 'condition') {
@@ -758,7 +735,11 @@ function CanvasEditorInner({
             connections: [...existingConnections, newConnection],
             lastModified: Date.now(),
         });
-    }, [onUpdateFlow, resolveDefaultUserTurnInputType]);
+
+        if (newStep.type === 'turn') {
+            focusNodeWithToolbar(newStep.id, true);
+        }
+    }, [applyFlowUpdate, focusNodeWithToolbar, resolveDefaultUserTurnInputType]);
 
     const getQuickConnectPosition = useCallback((sourceNodeId: string) => {
         const sourceStep = flowRef.current.steps?.find(step => step.id === sourceNodeId);
@@ -998,6 +979,32 @@ function CanvasEditorInner({
         });
     }, [createConnectedNode, getQuickConnectPosition, isReadOnly, screenToFlowPosition]);
 
+    const handleComponentAdd = useCallback((type: ComponentType, targetNodeId?: string) => {
+        const currentFlow = flowRef.current;
+        const currentSelection = selectionRef.current;
+        const resolvedNodeId = targetNodeId ?? (currentSelection?.type === 'node' ? currentSelection.nodeId : undefined);
+
+        if (!resolvedNodeId) return;
+
+        const step = currentFlow.steps?.find(s => s.id === resolvedNodeId && s.type === 'turn');
+        if (!step || step.type !== 'turn') return;
+
+        const newComponent: Component = {
+            id: `component-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            type,
+            content: getDefaultContent(type)
+        };
+
+        const updatedSteps = currentFlow.steps?.map(s =>
+            s.id === resolvedNodeId && s.type === 'turn'
+                ? { ...s, components: [...s.components, newComponent] }
+                : s
+        );
+
+        applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
+        setPendingAutoOpenAddComponentNodeId(null);
+    }, [applyFlowUpdate]);
+
     // Convert flow steps to React Flow nodes
     const baseNodes = useMemo(() => {
         // Use new steps[] if available, otherwise fall back to old blocks[]
@@ -1160,7 +1167,8 @@ function CanvasEditorInner({
         // React Flow handles the visual 'selected' prop automatically
         setSelection({ type: 'node', nodeId: node.id });
         setSelectionAnchorEl(event.currentTarget as HTMLElement);
-    }, []);
+        setPendingAutoOpenAddComponentNodeId(isEmptyAiTurnNode(node.id) ? node.id : null);
+    }, [isEmptyAiTurnNode]);
 
     // Sync edges when flow model changes
     useEffect(() => {
@@ -1270,7 +1278,7 @@ function CanvasEditorInner({
         });
 
         applyFlowUpdate({ ...flow, steps: updatedSteps, lastModified: Date.now() });
-    }, [flow, onUpdateFlow]);
+    }, [applyFlowUpdate, flow]);
 
     // Connection handler
     const onConnect: OnConnect = useCallback(
@@ -1330,16 +1338,20 @@ function CanvasEditorInner({
                         }
 
                         if (textToFill) {
-                            // Valid link! Update the User Turn input type.
-                            updatedSteps = flow.steps?.map(s =>
-                                s.id === targetNodeId
-                                    ? {
-                                        ...s,
-                                        label: textToFill, // Auto-fill label
-                                        inputType: component.type === 'prompt' ? 'prompt' : 'button' // Selection acts like button? or text?
-                                    }
-                                    : s
-                            );
+                            // Valid link! Update the User Turn mode and auto-fill readable text.
+                            updatedSteps = flow.steps?.map(s => {
+                                if (s.id !== targetNodeId || s.type !== 'user-turn') {
+                                    return s;
+                                }
+
+                                const nextInputType: UserTurn['inputType'] = component.type === 'prompt' ? 'prompt' : 'button';
+                                return {
+                                    ...s,
+                                    label: textToFill,
+                                    inputType: nextInputType,
+                                    triggerValue: nextInputType === 'button' ? textToFill : s.triggerValue,
+                                };
+                            });
                         }
                     }
                 }
@@ -1352,28 +1364,8 @@ function CanvasEditorInner({
                 lastModified: Date.now()
             });
         },
-        [flow, onUpdateFlow]
+        [applyFlowUpdate, flow]
     );
-
-    const handleComponentAdd = (type: ComponentType) => {
-        if (selection?.type === 'node') {
-            // Find the turn and add component
-            const step = flow.steps?.find(s => s.id === selection.nodeId && s.type === 'turn');
-            if (step && step.type === 'turn') {
-                const newComponent: Component = {
-                    id: `component-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                    type,
-                    content: getDefaultContent(type)
-                };
-                const updatedSteps = flow.steps?.map(s =>
-                    s.id === selection.nodeId && s.type === 'turn'
-                        ? { ...s, components: [...s.components, newComponent] }
-                        : s
-                );
-                applyFlowUpdate({ ...flow, steps: updatedSteps, lastModified: Date.now() });
-            }
-        }
-    };
 
     const handleChangeUserTurnInputType = (inputType: 'text' | 'prompt' | 'button') => {
         if (selection?.type === 'node') {
@@ -1407,7 +1399,7 @@ function CanvasEditorInner({
                 }
             }
         }
-    }, [onUpdateFlow]); // implementation uses refs
+    }, [applyFlowUpdate]); // implementation uses refs
 
     const handleMoveComponentDown = useCallback(() => {
         const currentSelection = selectionRef.current;
@@ -1430,7 +1422,7 @@ function CanvasEditorInner({
                 }
             }
         }
-    }, [onUpdateFlow]); // implementation uses refs
+    }, [applyFlowUpdate]); // implementation uses refs
 
 
     // Native React Flow delete handler (supports multi-selection)
@@ -1462,7 +1454,7 @@ function CanvasEditorInner({
         if (currentSelection && deletedIds.has(currentSelection.nodeId)) {
             handleDeselect();
         }
-    }, [onUpdateFlow, handleDeselect]); // flowRef used inside
+    }, [applyFlowUpdate, handleDeselect]); // flowRef used inside
 
     const onEdgesDelete = useCallback((deletedEdges: Edge[]) => {
         const currentFlow = flowRef.current;
@@ -1477,7 +1469,7 @@ function CanvasEditorInner({
             connections: updatedConnections,
             lastModified: Date.now()
         });
-    }, [onUpdateFlow]);
+    }, [applyFlowUpdate]);
 
 
     const handleDeleteComponent = useCallback(() => {
@@ -1970,7 +1962,7 @@ function CanvasEditorInner({
                 lastModified: Date.now()
             });
         }
-    }, [flow, onUpdateFlow]);
+    }, [applyFlowUpdate, flow]);
 
     // Drag and Drop handlers
     const onDragOver = useCallback((event: React.DragEvent) => {
@@ -1999,11 +1991,7 @@ function CanvasEditorInner({
                     type: 'turn',
                     speaker: 'ai',
                     label: `AI Turn ${aiTurnCount}`,
-                    components: [{
-                        id: crypto.randomUUID(),
-                        type: 'message',
-                        content: getDefaultContent('message')
-                    }],
+                    components: [],
                     position
                 };
                 applyFlowUpdate({
@@ -2011,6 +1999,7 @@ function CanvasEditorInner({
                     steps: [...(flow.steps || []), newTurn],
                     lastModified: Date.now()
                 });
+                focusNodeWithToolbar(newTurn.id, true);
             } else if (type === 'note') {
                 const noteCount = (flow.steps?.filter(s => s.type === 'note').length || 0) + 1;
                 const newNote: Note = {
@@ -2058,7 +2047,7 @@ function CanvasEditorInner({
                 });
             }
         },
-        [flow, onUpdateFlow, screenToFlowPosition]
+        [applyFlowUpdate, flow, focusNodeWithToolbar, screenToFlowPosition]
     );
 
     const handlePaneClick = useCallback(() => {
@@ -2145,7 +2134,7 @@ function CanvasEditorInner({
                             <DropdownMenuContent align="end" className="w-48">
                                 <DropdownMenuItem onClick={onPreview} className="gap-2">
                                     <PanelRightOpen size={14} className="text-shell-muted" />
-                                    Preview in canvas
+                                    Open here in canvas
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
@@ -2153,7 +2142,7 @@ function CanvasEditorInner({
                                     className="gap-2"
                                 >
                                     <ExternalLink size={14} className="text-shell-muted" />
-                                    Open prototype
+                                    Open in new tab
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -2172,28 +2161,15 @@ function CanvasEditorInner({
                     </>
                 ) : (
                     <>
-                        {/* File Menu (Export/Import) */}
-                        <DropdownMenu>
-                            <ActionTooltip content="File options">
-                                <DropdownMenuTrigger asChild>
-                                    <button
-                                        className="flex items-center justify-center w-8 h-8 rounded-md transition-all text-shell-muted hover:text-shell-text hover:bg-shell-surface"
-                                    >
-                                        <FileJson size={16} />
-                                    </button>
-                                </DropdownMenuTrigger>
-                            </ActionTooltip>
-                            <DropdownMenuContent align="end" className="w-48">
-                                <DropdownMenuItem onClick={handleExportJSON} className="gap-2">
-                                    <Download size={14} className="text-shell-muted" />
-                                    Export JSON
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={handleImportJSON} className="gap-2">
-                                    <Upload size={14} className="text-shell-muted" />
-                                    Import JSON
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                        {/* Export JSON */}
+                        <ActionTooltip content="Export JSON">
+                            <button
+                                onClick={handleExportJSON}
+                                className="flex items-center justify-center w-8 h-8 rounded-md transition-all text-shell-muted hover:text-shell-text hover:bg-shell-surface"
+                            >
+                                <Download size={16} />
+                            </button>
+                        </ActionTooltip>
 
                         <div className="h-5 w-px bg-shell-border-subtle" />
 
@@ -2214,7 +2190,7 @@ function CanvasEditorInner({
                             <DropdownMenuContent align="end" className="w-48">
                                 <DropdownMenuItem onClick={onPreview} className="gap-2">
                                     <PanelRightOpen size={14} className="text-shell-muted" />
-                                    Preview in canvas
+                                    Open here in canvas
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
@@ -2222,7 +2198,7 @@ function CanvasEditorInner({
                                     className="gap-2"
                                 >
                                     <ExternalLink size={14} className="text-shell-muted" />
-                                    Open prototype
+                                    Open in new tab
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -2249,6 +2225,12 @@ function CanvasEditorInner({
                     .react-flow__pane, 
                     .react-flow__selection-pane {
                         cursor: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23FFF' stroke='%23000' stroke-width='2' d='M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87a.5.5 0 0 0 .35-.85L6.35 2.85a.5.5 0 0 0-.85.35Z'%3E%3C/path%3E%3C/svg%3E") 6 3, auto !important;
+                    }
+                    .react-flow__node.draggable {
+                        cursor: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23FFF' stroke='%23000' stroke-width='2' d='M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87a.5.5 0 0 0 .35-.85L6.35 2.85a.5.5 0 0 0-.85.35Z'%3E%3C/path%3E%3C/svg%3E") 6 3, auto !important;
+                    }
+                    .react-flow__node.draggable.dragging {
+                        cursor: grabbing !important;
                     }
                     .is-alt-pressed .react-flow__node:hover,
                     .is-alt-pressed .react-flow__node:hover * {
@@ -2312,11 +2294,13 @@ function CanvasEditorInner({
                         <ContextToolbar
                             selection={{ type: 'node', nodeId: selectedNodeId }}
                             anchorEl={selectionAnchorEl}
-                            onAddComponent={(type: ComponentType) => handleComponentAdd(type)}
+                            onAddComponent={(type: ComponentType) => handleComponentAdd(type, selectedNodeId)}
                             onChangeUserTurnInputType={handleChangeUserTurnInputType}
                             currentUserTurnInputType={currentUserTurnInputType}
                             currentBranches={currentBranches}
                             onUpdateBranches={handleUpdateBranches}
+                            autoOpenAddComponentPopover={pendingAutoOpenAddComponentNodeId === selectedNodeId}
+                            onAutoOpenAddComponentHandled={() => setPendingAutoOpenAddComponentNodeId(null)}
                             isAiTurn={flow.steps?.some(s => s.id === selectedNodeId && s.type === 'turn')}
                         />
                     )}
@@ -2331,11 +2315,7 @@ function CanvasEditorInner({
                                     type: 'turn',
                                     speaker: 'ai',
                                     label: `AI Turn ${aiTurnCount}`,
-                                    components: [{
-                                        id: crypto.randomUUID(),
-                                        type: 'message',
-                                        content: getDefaultContent('message')
-                                    }],
+                                    components: [],
                                     position: { x: 100, y: 100 + (flow.steps?.length || 0) * 50 }
                                 };
                                 applyFlowUpdate({
@@ -2343,6 +2323,7 @@ function CanvasEditorInner({
                                     steps: [...(flow.steps || []), newTurn],
                                     lastModified: Date.now()
                                 });
+                                focusNodeWithToolbar(newTurn.id, true);
                             }}
                             onAddUserTurn={() => {
                                 const userTurnCount = (flow.steps?.filter(s => s.type === 'user-turn').length || 0) + 1;
