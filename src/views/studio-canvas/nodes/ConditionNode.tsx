@@ -256,7 +256,7 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
             />
 
             {/* Wrapper for branch rows */}
-            <div className={`w-full h-full p-5 ${conditionSurfaceClassName} rounded-lg`}>
+            <div className={`w-full h-full px-6 py-8 ${conditionSurfaceClassName} rounded-lg`}>
                 <DndContext
                     sensors={sensors}
                     collisionDetection={closestCenter}

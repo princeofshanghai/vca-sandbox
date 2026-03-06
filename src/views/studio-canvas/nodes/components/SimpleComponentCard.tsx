@@ -89,16 +89,14 @@ export const SimpleComponentCard = memo(forwardRef<HTMLDivElement, SimpleCompone
                 if (!content.loadingTitle && !content.successTitle) return null;
                 return (
 
-                    <div className="flex flex-col gap-1.5 px-0.5 py-1">
-                        {/* Loading State */}
-                        <div className="relative flex flex-col justify-center rounded-md bg-shell-accent-soft overflow-hidden">
-                            <div className="flex items-center gap-2 px-2.5 py-2 text-sm text-shell-text">
-                                <CircleDashed className="w-4 h-4 text-shell-muted-strong animate-spin" />
-                                <span className="truncate">{content.loadingTitle || 'Loading...'}</span>
-                            </div>
-                            {/* Visual Loading Bar */}
-                            <div className="absolute bottom-0 left-0 h-[2px] w-[75%] bg-shell-accent" />
-                        </div>
+	                    <div className="flex flex-col gap-1.5 px-0.5 py-1">
+	                        {/* Loading State */}
+	                        <div className="relative flex flex-col justify-center rounded-md bg-shell-accent-soft overflow-hidden">
+	                            <div className="flex items-center gap-2 px-2.5 py-2 text-sm text-shell-text">
+	                                <CircleDashed className="w-4 h-4 text-shell-muted-strong animate-spin" />
+	                                <span className="truncate">{content.loadingTitle || 'Loading...'}</span>
+	                            </div>
+	                        </div>
 
                         {/* Success State */}
                         <div className="flex items-center gap-2 px-2.5 py-2.5 rounded-md bg-shell-accent-soft text-sm text-shell-text">
@@ -148,9 +146,9 @@ export const SimpleComponentCard = memo(forwardRef<HTMLDivElement, SimpleCompone
                             </span>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-1.5">
-                            <div className="relative flex items-center justify-center rounded border border-shell-accent-border/70 bg-shell-accent-soft px-2 py-2 text-[11px] font-medium text-shell-accent-text">
-                                <span className="truncate max-w-[100px]" title={content.confirmLabel || 'Yes, confirm'}>
+                        <div className="flex flex-col gap-1.5">
+                            <div className="relative flex w-full items-center rounded border border-shell-accent-border/70 bg-shell-accent-soft px-2.5 py-2 pr-8 text-[11px] font-medium text-shell-accent-text">
+                                <span className="truncate max-w-full" title={content.confirmLabel || 'Yes, confirm'}>
                                     {content.confirmLabel || 'Yes, confirm'}
                                 </span>
                                 <Handle
@@ -171,8 +169,8 @@ export const SimpleComponentCard = memo(forwardRef<HTMLDivElement, SimpleCompone
                                 />
                             </div>
 
-                            <div className="relative flex items-center justify-center rounded border border-shell-border/70 bg-shell-bg px-2 py-2 text-[11px] font-medium text-shell-muted-strong">
-                                <span className="truncate max-w-[100px]" title={content.rejectLabel || 'No, not this person'}>
+                            <div className="relative flex w-full items-center rounded border border-shell-border/70 bg-shell-bg px-2.5 py-2 pr-8 text-[11px] font-medium text-shell-muted-strong">
+                                <span className="truncate max-w-full" title={content.rejectLabel || 'No, not this person'}>
                                     {content.rejectLabel || 'No, not this person'}
                                 </span>
                                 <Handle
@@ -238,14 +236,14 @@ export const SimpleComponentCard = memo(forwardRef<HTMLDivElement, SimpleCompone
         }
     };
 
-    // Update label to "Add <Component>" if empty
+    // Update label to "Edit <Component>" if empty
     const getLabel = () => {
         if (isEmpty()) {
             switch (component.type) {
-                case 'message': return 'Add Message';
-                case 'infoMessage': return 'Add Info Message';
-                case 'prompt': return 'Add Prompt';
-                case 'statusCard': return 'Add Status Card';
+                case 'message': return 'Edit Message';
+                case 'infoMessage': return 'Edit Info Message';
+                case 'prompt': return 'Edit Prompt';
+                case 'statusCard': return 'Edit Status Card';
                 case 'confirmationCard': return 'Add Confirmation Card';
                 default: return display.label;
             }

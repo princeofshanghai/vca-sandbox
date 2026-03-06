@@ -16,6 +16,7 @@ import {
     verticalListSortingStrategy
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { Component as ComponentIcon } from 'lucide-react';
 import { Component } from '../../../studio/types';
 import { SimpleComponentCard } from './SimpleComponentCard';
 import { getComponentDisplay } from '../utils/turnNodeUtils';
@@ -56,6 +57,7 @@ interface TurnNodeComponentListProps {
     components: Component[];
     selectedComponentId?: string;
     entryPoint?: string;
+    isAiTurn?: boolean;
     readOnly?: boolean;
     surfaceClassName?: string;
     onSelectComponent?: (nodeId: string, componentId: string, anchorEl: HTMLElement) => void;
@@ -275,6 +277,7 @@ export const TurnNodeComponentList = ({
     components,
     selectedComponentId,
     entryPoint,
+    isAiTurn = false,
     readOnly = false,
     surfaceClassName = 'bg-shell-bg',
     onSelectComponent,
@@ -285,6 +288,7 @@ export const TurnNodeComponentList = ({
 }: TurnNodeComponentListProps) => {
     const [lastDragAt, setLastDragAt] = useState(0);
     const canReorder = !readOnly && components.length > 1;
+    const showEmptyStateText = isAiTurn && components.length === 0;
     const updateNodeInternals = useUpdateNodeInternals();
 
     const sensors = useSensors(
@@ -349,6 +353,14 @@ export const TurnNodeComponentList = ({
             >
                 <SortableContext items={componentIds} strategy={verticalListSortingStrategy}>
                     <div className="flex flex-col gap-3">
+                        {showEmptyStateText && (
+                            <div className="pointer-events-none select-none flex items-center gap-2 py-1 text-sm text-shell-muted">
+                                <span className="flex items-center text-shell-muted">
+                                    <ComponentIcon className="w-4 h-4" />
+                                </span>
+                                <span>No components yet</span>
+                            </div>
+                        )}
                         {components.map((component: Component) => (
                             <SortableComponentRow
                                 key={component.id}
