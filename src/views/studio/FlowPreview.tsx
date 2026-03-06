@@ -262,12 +262,6 @@ const PreviewContent = ({
                 : null
     ), [activeInterceptor, lastConditionSelection]);
 
-    const listBottomPaddingClass = isPathPanelExpanded
-        ? 'pb-28'
-        : overlaySelection
-            ? 'pb-14'
-            : '';
-
     const shouldShowFullPathPanel = !!overlaySelection && isPathPanelExpanded;
     const shouldShowCompactPathPill = !!overlaySelection && !isPathPanelExpanded;
     const activeInteractiveTurn = useMemo(
@@ -438,7 +432,7 @@ const PreviewContent = ({
     // Render logic
     return (
         <div className="relative">
-            <div className={`space-y-4 ${listBottomPaddingClass}`}>
+            <div className="space-y-4">
             {/* Disclaimer (Global) */}
             {flow.settings?.showDisclaimer && <Message variant="disclaimer" />}
 
@@ -675,13 +669,12 @@ const PreviewContent = ({
                 </div>
             )}
 
-            <div ref={messagesEndRef} className="h-4" />
             </div>
 
             {overlaySelection && shouldShowFullPathPanel && (
-                <div className="pointer-events-none absolute inset-x-0 bottom-2 z-30 flex justify-center px-2">
+                <div className="mt-2 flex justify-center px-2">
                     <ContextInterceptorMessage
-                        className="pointer-events-auto w-full max-w-[360px]"
+                        className="w-full max-w-[420px]"
                         variableName={overlaySelection.variableName}
                         branches={overlaySelection.branches}
                         onResolve={handleOverlayResolve}
@@ -690,7 +683,7 @@ const PreviewContent = ({
             )}
 
             {shouldShowCompactPathPill && (
-                <div className="pointer-events-none absolute inset-x-0 bottom-2 z-20 flex justify-center px-2">
+                <div className="mt-2 flex justify-center px-2">
                     <div
                         role="button"
                         tabIndex={0}
@@ -701,7 +694,7 @@ const PreviewContent = ({
                                 setIsPathPanelExpanded(true);
                             }
                         }}
-                        className="pointer-events-auto inline-flex max-w-[360px] items-center gap-2 rounded-xl border border-shell-node-condition/35 bg-[rgb(var(--shell-node-condition-surface)/1)] px-3 py-1.5 text-left shadow-sm"
+                        className="inline-flex max-w-[420px] items-center gap-2 rounded-xl border border-shell-node-condition/35 bg-[rgb(var(--shell-node-condition-surface)/1)] px-3 py-1.5 text-left shadow-sm"
                     >
                         <Split size={13} className="shrink-0 text-shell-node-condition" />
                         <div className="min-w-0">
@@ -727,6 +720,8 @@ const PreviewContent = ({
                     </div>
                 </div>
             )}
+
+            <div ref={messagesEndRef} className="h-4" />
         </div>
     );
 };

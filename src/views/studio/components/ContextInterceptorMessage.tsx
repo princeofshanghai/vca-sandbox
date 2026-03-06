@@ -57,28 +57,29 @@ export function ContextInterceptorMessage({
 
                 <div className="space-y-2">
                     {pathChoices.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
+                        <div className="max-h-[220px] space-y-2 overflow-y-auto pr-1 thin-scrollbar">
                             {pathChoices.map(({ id, value, pathLabel, ruleVariable, ruleValue, isDefault }) => (
                                 <Button
                                     key={id}
                                     variant="outline"
-                                    size="sm"
                                     onClick={() => onResolve(value)}
                                     className={cn(
-                                        'h-8 min-w-0 max-w-[170px] border-shell-border bg-shell-bg px-2 text-xs text-shell-text shadow-sm hover:border-shell-node-condition/60 hover:bg-shell-surface',
-                                        isDefault && 'text-shell-muted-strong'
+                                        'h-auto w-full items-start justify-start border-shell-border bg-shell-bg px-3 py-2.5 text-left shadow-sm hover:border-shell-node-condition/60 hover:bg-shell-surface',
+                                        isDefault ? 'text-shell-muted-strong' : 'text-shell-text'
                                     )}
                                 >
-                                    <span className="truncate text-[13px] font-medium">{pathLabel}</span>
-                                    {isDefault ? (
-                                        <span className="ml-1 truncate font-mono text-[13px] text-shell-muted-strong">Fallback</span>
-                                    ) : (
-                                        <span className="ml-1 inline-flex min-w-0 items-center gap-0.5 font-mono text-[13px]">
-                                            <span className="truncate text-shell-muted-strong">{ruleVariable || variableName}</span>
-                                            <span className="text-shell-muted">=</span>
-                                            <span className="truncate font-semibold text-shell-accent-text">{ruleValue || 'value'}</span>
-                                        </span>
-                                    )}
+                                    <span className="w-full min-w-0">
+                                        <span className="block text-[13px] font-semibold leading-snug break-words">{pathLabel}</span>
+                                        {isDefault ? (
+                                            <span className="mt-0.5 block text-[12px] text-shell-muted-strong leading-snug break-words">
+                                                Anything else (fallback)
+                                            </span>
+                                        ) : (
+                                            <span className="mt-0.5 block font-mono text-[12px] leading-snug break-all text-shell-muted-strong">
+                                                {`${ruleVariable || variableName} = ${ruleValue || 'value'}`}
+                                            </span>
+                                        )}
+                                    </span>
                                 </Button>
                             ))}
                         </div>
