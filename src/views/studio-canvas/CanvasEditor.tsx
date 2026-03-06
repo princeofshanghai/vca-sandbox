@@ -524,7 +524,7 @@ function CanvasEditorInner({
                 : s
         );
         applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
-    }, [applyFlowUpdate]);
+    }, [onUpdateFlow]);
 
     const handleTurnComponentUpdate = useCallback((nodeId: string, componentId: string, updates: Partial<Component>) => {
         const currentFlow = flowRef.current;
@@ -543,7 +543,7 @@ function CanvasEditorInner({
             return s;
         });
         applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
-    }, [applyFlowUpdate]);
+    }, [onUpdateFlow]);
 
     const handleTurnComponentReorder = useCallback((nodeId: string, activeComponentId: string, overComponentId: string) => {
         if (activeComponentId === overComponentId) return;
@@ -578,7 +578,7 @@ function CanvasEditorInner({
         if (!didReorder) return;
 
         applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
-    }, [applyFlowUpdate]);
+    }, [onUpdateFlow]);
 
     const handleUserTurnUpdate = useCallback((nodeId: string, updates: Partial<UserTurn>) => {
         const currentFlow = flowRef.current;
@@ -589,7 +589,7 @@ function CanvasEditorInner({
                 : s
         );
         applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
-    }, [applyFlowUpdate]);
+    }, [onUpdateFlow]);
 
     const handleConditionLabelChange = useCallback((nodeId: string, newLabel: string) => {
         const currentFlow = flowRef.current;
@@ -600,7 +600,7 @@ function CanvasEditorInner({
                 : s
         );
         applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
-    }, [applyFlowUpdate]);
+    }, [onUpdateFlow]);
 
     const handleConditionUpdateBranches = useCallback((nodeId: string, branches: Branch[]) => {
         const currentFlow = flowRef.current;
@@ -611,7 +611,7 @@ function CanvasEditorInner({
                 : s
         );
         applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
-    }, [applyFlowUpdate]);
+    }, [onUpdateFlow]);
 
     const handleNoteLabelChange = useCallback((nodeId: string, newLabel: string) => {
         const currentFlow = flowRef.current;
@@ -622,7 +622,7 @@ function CanvasEditorInner({
                 : s
         );
         applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
-    }, [applyFlowUpdate]);
+    }, [onUpdateFlow]);
 
     const handleNoteContentChange = useCallback((nodeId: string, newContent: string) => {
         const currentFlow = flowRef.current;
@@ -633,7 +633,7 @@ function CanvasEditorInner({
                 : s
         );
         applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
-    }, [applyFlowUpdate]);
+    }, [onUpdateFlow]);
 
     const resolveDefaultUserTurnInputType = useCallback((
         sourceNodeId: string,
@@ -739,7 +739,7 @@ function CanvasEditorInner({
         if (newStep.type === 'turn') {
             focusNodeWithToolbar(newStep.id, true);
         }
-    }, [applyFlowUpdate, focusNodeWithToolbar, resolveDefaultUserTurnInputType]);
+    }, [focusNodeWithToolbar, onUpdateFlow, resolveDefaultUserTurnInputType]);
 
     const getQuickConnectPosition = useCallback((sourceNodeId: string) => {
         const sourceStep = flowRef.current.steps?.find(step => step.id === sourceNodeId);
@@ -1003,7 +1003,7 @@ function CanvasEditorInner({
 
         applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
         setPendingAutoOpenAddComponentNodeId(null);
-    }, [applyFlowUpdate]);
+    }, [onUpdateFlow]);
 
     // Convert flow steps to React Flow nodes
     const baseNodes = useMemo(() => {
@@ -1278,7 +1278,7 @@ function CanvasEditorInner({
         });
 
         applyFlowUpdate({ ...flow, steps: updatedSteps, lastModified: Date.now() });
-    }, [applyFlowUpdate, flow]);
+    }, [flow, onUpdateFlow]);
 
     // Connection handler
     const onConnect: OnConnect = useCallback(
@@ -1364,7 +1364,7 @@ function CanvasEditorInner({
                 lastModified: Date.now()
             });
         },
-        [applyFlowUpdate, flow]
+        [flow, onUpdateFlow]
     );
 
     const handleChangeUserTurnInputType = (inputType: 'text' | 'prompt' | 'button') => {
@@ -1399,7 +1399,7 @@ function CanvasEditorInner({
                 }
             }
         }
-    }, [applyFlowUpdate]); // implementation uses refs
+    }, [onUpdateFlow]); // implementation uses refs
 
     const handleMoveComponentDown = useCallback(() => {
         const currentSelection = selectionRef.current;
@@ -1422,7 +1422,7 @@ function CanvasEditorInner({
                 }
             }
         }
-    }, [applyFlowUpdate]); // implementation uses refs
+    }, [onUpdateFlow]); // implementation uses refs
 
 
     // Native React Flow delete handler (supports multi-selection)
@@ -1454,7 +1454,7 @@ function CanvasEditorInner({
         if (currentSelection && deletedIds.has(currentSelection.nodeId)) {
             handleDeselect();
         }
-    }, [applyFlowUpdate, handleDeselect]); // flowRef used inside
+    }, [onUpdateFlow, handleDeselect]); // flowRef used inside
 
     const onEdgesDelete = useCallback((deletedEdges: Edge[]) => {
         const currentFlow = flowRef.current;
@@ -1469,7 +1469,7 @@ function CanvasEditorInner({
             connections: updatedConnections,
             lastModified: Date.now()
         });
-    }, [applyFlowUpdate]);
+    }, [onUpdateFlow]);
 
 
     const handleDeleteComponent = useCallback(() => {
@@ -1962,7 +1962,7 @@ function CanvasEditorInner({
                 lastModified: Date.now()
             });
         }
-    }, [applyFlowUpdate, flow]);
+    }, [flow, onUpdateFlow]);
 
     // Drag and Drop handlers
     const onDragOver = useCallback((event: React.DragEvent) => {
@@ -2047,7 +2047,7 @@ function CanvasEditorInner({
                 });
             }
         },
-        [applyFlowUpdate, flow, focusNodeWithToolbar, screenToFlowPosition]
+        [flow, focusNodeWithToolbar, onUpdateFlow, screenToFlowPosition]
     );
 
     const handlePaneClick = useCallback(() => {
