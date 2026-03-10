@@ -38,12 +38,15 @@
     --shell-danger-border: 254 202 202;
     --shell-canvas: 245 245 247;
     --shell-canvas-grid: 180 179 168;
+    --shell-studio-canvas: 245 245 247;
+    --shell-studio-canvas-grid: 180 179 168;
     --shell-flow-edge: 107 114 128;
     --shell-flow-edge-hover: 55 65 81;
     --shell-flow-edge-selected: 29 78 216;
     --shell-flow-edge-marker: 100 116 139;
     --shell-scrollbar-thumb: 203 213 225;
     --shell-scrollbar-thumb-hover: 148 163 184;
+    --shell-chrome-divider: 220 223 228;
     --shell-node-ai-surface: 245 248 255;
     --shell-node-user-surface: 249 245 255;
     --shell-node-condition-surface: 255 249 240;
@@ -53,6 +56,13 @@
     --shell-node-start: 16 185 129;
     --shell-node-start-text: 6 95 70;
     --shell-node-note: 202 138 4;
+    --shell-node-card-surface: 255 255 255;
+    --shell-node-card-divider: 229 231 235;
+    --shell-note-surface: 255 251 235;
+    --shell-note-border: 245 215 120;
+    --shell-note-text: 120 53 15;
+    --shell-note-muted: 146 64 14;
+    --shell-note-placeholder: 180 83 9;
 
     /* Always-dark cinematic tokens */
     --shell-dark-bg: 30 30 30;
@@ -71,6 +81,7 @@
     --shell-dark-accent-hover: 29 78 216;
     --shell-dark-accent-soft: 29 78 216;
     --shell-dark-accent-soft-alpha: 0.3;
+    --shell-dark-accent-text: 191 219 254;
     --shell-dark-danger: 239 68 68;
     --shell-dark-danger-soft: 239 68 68;
     --shell-dark-danger-soft-alpha: 0.1;
@@ -81,34 +92,37 @@
   }
 
   .dark {
-    --shell-bg: 12 13 15;
-    --shell-surface: 19 20 23;
-    --shell-surface-subtle: 28 30 35;
-    --shell-surface-subtle-alpha: 0.52;
-    --shell-text: 241 242 245;
-    --shell-muted: 152 155 165;
-    --shell-muted-strong: 198 201 210;
-    --shell-border: 42 44 50;
-    --shell-border-subtle: 30 32 37;
-    --shell-accent: 82 139 255;
-    --shell-accent-hover: 106 156 255;
-    --shell-accent-soft: 82 139 255;
-    --shell-accent-soft-alpha: 0.16;
-    --shell-accent-border: 101 129 194;
-    --shell-accent-text: 197 217 255;
+    --shell-bg: 30 30 30;
+    --shell-surface: 44 44 44;
+    --shell-surface-subtle: 58 58 58;
+    --shell-surface-subtle-alpha: 0.72;
+    --shell-text: 255 255 255;
+    --shell-muted: 156 163 175;
+    --shell-muted-strong: 218 218 218;
+    --shell-border: 70 70 70;
+    --shell-border-subtle: 54 54 54;
+    --shell-accent: 37 99 235;
+    --shell-accent-hover: 29 78 216;
+    --shell-accent-soft: 29 78 216;
+    --shell-accent-soft-alpha: 0.3;
+    --shell-accent-border: 96 128 198;
+    --shell-accent-text: 219 234 254;
     --shell-danger: 242 113 113;
     --shell-danger-hover: 248 141 141;
     --shell-danger-soft: 126 44 44;
     --shell-danger-soft-alpha: 0.38;
     --shell-danger-border: 175 76 76;
-    --shell-canvas: 15 16 19;
-    --shell-canvas-grid: 47 49 56;
+    --shell-canvas: 44 44 44;
+    --shell-canvas-grid: 94 94 94;
+    --shell-studio-canvas: 35 35 35;
+    --shell-studio-canvas-grid: 86 86 86;
     --shell-flow-edge: 121 129 145;
     --shell-flow-edge-hover: 161 169 186;
     --shell-flow-edge-selected: 130 170 255;
     --shell-flow-edge-marker: 128 138 158;
-    --shell-scrollbar-thumb: 75 85 99;
-    --shell-scrollbar-thumb-hover: 107 114 128;
+    --shell-scrollbar-thumb: 108 108 108;
+    --shell-scrollbar-thumb-hover: 132 132 132;
+    --shell-chrome-divider: 88 88 88;
     --shell-node-ai-surface: 22 28 39;
     --shell-node-user-surface: 29 23 39;
     --shell-node-condition-surface: 37 31 24;
@@ -118,6 +132,13 @@
     --shell-node-start: 52 211 153;
     --shell-node-start-text: 167 243 208;
     --shell-node-note: 250 204 21;
+    --shell-node-card-surface: 50 50 50;
+    --shell-node-card-divider: 72 72 72;
+    --shell-note-surface: 245 239 210;
+    --shell-note-border: 214 182 86;
+    --shell-note-text: 92 58 0;
+    --shell-note-muted: 120 75 10;
+    --shell-note-placeholder: 146 94 26;
   }
 
   html,

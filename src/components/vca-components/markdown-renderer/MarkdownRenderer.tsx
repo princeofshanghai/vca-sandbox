@@ -21,7 +21,7 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
     // We bypass cn() for the main typography classes because tailwind-merge
     // incorrectly strips 'text-vca-small-open' in favor of 'text-vca-text'.
     // See docs/archive/Tailwind-Merge-Typography-Fix.md
-    const baseClasses = "text-vca-small-open text-vca-text";
+    const baseClasses = "font-vca-text text-vca-small-open text-vca-text";
     const combinedClassName = className ? `${baseClasses} ${className}` : baseClasses;
 
     return (
@@ -39,14 +39,14 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
                     ),
                     // Paragraphs - explicit VCA body style to override global CSS (text-15)
                     p: ({ node: _node, ...props }) => (
-                        <p {...props} className="text-vca-small-open mb-2 last:mb-0" />
+                        <p {...props} className="font-vca-text text-vca-small-open text-vca-text mb-2 last:mb-0" />
                     ),
                     // Strong/Bold
                     strong: ({ node: _node, ...props }) => (
-                        <strong {...props} className="font-vca-text text-vca-small-bold-open" />
+                        <strong {...props} className="font-vca-text text-vca-small-bold-open text-vca-text" />
                     ),
                     b: ({ node: _node, ...props }) => (
-                        <strong {...props} className="font-vca-text text-vca-small-bold-open" />
+                        <strong {...props} className="font-vca-text text-vca-small-bold-open text-vca-text" />
                     ),
                     // Emphasis/Italic
                     em: ({ node: _node, ...props }) => (
@@ -63,7 +63,7 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
                         <ol {...props} className="text-vca-small-open text-vca-text list-decimal pl-4 my-2 space-y-1.5 [&>li::marker]:font-vca-text [&>li::marker]:text-vca-small-bold-open" />
                     ),
                     li: ({ node: _node, ...props }) => (
-                        <li {...props} className="pl-0" />
+                        <li {...props} className="font-vca-text text-vca-small-open text-vca-text pl-0" />
                     ),
                 }}
             >

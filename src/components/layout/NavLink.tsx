@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/utils';
-import { Button } from '@/components/ui/button';
+import { ShellButton } from '@/components/shell';
 
 type NavLinkBaseProps = {
   /** Link text or custom content */
@@ -48,43 +48,38 @@ type NavLinkProps = NavLinkAsRouterLink | NavLinkAsButton;
  * ```
  */
 const NavLink = ({ children, isActive = false, className, ...props }: NavLinkProps) => {
-  // Shared classes for both Link and button variants
   const baseClasses = cn(
-    'block text-left px-3 py-1.5 text-2xs rounded-vca-sm transition-colors',
+    'h-auto w-full justify-start px-3 py-1.5 text-left text-2xs rounded-vca-sm transition-colors',
     isActive 
       ? 'bg-shell-border-subtle text-shell-text font-medium hover:bg-shell-border hover:text-shell-text'
       : 'text-shell-muted-strong hover:bg-shell-surface hover:text-shell-text',
+    !isActive && 'font-normal',
     className
   );
 
-  // Render as React Router Link if 'to' prop is provided
   if ('to' in props && props.to) {
     return (
-      <Link to={props.to} className={baseClasses}>
-        {children}
-      </Link>
+      <ShellButton asChild variant="ghost" className={baseClasses}>
+        <Link to={props.to}>
+          {children}
+        </Link>
+      </ShellButton>
     );
   }
 
-  // Render as button if 'onClick' prop is provided
   if ('onClick' in props && props.onClick) {
     return (
-      <Button
+      <ShellButton
         onClick={props.onClick} 
-        className={cn(
-          baseClasses,
-          'w-full justify-start h-auto',
-          !isActive && 'font-normal'
-        )}
+        className={baseClasses}
         variant="ghost"
         type="button"
       >
         {children}
-      </Button>
+      </ShellButton>
     );
   }
 
-  // Fallback (should never happen with proper TypeScript usage)
   return null;
 };
 

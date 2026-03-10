@@ -1,83 +1,104 @@
-# Shell Design System Contract
+# Shell UI Design System
 
-## Goal
-Keep app shell UI consistent and prevent AI drift into one-off custom controls.
+This is the canonical source of truth for shell UI.
+When you want Codex to build or polish shell UI, point to:
+`@docs/guidelines/shell-design-system.md`
 
-This contract applies to:
+## Scope
+This governs the tool interface only:
 - Dashboard
-- Auth/Login
 - Share shell chrome
-- Layout/navigation surfaces
-- Component library shell pages
+- Login/auth shell chrome
+- Sidebars
+- Drawers
+- Dialogs
+- Canvas controls
+- Component library shell surfaces
 
-This does **not** apply to VCA chat components, which are a separate system in:
+This does not govern VCA component UI.
+VCA component UI is the end-user chat/product experience in:
 - `src/components/vca-components`
 
-## Source of truth for shell UI
-- `src/components/shell` (preferred)
-- `src/components/ui` (base primitives)
+## Shell UI vs VCA UI
+- Shell UI = the product-building interface around the experience.
+- VCA UI = the experience being designed.
+- Do not mix their visual languages.
+- If a shell screen renders VCA components, the shell chrome follows this doc and the VCA internals keep VCA tokens, typography, and behavior.
+- Shell base element styles must not override VCA text, links, paragraphs, lists, or emphasis styles inside previews.
 
-Use shell components first. If missing, extend `src/components/shell` before building custom controls in views.
+## Build Order
+1. Use `src/components/shell` first.
+2. If needed, use shared primitives from `src/components/ui`.
+3. If a shell control is missing, extend `src/components/shell` before styling a one-off version in a view.
+4. Prefer semantic shell tokens over hardcoded palette classes.
 
-## Current shell layer
-- `src/components/shell/ShellButton.tsx`
-- `src/components/shell/ShellInput.tsx`
-- `src/components/shell/ShellIconButton.tsx`
-- `src/components/shell/index.ts`
+## Aesthetic
+- Compact, calm, and precise.
+- Neutral graphite surfaces.
+- Restrained blue accents.
+- Soft borders and dividers.
+- Color is for action, focus, selection, and status, not decoration.
 
-## Shell semantic tokens (v1)
-Defined in:
-- `tailwind.config.js` (token class mapping)
-- `src/index.css` (`:root` for light values, `.dark` for dark values)
+## Tokens
+Use semantic shell tokens from `tailwind.config.js` and `src/index.css`.
 
-Primary token families:
-- Colors: `shell-bg`, `shell-surface`, `shell-surface-subtle`, `shell-text`, `shell-muted`, `shell-border`, `shell-border-subtle`, `shell-accent`, `shell-accent-hover`, `shell-accent-soft`, `shell-accent-border`, `shell-accent-text`
-- Dark colors: `shell-dark-bg`, `shell-dark-panel`, `shell-dark-panel-alt`, `shell-dark-card`, `shell-dark-text`, `shell-dark-muted`, `shell-dark-border`, `shell-dark-border-strong`, `shell-dark-accent`, `shell-dark-accent-hover`, `shell-dark-danger`, `shell-dark-success`
-- Spacing: `shell-0` to `shell-6`
-- Radius: `shell-sm`, `shell-md`, `shell-lg`, `shell-xl`
-- Shadows: `shadow-shell-sm`, `shadow-shell-lg`
+Default shell:
+- `shell-bg`
+- `shell-surface`
+- `shell-surface-subtle`
+- `shell-text`
+- `shell-muted`
+- `shell-border`
+- `shell-accent`
 
-## How global changes work
-1. Update token values in `src/index.css` (`:root` and/or `.dark`).
-2. Keep token class mapping in `tailwind.config.js` aligned.
-3. Components in `src/components/shell` pick up the new value.
-4. Screens using shell wrappers inherit the change automatically.
+Cinematic dark shell:
+- `shell-dark-bg`
+- `shell-dark-panel`
+- `shell-dark-surface`
+- `shell-dark-text`
+- `shell-dark-muted`
+- `shell-dark-border`
+- `shell-dark-accent`
 
-## Current migration coverage
-- Tokenized shell styling is now applied across dashboard/layout/component-library shell surfaces.
-- Cinematic dark contexts (login/share) now use `shell-dark-*` semantic tokens.
+Share and Login are always-cinematic dark contexts unless explicitly changed.
 
-## Theme model
-- `shell-*` tokens are the default app-shell tokens and are theme-adaptive (light + dark).
-- `shell-dark-*` tokens are for intentionally always-dark cinematic contexts.
-- Current cinematic always-dark contexts:
-  - Login view
-  - Share view
+## Cinematic Dark Recipe
+Use this pattern for dark shell controls:
+- Backdrop or stage uses `shell-dark-bg`.
+- Anchored containers use `shell-dark-panel`.
+- Interactive controls sitting on those containers use `shell-dark-surface`.
+- Selected/current text uses `shell-dark-text`.
+- Supporting text uses `shell-dark-muted`.
+- Default edges use `shell-dark-border`.
+- Blue is mostly reserved for focus, active, selected, and primary CTA states.
 
-## Dark aesthetic direction (current)
-- Neutral graphite surfaces (very dark, low tint).
-- Restrained blue accents for brand/action emphasis.
-- Softer, less-bright borders in dark mode to reduce visual noise.
+Why this works:
+- The control reads as interactive because it is one step lighter than its parent panel.
+- Separation comes from surface contrast first, not loud borders.
+- The dark UI stays calm because blue is not constantly “on.”
 
-## Rules
+## Non-Negotiables
 1. In shell surfaces, do not use raw `<button>`, `<input>`, `<select>`, or `<textarea>`.
-2. Prefer existing shell/ui components before creating custom controls.
-3. Keep shell visuals aligned to existing shell style (gray neutrals + blue action, compact typography).
-4. Keep VCA visual language separate from shell visual language.
-5. Do not use hardcoded light palette utility classes (`bg-white`, `text-gray-*`, `border-gray-*`) in shell surfaces.
-6. For shell/UI documentation pages, use shell tokens for page chrome and text.
+2. Do not use hardcoded light palette classes like `bg-white`, `text-gray-*`, or `border-gray-*` in shell surfaces.
+3. Do not copy long one-off class stacks across views when the pattern should live in a reusable shell or shared UI component.
+4. Do not use accent blue as the resting fill for secondary controls.
+5. Do not place an interactive dark control on the exact same fill as its parent panel when hierarchy matters.
+6. Use pill shapes only when the component is semantically a chip, badge, or toolbar pill.
+7. When shell screens render VCA components, fix styling leaks in the VCA layer, not by restyling the shell preview container.
 
-## Enforcement
-- ESLint rule in `eslint.config.cjs` blocks raw button/form controls in shell files.
-
-## When a new control is needed
-1. Add or extend a reusable component in `src/components/shell`.
-2. Reuse that component in the target view.
-3. Keep customization via `className` minimal and consistent.
-
-## Dark theme QA checklist
-Before finalizing shell UI changes:
-1. Verify both light and dark themes.
-2. Check CTA readability (especially primary buttons).
-3. Check border/subtle divider intensity in dark mode.
+## QA Checklist
+1. Verify light and dark themes when applicable.
+2. Check default, hover, focus, active, open, selected, and disabled states.
+3. Check CTA readability.
 4. Check muted/supporting text legibility.
+5. Check that dark borders and dividers are subtle, not bright.
+6. Check that controls are visibly one step above their parent panel.
+7. If a shell surface contains VCA components, verify shell typography does not leak into VCA internals.
+8. In previews, verify VCA text still reads correctly inside light VCA surfaces while the surrounding shell is in dark mode.
+
+## Useful References
+- `src/components/shell`
+- `src/components/ui`
+- `src/index.css`
+- `tailwind.config.js`
+- `docs/guidelines/tailwind-typography-fix.md`

@@ -96,13 +96,10 @@ export const LoginView = () => {
                                 <span>Continue with Google</span>
                             </Button>
 
-                            <div className="relative">
-                                <div className="absolute inset-0 flex items-center">
-                                    <span className="w-full border-t border-shell-dark-border" />
-                                </div>
-                                <div className="relative flex justify-center text-[10px] uppercase tracking-wider">
-                                    <span className="bg-shell-dark-panel-alt px-2 text-shell-dark-muted">Or using email</span>
-                                </div>
+                            <div className="flex items-center gap-3 text-[10px] uppercase tracking-wider text-shell-dark-muted">
+                                <div className="h-px flex-1 bg-shell-dark-border" />
+                                <span>Or using email</span>
+                                <div className="h-px flex-1 bg-shell-dark-border" />
                             </div>
 
                             <form onSubmit={handleMagicLink} className="space-y-3">

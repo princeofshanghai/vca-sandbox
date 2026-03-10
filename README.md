@@ -158,13 +158,13 @@ vca-sandbox-6/
 
 **Start Here:**
 - [project-overview.md](./docs/context/project-overview.md) — Project goals, audience, and vision
-- [ui-ux-shared-context.md](./docs/context/ui-ux-shared-context.md) — Shared designer + Codex UI/UX collaboration context
+- [shell-design-system.md](./docs/guidelines/shell-design-system.md) — Canonical shell UI guide; point Codex here for shell work
+- [ui-ux-shared-context.md](./docs/context/ui-ux-shared-context.md) — Brief orientation note explaining shell UI vs VCA UI
 - [sdui-strategic-alignment.md](./docs/context/sdui-strategic-alignment.md) — Long-term SDUI direction
 
 **Guidelines:**
 - [flow-preview-guidelines.md](./docs/guidelines/flow-preview-guidelines.md) — Flow preview behavior and patterns
-- [visual-design.md](./docs/guidelines/visual-design.md) — Visual design principles
-- [shell-design-system.md](./docs/guidelines/shell-design-system.md) — App shell component contract to prevent UI drift
+- [visual-design.md](./docs/guidelines/visual-design.md) — High-level aesthetic note; shell guide wins on implementation details
 - [tailwind-typography-fix.md](./docs/guidelines/tailwind-typography-fix.md) — Typography implementation notes
 
 **Proposals:**

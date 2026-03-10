@@ -304,7 +304,6 @@ export const DashboardView = () => {
                                     <FlowCard
                                         key={flow.id}
                                         flow={flow}
-                                        folderName={folders.find(f => f.id === flow.folderId)?.name}
                                         onDelete={handleDeleteFlow}
                                         onRename={handleRenameFlow}
                                         onDuplicate={handleDuplicateFlow}
@@ -337,7 +336,7 @@ export const DashboardView = () => {
 
                 {/* Delete Confirmation Dialog */}
                 <Dialog open={!!deleteConfirmation} onOpenChange={(open) => !open && setDeleteConfirmation(null)}>
-                    <DialogContent className="max-w-[320px] p-shell-0 gap-shell-0 border-shell-border-subtle shadow-shell-lg bg-shell-bg overflow-hidden" hideClose>
+                    <DialogContent className="max-w-[320px] p-shell-0 gap-shell-0 border-shell-border shadow-shell-lg bg-shell-bg dark:bg-shell-surface overflow-hidden" hideClose>
                         <div className="px-5 pt-5 pb-4">
                             <DialogHeader>
                                 <DialogTitle className={cn("text-sm font-semibold mb-2", deleteConfirmation?.isPermanent ? "text-shell-danger" : "text-shell-text")}>
@@ -350,7 +349,7 @@ export const DashboardView = () => {
                                 </DialogDescription>
                             </DialogHeader>
                         </div>
-                        <DialogFooter className="p-shell-4 bg-shell-surface-subtle border-t border-shell-border-subtle flex flex-row justify-end gap-shell-2">
+                        <DialogFooter className="p-shell-4 border-t border-shell-border-subtle flex flex-row justify-end gap-shell-2">
                             <ShellButton
                                 variant="outline"
                                 onClick={() => setDeleteConfirmation(null)}

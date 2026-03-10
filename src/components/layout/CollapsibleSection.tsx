@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { cn } from '@/utils';
 import { AppIcon } from '@/components/app-shell/AppIcon';
-import { Button } from '@/components/ui/button';
+import { ShellButton } from '@/components/shell';
 
 type CollapsibleSectionProps = {
   /** Section title displayed in the header */
@@ -44,7 +44,7 @@ const CollapsibleSection = ({
   return (
     <div className={className}>
       {/* Header button */}
-      <Button
+      <ShellButton
         onClick={onToggle}
         className="mb-4 w-full justify-start gap-2 p-0 h-auto text-sm font-medium text-shell-text hover:text-shell-muted-strong"
         aria-expanded={expanded}
@@ -60,7 +60,7 @@ const CollapsibleSection = ({
           size="sm"
           className={cn("transition-transform", expanded ? "rotate-0" : "-rotate-90")}
         />
-      </Button>
+      </ShellButton>
       
       {/* Content - only rendered when expanded */}
       {expanded && children}

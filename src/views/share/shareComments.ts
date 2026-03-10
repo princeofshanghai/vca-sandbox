@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 
 export type CommentStatus = 'open' | 'resolved';
+export type CommentFilter = 'open' | 'all' | 'resolved';
 
 export interface FlowComment {
     id: string;
@@ -122,6 +123,27 @@ export const updateFlowCommentStatus = async ({
     if (error) throw error;
 };
 
+export const updateFlowCommentMessage = async ({
+    commentId,
+    message,
+}: {
+    commentId: string;
+    message: string;
+}) => {
+    const { data, error } = await supabase
+        .from('flow_comments')
+        .update({
+            message: message.trim(),
+            updated_at: new Date().toISOString(),
+        })
+        .eq('id', commentId)
+        .select('*')
+        .single();
+
+    if (error) throw error;
+    return data as FlowComment;
+};
+
 export const updateFlowCommentPin = async ({
     commentId,
     pinX,
@@ -144,6 +166,12 @@ export const updateFlowCommentPin = async ({
 
     if (error) throw error;
     return data as FlowComment;
+};
+
+export const deleteFlowComment = async ({ commentId }: { commentId: string }) => {
+    const { error } = await supabase.from('flow_comments').delete().eq('id', commentId);
+
+    if (error) throw error;
 };
 
 const resolveThreadRoot = (

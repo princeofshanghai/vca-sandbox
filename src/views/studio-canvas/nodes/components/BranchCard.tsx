@@ -32,13 +32,19 @@ export const BranchCard = memo(forwardRef<HTMLDivElement, BranchCardProps>(({
                     </div>
                 ) : branch.logic?.variable ? (
                     <div className="flex flex-wrap gap-1 items-center">
-                        <span className="text-sm text-cyan-700 font-mono bg-cyan-50 px-1.5 py-0.5 rounded border border-cyan-100 truncate max-w-[120px]" title={branch.logic.variable}>
+                        <span
+                            className="truncate max-w-[120px] rounded border px-1.5 py-0.5 font-mono text-sm border-[rgb(var(--shell-node-condition)/0.22)] bg-[rgb(var(--shell-node-condition-surface)/0.9)] text-[rgb(var(--shell-note-muted)/1)] dark:border-[rgb(var(--shell-node-condition)/0.28)] dark:bg-[rgb(var(--shell-node-condition-surface)/1)] dark:text-[rgb(var(--shell-node-condition)/0.78)]"
+                            title={branch.logic.variable}
+                        >
                             {branch.logic.variable}
                         </span>
                         <span className="text-sm text-shell-muted-strong font-mono bg-shell-surface px-1.5 py-0.5 rounded border border-shell-border shrink-0">
                             =
                         </span>
-                        <span className="text-sm text-cyan-700 font-mono bg-cyan-50 px-1.5 py-0.5 rounded border border-cyan-100 truncate max-w-[120px]" title={String(branch.logic.value)}>
+                        <span
+                            className="truncate max-w-[120px] rounded border px-1.5 py-0.5 font-mono text-sm border-[rgb(var(--shell-node-condition)/0.22)] bg-[rgb(var(--shell-node-condition-surface)/0.9)] text-[rgb(var(--shell-note-muted)/1)] dark:border-[rgb(var(--shell-node-condition)/0.28)] dark:bg-[rgb(var(--shell-node-condition-surface)/1)] dark:text-[rgb(var(--shell-node-condition)/0.78)]"
+                            title={String(branch.logic.value)}
+                        >
                             {String(branch.logic.value)}
                         </span>
                     </div>

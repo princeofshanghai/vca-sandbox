@@ -1,15 +1,15 @@
 import { useAuth } from '@/hooks/useAuth';
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { ShellIconButton } from '@/components/shell';
+    ShellIconButton,
+    ShellMenu,
+    ShellMenuContent,
+    ShellMenuItem,
+    ShellMenuSeparator,
+    ShellMenuSwitchItem,
+    ShellMenuTrigger,
+} from '@/components/shell';
 import { ActionTooltip } from '@/views/studio-canvas/components/ActionTooltip';
 import { useApp } from '@/contexts/AppContext';
-import { Switch } from '@/components/ui/switch';
 import { getUserAvatarUrl, getUserInitials } from '@/utils/userIdentity';
 
 export function UserMenu() {
@@ -27,9 +27,9 @@ export function UserMenu() {
     };
 
     return (
-        <DropdownMenu>
+        <ShellMenu>
             <ActionTooltip content={user.email} side="bottom">
-                <DropdownMenuTrigger asChild>
+                <ShellMenuTrigger asChild>
                     <ShellIconButton aria-label="Open user menu" className="h-9 w-9">
                         <div className="h-7 w-7 rounded-full overflow-hidden border border-shell-border/70 bg-shell-surface">
                             {avatarUrl ? (
@@ -45,40 +45,31 @@ export function UserMenu() {
                             )}
                         </div>
                     </ShellIconButton>
-                </DropdownMenuTrigger>
+                </ShellMenuTrigger>
             </ActionTooltip>
 
-            <DropdownMenuContent align="end" className="w-[200px] border-shell-border bg-shell-bg text-shell-text">
+            <ShellMenuContent align="end" size="compact" className="w-[212px]">
                 <div className="px-2 py-1.5 pb-0">
-                    <p className="text-xs font-medium text-shell-muted">Signed in as</p>
-                    <p className="text-[13px] font-medium text-shell-text truncate mt-0.5">{user.email}</p>
+                    <p className="text-[11px] font-medium text-shell-muted">Signed in as</p>
+                    <p className="text-[12px] font-medium text-shell-text truncate mt-0.5">{user.email}</p>
                 </div>
 
-                <DropdownMenuSeparator />
+                <ShellMenuSeparator />
 
-                <DropdownMenuItem
-                    className="justify-between gap-3"
-                    onSelect={(e) => e.preventDefault()}
-                    onClick={() => updateTheme(!isDarkMode)}
+                <ShellMenuSwitchItem
+                    checked={isDarkMode}
+                    onCheckedChange={(checked) => updateTheme(checked === true)}
                 >
                     <span>Dark mode</span>
-                    <Switch
-                        size="sm"
-                        checked={isDarkMode}
-                        onCheckedChange={updateTheme}
-                        onClick={(e) => e.stopPropagation()}
-                        aria-label="Toggle dark mode"
-                    />
-                </DropdownMenuItem>
+                </ShellMenuSwitchItem>
 
-                <DropdownMenuItem
+                <ShellMenuItem
                     variant="destructive"
-                    className="gap-2"
                     onClick={signOut}
                 >
                     <span>Sign out</span>
-                </DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
+                </ShellMenuItem>
+            </ShellMenuContent>
+        </ShellMenu>
     );
 }

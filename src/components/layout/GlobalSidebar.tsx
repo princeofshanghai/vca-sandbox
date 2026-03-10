@@ -2,7 +2,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { BookMarked, Blocks } from 'lucide-react';
 import VcaLogo from '@/components/VcaLogo';
 import { cn } from '@/utils/cn'; // Assuming cn utility exists, otherwise I'll use template literals
-import { Button } from '@/components/ui/button';
+import { ShellButton } from '@/components/shell';
 
 interface SidebarItemProps {
     icon: React.ElementType;
@@ -12,7 +12,7 @@ interface SidebarItemProps {
 }
 
 const SidebarItem = ({ icon: Icon, label, isActive, onClick }: SidebarItemProps) => (
-    <Button
+    <ShellButton
         onClick={onClick}
         className={cn(
             "relative group h-auto w-full flex-col items-center justify-center gap-1 rounded-none py-4 transition-colors",
@@ -29,7 +29,7 @@ const SidebarItem = ({ icon: Icon, label, isActive, onClick }: SidebarItemProps)
         )}
         <Icon size={22} strokeWidth={1.25} />
         <span className="text-[10px] font-medium">{label}</span>
-    </Button>
+    </ShellButton>
 );
 
 export const GlobalSidebar = () => {

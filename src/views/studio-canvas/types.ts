@@ -2,11 +2,13 @@
 // This file will contain types for nodes, edges, and canvas state
 
 // Selection state for canvas interactions
-export type SelectionType = 'node' | 'component' | 'branch';
+export type SelectionType = 'node' | 'nodes' | 'component' | 'components' | 'branch';
 
 export type SelectionState =
     | { type: 'node'; nodeId: string }
+    | { type: 'nodes'; nodeIds: string[] }
     | { type: 'component'; nodeId: string; componentId: string }
+    | { type: 'components'; nodeId: string; componentIds: string[] }
     | { type: 'branch'; nodeId: string; branchId: string };
 
 export { };

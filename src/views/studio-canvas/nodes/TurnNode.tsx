@@ -10,11 +10,17 @@ interface TurnNodeData {
     phase?: string;
     label?: string;
     components?: Component[];
-    selectedComponentId?: string;
+    selectedComponentIds?: string[];
+    openComponentId?: string;
     entryPoint?: string;
     readOnly?: boolean;
 
-    onSelectComponent?: (nodeId: string, componentId: string, anchorEl: HTMLElement) => void;
+    onSelectComponent?: (
+        nodeId: string,
+        componentId: string,
+        anchorEl: HTMLElement,
+        options?: { appendToSelection?: boolean }
+    ) => void;
     onDeselect?: () => void;
     onComponentReorder?: (nodeId: string, activeComponentId: string, overComponentId: string) => void;
 
@@ -33,6 +39,7 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
     const typedData = data as unknown as TurnNodeData;
     const isAI = typedData.speaker === 'ai';
     const components = typedData.components || [];
+    const hasComponents = components.length > 0;
 
     // Label editing state
     const [isEditingLabel, setIsEditingLabel] = useState(false);
@@ -137,7 +144,7 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
                 id="main-input"
                 position={Position.Left}
                 className={`${handleClassName} !w-3.5 !h-3.5 !border-2 !border-shell-bg !z-50`}
-                style={{ top: 19 }}
+                style={hasComponents ? { top: 19 } : undefined}
             />
 
             {/* Internal Content Wrapper for clipping rounded corners */}
@@ -146,7 +153,8 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
                 <TurnNodeComponentList
                     nodeId={nodeId}
                     components={components}
-                    selectedComponentId={typedData.selectedComponentId}
+                    selectedComponentIds={typedData.selectedComponentIds}
+                    openComponentId={typedData.openComponentId}
                     entryPoint={typedData.entryPoint}
                     surfaceClassName={nodeSurfaceClassName}
                     onSelectComponent={typedData.onSelectComponent}
@@ -165,7 +173,7 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
                 id="main-output"
                 position={Position.Right}
                 className={`${handleClassName} ${createHandlePreviewClassName} !w-3.5 !h-3.5 !border-2 !border-shell-bg !z-50`}
-                style={{ top: 19 }}
+                style={hasComponents ? { top: 19 } : undefined}
                 onClick={(event) => {
                     event.stopPropagation();
                     if (typedData.readOnly) return;

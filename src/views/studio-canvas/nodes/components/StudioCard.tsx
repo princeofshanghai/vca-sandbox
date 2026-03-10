@@ -59,16 +59,16 @@ export const StudioCard = memo(({
     const themes = {
         blue: {
             selectedBorder: 'border-shell-accent ring-1 ring-shell-accent/30',
-            baseBorder: 'border-shell-border/70',
+            baseBorder: 'border-shell-node-card-divider',
             hoverBorder: 'hover:border-shell-accent/60',
             text: 'text-shell-text',
-            iconColor: 'text-shell-accent',
-            selectedIconColor: 'text-shell-accent',
+            iconColor: 'text-shell-accent dark:text-[rgb(var(--shell-accent-border)/1)]',
+            selectedIconColor: 'text-shell-accent dark:text-[rgb(var(--shell-accent-border)/1)]',
             handle: '!bg-shell-accent',
         },
         amber: {
             selectedBorder: 'border-shell-node-condition ring-1 ring-shell-node-condition/30',
-            baseBorder: 'border-shell-border/70',
+            baseBorder: 'border-shell-node-card-divider',
             hoverBorder: 'hover:border-shell-node-condition/60',
             text: 'text-shell-text',
             iconColor: 'text-shell-node-condition',
@@ -77,7 +77,7 @@ export const StudioCard = memo(({
         },
         gray: {
             selectedBorder: 'border-shell-muted-strong ring-1 ring-shell-muted-strong/30',
-            baseBorder: 'border-shell-border/70',
+            baseBorder: 'border-shell-node-card-divider',
             hoverBorder: 'hover:border-shell-muted-strong/70',
             text: 'text-shell-text',
             iconColor: 'text-shell-muted-strong',
@@ -101,7 +101,7 @@ export const StudioCard = memo(({
                 onClick?.(e);
             }}
             className={cn(
-                "flex flex-col gap-0 rounded-md border transition-all z-20 relative cursor-pointer nodrag group bg-shell-bg",
+                "flex flex-col gap-0 rounded-md border transition-all z-20 relative cursor-pointer nodrag group bg-shell-node-card-surface",
                 selected ? activeTheme.selectedBorder : `${activeTheme.baseBorder} ${activeTheme.hoverBorder}`,
                 className
             )}
@@ -120,7 +120,7 @@ export const StudioCard = memo(({
             <div className={cn("flex flex-col w-full h-full rounded-[inherit]", overflowVisible ? "overflow-visible" : "overflow-hidden")}>
                 {/* Header - Only show if NOT a placeholder */}
                 {!isPlaceholder && (
-                    <div className="flex items-center gap-2 p-3 pb-2 border-b border-shell-border-subtle bg-shell-bg rounded-t-[inherit]">
+                    <div className="flex items-center gap-2 p-3 pb-2 border-b border-shell-node-card-divider bg-shell-node-card-surface rounded-t-[inherit]">
                         {icon && (
                             <span className={cn("flex-shrink-0", selected ? activeTheme.selectedIconColor : activeTheme.iconColor)}>
                                 {icon}
@@ -133,7 +133,7 @@ export const StudioCard = memo(({
                 )}
 
                 {/* Body */}
-                <div className={cn("w-full p-3 bg-shell-bg", !isPlaceholder && "pt-2")}>
+                <div className={cn("w-full p-3 bg-shell-node-card-surface", !isPlaceholder && "pt-2")}>
                     {isPlaceholder ? (
                         <div className="flex items-center gap-2">
                             {icon && (

@@ -1,4 +1,4 @@
-import { memo, forwardRef } from 'react';
+import { memo, forwardRef, type MouseEvent } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { CircleDashed, Check } from 'lucide-react';
 import { Component } from '../../../studio/types';
@@ -13,7 +13,7 @@ interface SimpleComponentCardProps {
     display: { icon: JSX.Element; label: string; detail?: string };
     isSelected: boolean;
     readOnly?: boolean;
-    onClick: () => void;
+    onClick: (event: MouseEvent<HTMLDivElement>) => void;
     onHandleClick?: (
         handleId: string,
         handleEl?: HTMLElement | null,

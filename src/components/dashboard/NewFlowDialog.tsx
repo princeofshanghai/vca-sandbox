@@ -39,7 +39,7 @@ export function NewFlowDialog({ onCreateFlow, onClose }: NewFlowDialogProps) {
 
     return (
         <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-[320px] p-shell-0 gap-shell-0 border-shell-border-subtle shadow-shell-lg bg-shell-bg overflow-hidden" hideClose>
+            <DialogContent className="max-w-[320px] p-shell-0 gap-shell-0 border-shell-border shadow-shell-lg bg-shell-bg dark:bg-shell-surface overflow-hidden" hideClose>
                 <div className="px-shell-5 pt-shell-5">
                     <DialogHeader className="mb-shell-4">
                         <DialogTitle className="text-sm font-semibold text-shell-text">
@@ -86,7 +86,7 @@ export function NewFlowDialog({ onCreateFlow, onClose }: NewFlowDialogProps) {
                     </div>
                 </div>
 
-                <DialogFooter className="p-shell-4 bg-shell-surface-subtle border-t border-shell-border-subtle flex flex-row justify-end gap-shell-1 sm:space-x-0">
+                <DialogFooter className="p-shell-4 border-t border-shell-border-subtle flex flex-row justify-end gap-shell-1 sm:space-x-0">
                     <ShellButton
                         size="compact"
                         variant="outline"

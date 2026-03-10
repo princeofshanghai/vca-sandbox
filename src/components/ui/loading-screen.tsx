@@ -34,7 +34,7 @@ export const LoadingScreen = ({ className, fullScreen = false }: LoadingScreenPr
             <div className="flex flex-col items-center gap-6">
                 {/* Logo */}
                 <div className="relative">
-                    <VcaLogo className="h-8 block pointer-events-none select-none" />
+                    <VcaLogo autoInvertInDark className="h-8 block pointer-events-none select-none" />
                 </div>
 
                 {/* Loading Line */}

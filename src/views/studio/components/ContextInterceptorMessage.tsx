@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { Branch } from '@/views/studio/types';
 import { Split } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { cn } from '@/utils/cn';
+import { ShellButton, ShellInput } from '@/components/shell';
 
 interface ContextInterceptorMessageProps {
     variableName: string;
@@ -59,7 +58,7 @@ export function ContextInterceptorMessage({
                     {pathChoices.length > 0 && (
                         <div className="max-h-[220px] space-y-2 overflow-y-auto pr-1 thin-scrollbar">
                             {pathChoices.map(({ id, value, pathLabel, ruleVariable, ruleValue, isDefault }) => (
-                                <Button
+                                <ShellButton
                                     key={id}
                                     variant="outline"
                                     onClick={() => onResolve(value)}
@@ -80,32 +79,34 @@ export function ContextInterceptorMessage({
                                             </span>
                                         )}
                                     </span>
-                                </Button>
+                                </ShellButton>
                             ))}
                         </div>
                     )}
 
                     {shouldShowInputFirst && (
                         <div className="flex gap-2 animate-in fade-in zoom-in-95">
-                            <Input
+                            <ShellInput
                                 autoFocus
+                                size="compact"
                                 value={customValue}
                                 onChange={(e) => setCustomValue(e.target.value)}
                                 placeholder={`Type a value for ${variableName}`}
-                                className="h-7 border-shell-border bg-shell-bg text-xs text-shell-text placeholder:text-shell-muted focus-visible:border-shell-node-condition focus-visible:ring-shell-node-condition/20"
+                                className="text-xs focus-visible:border-shell-node-condition focus-visible:ring-shell-node-condition/20"
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter' && customValue.trim()) {
                                         onResolve(customValue.trim());
                                     }
                                 }}
                             />
-                            <Button
-                                size="sm"
+                            <ShellButton
+                                size="compact"
+                                variant="outline"
                                 onClick={() => customValue.trim() && onResolve(customValue.trim())}
-                                className="h-7 border border-shell-node-condition/50 bg-shell-bg px-3 text-xs text-shell-text hover:bg-shell-surface"
+                                className="border-shell-node-condition/50 bg-shell-bg px-3 text-xs text-shell-text hover:bg-shell-surface"
                             >
                                 Continue
-                            </Button>
+                            </ShellButton>
                         </div>
                     )}
                 </div>

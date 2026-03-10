@@ -109,9 +109,9 @@ export const NoteNode = memo(({ id, data, selected }: NodeProps) => {
 
     return (
         <div
-            className={`bg-yellow-50 rounded-lg border shadow-sm w-[300px] transition-colors relative group ${selected
-                ? 'border-yellow-400 ring-1 ring-yellow-400'
-                : 'border-yellow-200 hover:border-yellow-300'
+            className={`bg-shell-note-surface rounded-lg border shadow-sm w-[300px] transition-colors relative group ${selected
+                ? 'border-shell-node-note ring-1 ring-shell-node-note'
+                : 'border-shell-note-border hover:border-shell-node-note/75'
                 }`}
         >
             {/* Node Label - Above the card */}
@@ -121,7 +121,7 @@ export const NoteNode = memo(({ id, data, selected }: NodeProps) => {
                     transform: `scale(${scale})`,
                 }}
             >
-                <StickyNote size={14} className="text-yellow-600 flex-shrink-0" fill="currentColor" />
+                <StickyNote size={14} className="text-shell-node-note flex-shrink-0" fill="currentColor" />
 
                 {isEditingLabel ? (
                     <input
@@ -131,13 +131,15 @@ export const NoteNode = memo(({ id, data, selected }: NodeProps) => {
                         onChange={(e) => setEditedLabel(e.target.value)}
                         onBlur={handleLabelSave}
                         onKeyDown={handleLabelKeyDown}
-                        className="w-full h-full text-xs font-medium text-shell-text bg-transparent border border-yellow-500 rounded px-1 outline-none nodrag"
+                        className="w-full h-full text-xs font-medium text-shell-text bg-transparent border border-shell-node-note rounded px-1 outline-none nodrag"
                         onClick={(e) => e.stopPropagation()}
                         readOnly={typedData.readOnly}
                     />
                 ) : (
                     <div
-                        className={`w-full h-full flex items-center text-xs font-medium truncate rounded transition-colors ${typedData.readOnly ? 'cursor-default text-shell-muted-strong' : 'cursor-text'} ${!typedData.label ? 'text-shell-muted' : 'text-shell-muted-strong hover:text-shell-text'}`}
+                        className={`w-full h-full flex items-center text-xs font-medium truncate rounded transition-colors ${
+                            typedData.readOnly ? 'cursor-default text-shell-muted-strong' : 'cursor-text'
+                        } ${!typedData.label ? 'text-shell-muted' : 'text-shell-text hover:text-shell-text'}`}
                         onClick={(e) => {
                             e.stopPropagation();
                             if (typedData.readOnly) return;
@@ -158,7 +160,7 @@ export const NoteNode = memo(({ id, data, selected }: NodeProps) => {
                     onChange={handleContentChange}
                     onBlur={handleContentBlur}
                     placeholder="Write a note..."
-                    className="w-full bg-transparent border-none resize-none outline-none text-sm text-shell-muted-strong placeholder-yellow-800/30 leading-relaxed overflow-hidden min-h-[80px] nodrag"
+                    className="w-full bg-transparent border-none resize-none outline-none text-sm text-shell-note-text placeholder:text-shell-note-placeholder leading-relaxed overflow-hidden min-h-[80px] nodrag"
                     spellCheck={false}
                     rows={1}
                     readOnly={typedData.readOnly}

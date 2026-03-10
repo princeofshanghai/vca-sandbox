@@ -1,10 +1,10 @@
 import { cn } from '@/utils/cn';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Globe, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { Flow } from '../../studio/types';
 import { supabase } from '@/lib/supabase';
+import { ShellButton, ShellIconButton } from '@/components/shell';
 
 type ShareLinkType = 'prototype' | 'studio';
 
@@ -72,16 +72,18 @@ export function ShareDialog({
             <DialogTrigger asChild>
                 {children}
             </DialogTrigger>
-            <DialogContent hideClose className="sm:max-w-[420px] p-0 gap-0 overflow-hidden bg-shell-bg border-shell-border shadow-2xl rounded-xl">
+            <DialogContent hideClose className="sm:max-w-[420px] p-0 gap-0 overflow-hidden bg-shell-bg dark:bg-shell-surface border-shell-border shadow-2xl rounded-xl">
                 <DialogHeader className="p-3 px-4 border-b border-shell-border flex flex-row items-center justify-between gap-4 h-[52px]">
                     <DialogTitle className="text-[14px] font-medium text-shell-text shrink-0">{title}</DialogTitle>
 
-                    <DialogClose className="h-8 w-8 -mr-1 rounded-md flex items-center justify-center text-shell-muted hover:text-shell-text transition-colors focus:outline-none">
-                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 4L4 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M4 4L12 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                        <span className="sr-only">Close</span>
+                    <DialogClose asChild>
+                        <ShellIconButton aria-label="Close share dialog" className="-mr-1">
+                            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 4L4 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                                <path d="M4 4L12 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                            <span className="sr-only">Close</span>
+                        </ShellIconButton>
                     </DialogClose>
                 </DialogHeader>
 
@@ -104,7 +106,7 @@ export function ShareDialog({
                 </div>
 
                 {/* Footer */}
-                <div className="p-3 px-4 border-t border-shell-border bg-shell-surface-subtle">
+                <div className="p-3 px-4 border-t border-shell-border">
                     <div className="flex flex-col gap-2">
                         {enabledLinkTypes.map((linkType, index) => {
                             const isCopying = copyingType === linkType;
@@ -112,16 +114,18 @@ export function ShareDialog({
                             const isPrimary = index === 0;
 
                             return (
-                                <Button
+                                <ShellButton
                                     key={linkType}
+                                    size="sm"
+                                    variant={isPrimary || isCopied ? 'default' : 'outline'}
                                     onClick={() => void handleCopyLink(linkType)}
                                     className={cn(
-                                        "w-full shadow-sm font-medium transition-all text-[13px] h-9",
+                                        "w-full shadow-sm transition-all text-[13px] h-9",
                                         isCopied
                                             ? "bg-green-600 hover:bg-green-700 text-white"
                                             : isPrimary
-                                                ? "bg-shell-accent hover:bg-shell-accent-hover text-white"
-                                                : "bg-shell-bg hover:bg-shell-surface text-shell-muted-strong border border-shell-border"
+                                                ? ""
+                                                : "text-shell-muted-strong"
                                     )}
                                 >
                                     {isCopying ? (
@@ -130,7 +134,7 @@ export function ShareDialog({
                                     {isCopied
                                         ? getSuccessButtonLabel(linkType)
                                         : (linkLabelOverrides?.[linkType] || getIdleButtonLabel(linkType))}
-                                </Button>
+                                </ShellButton>
                             );
                         })}
                     </div>

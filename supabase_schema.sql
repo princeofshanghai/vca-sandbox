@@ -112,7 +112,9 @@ create index if not exists flow_comments_status_idx on public.flow_comments(stat
 create index if not exists flow_comments_created_at_idx on public.flow_comments(created_at);
 
 alter table public.flow_comments enable row level security;
-grant select, insert, update on public.flow_comments to anon, authenticated;
+revoke insert, update, delete on public.flow_comments from anon;
+grant select on public.flow_comments to anon, authenticated;
+grant insert, update, delete on public.flow_comments to authenticated;
 
 drop policy if exists "Anyone can view comments on accessible flows" on public.flow_comments;
 create policy "Anyone can view comments on accessible flows"
@@ -145,24 +147,48 @@ create policy "Signed-in users can insert comments on accessible flows"
 
 drop policy if exists "Anyone can update comments on accessible flows" on public.flow_comments;
 drop policy if exists "Signed-in users can update comments on accessible flows" on public.flow_comments;
-create policy "Signed-in users can update comments on accessible flows"
+drop policy if exists "Authors and flow owners can update comments" on public.flow_comments;
+create policy "Authors and flow owners can update comments"
   on public.flow_comments
   for update
   using (
-    exists (
-      select 1
-      from public.flows f
-      where f.id = flow_comments.flow_id
-        and (f.is_public = true or f.user_id = auth.uid())
+    auth.uid() is not null
+    and (
+      flow_comments.author_user_id = auth.uid()
+      or exists (
+        select 1
+        from public.flows f
+        where f.id = flow_comments.flow_id
+          and f.user_id = auth.uid()
+      )
     )
-    and auth.uid() is not null
   )
   with check (
-    exists (
-      select 1
-      from public.flows f
-      where f.id = flow_comments.flow_id
-        and (f.is_public = true or f.user_id = auth.uid())
+    auth.uid() is not null
+    and (
+      flow_comments.author_user_id = auth.uid()
+      or exists (
+        select 1
+        from public.flows f
+        where f.id = flow_comments.flow_id
+          and f.user_id = auth.uid()
+      )
     )
-    and auth.uid() is not null
+  );
+
+drop policy if exists "Authors and flow owners can delete comments" on public.flow_comments;
+create policy "Authors and flow owners can delete comments"
+  on public.flow_comments
+  for delete
+  using (
+    auth.uid() is not null
+    and (
+      flow_comments.author_user_id = auth.uid()
+      or exists (
+        select 1
+        from public.flows f
+        where f.id = flow_comments.flow_id
+          and f.user_id = auth.uid()
+      )
+    )
   );

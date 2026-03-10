@@ -256,7 +256,7 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
             />
 
             {/* Wrapper for branch rows */}
-            <div className={`w-full h-full px-6 py-8 ${conditionSurfaceClassName} rounded-lg`}>
+            <div className={`w-full h-full px-7 py-9 ${conditionSurfaceClassName} rounded-lg`}>
                 <DndContext
                     sensors={sensors}
                     collisionDetection={closestCenter}
@@ -265,7 +265,7 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
                     onDragEnd={handleDragEnd}
                 >
                     <SortableContext items={branchIds} strategy={verticalListSortingStrategy}>
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-3">
                             {branches.map((branch) => (
                                 <SortableBranchRow
                                     key={branch.id}

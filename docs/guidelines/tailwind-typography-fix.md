@@ -48,6 +48,16 @@ Apply this pattern when:
 - ✅ Typography token is being removed by tailwind-merge
 - ✅ Inspecting element shows missing typography classes
 
+## Preview-Specific Reminder
+
+This issue can also show up even when `cn()` is not stripping classes.
+
+In shell previews, global shell element styles for tags like `p` and `strong` can still leak into nested VCA markdown content. When rendering markdown for VCA components:
+- apply VCA typography and VCA color classes on the wrapper
+- also reassert the correct VCA classes on inner rendered elements like `p`, `strong`, `b`, and `li`
+
+Do not rely on the wrapper alone if the content is rendered into real HTML tags.
+
 ## Still Best Practice?
 
 **Yes!** This solution:
@@ -70,4 +80,3 @@ Without the font family class, text will inherit the app's default font (Geist) 
 - Line-heights converted to unitless values (1.25, 1.5) in `tailwind.config.js`
 - Typography tokens must be used with explicit font-family classes
 - Cached CSS requires `rm -rf dist/` when changing Tailwind config
-

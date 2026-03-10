@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState, type MouseEvent } from 'react';
 import { useUpdateNodeInternals } from '@xyflow/react';
 import {
     closestCenter,
@@ -16,7 +16,6 @@ import {
     verticalListSortingStrategy
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Component as ComponentIcon } from 'lucide-react';
 import { Component } from '../../../studio/types';
 import { SimpleComponentCard } from './SimpleComponentCard';
 import { getComponentDisplay } from '../utils/turnNodeUtils';
@@ -55,12 +54,18 @@ class CardPointerSensor extends DndPointerSensor {
 interface TurnNodeComponentListProps {
     nodeId: string;
     components: Component[];
-    selectedComponentId?: string;
+    selectedComponentIds?: string[];
+    openComponentId?: string;
     entryPoint?: string;
     isAiTurn?: boolean;
     readOnly?: boolean;
     surfaceClassName?: string;
-    onSelectComponent?: (nodeId: string, componentId: string, anchorEl: HTMLElement) => void;
+    onSelectComponent?: (
+        nodeId: string,
+        componentId: string,
+        anchorEl: HTMLElement,
+        options?: { appendToSelection?: boolean }
+    ) => void;
     onDeselect?: () => void;
     onComponentUpdate?: (nodeId: string, componentId: string, updates: Partial<Component>) => void;
     onComponentReorder?: (nodeId: string, activeComponentId: string, overComponentId: string) => void;
@@ -76,9 +81,15 @@ interface ComponentRowProps {
     nodeId: string;
     component: Component;
     isSelected: boolean;
+    isOpen: boolean;
     entryPoint?: string;
     readOnly?: boolean;
-    onSelectComponent?: (nodeId: string, componentId: string, anchorEl: HTMLElement) => void;
+    onSelectComponent?: (
+        nodeId: string,
+        componentId: string,
+        anchorEl: HTMLElement,
+        options?: { appendToSelection?: boolean }
+    ) => void;
     onDeselect?: () => void;
     onComponentUpdate?: (nodeId: string, componentId: string, updates: Partial<Component>) => void;
     onQuickCreateFromHandle?: (
@@ -94,6 +105,7 @@ const ComponentRow = memo(({
     nodeId,
     component,
     isSelected,
+    isOpen,
     entryPoint,
     readOnly = false,
     onSelectComponent,
@@ -104,20 +116,24 @@ const ComponentRow = memo(({
 }: ComponentRowProps) => {
     const display = useMemo(() => getComponentDisplay(component), [component]);
 
-    const handleClick = useCallback(() => {
+    const handleClick = useCallback((event: MouseEvent<HTMLDivElement>) => {
         // Ignore click right after dragging so we don't accidentally open the editor popover.
         if (Date.now() - lastDragAt < 180) {
             return;
         }
-        const el = document.getElementById(`component-${component.id}`);
-        onSelectComponent?.(nodeId, component.id, el || document.body);
+        onSelectComponent?.(
+            nodeId,
+            component.id,
+            event.currentTarget as HTMLElement,
+            { appendToSelection: event.shiftKey }
+        );
     }, [component.id, lastDragAt, nodeId, onSelectComponent]);
 
     const handleOpenChange = useCallback((open: boolean) => {
-        if (!open && isSelected) {
+        if (!open && isOpen) {
             onDeselect?.();
         }
-    }, [isSelected, onDeselect]);
+    }, [isOpen, onDeselect]);
 
     const handleComponentChange = useCallback((updates: Record<string, unknown>) => {
         if (readOnly) return;
@@ -140,7 +156,7 @@ const ComponentRow = memo(({
             <MessageEditor
                 component={component}
                 onChange={handleComponentChange}
-                isOpen={isSelected}
+                isOpen={isOpen}
                 onOpenChange={handleOpenChange}
                 readOnly={readOnly}
             >
@@ -155,7 +171,7 @@ const ComponentRow = memo(({
                 component={component}
                 entryPoint={entryPoint}
                 onChange={handleComponentChange}
-                isOpen={isSelected}
+                isOpen={isOpen}
                 onOpenChange={handleOpenChange}
                 readOnly={readOnly}
             >
@@ -169,7 +185,7 @@ const ComponentRow = memo(({
             <InfoMessageEditor
                 component={component}
                 onChange={handleComponentChange}
-                isOpen={isSelected}
+                isOpen={isOpen}
                 onOpenChange={handleOpenChange}
                 readOnly={readOnly}
             >
@@ -183,7 +199,7 @@ const ComponentRow = memo(({
             <StatusCardEditor
                 component={component}
                 onChange={handleComponentChange}
-                isOpen={isSelected}
+                isOpen={isOpen}
                 onOpenChange={handleOpenChange}
                 readOnly={readOnly}
             >
@@ -197,7 +213,7 @@ const ComponentRow = memo(({
             <SelectionListEditor
                 component={component}
                 onChange={handleComponentChange}
-                isOpen={isSelected}
+                isOpen={isOpen}
                 onOpenChange={handleOpenChange}
                 readOnly={readOnly}
             >
@@ -211,7 +227,7 @@ const ComponentRow = memo(({
             <ConfirmationCardEditor
                 component={component}
                 onChange={handleComponentChange}
-                isOpen={isSelected}
+                isOpen={isOpen}
                 onOpenChange={handleOpenChange}
                 readOnly={readOnly}
             >
@@ -225,7 +241,7 @@ const ComponentRow = memo(({
             <CheckboxGroupEditor
                 component={component}
                 onChange={handleComponentChange}
-                isOpen={isSelected}
+                isOpen={isOpen}
                 onOpenChange={handleOpenChange}
                 readOnly={readOnly}
             >
@@ -275,7 +291,8 @@ SortableComponentRow.displayName = 'SortableComponentRow';
 export const TurnNodeComponentList = ({
     nodeId,
     components,
-    selectedComponentId,
+    selectedComponentIds = [],
+    openComponentId,
     entryPoint,
     isAiTurn = false,
     readOnly = false,
@@ -289,6 +306,7 @@ export const TurnNodeComponentList = ({
     const [lastDragAt, setLastDragAt] = useState(0);
     const canReorder = !readOnly && components.length > 1;
     const showEmptyStateText = isAiTurn && components.length === 0;
+    const isEmptyState = showEmptyStateText;
     const updateNodeInternals = useUpdateNodeInternals();
 
     const sensors = useSensors(
@@ -342,8 +360,18 @@ export const TurnNodeComponentList = ({
         setLastDragAt(Date.now());
     }, []);
 
+    if (isEmptyState) {
+        return (
+            <div className={`w-full rounded-lg overflow-visible ${surfaceClassName}`}>
+                <div className="pointer-events-none select-none px-4 py-3 text-sm text-shell-muted">
+                    No components yet
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div className={`px-5 pb-5 pt-5 space-y-3 ${surfaceClassName} rounded-lg overflow-visible`}>
+        <div className={`px-7 py-9 ${surfaceClassName} rounded-lg overflow-visible`}>
             <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
@@ -352,15 +380,7 @@ export const TurnNodeComponentList = ({
                 onDragEnd={readOnly ? undefined : handleDragEnd}
             >
                 <SortableContext items={componentIds} strategy={verticalListSortingStrategy}>
-                    <div className="flex flex-col gap-3">
-                        {showEmptyStateText && (
-                            <div className="pointer-events-none select-none flex items-center gap-2 py-1 text-sm text-shell-muted">
-                                <span className="flex items-center text-shell-muted">
-                                    <ComponentIcon className="w-4 h-4" />
-                                </span>
-                                <span>No components yet</span>
-                            </div>
-                        )}
+                    <div className="flex flex-col gap-5">
                         {components.map((component: Component) => (
                             <SortableComponentRow
                                 key={component.id}
@@ -370,7 +390,8 @@ export const TurnNodeComponentList = ({
                                 <ComponentRow
                                     nodeId={nodeId}
                                     component={component}
-                                    isSelected={selectedComponentId === component.id}
+                                    isSelected={selectedComponentIds.includes(component.id)}
+                                    isOpen={openComponentId === component.id}
                                     entryPoint={entryPoint}
                                     readOnly={readOnly}
                                     onSelectComponent={onSelectComponent}

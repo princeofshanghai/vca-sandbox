@@ -1,107 +1,23 @@
-# UI/UX Shared Context (Designer + Codex)
+# UI/UX Shared Context
 
-## Why this exists
-Use this doc as our shared reference for UI/UX work in VCA Sandbox.
-When you want to activate this context, mention:
-`@docs/context/ui-ux-shared-context.md`
+This file is intentionally brief.
+Its job is to explain the product layers and point shell UI work to the right source of truth.
 
-## Project in one sentence
-VCA Sandbox is a design tool where the app shell helps you build flows, and VCA components render the realistic chat experience being designed.
+For shell UI requests, always point Codex to:
+`@docs/guidelines/shell-design-system.md`
 
-## Tech stack (plain language)
-- Frontend app: React + TypeScript + Vite
-- Routing/auth flow: React Router + protected routes
-- Styling system: Tailwind + Radix/shadcn-style primitives
-- Design system tokens: generated VCA tokens wired into Tailwind
-- Flow builder: XYFlow/React Flow canvas
-- Backend/auth: Supabase
+## Project in One Sentence
+VCA Sandbox is a design tool where shell UI helps create flows, and VCA components render the realistic end-user experience being designed.
 
-## Two UI layers to keep separate
+## Two UI Layers
+- Shell UI = the tool interface: navigation, drawers, dialogs, canvas controls, dashboard, Share/Login chrome, and editor surfaces.
+- VCA UI = the experience being designed: messages, prompt groups, info states, and other chat/product components in `src/components/vca-components`.
 
-### 1) Project Shell UI (tool interface)
-What this is:
-- The app framework around the product preview: navigation, sidebars, dashboard, dialogs, canvas controls, editor UI.
+## Core Rule
+- Keep shell UI and VCA UI visually separate.
+- When both appear on the same screen, shell chrome follows the shell design system and VCA internals keep VCA tokens, typography, and behavior.
 
-Where it mostly lives:
-- `src/components/layout`
-- `src/components/ui`
-- `src/views/dashboard`
-- `src/views/studio-canvas`
-
-### 2) VCA Components (chat product interface)
-What this is:
-- The actual chat building blocks (Message, PromptGroup, InfoMessage, Container, etc.) that represent the experience end users would see.
-
-Where it mostly lives:
-- `src/components/vca-components`
-
-## How they connect
-1. Shell UI lets you create/edit flow structure and behavior.
-2. Flow data is passed into preview.
-3. Preview renders with VCA components.
-4. Component Library pages also demonstrate those same VCA components.
-
-## Design system rules we should always enforce
-- Prefer reusable, componentized solutions over one-off custom code.
-- Keep shell patterns consistent with existing shell UI.
-- Keep VCA component visuals aligned with design tokens and existing component behavior.
-- When proposing UX/UI changes, provide 2-3 options, explain tradeoffs, and recommend one.
-- For shell controls, prefer `src/components/shell` first, then `src/components/ui`.
-- Reference: `docs/guidelines/shell-design-system.md`
-- In shell surfaces, avoid raw HTML controls (`button`, `input`, `select`, `textarea`).
-- For shell styling, prefer `shell-*` semantic tokens over raw palette classes when possible.
-- For cinematic dark shell contexts, prefer `shell-dark-*` semantic tokens over raw dark palette values.
-- For shell/page chrome and docs surfaces, avoid hardcoded light classes like `bg-white`, `text-gray-*`, and `border-gray-*`.
-
-## Dark theme intent (current)
-- Overall look: neutral graphite (very dark, low blue tint in surfaces).
-- Brand/action color: restrained blue (used mostly for primary actions and active states).
-- Borders in dark: intentionally subtle (not bright) to keep the UI calm.
-- Always-cinematic dark contexts:
-  - Login
-  - Share
-
-## Important implementation gotcha (Tailwind typography)
-- `cn()` uses `tailwind-merge`, which can drop one of two `text-*` classes.
-- VCA typography tokens and VCA color tokens can conflict if both are passed through `cn()`.
-- Safe pattern: split typography + color classes with direct string concatenation.
-- Always include explicit VCA font family (`font-vca-text` or `font-vca-display`) with typography tokens.
-- Reference: `docs/guidelines/tailwind-typography-fix.md`
-
-## Collaboration mode for non-trivial UI/UX requests
-Before coding, we do this:
-1. Analyze request and inspect relevant files.
-2. Restate understanding in plain English.
-3. Propose approach, alternatives, and tradeoffs.
-4. Wait for your explicit confirmation.
-5. Then implement.
-
-Non-trivial usually means:
-- Multi-file changes
-- Structural/risky refactors
-- Changes with meaningful UX behavior impact
-- Unclear or ambiguous requirements
-
-## Prompt anti-drift reminders
-- For shell UI requests, default to shell components + shell tokens.
-- If existing pages use mixed hardcoded colors and shell tokens, normalize to shell tokens first.
-- Keep VCA component visual language separate from shell visual language.
-- Do not let broad shell typography selectors style VCA internals in mixed surfaces (for example, Component Library pages that render VCA components inside shell layouts).
-- VCA component text and heading elements should use explicit VCA font classes (`font-vca-text` or `font-vca-display`) when needed to prevent font leakage.
-- Reference for enforcement details: `docs/guidelines/shell-design-system.md`
-
-## UI QA checklist (for changes)
-1. Check light and dark theme.
-2. Check default, hover, active, focus, disabled states.
-3. Check CTA readability and muted text contrast.
-4. Check border/subtle surface intensity in dark mode.
-5. In Component Library pages, verify VCA component typography does not inherit shell Community Pro heading styles unless intentionally shell content.
-
-## Quick request template (optional)
-Use this when you want fast, high-quality collaboration:
-- Goal:
-- Screen/view:
-- What should change visually:
-- Behavior/interaction states:
-- Must keep:
-- Nice to have:
+## If You Are Prompting Codex
+- For shell UI quality, consistency, and dark-theme behavior, use `docs/guidelines/shell-design-system.md`.
+- For project goals and product context, use `docs/context/project-overview.md`.
+- For VCA typography merge issues, use `docs/guidelines/tailwind-typography-fix.md`.

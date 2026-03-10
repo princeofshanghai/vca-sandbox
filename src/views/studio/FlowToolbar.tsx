@@ -3,13 +3,15 @@ import { Download, Upload, Settings } from 'lucide-react';
 import { Flow } from './types';
 import { useRef } from 'react';
 import {
-    DropdownMenu,
-    DropdownMenuCheckboxItem,
-    DropdownMenuContent,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+    ShellButton,
+    ShellIconButton,
+    ShellMenu,
+    ShellMenuCheckboxItem,
+    ShellMenuContent,
+    ShellMenuLabel,
+    ShellMenuSeparator,
+    ShellMenuTrigger,
+} from '@/components/shell';
 
 interface FlowToolbarProps {
     flow: Flow;
@@ -86,64 +88,70 @@ export const FlowToolbar = ({ flow, onLoadFlow, onUpdateFlow, isPremium, onToggl
             />
 
 
-            <button
+            <ShellIconButton
                 onClick={handleImportClick}
-                className="p-2 text-shell-muted hover:text-shell-accent hover:bg-shell-accent-soft rounded-md transition-colors"
+                variant="ghost"
+                className="text-shell-muted hover:text-shell-accent hover:bg-shell-accent-soft"
                 title="Import JSON"
+                aria-label="Import JSON"
             >
                 <Upload size={18} />
-            </button>
-            <button
+            </ShellIconButton>
+            <ShellIconButton
                 onClick={handleExport}
-                className="p-2 text-shell-muted hover:text-shell-accent hover:bg-shell-accent-soft rounded-md transition-colors"
+                variant="ghost"
+                className="text-shell-muted hover:text-shell-accent hover:bg-shell-accent-soft"
                 title="Export JSON"
+                aria-label="Export JSON"
             >
                 <Download size={18} />
-            </button>
+            </ShellIconButton>
 
             <div className="w-px h-6 bg-shell-border mx-1"></div>
 
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <button
-                        className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-shell-muted-strong bg-shell-bg border border-shell-border rounded-lg hover:bg-shell-surface transition-colors shadow-sm"
+            <ShellMenu>
+                <ShellMenuTrigger asChild>
+                    <ShellButton
+                        variant="outline"
+                        size="sm"
+                        className="h-8 gap-2 px-3 text-xs text-shell-muted-strong shadow-sm"
                         title="Display Settings"
                     >
                         <Settings size={16} />
                         <span>Display</span>
-                    </button>
-                </DropdownMenuTrigger>
+                    </ShellButton>
+                </ShellMenuTrigger>
 
-                <DropdownMenuContent align="end" sideOffset={8} className="min-w-[260px]">
-                    <DropdownMenuLabel className="mb-1 text-xs font-semibold uppercase tracking-wider text-shell-muted">
+                <ShellMenuContent align="end" sideOffset={8} className="min-w-[260px]">
+                    <ShellMenuLabel className="mb-1 text-xs font-semibold uppercase tracking-wider text-shell-muted">
                         Display settings
-                    </DropdownMenuLabel>
+                    </ShellMenuLabel>
 
-                    <DropdownMenuCheckboxItem
+                    <ShellMenuCheckboxItem
                         checked={settings.showDisclaimer}
                         onCheckedChange={() => toggleSetting('showDisclaimer')}
                     >
                         <span>Show Disclaimer</span>
-                    </DropdownMenuCheckboxItem>
+                    </ShellMenuCheckboxItem>
 
-                    <DropdownMenuCheckboxItem
+                    <ShellMenuCheckboxItem
                         checked={settings.simulateThinking}
                         onCheckedChange={() => toggleSetting('simulateThinking')}
                     >
                         <span>Simulate Thinking</span>
-                    </DropdownMenuCheckboxItem>
+                    </ShellMenuCheckboxItem>
 
-                    <DropdownMenuSeparator />
+                    <ShellMenuSeparator />
 
-                    <DropdownMenuCheckboxItem checked={isMobile} onCheckedChange={onToggleMobile}>
+                    <ShellMenuCheckboxItem checked={isMobile} onCheckedChange={onToggleMobile}>
                         <span>View as Mobile</span>
-                    </DropdownMenuCheckboxItem>
+                    </ShellMenuCheckboxItem>
 
-                    <DropdownMenuCheckboxItem checked={isPremium} onCheckedChange={onTogglePremium}>
+                    <ShellMenuCheckboxItem checked={isPremium} onCheckedChange={onTogglePremium}>
                         <span>View as LinkedIn Premium member</span>
-                    </DropdownMenuCheckboxItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
+                    </ShellMenuCheckboxItem>
+                </ShellMenuContent>
+            </ShellMenu>
         </div>
     );
 };

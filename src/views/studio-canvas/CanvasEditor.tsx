@@ -28,7 +28,6 @@ import { SelectionState } from './types';
 import { ContextToolbar } from './components/ContextToolbar';
 import { FloatingToolbar } from './components/FloatingToolbar';
 import { ZoomControls } from './components/ZoomControls';
-import { Button } from '@/components/ui/button';
 import { ActionTooltip } from './components/ActionTooltip';
 import {
     ConnectionLine,
@@ -44,12 +43,14 @@ import {
 import { ShareDialog } from '../studio/components/ShareDialog';
 import { ArrowLeft, Play, PanelRightOpen, ExternalLink, Download } from 'lucide-react';
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-    DropdownMenuSeparator
-} from '@/components/ui/dropdown-menu';
+    ShellButton,
+    ShellIconButton,
+    ShellMenu,
+    ShellMenuContent,
+    ShellMenuItem,
+    ShellMenuSeparator,
+    ShellMenuTrigger,
+} from '@/components/shell';
 
 
 // Register custom node types
@@ -182,7 +183,9 @@ const getQuickAddPreviewVariant = (type: QuickAddNodeType | null): ConnectionPre
 type ClipboardNodeStep = Turn | UserTurn | Condition | Note;
 type CanvasClipboardPayload =
     | { type: 'node'; step: ClipboardNodeStep; pasteCount: number }
+    | { type: 'nodes'; steps: ClipboardNodeStep[]; pasteCount: number }
     | { type: 'component'; component: Component }
+    | { type: 'components'; components: Component[] }
     | { type: 'branch'; branch: Branch };
 
 const cloneValue = <T,>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
@@ -267,6 +270,51 @@ const cloneNodeStepForPaste = (step: ClipboardNodeStep, pasteCount: number): Cli
     };
 };
 
+const cloneNodeStepsForPaste = (steps: ClipboardNodeStep[], pasteCount: number): ClipboardNodeStep[] =>
+    steps.map((step) => cloneNodeStepForPaste(step, pasteCount));
+
+const areStringArraysEqual = (left: string[] | undefined, right: string[] | undefined): boolean => {
+    if (left === right) {
+        return true;
+    }
+    if (!left || !right || left.length !== right.length) {
+        return false;
+    }
+    return left.every((value, index) => value === right[index]);
+};
+
+const getSingleSelectedNodeId = (selection: SelectionState | null): string | null => {
+    if (!selection) {
+        return null;
+    }
+
+    if (selection.type === 'node') {
+        return selection.nodeId;
+    }
+
+    if (selection.type === 'nodes' && selection.nodeIds.length === 1) {
+        return selection.nodeIds[0];
+    }
+
+    return null;
+};
+
+const getSelectionNodeIds = (selection: SelectionState | null): string[] => {
+    if (!selection) {
+        return [];
+    }
+
+    if (selection.type === 'node') {
+        return [selection.nodeId];
+    }
+
+    if (selection.type === 'nodes') {
+        return selection.nodeIds;
+    }
+
+    return [selection.nodeId];
+};
+
 export function CanvasEditor(props: CanvasEditorProps) {
     return (
         <ReactFlowProvider>
@@ -291,6 +339,7 @@ function CanvasEditorInner({
     const [selection, setSelection] = useState<SelectionState | null>(null);
     const [selectionAnchorEl, setSelectionAnchorEl] = useState<HTMLElement | null>(null);
     const [pendingAutoOpenAddComponentNodeId, setPendingAutoOpenAddComponentNodeId] = useState<string | null>(null);
+    const [pendingReactFlowSelectedNodeIds, setPendingReactFlowSelectedNodeIds] = useState<string[] | null>(null);
 
     const selectionRef = useRef<SelectionState | null>(selection);
     const flowRef = useRef(flow);
@@ -321,6 +370,11 @@ function CanvasEditorInner({
     useEffect(() => {
         selectionRef.current = selection;
     }, [selection]);
+
+    const setCanvasSelection = useCallback((nextSelection: SelectionState | null) => {
+        selectionRef.current = nextSelection;
+        setSelection(nextSelection);
+    }, []);
 
     useEffect(() => {
         flowRef.current = flow;
@@ -478,9 +532,10 @@ function CanvasEditorInner({
         const syncSelectionToNode = () => {
             const nodeEl = document.getElementById(`node-${nodeId}`) as HTMLElement | null;
             if (nodeEl || attempts >= maxAttempts) {
-                setSelection({ type: 'node', nodeId });
+                setCanvasSelection({ type: 'node', nodeId });
                 setSelectionAnchorEl(nodeEl);
                 setPendingAutoOpenAddComponentNodeId(openAddComponentPopover ? nodeId : null);
+                setPendingReactFlowSelectedNodeIds([nodeId]);
                 return;
             }
 
@@ -489,7 +544,7 @@ function CanvasEditorInner({
         };
 
         requestAnimationFrame(syncSelectionToNode);
-    }, []);
+    }, [setCanvasSelection]);
 
     const isEmptyAiTurnNode = useCallback((nodeId: string): boolean => {
         const step = flowRef.current.steps?.find((candidate) => candidate.id === nodeId);
@@ -497,23 +552,60 @@ function CanvasEditorInner({
     }, []);
 
     const handleDeselect = useCallback(() => {
-        setSelection(null);
+        setCanvasSelection(null);
         setSelectionAnchorEl(null);
         setPendingAutoOpenAddComponentNodeId(null);
-    }, []);
+        setPendingReactFlowSelectedNodeIds([]);
+    }, [setCanvasSelection]);
 
-    const handleSelectComponent = useCallback((nodeId: string, componentId: string, anchorEl: HTMLElement) => {
-        // Keep card selection sticky so Delete consistently targets the card.
-        setSelection({ type: 'component', nodeId, componentId });
-        setSelectionAnchorEl(anchorEl);
-        setPendingAutoOpenAddComponentNodeId(null);
-    }, []);
+    const handleSelectComponent = useCallback((
+        nodeId: string,
+        componentId: string,
+        _anchorEl: HTMLElement,
+        options?: { appendToSelection?: boolean }
+    ) => {
+        if (options?.appendToSelection) {
+            const currentSelection = selectionRef.current;
 
-    const handleSelectBranch = useCallback((nodeId: string, branchId: string, anchorEl: HTMLElement) => {
-        setSelection({ type: 'branch', nodeId, branchId });
-        setSelectionAnchorEl(anchorEl);
+            if (currentSelection?.type === 'components' && currentSelection.nodeId === nodeId) {
+                const nextComponentIds = currentSelection.componentIds.includes(componentId)
+                    ? currentSelection.componentIds.filter((id) => id !== componentId)
+                    : [...currentSelection.componentIds, componentId];
+
+                setCanvasSelection(
+                    nextComponentIds.length === 0
+                        ? null
+                        : { type: 'components', nodeId, componentIds: nextComponentIds }
+                );
+            } else if (currentSelection?.type === 'component' && currentSelection.nodeId === nodeId) {
+                const nextComponentIds = currentSelection.componentId === componentId
+                    ? []
+                    : [currentSelection.componentId, componentId];
+
+                setCanvasSelection(
+                    nextComponentIds.length === 0
+                        ? null
+                        : { type: 'components', nodeId, componentIds: nextComponentIds }
+                );
+            } else {
+                setCanvasSelection({ type: 'components', nodeId, componentIds: [componentId] });
+            }
+        } else {
+            // Keep card selection sticky so Delete consistently targets the card.
+            setCanvasSelection({ type: 'component', nodeId, componentId });
+        }
+
+        setSelectionAnchorEl(null);
         setPendingAutoOpenAddComponentNodeId(null);
-    }, []);
+        setPendingReactFlowSelectedNodeIds([]);
+    }, [setCanvasSelection]);
+
+    const handleSelectBranch = useCallback((nodeId: string, branchId: string, _anchorEl: HTMLElement) => {
+        setCanvasSelection({ type: 'branch', nodeId, branchId });
+        setSelectionAnchorEl(null);
+        setPendingAutoOpenAddComponentNodeId(null);
+        setPendingReactFlowSelectedNodeIds([]);
+    }, [setCanvasSelection]);
 
     const handleTurnLabelChange = useCallback((nodeId: string, newLabel: string) => {
         const currentFlow = flowRef.current;
@@ -982,7 +1074,7 @@ function CanvasEditorInner({
     const handleComponentAdd = useCallback((type: ComponentType, targetNodeId?: string) => {
         const currentFlow = flowRef.current;
         const currentSelection = selectionRef.current;
-        const resolvedNodeId = targetNodeId ?? (currentSelection?.type === 'node' ? currentSelection.nodeId : undefined);
+        const resolvedNodeId = targetNodeId ?? getSingleSelectedNodeId(currentSelection);
 
         if (!resolvedNodeId) return;
 
@@ -1163,17 +1255,79 @@ function CanvasEditorInner({
 
     // Handle node clicks natively from React Flow
     const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
-        // Just Update selection state
-        // React Flow handles the visual 'selected' prop automatically
-        setSelection({ type: 'node', nodeId: node.id });
+        if (event.shiftKey) {
+            return;
+        }
+
+        // Just update selection state.
+        // React Flow handles the visual 'selected' prop automatically.
+        setCanvasSelection({ type: 'node', nodeId: node.id });
         setSelectionAnchorEl(event.currentTarget as HTMLElement);
         setPendingAutoOpenAddComponentNodeId(isEmptyAiTurnNode(node.id) ? node.id : null);
-    }, [isEmptyAiTurnNode]);
+    }, [isEmptyAiTurnNode, setCanvasSelection]);
+
+    const onSelectionChange = useCallback(({ nodes: selectedNodes }: { nodes: Node[]; edges: Edge[] }) => {
+        const selectedNodeIds = selectedNodes.map((node) => node.id);
+        const currentSelection = selectionRef.current;
+
+        if (selectedNodeIds.length === 0) {
+            if (currentSelection?.type === 'node' || currentSelection?.type === 'nodes') {
+                handleDeselect();
+            }
+            return;
+        }
+
+        if (selectedNodeIds.length === 1) {
+            const [nodeId] = selectedNodeIds;
+            if (currentSelection?.type !== 'node' || currentSelection.nodeId !== nodeId) {
+                setSelectionAnchorEl(null);
+            }
+            setCanvasSelection({ type: 'node', nodeId });
+            return;
+        }
+
+        setCanvasSelection({ type: 'nodes', nodeIds: selectedNodeIds });
+        setSelectionAnchorEl(null);
+        setPendingAutoOpenAddComponentNodeId(null);
+    }, [handleDeselect, setCanvasSelection]);
 
     // Sync edges when flow model changes
     useEffect(() => {
         setEdges(initialEdges as Edge[]);
     }, [initialEdges, setEdges]);
+
+    useEffect(() => {
+        if (!pendingReactFlowSelectedNodeIds) {
+            return;
+        }
+
+        const pendingSelectionSet = new Set(pendingReactFlowSelectedNodeIds);
+        const hasAllPendingNodes = pendingReactFlowSelectedNodeIds.length === 0 || pendingReactFlowSelectedNodeIds.every((id) =>
+            nodes.some((node) => node.id === id)
+        );
+
+        if (!hasAllPendingNodes) {
+            return;
+        }
+
+        setNodes((currentNodes) => {
+            let didChange = false;
+            const nextNodes = currentNodes.map((node) => {
+                const nextSelected = pendingSelectionSet.has(node.id);
+                if (Boolean(node.selected) === nextSelected) {
+                    return node;
+                }
+                didChange = true;
+                return {
+                    ...node,
+                    selected: nextSelected,
+                };
+            });
+
+            return didChange ? nextNodes : currentNodes;
+        });
+        setPendingReactFlowSelectedNodeIds(null);
+    }, [nodes, pendingReactFlowSelectedNodeIds, setNodes]);
 
     // Sync node data when flow changes
     useEffect(() => {
@@ -1185,13 +1339,18 @@ function CanvasEditorInner({
             return baseNodes.map(newNode => {
                 const existingNode = currentNodeMap.get(newNode.id);
                 if (existingNode) {
-                    const existingData = existingNode.data as { selectedComponentId?: string; selectedBranchId?: string } | undefined;
+                    const existingData = existingNode.data as {
+                        selectedComponentIds?: string[];
+                        openComponentId?: string;
+                        selectedBranchId?: string;
+                    } | undefined;
                     let nextData: unknown = newNode.data;
 
                     if (newNode.type === 'turn') {
                         nextData = {
                             ...(newNode.data as Record<string, unknown>),
-                            selectedComponentId: existingData?.selectedComponentId,
+                            selectedComponentIds: existingData?.selectedComponentIds,
+                            openComponentId: existingData?.openComponentId,
                         };
                     } else if (newNode.type === 'condition') {
                         nextData = {
@@ -1219,8 +1378,17 @@ function CanvasEditorInner({
 
     // Sync selected component/branch without rebuilding all node data.
     useEffect(() => {
-        const selectedComponentNodeId = selection?.type === 'component' ? selection.nodeId : null;
-        const selectedComponentId = selection?.type === 'component' ? selection.componentId : undefined;
+        const selectedComponentNodeId =
+            selection?.type === 'component' || selection?.type === 'components'
+                ? selection.nodeId
+                : null;
+        const selectedComponentIds =
+            selection?.type === 'component'
+                ? [selection.componentId]
+                : selection?.type === 'components'
+                    ? selection.componentIds
+                    : [];
+        const openComponentId = selection?.type === 'component' ? selection.componentId : undefined;
         const selectedBranchNodeId = selection?.type === 'branch' ? selection.nodeId : null;
         const selectedBranchId = selection?.type === 'branch' ? selection.branchId : undefined;
 
@@ -1228,15 +1396,23 @@ function CanvasEditorInner({
             let didChange = false;
             const nextNodes = currentNodes.map(node => {
                 if (node.type === 'turn') {
-                    const data = node.data as { selectedComponentId?: string };
-                    const nextSelected = node.id === selectedComponentNodeId ? selectedComponentId : undefined;
-                    if (data.selectedComponentId === nextSelected) {
+                    const data = node.data as { selectedComponentIds?: string[]; openComponentId?: string };
+                    const nextSelectedIds = node.id === selectedComponentNodeId ? selectedComponentIds : [];
+                    const nextOpenId = node.id === selectedComponentNodeId ? openComponentId : undefined;
+                    if (
+                        areStringArraysEqual(data.selectedComponentIds, nextSelectedIds) &&
+                        data.openComponentId === nextOpenId
+                    ) {
                         return node;
                     }
                     didChange = true;
                     return {
                         ...node,
-                        data: { ...data, selectedComponentId: nextSelected }
+                        data: {
+                            ...data,
+                            selectedComponentIds: nextSelectedIds,
+                            openComponentId: nextOpenId,
+                        }
                     };
                 }
 
@@ -1260,7 +1436,7 @@ function CanvasEditorInner({
         });
     }, [selection, setNodes]);
 
-    const selectedNodeId = selection?.type === 'node' ? selection.nodeId : null;
+    const selectedNodeId = getSingleSelectedNodeId(selection);
 
     // Save positions when dragging stops
     const onNodeDragStop = useCallback((_: React.MouseEvent, _node: Node, nodes: Node[]) => {
@@ -1368,9 +1544,9 @@ function CanvasEditorInner({
     );
 
     const handleChangeUserTurnInputType = (inputType: 'text' | 'prompt' | 'button') => {
-        if (selection?.type === 'node') {
+        if (selectedNodeId) {
             const updatedSteps = flow.steps?.map(s =>
-                s.id === selection.nodeId && s.type === 'user-turn'
+                s.id === selectedNodeId && s.type === 'user-turn'
                     ? { ...s, inputType }
                     : s
             );
@@ -1382,16 +1558,23 @@ function CanvasEditorInner({
         const currentSelection = selectionRef.current;
         const currentFlow = flowRef.current;
 
-        if (currentSelection?.type === 'component') {
-            const step = currentFlow.steps?.find(s => s.id === currentSelection.nodeId && s.type === 'turn');
+        const selectedComponentSelection =
+            currentSelection?.type === 'component'
+                ? { nodeId: currentSelection.nodeId, componentId: currentSelection.componentId }
+                : currentSelection?.type === 'components' && currentSelection.componentIds.length === 1
+                    ? { nodeId: currentSelection.nodeId, componentId: currentSelection.componentIds[0] }
+                    : null;
+
+        if (selectedComponentSelection) {
+            const step = currentFlow.steps?.find(s => s.id === selectedComponentSelection.nodeId && s.type === 'turn');
             if (step && step.type === 'turn') {
-                const componentIndex = step.components.findIndex(c => c.id === currentSelection.componentId);
+                const componentIndex = step.components.findIndex(c => c.id === selectedComponentSelection.componentId);
                 if (componentIndex > 0) {
                     const newComponents = [...step.components];
                     [newComponents[componentIndex - 1], newComponents[componentIndex]] =
                         [newComponents[componentIndex], newComponents[componentIndex - 1]];
                     const updatedSteps = currentFlow.steps?.map(s =>
-                        s.id === currentSelection.nodeId && s.type === 'turn'
+                        s.id === selectedComponentSelection.nodeId && s.type === 'turn'
                             ? { ...s, components: newComponents }
                             : s
                     );
@@ -1405,16 +1588,23 @@ function CanvasEditorInner({
         const currentSelection = selectionRef.current;
         const currentFlow = flowRef.current;
 
-        if (currentSelection?.type === 'component') {
-            const step = currentFlow.steps?.find(s => s.id === currentSelection.nodeId && s.type === 'turn');
+        const selectedComponentSelection =
+            currentSelection?.type === 'component'
+                ? { nodeId: currentSelection.nodeId, componentId: currentSelection.componentId }
+                : currentSelection?.type === 'components' && currentSelection.componentIds.length === 1
+                    ? { nodeId: currentSelection.nodeId, componentId: currentSelection.componentIds[0] }
+                    : null;
+
+        if (selectedComponentSelection) {
+            const step = currentFlow.steps?.find(s => s.id === selectedComponentSelection.nodeId && s.type === 'turn');
             if (step && step.type === 'turn') {
-                const componentIndex = step.components.findIndex(c => c.id === currentSelection.componentId);
+                const componentIndex = step.components.findIndex(c => c.id === selectedComponentSelection.componentId);
                 if (componentIndex < step.components.length - 1) {
                     const newComponents = [...step.components];
                     [newComponents[componentIndex], newComponents[componentIndex + 1]] =
                         [newComponents[componentIndex + 1], newComponents[componentIndex]];
                     const updatedSteps = currentFlow.steps?.map(s =>
-                        s.id === currentSelection.nodeId && s.type === 'turn'
+                        s.id === selectedComponentSelection.nodeId && s.type === 'turn'
                             ? { ...s, components: newComponents }
                             : s
                     );
@@ -1451,7 +1641,7 @@ function CanvasEditorInner({
 
         // If the custom selection was tied to a deleted node, clear it.
         const currentSelection = selectionRef.current;
-        if (currentSelection && deletedIds.has(currentSelection.nodeId)) {
+        if (getSelectionNodeIds(currentSelection).some((nodeId) => deletedIds.has(nodeId))) {
             handleDeselect();
         }
     }, [onUpdateFlow, handleDeselect]); // flowRef used inside
@@ -1476,10 +1666,14 @@ function CanvasEditorInner({
         const currentSelection = selectionRef.current;
         const currentFlow = flowRef.current;
 
-        if (currentSelection?.type === 'component') {
+        if (currentSelection?.type === 'component' || currentSelection?.type === 'components') {
+            const selectedComponentIds =
+                currentSelection.type === 'component'
+                    ? [currentSelection.componentId]
+                    : currentSelection.componentIds;
             const updatedSteps = currentFlow.steps?.map(s =>
                 s.id === currentSelection.nodeId && s.type === 'turn'
-                    ? { ...s, components: s.components.filter(c => c.id !== currentSelection.componentId) }
+                    ? { ...s, components: s.components.filter(c => !selectedComponentIds.includes(c.id)) }
                     : s
             );
             applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
@@ -1588,21 +1782,54 @@ function CanvasEditorInner({
             return true;
         }
 
-        if (currentSelection.type === 'component') {
+        if (currentSelection.type === 'nodes') {
+            const selectedNodeIds = new Set(currentSelection.nodeIds);
+            const selectedSteps = (currentFlow.steps || []).filter(
+                (step): step is ClipboardNodeStep => selectedNodeIds.has(step.id) && step.type !== 'start'
+            );
+
+            if (selectedSteps.length === 0) {
+                return false;
+            }
+
+            clipboardRef.current = selectedSteps.length === 1
+                ? {
+                    type: 'node',
+                    step: cloneValue(selectedSteps[0]),
+                    pasteCount: 0,
+                }
+                : {
+                    type: 'nodes',
+                    steps: cloneValue(selectedSteps),
+                    pasteCount: 0,
+                };
+            return true;
+        }
+
+        if (currentSelection.type === 'component' || currentSelection.type === 'components') {
             const selectedStep = currentFlow.steps?.find((step) => step.id === currentSelection.nodeId && step.type === 'turn');
             if (!selectedStep || selectedStep.type !== 'turn') {
                 return false;
             }
 
-            const selectedComponent = selectedStep.components.find((component) => component.id === currentSelection.componentId);
-            if (!selectedComponent) {
+            const selectedComponentIds = currentSelection.type === 'component'
+                ? [currentSelection.componentId]
+                : currentSelection.componentIds;
+            const selectedComponentIdSet = new Set(selectedComponentIds);
+            const selectedComponents = selectedStep.components.filter((component) => selectedComponentIdSet.has(component.id));
+            if (selectedComponents.length === 0) {
                 return false;
             }
 
-            clipboardRef.current = {
-                type: 'component',
-                component: cloneValue(selectedComponent),
-            };
+            clipboardRef.current = selectedComponents.length === 1
+                ? {
+                    type: 'component',
+                    component: cloneValue(selectedComponents[0]),
+                }
+                : {
+                    type: 'components',
+                    components: cloneValue(selectedComponents),
+                };
             return true;
         }
 
@@ -1649,51 +1876,79 @@ function CanvasEditorInner({
                 steps: [...currentSteps, newStep],
                 lastModified: Date.now(),
             });
-            setSelection({ type: 'node', nodeId: newStep.id });
+            setCanvasSelection({ type: 'node', nodeId: newStep.id });
             setSelectionAnchorEl(null);
+            setPendingReactFlowSelectedNodeIds([newStep.id]);
             return true;
         }
 
-        if (clipboard.type === 'component') {
+        if (clipboard.type === 'nodes') {
+            const nextPasteCount = clipboard.pasteCount + 1;
+            const newSteps = cloneNodeStepsForPaste(clipboard.steps, nextPasteCount);
+            clipboardRef.current = {
+                ...clipboard,
+                pasteCount: nextPasteCount,
+            };
+
+            applyFlowUpdate({
+                ...currentFlow,
+                steps: [...currentSteps, ...newSteps],
+                lastModified: Date.now(),
+            });
+            setCanvasSelection({ type: 'nodes', nodeIds: newSteps.map((step) => step.id) });
+            setSelectionAnchorEl(null);
+            setPendingReactFlowSelectedNodeIds(newSteps.map((step) => step.id));
+            return true;
+        }
+
+        if (clipboard.type === 'component' || clipboard.type === 'components') {
             const currentSelection = selectionRef.current;
             if (!currentSelection) {
                 return false;
             }
 
             const targetNodeId =
-                currentSelection.type === 'component' || currentSelection.type === 'node'
+                currentSelection.type === 'component' || currentSelection.type === 'components'
                     ? currentSelection.nodeId
-                    : null;
-            const insertAfterComponentId =
+                    : getSingleSelectedNodeId(currentSelection);
+            const insertAfterComponentIds =
                 currentSelection.type === 'component'
-                    ? currentSelection.componentId
-                    : null;
+                    ? [currentSelection.componentId]
+                    : currentSelection.type === 'components'
+                        ? currentSelection.componentIds
+                        : [];
 
             if (!targetNodeId) {
                 return false;
             }
 
-            let newComponentId: string | null = null;
+            const clipboardComponents = clipboard.type === 'component'
+                ? [clipboard.component]
+                : clipboard.components;
+            let newComponentIds: string[] = [];
             let didPaste = false;
             const updatedSteps = currentSteps.map((step) => {
                 if (step.id !== targetNodeId || step.type !== 'turn') {
                     return step;
                 }
 
-                const pastedComponent = cloneComponentForPaste(clipboard.component);
+                const pastedComponents = clipboardComponents.map((component) => cloneComponentForPaste(component));
                 const nextComponents = [...step.components];
 
-                if (insertAfterComponentId) {
-                    const componentIndex = step.components.findIndex((component) => component.id === insertAfterComponentId);
-                    if (componentIndex === -1) {
+                if (insertAfterComponentIds.length > 0) {
+                    const componentIndices = step.components
+                        .map((component, index) => insertAfterComponentIds.includes(component.id) ? index : -1)
+                        .filter((index) => index >= 0);
+                    if (componentIndices.length === 0) {
                         return step;
                     }
-                    nextComponents.splice(componentIndex + 1, 0, pastedComponent);
+                    const insertAfterIndex = Math.max(...componentIndices);
+                    nextComponents.splice(insertAfterIndex + 1, 0, ...pastedComponents);
                 } else {
-                    nextComponents.push(pastedComponent);
+                    nextComponents.push(...pastedComponents);
                 }
 
-                newComponentId = pastedComponent.id;
+                newComponentIds = pastedComponents.map((component) => component.id);
                 didPaste = true;
 
                 return {
@@ -1702,7 +1957,7 @@ function CanvasEditorInner({
                 };
             });
 
-            if (!didPaste || !newComponentId) {
+            if (!didPaste || newComponentIds.length === 0) {
                 return false;
             }
 
@@ -1711,8 +1966,13 @@ function CanvasEditorInner({
                 steps: updatedSteps,
                 lastModified: Date.now(),
             });
-            setSelection({ type: 'component', nodeId: targetNodeId, componentId: newComponentId });
+            setCanvasSelection(
+                newComponentIds.length === 1
+                    ? { type: 'component', nodeId: targetNodeId, componentId: newComponentIds[0] }
+                    : { type: 'components', nodeId: targetNodeId, componentIds: newComponentIds }
+            );
             setSelectionAnchorEl(null);
+            setPendingReactFlowSelectedNodeIds([]);
             return true;
         }
 
@@ -1722,9 +1982,9 @@ function CanvasEditorInner({
         }
 
         const targetNodeId =
-            currentSelection.type === 'branch' || currentSelection.type === 'node'
+            currentSelection.type === 'branch'
                 ? currentSelection.nodeId
-                : null;
+                : getSingleSelectedNodeId(currentSelection);
         const insertAfterBranchId =
             currentSelection.type === 'branch'
                 ? currentSelection.branchId
@@ -1772,15 +2032,16 @@ function CanvasEditorInner({
             steps: updatedSteps,
             lastModified: Date.now(),
         });
-        setSelection({ type: 'branch', nodeId: targetNodeId, branchId: newBranchId });
+        setCanvasSelection({ type: 'branch', nodeId: targetNodeId, branchId: newBranchId });
         setSelectionAnchorEl(null);
+        setPendingReactFlowSelectedNodeIds([]);
         return true;
-    }, [applyFlowUpdate, isReadOnly]);
+    }, [applyFlowUpdate, isReadOnly, setCanvasSelection]);
 
     // Manual delete trigger for nested selections (cards and branch cards).
     const handleDeleteSelection = useCallback(() => {
         const currentSelection = selectionRef.current;
-        if (currentSelection?.type === 'component') {
+        if (currentSelection?.type === 'component' || currentSelection?.type === 'components') {
             handleDeleteComponent();
             return;
         }
@@ -1838,7 +2099,11 @@ function CanvasEditorInner({
                 handleDeselect();
             } else if (e.key === 'Delete' || e.key === 'Backspace') {
                 // Only hijack delete for nested cards (React Flow only knows about node deletion).
-                if (currentSelection?.type === 'component' || currentSelection?.type === 'branch') {
+                if (
+                    currentSelection?.type === 'component' ||
+                    currentSelection?.type === 'components' ||
+                    currentSelection?.type === 'branch'
+                ) {
                     e.preventDefault();
                     e.stopPropagation();
                     e.stopImmediatePropagation();
@@ -1846,20 +2111,24 @@ function CanvasEditorInner({
                     return;
                 }
                 // Otherwise let the event bubble to React Flow to handle Node deletion (single or multi)
-            } else if (currentSelection?.type === 'component' || currentSelection?.type === 'branch') {
+            } else if (
+                currentSelection?.type === 'component' ||
+                currentSelection?.type === 'branch' ||
+                (currentSelection?.type === 'components' && currentSelection.componentIds.length === 1)
+            ) {
                 if (e.key === 'ArrowUp') {
                     e.preventDefault();
-                    if (currentSelection.type === 'component') {
-                        handleMoveComponentUp();
-                    } else {
+                    if (currentSelection.type === 'branch') {
                         moveSelectedBranch('up');
+                    } else {
+                        handleMoveComponentUp();
                     }
                 } else if (e.key === 'ArrowDown') {
                     e.preventDefault();
-                    if (currentSelection.type === 'component') {
-                        handleMoveComponentDown();
-                    } else {
+                    if (currentSelection.type === 'branch') {
                         moveSelectedBranch('down');
+                    } else {
+                        handleMoveComponentDown();
                     }
                 }
             }
@@ -2081,20 +2350,57 @@ function CanvasEditorInner({
         }
     };
 
+    const renderPreviewOpenMenu = () => (
+        <ShellMenu>
+            <ActionTooltip content="Play prototype" disabled={isPreviewActive}>
+                <ShellMenuTrigger asChild>
+                    <ShellIconButton
+                        aria-label="Play prototype"
+                        className={`flex items-center justify-center w-8 h-8 rounded-md transition-all group ${isPreviewActive
+                            ? "text-shell-accent-text bg-shell-accent-soft ring-1 ring-shell-accent-border"
+                            : "text-shell-muted hover:text-shell-text hover:bg-shell-surface"
+                            }`}
+                    >
+                        <Play size={16} fill={isPreviewActive ? "currentColor" : "none"} className="mr-[1px]" />
+                    </ShellIconButton>
+                </ShellMenuTrigger>
+            </ActionTooltip>
+            <ShellMenuContent align="end" sideOffset={8} className="w-[196px] rounded-xl p-1.5 shadow-[0_20px_48px_rgb(15_23_42/0.18)]">
+                <ShellMenuItem
+                    size="compact"
+                    className="gap-2.5 rounded-lg px-2.5 text-[12px]"
+                    onClick={onPreview}
+                >
+                    <PanelRightOpen size={14} className="text-current opacity-70" />
+                    Open here in canvas
+                </ShellMenuItem>
+                <ShellMenuSeparator className="my-1" />
+                <ShellMenuItem
+                    size="compact"
+                    className="gap-2.5 rounded-lg px-2.5 text-[12px]"
+                    onClick={() => window.open(`/share/${flow.id}`, '_blank')}
+                >
+                    <ExternalLink size={14} className="text-current opacity-70" />
+                    Open in new tab
+                </ShellMenuItem>
+            </ShellMenuContent>
+        </ShellMenu>
+    );
+
     return (
         <div className="w-full h-full flex flex-col relative bg-shell-canvas">
             {/* Header */}
             {/* Top Left Pill: Back & Title */}
-            <div className="absolute top-4 left-4 z-50 flex items-center h-11 gap-1.5 bg-shell-bg px-2 rounded-xl shadow-sm border border-shell-border/70 backdrop-blur-sm">
+            <div className="absolute top-4 left-4 z-50 flex items-center h-11 gap-1.5 bg-shell-bg dark:bg-shell-surface-subtle px-2 rounded-xl shadow-sm dark:shadow-[0_14px_32px_rgb(0_0_0/0.26)] border border-shell-border/70 dark:border-shell-border/55 backdrop-blur-sm">
                 <ActionTooltip content={isReadOnly ? 'Back to home' : 'Back to dashboard'}>
-                    <button
+                    <ShellIconButton
                         onClick={onBack}
-                        className="flex items-center justify-center p-2 text-shell-muted hover:text-shell-text transition-colors rounded-md hover:bg-shell-surface"
+                        aria-label={isReadOnly ? 'Back to home' : 'Back to dashboard'}
                     >
                         <ArrowLeft size={18} />
-                    </button>
+                    </ShellIconButton>
                 </ActionTooltip>
-                <div className="h-5 w-px bg-shell-border-subtle" />
+                <div className="h-5 w-px bg-shell-chrome-divider" />
                 <div className="relative inline-grid items-center min-w-[60px] max-w-[320px]">
                     <span className="invisible px-3 py-1 text-sm font-medium whitespace-pre border border-transparent col-start-1 row-start-1">
                         {flow.title || "Untitled flow"}
@@ -2115,105 +2421,45 @@ function CanvasEditorInner({
             </div>
 
             {/* Top Right Pill: File, Run & Share */}
-            <div className="absolute top-4 right-4 z-50 flex items-center h-11 gap-2 bg-shell-bg px-1.5 rounded-xl shadow-sm border border-shell-border/70 backdrop-blur-sm">
+            <div className="absolute top-4 right-4 z-50 flex items-center h-11 gap-2 bg-shell-bg dark:bg-shell-surface-subtle px-1.5 rounded-xl shadow-sm dark:shadow-[0_14px_32px_rgb(0_0_0/0.26)] border border-shell-border/70 dark:border-shell-border/55 backdrop-blur-sm">
                 {isReadOnly ? (
                     <>
-                        <DropdownMenu>
-                            <ActionTooltip content="Play prototype" disabled={isPreviewActive}>
-                                <DropdownMenuTrigger asChild>
-                                    <button
-                                        className={`flex items-center justify-center w-8 h-8 rounded-md transition-all group ${isPreviewActive
-                                            ? "text-shell-accent-text bg-shell-accent-soft ring-1 ring-shell-accent-border"
-                                            : "text-shell-muted hover:text-shell-text hover:bg-shell-surface"
-                                            }`}
-                                    >
-                                        <Play size={16} fill={isPreviewActive ? "currentColor" : "none"} className="mr-[1px]" />
-                                    </button>
-                                </DropdownMenuTrigger>
-                            </ActionTooltip>
-                            <DropdownMenuContent align="end" className="w-48">
-                                <DropdownMenuItem onClick={onPreview} className="gap-2">
-                                    <PanelRightOpen size={14} className="text-shell-muted" />
-                                    Open here in canvas
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                    onClick={() => window.open(`/share/${flow.id}`, '_blank')}
-                                    className="gap-2"
-                                >
-                                    <ExternalLink size={14} className="text-shell-muted" />
-                                    Open in new tab
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                        {renderPreviewOpenMenu()}
                         <ShareDialog
                             flow={flow}
                             enabledLinkTypes={['studio', 'prototype']}
                             linkLabelOverrides={{ studio: 'Copy link' }}
                         >
-                            <Button
-                                size="sm"
-                                className="bg-shell-accent text-white hover:bg-shell-accent-hover border-0"
-                            >
+                            <ShellButton size="sm">
                                 Share
-                            </Button>
+                            </ShellButton>
                         </ShareDialog>
                     </>
                 ) : (
                     <>
                         {/* Export JSON */}
                         <ActionTooltip content="Export JSON">
-                            <button
+                            <ShellIconButton
                                 onClick={handleExportJSON}
-                                className="flex items-center justify-center w-8 h-8 rounded-md transition-all text-shell-muted hover:text-shell-text hover:bg-shell-surface"
+                                aria-label="Export JSON"
                             >
                                 <Download size={16} />
-                            </button>
+                            </ShellIconButton>
                         </ActionTooltip>
 
-                        <div className="h-5 w-px bg-shell-border-subtle" />
+                        <div className="h-5 w-px bg-shell-chrome-divider" />
 
                         {/* Run Menu */}
-                        <DropdownMenu>
-                            <ActionTooltip content="Play prototype" disabled={isPreviewActive}>
-                                <DropdownMenuTrigger asChild>
-                                    <button
-                                        className={`flex items-center justify-center w-8 h-8 rounded-md transition-all group ${isPreviewActive
-                                            ? "text-shell-accent-text bg-shell-accent-soft ring-1 ring-shell-accent-border"
-                                            : "text-shell-muted hover:text-shell-text hover:bg-shell-surface"
-                                            }`}
-                                    >
-                                        <Play size={16} fill={isPreviewActive ? "currentColor" : "none"} className="mr-[1px]" />
-                                    </button>
-                                </DropdownMenuTrigger>
-                            </ActionTooltip>
-                            <DropdownMenuContent align="end" className="w-48">
-                                <DropdownMenuItem onClick={onPreview} className="gap-2">
-                                    <PanelRightOpen size={14} className="text-shell-muted" />
-                                    Open here in canvas
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                    onClick={() => window.open(`/share/${flow.id}`, '_blank')}
-                                    className="gap-2"
-                                >
-                                    <ExternalLink size={14} className="text-shell-muted" />
-                                    Open in new tab
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                        {renderPreviewOpenMenu()}
 
                         <ShareDialog
                             flow={flow}
                             enabledLinkTypes={['studio', 'prototype']}
                             linkLabelOverrides={{ studio: 'Copy link' }}
                         >
-                            <Button
-                                size="sm"
-                                className="bg-shell-accent text-white hover:bg-shell-accent-hover border-0"
-                            >
+                            <ShellButton size="sm">
                                 Share
-                            </Button>
+                            </ShellButton>
                         </ShareDialog>
                     </>
                 )}
@@ -2271,10 +2517,11 @@ function CanvasEditorInner({
                     onEdgesDelete={isReadOnly ? undefined : onEdgesDelete}
                     onNodeDragStop={isReadOnly ? undefined : onNodeDragStop}
                     onPaneClick={handlePaneClick}
+                    onSelectionChange={onSelectionChange}
                     panOnScroll
                     selectionOnDrag={!isReadOnly}
                     selectionMode={SelectionMode.Partial}
-                    multiSelectionKeyCode={null}
+                    multiSelectionKeyCode={['Shift']}
                     panOnDrag={isReadOnly ? true : isAltPressed}
                     zoomOnScroll={isReadOnly ? true : !isAltPressed}
                     deleteKeyCode={isReadOnly ? null : ['Delete', 'Backspace']}
@@ -2286,10 +2533,10 @@ function CanvasEditorInner({
                     onDragOver={isReadOnly ? undefined : onDragOver}
                     onDrop={isReadOnly ? undefined : onDrop}
                     connectionLineComponent={connectionLineWithPreview}
-                    className={`bg-shell-canvas ${!isReadOnly && isAltPressed ? 'is-alt-pressed' : ''}`}
+                    className={`bg-shell-studio-canvas ${!isReadOnly && isAltPressed ? 'is-alt-pressed' : ''}`}
                 >
 
-                    <Background color="rgb(var(--shell-canvas-grid) / 1)" gap={20} size={2} />
+                    <Background color="rgb(var(--shell-studio-canvas-grid) / 1)" gap={20} size={2} />
                     {!isReadOnly && selectedNodeId && (
                         <ContextToolbar
                             selection={{ type: 'node', nodeId: selectedNodeId }}
