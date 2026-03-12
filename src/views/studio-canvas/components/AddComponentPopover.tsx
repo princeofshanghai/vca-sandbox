@@ -3,9 +3,12 @@ import * as Popover from '@radix-ui/react-popover';
 import { MessageSquare, MessageCirclePlus, MessageSquareText, Zap, LayoutList, CheckSquare, IdCard } from 'lucide-react';
 import { toast } from 'sonner';
 import type { ComponentType } from '../../studio/types';
+import { CheckboxGroup } from '@/components/vca-components/checkbox-group/CheckboxGroup';
+import { DisplayCard } from '@/components/vca-components/confirmation-card/ConfirmationCard';
 import { Message } from '@/components/vca-components/messages/Message';
 import { PromptGroup } from '@/components/vca-components/prompt-group/PromptGroup';
 import { InfoMessage } from '@/components/vca-components/info-message/InfoMessage';
+import { SelectionList } from '@/components/vca-components/selection-list/SelectionList';
 import { StatusCard } from '@/components/vca-components/status-card/StatusCard';
 
 interface ComponentOption {
@@ -25,6 +28,46 @@ const HOVER_CARD_WIDTH_PX = 320;
 const HOVER_CARD_PREVIEW_MIN_HEIGHT_PX = 140;
 const HOVER_CARD_PREVIEW_SCALE = 0.85;
 const HOVER_CARD_PREVIEW_BACKGROUND = '#f3f4f6';
+
+const peopleSelectionPreviewItems = [
+    {
+        id: 'sarah-jenkins',
+        title: 'Sarah Jenkins',
+        subtitle: 'sjenkins@flexis.com',
+        visualType: 'avatar' as const,
+    },
+    {
+        id: 'michael-chen',
+        title: 'Michael Chen',
+        subtitle: 'mchen@flexis.com',
+        visualType: 'avatar' as const,
+    },
+];
+
+const peopleDisplayCardPreviewItem = {
+    id: 'sarah-jenkins',
+    title: 'Sarah Jenkins',
+    subtitle: 'sjenkins@flexis.com',
+    visualType: 'avatar' as const,
+};
+
+const peopleCheckboxPreviewOptions = [
+    {
+        id: 'sarah-jenkins',
+        label: 'Sarah Jenkins',
+        description: 'sjenkins@flexis.com',
+    },
+    {
+        id: 'michael-chen',
+        label: 'Michael Chen',
+        description: 'mchen@flexis.com',
+    },
+    {
+        id: 'alex-rivera',
+        label: 'Alex Rivera',
+        description: 'arivera@flexis.com',
+    },
+];
 
 const componentOptions: ComponentOption[] = [
     {
@@ -95,15 +138,11 @@ const componentOptions: ComponentOption[] = [
         name: 'Select Cards',
         description: 'Choose one card from a set',
         previewComponent: (
-            <div className="w-[300px] flex flex-col gap-2 p-2">
-                <div className="flex items-center gap-2 p-2 rounded border border-shell-border bg-shell-bg">
-                    <div className="w-6 h-6 rounded-full bg-shell-surface" />
-                    <div className="flex-1 h-2 bg-shell-surface rounded w-2/3" />
-                </div>
-                <div className="flex items-center gap-2 p-2 rounded border border-shell-border bg-shell-bg">
-                    <div className="w-6 h-6 rounded-full bg-shell-surface" />
-                    <div className="flex-1 h-2 bg-shell-surface rounded w-2/3" />
-                </div>
+            <div className="w-[300px] px-2">
+                <SelectionList
+                    items={peopleSelectionPreviewItems}
+                    maxDisplayed={2}
+                />
             </div>
         ),
     },
@@ -113,15 +152,12 @@ const componentOptions: ComponentOption[] = [
         name: 'Display Card',
         description: 'Rich content card with optional actions',
         previewComponent: (
-            <div className="w-[300px] flex flex-col gap-2 p-2">
-                <div className="flex items-center gap-2 p-2 rounded border border-shell-border bg-shell-bg">
-                    <div className="w-6 h-6 rounded-full bg-shell-surface" />
-                    <div className="flex-1 h-2 bg-shell-surface rounded w-2/3" />
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                    <div className="h-7 rounded bg-shell-accent/20 border border-shell-accent/40" />
-                    <div className="h-7 rounded bg-shell-surface border border-shell-border" />
-                </div>
+            <div className="w-[300px] px-2">
+                <DisplayCard
+                    item={peopleDisplayCardPreviewItem}
+                    confirmLabel="View profile"
+                    rejectLabel="Skip"
+                />
             </div>
         ),
     },
@@ -131,19 +167,13 @@ const componentOptions: ComponentOption[] = [
         name: 'Checkbox Group',
         description: 'Select multiple options with primary and secondary actions',
         previewComponent: (
-            <div className="w-[300px] flex flex-col gap-2 p-2">
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 border border-shell-border rounded-[2px]" />
-                    <div className="text-xs text-shell-muted">Option 1</div>
-                </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 border border-shell-accent rounded-[2px] bg-shell-accent" />
-                    <div className="text-xs text-shell-text">Option 2</div>
-                </div>
-                <div className="grid grid-cols-2 gap-2 pt-2">
-                    <div className="h-7 rounded bg-shell-accent/20 border border-shell-accent/40" />
-                    <div className="h-7 rounded bg-shell-surface border border-shell-border" />
-                </div>
+            <div className="w-[300px] px-2">
+                <CheckboxGroup
+                    options={peopleCheckboxPreviewOptions}
+                    value={['sarah-jenkins']}
+                    primaryLabel="Invite selected"
+                    secondaryLabel="Cancel"
+                />
             </div>
         ),
     },
