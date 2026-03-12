@@ -218,7 +218,9 @@ const ComponentLibraryView = () => {
           <Route path="feedback" element={<FeedbackComponentView />} />
           <Route path="prompt" element={<PromptComponentView />} />
           <Route path="prompt-group" element={<PromptGroupComponentView />} />
+          <Route path="select-cards" element={<SelectionListComponentView />} />
           <Route path="selection-list" element={<SelectionListComponentView />} />
+          <Route path="display-card" element={<ConfirmationCardComponentView />} />
           <Route path="confirmation-card" element={<ConfirmationCardComponentView />} />
         </Routes>
       </MainContent>

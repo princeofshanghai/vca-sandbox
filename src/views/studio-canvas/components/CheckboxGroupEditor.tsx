@@ -1,12 +1,19 @@
 import { useState, useEffect } from 'react';
-import { Plus, X, GripVertical, Wand2, CheckSquare } from 'lucide-react';
+import { GripVertical, X, CheckSquare, ChevronDown } from 'lucide-react';
+import { ShellIconButton } from '@/components/shell';
+import { cn } from '@/utils/cn';
 import { Component, CheckboxGroupContent } from '../../studio/types';
 import { ComponentEditorPopover } from './ComponentEditorPopover';
 import { EditorRoot } from './editor-ui/EditorRoot';
 import { EditorHeader } from './editor-ui/EditorHeader';
+import { EditorAddButton } from './editor-ui/EditorAddButton';
+import { EditorActionMenu } from './editor-ui/EditorActionMenu';
 import { EditorContent } from './editor-ui/EditorContent';
 import { EditorSection } from './editor-ui/EditorSection';
 import { EditorField } from './editor-ui/EditorField';
+import { EditorFieldRow } from './editor-ui/EditorFieldRow';
+import { buildCheckboxAutofillOptions } from './editor-ui/editorAutofillPresets';
+import { getCheckboxGroupPrimaryLabel, getCheckboxGroupSecondaryLabel } from '@/components/vca-components/checkbox-group/CheckboxGroup';
 
 interface CheckboxGroupEditorProps {
     component: Component;
@@ -16,26 +23,6 @@ interface CheckboxGroupEditorProps {
     onOpenChange: (open: boolean) => void;
     readOnly?: boolean;
 }
-
-// Mock Presets for Checkboxes
-const PRESETS = {
-    policies: [
-        { id: 'tnc', label: 'I agree to the Terms and Conditions' },
-        { id: 'privacy', label: 'I agree to the Privacy Policy' },
-        { id: 'marketing', label: 'Keep me updated on news and offers' },
-    ],
-    features: [
-        { id: 'f1', label: 'Analytics' },
-        { id: 'f2', label: 'Custom Reporting' },
-        { id: 'f3', label: 'API Access' },
-        { id: 'f4', label: 'White-labeling' },
-    ],
-    feedback: [
-        { id: 'bug', label: 'Report a Bug' },
-        { id: 'feature', label: 'Request a Feature' },
-        { id: 'other', label: 'Other' },
-    ]
-};
 
 export function CheckboxGroupEditor({
     component,
@@ -48,40 +35,32 @@ export function CheckboxGroupEditor({
     const content = component.content as CheckboxGroupContent;
 
     // Local state for better UX
-    const [localTitle, setLocalTitle] = useState(content.title || '');
-    const [localDescription, setLocalDescription] = useState(content.description || '');
-    const [localSaveLabel, setLocalSaveLabel] = useState(content.saveLabel || 'Save');
+    const [localPrimaryLabel, setLocalPrimaryLabel] = useState(getCheckboxGroupPrimaryLabel(content));
+    const [localSecondaryLabel, setLocalSecondaryLabel] = useState(getCheckboxGroupSecondaryLabel(content));
     const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
 
     useEffect(() => {
-        setLocalTitle(content.title || '');
-        setLocalDescription(content.description || '');
-        setLocalSaveLabel(content.saveLabel || 'Save');
-    }, [component.id, content.title, content.description, content.saveLabel]);
+        setLocalPrimaryLabel(getCheckboxGroupPrimaryLabel(content));
+        setLocalSecondaryLabel(getCheckboxGroupSecondaryLabel(content));
+    }, [component.id, content.primaryLabel, content.secondaryLabel, content.saveLabel, content.cancelLabel]);
 
-    const handleTitleChange = (val: string) => {
+    const handlePrimaryLabelChange = (val: string) => {
         if (readOnly) return;
-        setLocalTitle(val);
-        onChange({ ...content, title: val });
+        setLocalPrimaryLabel(val);
+        onChange({ ...content, primaryLabel: val });
     };
 
-    const handleDescriptionChange = (val: string) => {
+    const handleSecondaryLabelChange = (val: string) => {
         if (readOnly) return;
-        setLocalDescription(val);
-        onChange({ ...content, description: val });
+        setLocalSecondaryLabel(val);
+        onChange({ ...content, secondaryLabel: val });
     };
 
-    const handleSaveLabelChange = (val: string) => {
-        if (readOnly) return;
-        setLocalSaveLabel(val);
-        onChange({ ...content, saveLabel: val });
-    };
-
-    const applyPreset = (presetKey: keyof typeof PRESETS) => {
+    const applyPreset = (presetKey: 'users' | 'accounts' | 'invoices') => {
         if (readOnly) return;
         onChange({
             ...content,
-            options: PRESETS[presetKey].map(opt => ({ ...opt, id: Math.random().toString(36).substr(2, 9) }))
+            options: buildCheckboxAutofillOptions(presetKey)
         });
     };
 
@@ -102,7 +81,7 @@ export function CheckboxGroupEditor({
         if (readOnly) return;
         const newOption = {
             id: Math.random().toString(36).substr(2, 9),
-            label: 'New Option',
+            label: '',
             description: ''
         };
         onChange({ ...content, options: [...(content.options || []), newOption] });
@@ -110,23 +89,15 @@ export function CheckboxGroupEditor({
     };
 
     const presetActions = (
-        <div className="relative group">
-            <button className="flex items-center gap-1.5 text-xs text-shell-accent hover:text-shell-accent-hover font-medium transition-colors">
-                <Wand2 className="w-3.5 h-3.5" />
-                <span>Preset</span>
-            </button>
-            <div className="absolute right-0 top-full mt-1 w-48 bg-shell-surface rounded-lg shadow-xl border border-shell-border py-1 hidden group-hover:block z-50">
-                <button onClick={() => applyPreset('policies')} className="w-full text-left px-3 py-2 text-xs hover:bg-shell-surface-subtle text-shell-muted-strong">
-                    Policies
-                </button>
-                <button onClick={() => applyPreset('features')} className="w-full text-left px-3 py-2 text-xs hover:bg-shell-surface-subtle text-shell-muted-strong">
-                    Product Features
-                </button>
-                <button onClick={() => applyPreset('feedback')} className="w-full text-left px-3 py-2 text-xs hover:bg-shell-surface-subtle text-shell-muted-strong">
-                    Feedback Types
-                </button>
-            </div>
-        </div>
+        <EditorActionMenu
+            label="Autofill"
+            disabled={readOnly}
+            items={[
+                { label: 'Users', onSelect: () => applyPreset('users') },
+                { label: 'Accounts', onSelect: () => applyPreset('accounts') },
+                { label: 'Invoices', onSelect: () => applyPreset('invoices') },
+            ]}
+        />
     );
 
     const editorContent = (
@@ -137,46 +108,8 @@ export function CheckboxGroupEditor({
                 onClose={() => onOpenChange(false)}
             />
             <EditorContent>
-                {/* 1. Settings */}
-                <EditorSection title="Settings" action={presetActions}>
-                    <EditorField
-                        label="Question / Title"
-                        value={localTitle}
-                        onChange={handleTitleChange}
-                        placeholder="e.g. Which topics interest you?"
-                        readOnly={readOnly}
-                    />
-                    <EditorField
-                        label="Description (Optional)"
-                        value={localDescription}
-                        onChange={handleDescriptionChange}
-                        placeholder="Select all that apply."
-                        readOnly={readOnly}
-                    />
-                    <EditorField
-                        label="Save Button Label"
-                        value={localSaveLabel}
-                        onChange={handleSaveLabelChange}
-                        placeholder="Save"
-                        readOnly={readOnly}
-                    />
-                </EditorSection>
-
-                {/* 2. Options List */}
-                <EditorSection
-                    title={`Options (${content.options?.length || 0})`}
-                    action={
-                        <button
-                            onClick={addOption}
-                            disabled={readOnly}
-                            className="flex items-center gap-1 text-[10px] text-shell-accent hover:text-shell-accent-hover font-medium"
-                        >
-                            <Plus size={12} />
-                            Add
-                        </button>
-                    }
-                >
-                    <div className="space-y-2">
+                <EditorSection title="Checkboxes" action={presetActions}>
+                    <div className="space-y-3">
                         {content.options?.map((option, idx) => (
                             <div key={option.id} className="group border border-shell-border rounded-lg bg-shell-bg overflow-hidden transition-all hover:border-shell-accent-border">
                                 {/* Item Header / Summary */}
@@ -187,34 +120,48 @@ export function CheckboxGroupEditor({
                                     <div className="text-shell-muted cursor-grab active:cursor-grabbing">
                                         <GripVertical className="w-4 h-4" />
                                     </div>
-                                    <div className="flex-1 min-w-0 flex items-center gap-2">
-                                        <div className="w-4 h-4 rounded border border-shell-border bg-shell-bg flex items-center justify-center">
-                                            <div className="w-2 h-2 rounded-[1px] bg-shell-muted opacity-0 group-hover:opacity-100" />
-                                        </div>
-                                        <div className="text-xs font-medium text-shell-text truncate">
-                                            {option.label || 'New Option'}
-                                        </div>
+                                    <div className="text-shell-muted">
+                                        <ChevronDown
+                                            className={cn(
+                                                "w-4 h-4 transition-transform duration-200",
+                                                expandedItemId === option.id && "rotate-180"
+                                            )}
+                                        />
                                     </div>
-                                    <button
+                                    <div className="flex-1 min-w-0">
+                                        <div className="text-xs font-medium text-shell-text truncate">
+                                            {option.label || `Checkbox ${idx + 1}`}
+                                        </div>
+                                        {option.description?.trim() && (
+                                            <div className="text-[10px] text-shell-muted truncate">
+                                                {option.description}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <ShellIconButton
                                         onClick={(e) => { e.stopPropagation(); deleteOption(idx); }}
                                         disabled={readOnly}
-                                        className="p-1.5 text-shell-muted hover:text-shell-danger hover:bg-shell-danger-soft rounded transition-all opacity-0 group-hover:opacity-100"
+                                        type="button"
+                                        size="sm"
+                                        aria-label={`Delete ${option.label || 'checkbox'}`}
+                                        className="opacity-0 transition-opacity group-hover:opacity-100"
                                     >
                                         <X className="w-3.5 h-3.5" />
-                                    </button>
+                                    </ShellIconButton>
                                 </div>
 
                                 {/* Expanded Editor */}
                                 {expandedItemId === option.id && (
-                                    <div className="p-3 border-t border-shell-border-subtle bg-shell-bg space-y-3 animate-in fade-in slide-in-from-top-1">
+                                    <div className="space-y-4 border-t border-shell-border-subtle bg-shell-bg p-4 animate-in fade-in slide-in-from-top-1">
                                         <EditorField
-                                            label="Label"
+                                            label="Checkbox label"
                                             value={option.label}
                                             onChange={(val) => updateOption(idx, { label: val })}
+                                            placeholder="Product Design"
                                             readOnly={readOnly}
                                         />
                                         <EditorField
-                                            label="Description (Optional)"
+                                            label="Caption"
                                             value={option.description || ''}
                                             onChange={(val) => updateOption(idx, { description: val })}
                                             placeholder="Add extra detail..."
@@ -226,10 +173,32 @@ export function CheckboxGroupEditor({
                         ))}
                         {content.options?.length === 0 && (
                             <div className="text-center py-4 text-xs text-shell-muted border border-dashed border-shell-border rounded-lg">
-                                No options added yet.
+                                No checkboxes yet. Add checkboxes people can select.
                             </div>
                         )}
                     </div>
+                    <EditorAddButton onClick={addOption} disabled={readOnly}>
+                        Add checkbox
+                    </EditorAddButton>
+                </EditorSection>
+
+                <EditorSection title="Actions">
+                    <EditorFieldRow>
+                        <EditorField
+                            label="Primary CTA"
+                            value={localPrimaryLabel}
+                            onChange={handlePrimaryLabelChange}
+                            placeholder="Select"
+                            readOnly={readOnly}
+                        />
+                        <EditorField
+                            label="Secondary CTA"
+                            value={localSecondaryLabel}
+                            onChange={handleSecondaryLabelChange}
+                            placeholder="Cancel"
+                            readOnly={readOnly}
+                        />
+                    </EditorFieldRow>
                 </EditorSection>
             </EditorContent>
         </EditorRoot>

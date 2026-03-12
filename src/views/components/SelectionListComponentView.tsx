@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { SelectionList, SelectionItem } from '@/components/vca-components/selection-list';
+import { SelectCards, SelectCard } from '@/components/vca-components/selection-list';
 import { ComponentViewLayout } from '@/components/component-library/ComponentViewLayout';
 import { DemoSection } from '@/components/component-library/DemoSection';
 import { ToggleButtons } from '@/components/component-library/DemoControls';
@@ -8,7 +8,7 @@ import { Message } from '@/components/vca-components/messages';
 import { PromptGroup } from '@/components/vca-components/prompt-group/PromptGroup';
 import { Container } from '@/components/vca-components/container/Container';
 
-const mockUsers: SelectionItem[] = [
+const mockUsers: SelectCard[] = [
     {
         id: '1',
         title: 'Sarah Jenkins',
@@ -35,21 +35,21 @@ const mockUsers: SelectionItem[] = [
     }
 ];
 
-const mockAccounts: SelectionItem[] = [
+const mockAccounts: SelectCard[] = [
     { id: 'a1', title: 'Acme Corp', subtitle: 'ID: 8839201', iconName: 'building' },
     { id: 'a2', title: 'Globex Inc', subtitle: 'ID: 4492011', iconName: 'building' },
     { id: 'a3', title: 'Soylent Corp', subtitle: 'ID: 1102934', iconName: 'building' },
     { id: 'a4', title: 'Initech', subtitle: 'ID: 5592011', iconName: 'building' },
 ];
 
-const mockLicenses: SelectionItem[] = [
+const mockLicenses: SelectCard[] = [
     { id: 'l1', title: 'Enterprise Seat 2024', subtitle: 'Expires Dec 31' },
     { id: 'l2', title: 'Pro Seat 2024', subtitle: 'Expires Nov 15' },
     { id: 'l3', title: 'Basic Seat', subtitle: 'Monthly' },
 ];
 
 // Generate many users for "Show More" demo
-const manyUsers: SelectionItem[] = Array.from({ length: 12 }, (_, i) => ({
+const manyUsers: SelectCard[] = Array.from({ length: 12 }, (_, i) => ({
     id: `many-${i}`,
     title: `User Candidate ${i + 1}`,
     subtitle: `candidate.${i + 1}@example.com`,
@@ -62,9 +62,9 @@ const SelectionListComponentView = () => {
 
     // Demo State for "Realistic Usage"
     const [userDemoState, setUserDemoState] = useState<'selecting' | 'selected'>('selecting');
-    const [selectedUser, setSelectedUser] = useState<SelectionItem | null>(null);
+    const [selectedUser, setSelectedUser] = useState<SelectCard | null>(null);
 
-    const handleUserSelect = (item: SelectionItem) => {
+    const handleUserSelect = (item: SelectCard) => {
         setUserDemoState('selected');
         setSelectedUser(item);
     };
@@ -85,8 +85,8 @@ const SelectionListComponentView = () => {
 
     return (
         <ComponentViewLayout
-            title="Selection List (WIP)"
-            description="A flexible component for selecting items from a list, such as users, accounts, or licenses. Supports multiple layouts."
+            title="Select Cards (WIP)"
+            description="A flexible component for choosing one card from a set, such as people, accounts, or licenses. Supports multiple layouts."
         >
             <div className="space-y-20">
                 <DemoSection
@@ -108,7 +108,7 @@ const SelectionListComponentView = () => {
                     }
                 >
                     <div className="p-4 bg-shell-surface-subtle rounded-xl w-full flex justify-center">
-                        <SelectionList
+                        <SelectCards
                             items={getItems()}
                             layout={layout}
                             onSelect={(item) => alert(`Selected: ${item.title}`)}
@@ -120,7 +120,7 @@ const SelectionListComponentView = () => {
                     <div>
                         <h2>Usage</h2>
                         <p className="mt-4 text-shell-muted">
-                            Use the Selection List when you need the user to choose one item from a collection.
+                            Use Select Cards when you need the user to choose one card from a collection.
                             It adapts to different content types (people with avatars, accounts with icons) and display contexts.
                         </p>
                     </div>
@@ -143,7 +143,7 @@ const SelectionListComponentView = () => {
                 <div>
                     <h2>Realistic Usage</h2>
                     <p className="mt-4 text-shell-muted">
-                        Here's how the Selection List appears within a typical VCA conversation flow.
+                        Here's how Select Cards appears within a typical VCA conversation flow.
                     </p>
                 </div>
 
@@ -173,7 +173,7 @@ const SelectionListComponentView = () => {
                                 {/* The Selection Component */}
                                 {userDemoState === 'selecting' ? (
                                     <>
-                                        <SelectionList
+                                        <SelectCards
                                             items={mockUsers.slice(0, 3)}
                                             layout="list"
                                             onSelect={handleUserSelect}
@@ -233,7 +233,7 @@ const SelectionListComponentView = () => {
                                 {/* The Selection Component */}
                                 <div className="-mx-vca-xl px-vca-xl overflow-hidden">
                                     {/* Negative margin to breakout of container padding, but keeping px for start alignment */}
-                                    <SelectionList
+                                    <SelectCards
                                         items={mockAccounts}
                                         layout="carousel"
                                         onSelect={(item) => alert(`Selected ${item.title}`)}
@@ -270,7 +270,7 @@ const SelectionListComponentView = () => {
                                 />
 
                                 {/* The Selection Component with maxDisplayed */}
-                                <SelectionList
+                                <SelectCards
                                     items={manyUsers}
                                     layout="list"
                                     maxDisplayed={3}

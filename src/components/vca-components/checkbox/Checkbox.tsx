@@ -7,12 +7,16 @@ import { cn } from "@/utils"
 export interface CheckboxProps extends React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root> {
     label?: string;
     description?: string;
+    labelClassName?: string;
 }
 
 const Checkbox = React.forwardRef<
     React.ElementRef<typeof CheckboxPrimitive.Root>,
     CheckboxProps
->(({ className, label, description, ...props }, ref) => (
+>(({ className, label, description, labelClassName, ...props }, ref) => {
+    const labelTextClasses = labelClassName || 'text-vca-medium-bold';
+
+    return (
     <div className="flex items-start gap-vca-lg">
         <CheckboxPrimitive.Root
             ref={ref}
@@ -62,10 +66,7 @@ const Checkbox = React.forwardRef<
                 {label && (
                     <label
                         htmlFor={props.id}
-                        className={cn(
-                            "text-vca-medium-bold leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
-                            "cursor-pointer"
-                        )}
+                        className={`${labelTextClasses} leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer`}
                         onClick={(_e) => {
                             // Allow clicking label to toggle if needed
                         }}
@@ -81,7 +82,8 @@ const Checkbox = React.forwardRef<
             </div>
         )}
     </div>
-))
+    )
+})
 Checkbox.displayName = CheckboxPrimitive.Root.displayName
 
 export { Checkbox }

@@ -13,6 +13,7 @@ interface UserTurnEditorProps {
     onChange: (updates: { label?: string; inputType?: 'text' | 'button' | 'prompt'; triggerValue?: string }) => void;
     isLinked?: boolean;
     promptText?: string;
+    buttonText?: string;
     children: React.ReactNode;
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
@@ -26,6 +27,7 @@ export const UserTurnEditor = ({
     onChange,
     isLinked,
     promptText,
+    buttonText,
     children,
     isOpen,
     onOpenChange,
@@ -60,6 +62,22 @@ export const UserTurnEditor = ({
         }
     };
 
+    const getButtonHelperText = () => {
+        if (isLinked) {
+            if (buttonText) {
+                return `Triggers when user clicks: ${buttonText}`;
+            }
+
+            return 'This path is linked to a button. Update the source component to add or change its label.';
+        }
+
+        if (triggerValue.trim()) {
+            return `Saved button label: ${triggerValue}. Link a button-based component on the canvas to keep this synced.`;
+        }
+
+        return 'Link a button-based component on the canvas to trigger this path.';
+    };
+
     const editorContent = (
         <EditorRoot>
             <EditorHeader
@@ -86,14 +104,12 @@ export const UserTurnEditor = ({
                 )}
 
                 {inputType === 'button' && (
-                    <EditorField
-                        label="Button Label"
-                        placeholder="Which button does the user click?"
-                        value={triggerValue}
-                        onChange={(val) => onChange({ triggerValue: val })}
-                        autoFocus={true}
-                        readOnly={readOnly}
-                    />
+                    <div className="p-3 bg-shell-accent-soft rounded border border-shell-accent-border text-xs text-shell-accent-text leading-normal font-medium flex items-start gap-2">
+                        <div className="mt-0.5">
+                            <MousePointerClick size={14} />
+                        </div>
+                        <div>{getButtonHelperText()}</div>
+                    </div>
                 )}
 
                 {inputType === 'prompt' && (

@@ -1,5 +1,5 @@
 import React from 'react';
-import TextareaAutosize from 'react-textarea-autosize';
+import { ShellInput, ShellTextareaAutosize } from '@/components/shell';
 import { cn } from '@/utils/cn';
 
 interface EditorFieldProps {
@@ -39,6 +39,11 @@ export const EditorField = ({
     readOnly = false,
     disabled = false,
 }: EditorFieldProps) => {
+    const fieldId = React.useId();
+    const errorId = error ? `${fieldId}-error` : undefined;
+    const hintId = hint ? `${fieldId}-hint` : undefined;
+    const describedBy = [errorId, hintId].filter(Boolean).join(' ') || undefined;
+
     const handleInputKeyDown = (e: React.KeyboardEvent) => {
         e.stopPropagation();
         onKeyDown?.(e);
@@ -49,12 +54,15 @@ export const EditorField = ({
             {(label || error) && (
                 <div className="flex justify-between items-baseline">
                     {label && (
-                        <label className="text-[11px] font-medium text-shell-muted-strong">
+                        <label
+                            className="text-[11px] font-medium text-shell-muted-strong"
+                            htmlFor={renderInput ? fieldId : undefined}
+                        >
                             {label}
                         </label>
                     )}
                     {error && (
-                        <span className="text-[10px] text-shell-danger font-medium">
+                        <span className="text-[10px] text-shell-danger font-medium" id={errorId}>
                             {error}
                         </span>
                     )}
@@ -62,7 +70,8 @@ export const EditorField = ({
             )}
 
             {renderInput && (type === 'textarea' ? (
-                <TextareaAutosize
+                <ShellTextareaAutosize
+                    id={fieldId}
                     ref={inputRef as React.Ref<HTMLTextAreaElement>}
                     value={value || ''}
                     onChange={(e) => onChange?.(e.target.value)}
@@ -72,16 +81,18 @@ export const EditorField = ({
                     autoFocus={autoFocus}
                     readOnly={readOnly}
                     disabled={disabled}
+                    aria-invalid={Boolean(error)}
+                    aria-describedby={describedBy}
                     className={cn(
-                        "w-full text-[13px] text-shell-text border rounded-lg p-2.5 resize-none leading-relaxed transition-all",
-                        "placeholder:text-shell-muted focus:outline-none disabled:cursor-not-allowed disabled:opacity-80",
+                        "min-h-[88px] rounded-lg bg-shell-surface px-3 py-2 text-[13px] leading-relaxed placeholder:text-shell-muted/55 md:text-[13px]",
                         error
-                            ? "border-shell-danger-border focus:border-shell-danger focus:ring-2 focus:ring-shell-danger/20 bg-shell-danger-soft/20"
-                            : "border-shell-border focus:border-shell-accent focus:ring-2 focus:ring-shell-accent/20 bg-shell-bg"
+                            ? "border-shell-danger-border bg-shell-danger-soft/20 focus-visible:border-shell-danger focus-visible:ring-shell-danger/20"
+                            : null
                     )}
                 />
             ) : (
-                <input
+                <ShellInput
+                    id={fieldId}
                     ref={inputRef as React.Ref<HTMLInputElement>}
                     type="text"
                     value={value || ''}
@@ -91,18 +102,19 @@ export const EditorField = ({
                     autoFocus={autoFocus}
                     readOnly={readOnly}
                     disabled={disabled}
+                    aria-invalid={Boolean(error)}
+                    aria-describedby={describedBy}
                     className={cn(
-                        "w-full text-[13px] text-shell-text border rounded-lg p-2.5 transition-all",
-                        "placeholder:text-shell-muted focus:outline-none disabled:cursor-not-allowed disabled:opacity-80",
+                        "h-auto min-h-[40px] rounded-lg bg-shell-surface px-3 py-2 text-[13px] leading-5 placeholder:text-shell-muted/55 md:text-[13px]",
                         error
-                            ? "border-shell-danger-border focus:border-shell-danger focus:ring-2 focus:ring-shell-danger/20 bg-shell-danger-soft/20"
-                            : "border-shell-border focus:border-shell-accent focus:ring-2 focus:ring-shell-accent/20 bg-shell-bg"
+                            ? "border-shell-danger-border bg-shell-danger-soft/20 focus-visible:border-shell-danger focus-visible:ring-shell-danger/20"
+                            : null
                     )}
                 />
             ))}
 
             {hint && (
-                <p className="text-[10px] text-shell-muted leading-relaxed">
+                <p className="text-[10px] text-shell-muted leading-relaxed" id={hintId}>
                     {hint}
                 </p>
             )}

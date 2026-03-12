@@ -1,4 +1,4 @@
-import { MessageSquare, MessageCirclePlus, MessageSquareText, Zap, LayoutList, CheckSquare, User } from 'lucide-react';
+import { MessageSquare, MessageCirclePlus, MessageSquareText, Zap, LayoutList, CheckSquare, IdCard } from 'lucide-react';
 import {
     Component,
     AIMessageContent,
@@ -57,16 +57,16 @@ export const getComponentDisplay = (component: Component): { icon: JSX.Element; 
             const listContent = component.content as SelectionListContent;
             return {
                 icon: <LayoutList className="w-4 h-4" />,
-                label: 'Selection List',
-                detail: `${listContent.items?.length || 0} items`
+                label: 'Select Cards',
+                detail: `${listContent.items?.length || 0} cards`
             };
         }
         case 'confirmationCard': {
             const confirmationContent = component.content as ConfirmationCardContent;
             return {
-                icon: <User className="w-4 h-4" />,
-                label: 'Confirmation Card',
-                detail: confirmationContent.item?.title || 'Candidate'
+                icon: <IdCard className="w-4 h-4" />,
+                label: 'Display Card',
+                detail: confirmationContent.item?.title || 'Item'
             };
         }
         case 'checkboxGroup': {
@@ -74,7 +74,7 @@ export const getComponentDisplay = (component: Component): { icon: JSX.Element; 
             return {
                 icon: <CheckSquare className="w-4 h-4" />,
                 label: 'Checkbox Group',
-                detail: groupContent.title || `${groupContent.options?.length || 0} options`
+                detail: `${groupContent.options?.length || 0} options`
             };
         }
         default:

@@ -3,6 +3,7 @@ import { Branch } from '@/views/studio/types';
 import { Split } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { ShellButton, ShellInput } from '@/components/shell';
+import { getConditionPathLabel, getConditionRuleSummary } from '../conditionBranchLabels';
 
 interface ContextInterceptorMessageProps {
     variableName: string;
@@ -26,8 +27,8 @@ export function ContextInterceptorMessage({
 
     const pathChoices = relevantBranches.map((branch) => {
         const isDefault = !!branch.isDefault;
-        const pathLabel = branch.condition?.trim() || (isDefault ? 'Default' : 'Path');
-        const ruleVariable = branch.logic?.variable || variableName;
+        const pathLabel = getConditionPathLabel(branch);
+        const ruleSummary = getConditionRuleSummary(branch, variableName);
         const ruleValue = branch.logic?.value !== undefined ? String(branch.logic.value) : '';
 
         return {
@@ -35,8 +36,7 @@ export function ContextInterceptorMessage({
             value: isDefault ? '__USE_DEFAULT__' : ruleValue,
             isDefault,
             pathLabel,
-            ruleVariable,
-            ruleValue
+            ruleSummary
         };
     });
 
@@ -57,7 +57,7 @@ export function ContextInterceptorMessage({
                 <div className="space-y-2">
                     {pathChoices.length > 0 && (
                         <div className="max-h-[220px] space-y-2 overflow-y-auto pr-1 thin-scrollbar">
-                            {pathChoices.map(({ id, value, pathLabel, ruleVariable, ruleValue, isDefault }) => (
+                            {pathChoices.map(({ id, value, pathLabel, ruleSummary, isDefault }) => (
                                 <ShellButton
                                     key={id}
                                     variant="outline"
@@ -71,11 +71,11 @@ export function ContextInterceptorMessage({
                                         <span className="block text-[13px] font-semibold leading-snug break-words">{pathLabel}</span>
                                         {isDefault ? (
                                             <span className="mt-0.5 block text-[12px] text-shell-muted-strong leading-snug break-words">
-                                                Anything else (fallback)
+                                                Anything else
                                             </span>
                                         ) : (
                                             <span className="mt-0.5 block font-mono text-[12px] leading-snug break-all text-shell-muted-strong">
-                                                {`${ruleVariable || variableName} = ${ruleValue || 'value'}`}
+                                                {ruleSummary || `${variableName} = value`}
                                             </span>
                                         )}
                                     </span>

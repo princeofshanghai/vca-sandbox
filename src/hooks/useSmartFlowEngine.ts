@@ -1,6 +1,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Flow, Step, Branch, Connection, UserTurn, Condition } from '@/views/studio/types';
+import { getConditionSelectionLabel } from '@/views/studio/conditionBranchLabels';
 
 // Types for local history extension
 export type HistoryStep = Step | {
@@ -8,6 +9,15 @@ export type HistoryStep = Step | {
     id: string,
     variant: 'neutral',
     message: string
+} | {
+    type: 'condition-selection',
+    id: string,
+    stepId: string,
+    variableName: string,
+    branches: Branch[],
+    selectedBranchId: string,
+    selectedLabel: string,
+    selectedValue: string
 } | {
     type: 'interceptor',
     id: string,
@@ -29,31 +39,55 @@ interface UseSmartFlowEngineProps {
     flow: Flow;
     variables?: Record<string, string>;
     onVariableUpdate?: (key: string, value: string) => void;
+    initialSnapshot?: SmartFlowEngineSnapshot | null;
+    reviewMode?: boolean;
+}
+
+export interface SmartFlowEngineSnapshot {
+    history: HistoryStep[];
+    visibleComponentIds: string[];
+    lastConditionSelection: ConditionPathSelection | null;
+    pathSelections: ConditionPathSelection[];
 }
 
 export const useSmartFlowEngine = ({
     flow,
     variables,
-    onVariableUpdate
+    onVariableUpdate,
+    initialSnapshot,
+    reviewMode = false,
 }: UseSmartFlowEngineProps) => {
     // State to track the conversation history (visited nodes)
-    const [history, setHistory] = useState<HistoryStep[]>([]);
+    const [history, setHistory] = useState<HistoryStep[]>(() => initialSnapshot?.history || []);
 
     // Delivery Queue & Visibility
     const [deliveryQueue, setDeliveryQueue] = useState<HistoryStep[]>([]);
-    const [visibleComponentIds, setVisibleComponentIds] = useState<Set<string>>(new Set());
+    const [visibleComponentIds, setVisibleComponentIds] = useState<Set<string>>(
+        () => new Set(initialSnapshot?.visibleComponentIds || [])
+    );
     const [isThinking, setIsThinking] = useState(false);
     const [isProcessingQueue, setIsProcessingQueue] = useState(false);
 
     // NEW: Text Streaming State
     const [streamingComponentId, setStreamingComponentId] = useState<string | null>(null);
     const [currentStreamingText, setCurrentStreamingText] = useState<string>('');
-    const [lastConditionSelection, setLastConditionSelection] = useState<ConditionPathSelection | null>(null);
+    const [lastConditionSelection, setLastConditionSelection] = useState<ConditionPathSelection | null>(
+        initialSnapshot?.lastConditionSelection || null
+    );
+    const [pathSelections, setPathSelections] = useState<ConditionPathSelection[]>(
+        () => initialSnapshot?.pathSelections || []
+    );
 
     const simulateThinking = flow.settings?.simulateThinking;
+    const shouldSimulateThinking = !reviewMode && simulateThinking;
     const variablesString = JSON.stringify(variables);
     const historyRef = useRef(history); // Ref to access latest history in callbacks
+    const pathSelectionsRef = useRef(pathSelections);
     const currentRunId = useRef(0); // Track active delivery run
+    const hasAttemptedReviewSeedRef = useRef(false);
+    const traverseRef = useRef<
+        ((currentNodeId: string, sourceHandle?: string, simulatedInput?: string) => void) | null
+    >(null);
 
     // Track streaming text content for truncation
     const currentStreamingTextRef = useRef<string>('');
@@ -63,6 +97,10 @@ export const useSmartFlowEngine = ({
     useEffect(() => {
         historyRef.current = history;
     }, [history]);
+
+    useEffect(() => {
+        pathSelectionsRef.current = pathSelections;
+    }, [pathSelections]);
 
     useEffect(() => {
         streamingComponentIdRef.current = streamingComponentId;
@@ -129,14 +167,14 @@ export const useSmartFlowEngine = ({
 
 
     // Initialize history with the start node
-    const isInitializedRef = useRef(false);
+    const isInitializedRef = useRef(Boolean(initialSnapshot?.history?.length));
 
 
 
 
     // --- DELIVERY ENGINE (STREAMING) ---
     useEffect(() => {
-        if (!simulateThinking || deliveryQueue.length === 0 || isProcessingQueue) return;
+        if (!shouldSimulateThinking || deliveryQueue.length === 0 || isProcessingQueue) return;
 
         const deliverNext = async () => {
             const runId = currentRunId.current;
@@ -242,7 +280,7 @@ export const useSmartFlowEngine = ({
         };
 
         deliverNext();
-    }, [deliveryQueue, isProcessingQueue, simulateThinking]);
+    }, [deliveryQueue, isProcessingQueue, shouldSimulateThinking]);
 
     // --- SMART MATCHING LOGIC ---
     const getLevenshteinDistance = (a: string, b: string) => {
@@ -437,6 +475,27 @@ export const useSmartFlowEngine = ({
         return selectedBranchId;
     };
 
+    const getPreferredReviewBranchId = (branches: Branch[]) =>
+        branches.find((branch) => !branch.isDefault)?.id ||
+        branches.find((branch) => branch.isDefault)?.id ||
+        branches[0]?.id ||
+        '';
+
+    const getMergedSelectionVariables = (
+        selections: ConditionPathSelection[],
+        extraSelection?: ConditionPathSelection
+    ) => {
+        const merged = { ...(variables || {}) };
+        const selectionsToApply = extraSelection ? mergePathSelections(selections, extraSelection) : selections;
+
+        selectionsToApply.forEach((selection) => {
+            if (selection.selectedValue === '__USE_DEFAULT__') return;
+            merged[selection.variableName] = selection.selectedValue;
+        });
+
+        return merged;
+    };
+
     const getConditionSelectionMeta = (
         stepId: string,
         variableName: string,
@@ -448,14 +507,9 @@ export const useSmartFlowEngine = ({
             : (getConditionBranch(branches, { ...(variables || {}), [variableName]: value }) || '');
 
         const selectedBranch = branches.find((branch) => branch.id === selectedBranchId);
-        const selectedPathLabel = selectedBranch?.condition?.trim() || (selectedBranch?.isDefault ? 'Default' : 'Path');
-        const selectedLabel = selectedBranch?.isDefault
-            ? `${selectedPathLabel} (Fallback)`
-            : (
-                selectedBranch?.logic?.variable && selectedBranch.logic?.value !== undefined
-                    ? `${selectedPathLabel} (${selectedBranch.logic.variable} = ${String(selectedBranch.logic.value)})`
-                    : selectedPathLabel
-            );
+        const selectedLabel = selectedBranch
+            ? getConditionSelectionLabel(selectedBranch, variableName)
+            : 'Path';
 
         return {
             stepId,
@@ -466,6 +520,66 @@ export const useSmartFlowEngine = ({
             selectedValue: value,
         };
     };
+
+    const getConditionVariableName = (branches: Branch[], stepId: string) =>
+        branches.find((branch) => branch.logic?.variable)?.logic?.variable || `condition:${stepId}`;
+
+    const getConditionSelectionMetaForBranch = ({
+        stepId,
+        branches,
+        selectedBranchId,
+        selectedValue,
+        variableName,
+    }: {
+        stepId: string;
+        branches: Branch[];
+        selectedBranchId: string;
+        selectedValue: string;
+        variableName?: string;
+    }): ConditionPathSelection => {
+        const resolvedVariableName = variableName || getConditionVariableName(branches, stepId);
+        const selectedBranch = branches.find((branch) => branch.id === selectedBranchId);
+        const selectedLabel = selectedBranch
+            ? getConditionSelectionLabel(selectedBranch, resolvedVariableName)
+            : 'Path';
+
+        return {
+            stepId,
+            variableName: resolvedVariableName,
+            branches,
+            selectedBranchId,
+            selectedLabel,
+            selectedValue,
+        };
+    };
+
+    const mergePathSelections = (
+        currentSelections: ConditionPathSelection[],
+        nextSelection: ConditionPathSelection
+    ) => {
+        const existingIndex = currentSelections.findIndex(
+            (selection) => selection.stepId === nextSelection.stepId
+        );
+
+        if (existingIndex >= 0) {
+            return [...currentSelections.slice(0, existingIndex), nextSelection];
+        }
+
+        return [...currentSelections, nextSelection];
+    };
+
+    const buildConditionSelectionStep = (
+        selection: ConditionPathSelection
+    ): Extract<HistoryStep, { type: 'condition-selection' }> => ({
+        type: 'condition-selection',
+        id: `condition-selection-${selection.stepId}-${Date.now()}`,
+        stepId: selection.stepId,
+        variableName: selection.variableName,
+        branches: selection.branches,
+        selectedBranchId: selection.selectedBranchId,
+        selectedLabel: selection.selectedLabel,
+        selectedValue: selection.selectedValue,
+    });
 
     const buildVisibleComponentSet = (steps: HistoryStep[]) => {
         const next = new Set<string>();
@@ -493,7 +607,12 @@ export const useSmartFlowEngine = ({
         replayFromCondition?: boolean;
     }) => {
         const selectionMeta = getConditionSelectionMeta(stepId, variableName, value, branches);
+        const selectionStep = buildConditionSelectionStep(selectionMeta);
+        const nextSelections = mergePathSelections(pathSelectionsRef.current, selectionMeta);
+
         setLastConditionSelection(selectionMeta);
+        pathSelectionsRef.current = nextSelections;
+        setPathSelections(nextSelections);
 
         if (value !== '__USE_DEFAULT__') {
             onVariableUpdate?.(variableName, value);
@@ -514,20 +633,31 @@ export const useSmartFlowEngine = ({
 
             let cutoffIndex = -1;
             for (let i = baselineHistory.length - 1; i >= 0; i--) {
-                if (baselineHistory[i].id === stepId) {
+                const historyStep = baselineHistory[i];
+                if (
+                    historyStep.type === 'condition-selection' &&
+                    historyStep.stepId === stepId
+                ) {
                     cutoffIndex = i;
                     break;
                 }
             }
 
             const truncatedHistory = cutoffIndex >= 0
-                ? baselineHistory.slice(0, cutoffIndex + 1)
+                ? baselineHistory.slice(0, cutoffIndex)
                 : baselineHistory;
 
-            setHistory(truncatedHistory);
-            setVisibleComponentIds(buildVisibleComponentSet(truncatedHistory));
+            const nextHistory = [...truncatedHistory, selectionStep];
+
+            setHistory(nextHistory);
+            setVisibleComponentIds(buildVisibleComponentSet(nextHistory));
         } else if (interceptorStepId) {
-            setHistory((prev) => prev.filter((step) => step.id !== interceptorStepId));
+            setHistory((prev) => [
+                ...prev.filter((step) => step.id !== interceptorStepId),
+                selectionStep,
+            ]);
+        } else {
+            setHistory((prev) => [...prev, selectionStep]);
         }
 
         setTimeout(() => {
@@ -590,7 +720,7 @@ export const useSmartFlowEngine = ({
                 const outgoing = flow.connections?.find(c => c.source === nextNode.id);
                 if (outgoing) {
                     const nextStep = flow.steps?.find(s => s.id === outgoing.target);
-                    if (nextStep && nextStep.type === 'user-turn') {
+                    if (nextStep && nextStep.type === 'user-turn' && !reviewMode) {
                         break;
                     }
                 } else {
@@ -601,17 +731,40 @@ export const useSmartFlowEngine = ({
             } else if (nextNode.type === 'condition') {
                 // Evaluate Condition
                 const branches = (nextNode as Condition).branches || [];
+                const effectiveVariables = getMergedSelectionVariables(pathSelectionsRef.current);
 
                 // CHECK: Do any branches reference a variable that's undefined?
                 const undefinedVariable = branches.find(b => {
                     if (b.isDefault) return false;
-                    if (b.logic?.variable && variables?.[b.logic.variable] === undefined) {
+                    if (b.logic?.variable && effectiveVariables[b.logic.variable] === undefined) {
                         return true;
                     }
                     return false;
                 });
 
                 if (undefinedVariable?.logic?.variable) {
+                    if (reviewMode) {
+                        const selectedBranchId = getPreferredReviewBranchId(branches);
+                        const selectedValue =
+                            branches.find((branch) => branch.id === selectedBranchId)?.logic?.value ??
+                            '__USE_DEFAULT__';
+                        const selectionMeta = getConditionSelectionMetaForBranch({
+                            stepId: nextNode.id,
+                            branches,
+                            selectedBranchId,
+                            selectedValue,
+                            variableName: getConditionVariableName(branches, nextNode.id),
+                        });
+                        const nextSelections = mergePathSelections(pathSelectionsRef.current, selectionMeta);
+
+                        setLastConditionSelection(selectionMeta);
+                        pathSelectionsRef.current = nextSelections;
+                        setPathSelections(nextSelections);
+                        nodesToAdd.push(buildConditionSelectionStep(selectionMeta));
+                        currentHandle = selectedBranchId || undefined;
+                        continue;
+                    }
+
                     // PAUSE: Trigger Interceptor
                     const interceptorStep: HistoryStep = {
                         id: `interceptor-${nextNode.id}`,
@@ -625,14 +778,31 @@ export const useSmartFlowEngine = ({
                 }
 
                 // No undefined variables, proceed normally
-                const selectedBranchId = getConditionBranch(branches, variables || {}, inputForBinding);
+                const selectedBranchId = reviewMode
+                    ? getConditionBranch(branches, effectiveVariables, inputForBinding) || getPreferredReviewBranchId(branches)
+                    : getConditionBranch(branches, effectiveVariables, inputForBinding);
+                const selectedValue =
+                    branches.find((branch) => branch.id === selectedBranchId)?.logic?.value ??
+                    '__USE_DEFAULT__';
+                const selectionMeta = getConditionSelectionMetaForBranch({
+                    stepId: nextNode.id,
+                    branches,
+                    selectedBranchId: selectedBranchId || '',
+                    selectedValue,
+                });
+
+                setLastConditionSelection(selectionMeta);
+                const nextSelections = mergePathSelections(pathSelectionsRef.current, selectionMeta);
+                pathSelectionsRef.current = nextSelections;
+                setPathSelections(nextSelections);
+                nodesToAdd.push(buildConditionSelectionStep(selectionMeta));
 
                 currentHandle = selectedBranchId || undefined;
             }
         }
 
         if (nodesToAdd.length > 0) {
-            if (simulateThinking) {
+            if (shouldSimulateThinking) {
                 setDeliveryQueue(prev => [...prev, ...nodesToAdd]);
             } else {
                 setHistory(prev => [...prev, ...nodesToAdd]);
@@ -647,6 +817,8 @@ export const useSmartFlowEngine = ({
             }
         }
     };
+
+    traverseRef.current = traverse;
 
 
 
@@ -676,7 +848,7 @@ export const useSmartFlowEngine = ({
 
             if (firstTurn) {
                 // Manually add the first turn step
-                if (simulateThinking) {
+                if (shouldSimulateThinking) {
                     setDeliveryQueue([firstTurn]);
                 } else {
                     setHistory([firstTurn]);
@@ -696,6 +868,7 @@ export const useSmartFlowEngine = ({
             setHistory(prevHistory => {
                 const updatedHistory = prevHistory.map(step => {
                     if (step.type === 'feedback') return step;
+                    if (step.type === 'condition-selection') return step;
                     if (step.type === 'user-turn') {
                         const realNode = flow.steps?.find(s => s.id === step.id);
                         return realNode ? realNode as Step : step;
@@ -708,7 +881,52 @@ export const useSmartFlowEngine = ({
             });
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [flow.steps, flow.connections, variablesString, simulateThinking]);
+    }, [flow.steps, flow.connections, reviewMode, shouldSimulateThinking, variablesString]);
+
+    useEffect(() => {
+        if (!reviewMode) {
+            hasAttemptedReviewSeedRef.current = false;
+            return;
+        }
+
+        if (hasAttemptedReviewSeedRef.current) return;
+        if (history.length === 0) return;
+
+        const hasPlayedRun = history.some((step) => step.type === 'user-turn');
+        const hasPathChoices = history.some(
+            (step) => step.type === 'condition-selection' || step.type === 'interceptor'
+        );
+
+        if (hasPlayedRun || hasPathChoices) {
+            hasAttemptedReviewSeedRef.current = true;
+            return;
+        }
+
+        const lastTurn = [...history]
+            .reverse()
+            .find((step): step is Step => step.type === 'turn' || step.type === 'start');
+
+        if (!lastTurn) {
+            hasAttemptedReviewSeedRef.current = true;
+            return;
+        }
+
+        const outgoingConnections = (flow.connections || []).filter(
+            (connection) => connection.source === lastTurn.id
+        );
+        const nextSteps = outgoingConnections
+            .map((connection) => flow.steps?.find((step) => step.id === connection.target))
+            .filter(Boolean);
+        const shouldSeedReviewPath = nextSteps.some(
+            (step) => step?.type === 'user-turn' || step?.type === 'condition'
+        );
+
+        hasAttemptedReviewSeedRef.current = true;
+
+        if (!shouldSeedReviewPath) return;
+
+        traverseRef.current?.(lastTurn.id);
+    }, [flow.connections, flow.steps, history, reviewMode]);
 
 
     const handlePromptClick = (stepId: string, promptComponentId: string, text?: string) => {
@@ -783,31 +1001,34 @@ export const useSmartFlowEngine = ({
         const lastRealStep = historyRef.current.slice().reverse().find(s => s.type === 'turn' || s.type === 'start');
 
         if (lastRealStep) {
-            const delay = simulateThinking ? 500 : 100;
+            const delay = shouldSimulateThinking ? 500 : 0;
             setTimeout(() => {
                 traverse(lastRealStep.id, undefined, input);
             }, delay);
         }
     };
 
-    const handleCheckboxSave = (
+    const handleCheckboxAction = (
         stepId: string,
         componentId: string,
+        action: 'primary' | 'secondary',
         selectedIds: string[],
         selectedLabels: string[],
-        saveLabel?: string
+        actionLabel?: string
     ) => {
-        const handleId = `handle-${componentId}`;
+        const handleId = action === 'secondary'
+            ? `handle-${componentId}-secondary`
+            : `handle-${componentId}`;
         const trimmedLabels = selectedLabels.map((label) => label.trim()).filter(Boolean);
 
-        let userLabel = saveLabel || 'Save';
-        if (trimmedLabels.length > 0) {
+        let userLabel = actionLabel || (action === 'secondary' ? 'Cancel' : 'Save');
+        if (action === 'primary' && trimmedLabels.length > 0) {
             const previewLabels = trimmedLabels.slice(0, 2).join(', ');
             const remaining = trimmedLabels.length - 2;
             userLabel = remaining > 0
                 ? `${previewLabels} +${remaining} more`
                 : previewLabels;
-        } else if (selectedIds.length > 0) {
+        } else if (action === 'primary' && selectedIds.length > 0) {
             userLabel = `${selectedIds.length} selected`;
         }
 
@@ -819,7 +1040,11 @@ export const useSmartFlowEngine = ({
         };
         setHistory(prev => [...prev, mockUserStep]);
 
-        traverse(stepId, handleId, trimmedLabels.join(', '));
+        const traversalInput = action === 'primary'
+            ? trimmedLabels.join(', ')
+            : userLabel;
+
+        traverse(stepId, handleId, traversalInput);
     };
 
     const resolveInterceptor = (stepId: string, variableName: string, value: string, branches: Branch[], interceptorStepId: string) => {
@@ -855,10 +1080,11 @@ export const useSmartFlowEngine = ({
         handlePromptClick,
         handleSelectionItemClick,
         handleConfirmationAction,
-        handleCheckboxSave,
+        handleCheckboxAction,
         resolveInterceptor,
         switchConditionPath,
         lastConditionSelection,
+        pathSelections,
         setHistory
     };
 };

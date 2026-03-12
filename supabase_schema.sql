@@ -105,11 +105,33 @@ create table if not exists public.flow_comments (
 );
 
 alter table public.flow_comments add column if not exists author_avatar_url text;
+alter table public.flow_comments add column if not exists anchor_mode text;
+alter table public.flow_comments add column if not exists anchor_kind text;
+alter table public.flow_comments add column if not exists anchor_block_id text;
+alter table public.flow_comments add column if not exists anchor_step_id text;
+alter table public.flow_comments add column if not exists anchor_component_id text;
+alter table public.flow_comments add column if not exists anchor_history_index integer;
+alter table public.flow_comments add column if not exists anchor_local_x double precision;
+alter table public.flow_comments add column if not exists anchor_local_y double precision;
+alter table public.flow_comments add column if not exists path_signature text;
+
+alter table public.flow_comments drop constraint if exists flow_comments_anchor_mode_check;
+alter table public.flow_comments add constraint flow_comments_anchor_mode_check
+  check (anchor_mode is null or anchor_mode in ('canvas', 'review'));
+
+alter table public.flow_comments drop constraint if exists flow_comments_anchor_kind_check;
+alter table public.flow_comments add constraint flow_comments_anchor_kind_check
+  check (
+    anchor_kind is null
+    or anchor_kind in ('turn', 'component', 'decision', 'feedback')
+  );
 
 create index if not exists flow_comments_flow_id_idx on public.flow_comments(flow_id);
 create index if not exists flow_comments_parent_id_idx on public.flow_comments(parent_id);
 create index if not exists flow_comments_status_idx on public.flow_comments(status);
 create index if not exists flow_comments_created_at_idx on public.flow_comments(created_at);
+create index if not exists flow_comments_anchor_mode_idx on public.flow_comments(anchor_mode);
+create index if not exists flow_comments_path_signature_idx on public.flow_comments(path_signature);
 
 alter table public.flow_comments enable row level security;
 revoke insert, update, delete on public.flow_comments from anon;

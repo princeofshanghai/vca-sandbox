@@ -2,7 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Flow } from '@/views/studio/types';
-import { FlowPreview } from '@/views/studio/FlowPreview';
+import {
+    type FlowPreviewReviewDecision,
+    type FlowPreviewReviewPathChangeRequest,
+    type FlowPreviewReviewState,
+    FlowPreview,
+} from '@/views/studio/FlowPreview';
 import { PreviewSettingsMenu } from '@/views/studio/PreviewSettingsMenu';
 import {
     AlertCircle,
@@ -15,6 +20,7 @@ import {
     MoreHorizontal,
     Pencil,
     RotateCcw,
+    Split,
     Smartphone,
     Trash2,
     X,
@@ -32,6 +38,8 @@ import {
 import {
     ShellButton,
     ShellDialogActions,
+    ShellHeaderRail,
+    ShellHeaderRailItem,
     ShellIconButton,
     ShellMenu,
     ShellMenuContent,
@@ -52,6 +60,7 @@ import {
 import { cn } from '@/utils/cn';
 import { ActionTooltip } from '@/views/studio-canvas/components/ActionTooltip';
 import { useAuth } from '@/hooks/useAuth';
+import { type SmartFlowEngineSnapshot } from '@/hooks/useSmartFlowEngine';
 import {
     getInitialsFromName,
     getUserAvatarUrl,
@@ -59,6 +68,7 @@ import {
 } from '@/utils/userIdentity';
 import {
     type CommentFilter,
+    type FlowCommentReviewAnchor,
     type FlowComment,
     type FlowCommentThread,
     buildFlowCommentThreads,
@@ -104,6 +114,32 @@ type PendingDeleteState = {
     replyCount: number;
 };
 
+type PointerPlacementState = {
+    pointerId: number;
+    startClientX: number;
+    startClientY: number;
+    movedPx: number;
+};
+
+type ReviewThreadStatus = 'visible' | 'other-path' | 'outdated' | 'rail-only';
+
+type ReviewThreadRenderState = {
+    thread: FlowCommentThread;
+    pin: PinPoint | null;
+    status: ReviewThreadStatus;
+    detail: string | null;
+};
+
+type ParsedPathSelection = {
+    stepId: string;
+    branchId: string;
+};
+
+type PendingThreadPathNavigation = {
+    threadId: string;
+    targetSelections: ParsedPathSelection[];
+};
+
 const PIN_VISUAL_RADIUS_PX = 18;
 const PIN_TO_POPOVER_GAP_PX = 8;
 const COMPOSER_GAP_PX = PIN_VISUAL_RADIUS_PX + PIN_TO_POPOVER_GAP_PX;
@@ -114,6 +150,87 @@ const DEFAULT_THREAD_HEIGHT_PX = 320;
 const DRAG_THRESHOLD_PX = 5;
 const NEW_COMMENT_COMPOSER_GAP_PX = PIN_VISUAL_RADIUS_PX + PIN_TO_POPOVER_GAP_PX;
 const PIN_TIP_TO_CIRCLE_CENTER_OFFSET_PX = 14;
+const COMMENT_PLACE_THRESHOLD_PX = 8;
+const COMMENT_PLACEMENT_CURSOR_SVG = `
+<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none">
+  <path
+    fill="#FFF"
+    stroke="#000"
+    stroke-width="2"
+    stroke-linejoin="round"
+    d="M7.5 5.5h13A4.5 4.5 0 0 1 25 10v5.5A4.5 4.5 0 0 1 20.5 20H15l-4.75 4.5a.75.75 0 0 1-1.27-.54V20H7.5A4.5 4.5 0 0 1 3 15.5V10a4.5 4.5 0 0 1 4.5-4.5Z"
+  />
+</svg>
+`.trim();
+const COMMENT_PLACEMENT_CURSOR = `url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(
+    COMMENT_PLACEMENT_CURSOR_SVG
+)}") 10 24, crosshair`;
+
+const createEmptyReviewState = (): FlowPreviewReviewState => ({
+    pathSelections: [],
+    decisions: [],
+    pathSignature: '',
+    historyLength: 0,
+});
+
+const getReviewSnapshotStorageKey = (flowId: string) => `share-review-snapshot:${flowId}`;
+
+const readStoredReviewSnapshot = (flowId: string | undefined) => {
+    if (!flowId || typeof window === 'undefined') return null;
+
+    try {
+        const raw = window.sessionStorage.getItem(getReviewSnapshotStorageKey(flowId));
+        if (!raw) return null;
+        return JSON.parse(raw) as SmartFlowEngineSnapshot;
+    } catch (error) {
+        console.warn('Could not restore review snapshot:', error);
+        return null;
+    }
+};
+
+const writeStoredReviewSnapshot = (
+    flowId: string | undefined,
+    snapshot: SmartFlowEngineSnapshot | null
+) => {
+    if (!flowId || typeof window === 'undefined') return;
+
+    try {
+        if (!snapshot) {
+            window.sessionStorage.removeItem(getReviewSnapshotStorageKey(flowId));
+            return;
+        }
+
+        window.sessionStorage.setItem(
+            getReviewSnapshotStorageKey(flowId),
+            JSON.stringify(snapshot)
+        );
+    } catch (error) {
+        console.warn('Could not persist review snapshot:', error);
+    }
+};
+
+const isReviewComment = (comment: FlowComment) => comment.anchor_mode === 'review';
+
+const parseReviewPathSignature = (pathSignature: string | null | undefined): ParsedPathSelection[] =>
+    (pathSignature || '')
+        .split('|')
+        .map((entry) => entry.trim())
+        .filter(Boolean)
+        .map((entry) => {
+            const separatorIndex = entry.indexOf(':');
+            if (separatorIndex <= 0 || separatorIndex === entry.length - 1) return null;
+
+            return {
+                stepId: entry.slice(0, separatorIndex),
+                branchId: entry.slice(separatorIndex + 1),
+            };
+        })
+        .filter((entry): entry is ParsedPathSelection => !!entry);
+
+const escapeReviewSelector = (value: string) =>
+    typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
+        ? CSS.escape(value)
+        : value.replace(/["\\]/g, '\\$&');
 
 const clampValue = (value: number, min: number, max: number) => {
     if (max < min) return min;
@@ -213,9 +330,6 @@ const formatCommentRelativeTime = (isoDate: string) => {
     return `${years}y ago`;
 };
 
-const hasValidPin = (comment: FlowComment) =>
-    typeof comment.pin_x === 'number' && typeof comment.pin_y === 'number';
-
 const getPreviewText = (message: string) => {
     const trimmed = message.trim().replace(/\s+/g, ' ');
     if (trimmed.length <= 80) return trimmed;
@@ -254,8 +368,27 @@ const getCommentEmptyState = (filter: CommentFilter) => {
 
     return {
         title: 'No comments yet',
-        description: 'Click the comment icon, then click the canvas to leave feedback.',
+        description: 'Press Comments, then click anywhere on the review transcript to leave feedback.',
     };
+};
+
+const getReviewBranchLabel = (
+    decision: Pick<FlowPreviewReviewDecision, 'branches' | 'selectedBranchId' | 'selectedLabel'>
+) => {
+    if (!decision.selectedBranchId) return decision.selectedLabel;
+
+    const selectedBranch = decision.branches.find(
+        (branch) => branch.id === decision.selectedBranchId
+    );
+    if (!selectedBranch) return decision.selectedLabel;
+
+    const label = selectedBranch.condition?.trim() || (selectedBranch.isDefault ? 'Default' : 'Path');
+    return selectedBranch.isDefault ? `${label} (Fallback)` : label;
+};
+
+const getReviewBranchOptionLabel = (branch: FlowPreviewReviewDecision['branches'][number]) => {
+    const label = branch.condition?.trim() || (branch.isDefault ? 'Default' : 'Path');
+    return branch.isDefault ? `${label} (Fallback)` : label;
 };
 
 export const ShareView = () => {
@@ -281,11 +414,22 @@ export const ShareView = () => {
     const [commentsError, setCommentsError] = useState<string | null>(null);
     const [hasLoadedCommentsOnce, setHasLoadedCommentsOnce] = useState(false);
     const [commentFilter, setCommentFilter] = useState<CommentFilter>('open');
+    const [reviewState, setReviewState] = useState<FlowPreviewReviewState>(createEmptyReviewState);
+    const [reviewSnapshot, setReviewSnapshot] = useState<SmartFlowEngineSnapshot | null>(() =>
+        readStoredReviewSnapshot(id)
+    );
+    const [reviewPathChangeRequest, setReviewPathChangeRequest] =
+        useState<FlowPreviewReviewPathChangeRequest | null>(null);
+    const [reviewLayoutVersion, setReviewLayoutVersion] = useState(0);
 
     const [isPanelOpen, setIsPanelOpen] = useState(false);
     const [commentMode, setCommentMode] = useState<CommentMode>('off');
+    const [pendingThreadPathNavigation, setPendingThreadPathNavigation] =
+        useState<PendingThreadPathNavigation | null>(null);
+    const [pendingThreadRevealId, setPendingThreadRevealId] = useState<string | null>(null);
 
     const [pendingPin, setPendingPin] = useState<PinPoint | null>(null);
+    const [pendingReviewAnchor, setPendingReviewAnchor] = useState<FlowCommentReviewAnchor | null>(null);
     const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
     const [hoveredThreadId, setHoveredThreadId] = useState<string | null>(null);
 
@@ -314,6 +458,9 @@ export const ShareView = () => {
     const editTextareaRef = useRef<HTMLTextAreaElement | null>(null);
     const commentsRequestSeqRef = useRef(0);
     const hasHandledInitialPanelVisibilityRef = useRef(false);
+    const commentPlacementRef = useRef<PointerPlacementState | null>(null);
+    const suppressedPlacementPointerIdRef = useRef<number | null>(null);
+    const lastAutoPathRequestKeyRef = useRef<string | null>(null);
 
     const commenterName = useMemo(() => getUserDisplayName(user), [user]);
     const commenterAvatarUrl = useMemo(() => getUserAvatarUrl(user), [user]);
@@ -323,7 +470,11 @@ export const ShareView = () => {
         hasHandledInitialPanelVisibilityRef.current = true;
         setIsPanelOpen(true);
         setCommentMode('placing');
+        setReviewPathChangeRequest(null);
+        setPendingThreadPathNavigation(null);
+        setPendingThreadRevealId(null);
         setPendingPin(null);
+        setPendingReviewAnchor(null);
         setActiveThreadId(null);
         setEditingCommentId(null);
         setEditDraft('');
@@ -334,7 +485,11 @@ export const ShareView = () => {
         hasHandledInitialPanelVisibilityRef.current = true;
         setIsPanelOpen(false);
         setCommentMode('off');
+        setReviewPathChangeRequest(null);
+        setPendingThreadPathNavigation(null);
+        setPendingThreadRevealId(null);
         setPendingPin(null);
+        setPendingReviewAnchor(null);
         setActiveThreadId(null);
         setHoveredThreadId(null);
         setNewCommentText('');
@@ -355,6 +510,72 @@ export const ShareView = () => {
 
         openCommentsWorkspace();
     }, [commentMode, isPanelOpen, closeCommentsWorkspace, openCommentsWorkspace]);
+
+    const handleReviewBranchChange = useCallback(
+        (decision: FlowPreviewReviewDecision, branchId: string) => {
+            if (decision.selectedBranchId === branchId) return;
+
+            setPendingThreadPathNavigation(null);
+            setPendingThreadRevealId(null);
+            setPendingPin(null);
+            setPendingReviewAnchor(null);
+            setNewCommentText('');
+            setHoveredThreadId(null);
+            setReviewPathChangeRequest({
+                token: Date.now() + Math.random(),
+                stepId: decision.stepId,
+                branchId,
+                mode: decision.mode,
+            });
+        },
+        []
+    );
+
+    const handleRestart = useCallback(() => {
+        setResetKey((prev) => prev + 1);
+        setReviewState(createEmptyReviewState());
+        setReviewSnapshot(null);
+        setReviewPathChangeRequest(null);
+        setPendingThreadPathNavigation(null);
+        setPendingThreadRevealId(null);
+        writeStoredReviewSnapshot(id, null);
+    }, [id]);
+
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.defaultPrevented || event.repeat) return;
+            if (event.metaKey || event.ctrlKey || event.altKey) return;
+
+            const target = event.target as HTMLElement | null;
+            if (
+                target &&
+                (
+                    target instanceof HTMLInputElement ||
+                    target instanceof HTMLTextAreaElement ||
+                    target instanceof HTMLSelectElement ||
+                    target.isContentEditable
+                )
+            ) {
+                return;
+            }
+
+            const key = event.key.toLowerCase();
+
+            if (key === 'c') {
+                event.preventDefault();
+                toggleCommentsWorkspace();
+                return;
+            }
+
+            if (key === 'r') {
+                event.preventDefault();
+                handleRestart();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [handleRestart, toggleCommentsWorkspace]);
 
     const toggleHotspots = useCallback(() => {
         setFlow((currentFlow) => {
@@ -455,8 +676,15 @@ export const ShareView = () => {
         if (!id) return;
         hasHandledInitialPanelVisibilityRef.current = false;
         setHasLoadedCommentsOnce(false);
+        setReviewSnapshot(readStoredReviewSnapshot(id));
+        setReviewState(createEmptyReviewState());
+        setReviewPathChangeRequest(null);
         void loadComments(id, { showLoader: true });
     }, [id, loadComments]);
+
+    useEffect(() => {
+        writeStoredReviewSnapshot(id, reviewSnapshot);
+    }, [id, reviewSnapshot]);
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -494,14 +722,14 @@ export const ShareView = () => {
         void loadComments(id);
     }, [id, isPanelOpen, loadComments]);
 
-    const allPinnedThreads = useMemo(
-        () => threads.filter((thread) => hasValidPin(thread.root)),
+    const reviewThreads = useMemo(
+        () => threads.filter((thread) => isReviewComment(thread.root)),
         [threads]
     );
 
     const visibleThreads = useMemo(
-        () => allPinnedThreads.filter((thread) => matchesCommentFilter(thread, commentFilter)),
-        [allPinnedThreads, commentFilter]
+        () => reviewThreads.filter((thread) => matchesCommentFilter(thread, commentFilter)),
+        [reviewThreads, commentFilter]
     );
 
     const isFlowOwner = !!user && user.id === flowOwnerId;
@@ -516,6 +744,215 @@ export const ShareView = () => {
         [canManageComment]
     );
 
+    const getPinPointFromClient = useCallback((clientX: number, clientY: number): PinPoint | null => {
+        const surface = commentSurfaceRef.current;
+        if (!surface) return null;
+
+        const rect = surface.getBoundingClientRect();
+        if (rect.width <= 0 || rect.height <= 0) return null;
+
+        const x = clampPercent(((clientX - rect.left) / rect.width) * 100);
+        const y = clampPercent(((clientY - rect.top) / rect.height) * 100);
+
+        return { x: Number(x.toFixed(2)), y: Number(y.toFixed(2)) };
+    }, []);
+
+    const getPinPointForElement = useCallback(
+        (element: HTMLElement, localX: number, localY: number): PinPoint | null => {
+            const surface = commentSurfaceRef.current;
+            if (!surface) return null;
+
+            const surfaceRect = surface.getBoundingClientRect();
+            const rect = element.getBoundingClientRect();
+            if (
+                surfaceRect.width <= 0 ||
+                surfaceRect.height <= 0 ||
+                rect.width <= 0 ||
+                rect.height <= 0
+            ) {
+                return null;
+            }
+
+            const x = clampPercent(
+                ((rect.left - surfaceRect.left + rect.width * (localX / 100)) / surfaceRect.width) * 100
+            );
+            const y = clampPercent(
+                ((rect.top - surfaceRect.top + rect.height * (localY / 100)) / surfaceRect.height) * 100
+            );
+
+            return { x: Number(x.toFixed(2)), y: Number(y.toFixed(2)) };
+        },
+        []
+    );
+
+    const resolveReviewAnchorFromClient = useCallback(
+        (clientX: number, clientY: number) => {
+            const surface = commentSurfaceRef.current;
+            if (!surface) return null;
+
+            const blocks = Array.from(
+                surface.querySelectorAll<HTMLElement>('[data-review-block="true"]')
+            ).filter((element) => {
+                const rect = element.getBoundingClientRect();
+                return rect.width > 0 && rect.height > 0;
+            });
+
+            if (blocks.length === 0) return null;
+
+            let bestMatch: HTMLElement | null = null;
+            let bestDistance = Number.POSITIVE_INFINITY;
+
+            blocks.forEach((element) => {
+                const rect = element.getBoundingClientRect();
+                const dx =
+                    clientX < rect.left ? rect.left - clientX : clientX > rect.right ? clientX - rect.right : 0;
+                const dy =
+                    clientY < rect.top ? rect.top - clientY : clientY > rect.bottom ? clientY - rect.bottom : 0;
+                const distance = Math.hypot(dx, dy);
+
+                if (distance < bestDistance) {
+                    bestDistance = distance;
+                    bestMatch = element;
+                }
+            });
+
+            if (!bestMatch) return null;
+            const matchedBlock = bestMatch as HTMLElement;
+
+            const rect = matchedBlock.getBoundingClientRect();
+            const localX = clampPercent(((clientX - rect.left) / rect.width) * 100);
+            const localY = clampPercent(((clientY - rect.top) / rect.height) * 100);
+
+            return {
+                pin: getPinPointFromClient(clientX, clientY),
+                reviewAnchor: {
+                    anchorMode: 'review' as const,
+                    anchorKind:
+                        (matchedBlock.dataset.reviewAnchorKind as FlowCommentReviewAnchor['anchorKind']) ||
+                        'component',
+                    anchorBlockId: matchedBlock.dataset.reviewBlockId || '',
+                    anchorStepId: matchedBlock.dataset.reviewStepId || '',
+                    anchorComponentId: matchedBlock.dataset.reviewComponentId || null,
+                    anchorHistoryIndex: Number.parseInt(matchedBlock.dataset.reviewHistoryIndex || '0', 10),
+                    anchorLocalX: Number(localX.toFixed(2)),
+                    anchorLocalY: Number(localY.toFixed(2)),
+                    pathSignature: reviewState.pathSignature || '',
+                },
+            };
+        },
+        [getPinPointFromClient, reviewState.pathSignature]
+    );
+
+    const resolveRenderedReviewBlocks = useCallback((comment: FlowComment) => {
+        const surface = commentSurfaceRef.current;
+        if (!surface) {
+            return {
+                exactBlock: null as HTMLElement | null,
+                fallbackBlock: null as HTMLElement | null,
+                localX: comment.anchor_local_x ?? 50,
+                localY: comment.anchor_local_y ?? 50,
+            };
+        }
+
+        const localX = comment.anchor_local_x ?? 50;
+        const localY = comment.anchor_local_y ?? 50;
+
+        const exactBlock = comment.anchor_block_id
+            ? surface.querySelector<HTMLElement>(
+                `[data-review-block-id="${escapeReviewSelector(comment.anchor_block_id)}"]`
+            )
+            : null;
+
+        let fallbackBlock: HTMLElement | null = null;
+
+        if (!exactBlock && comment.anchor_step_id) {
+            const matches = Array.from(
+                surface.querySelectorAll<HTMLElement>(
+                    `[data-review-step-id="${escapeReviewSelector(comment.anchor_step_id)}"]`
+                )
+            );
+
+            if (matches.length > 0) {
+                if (comment.anchor_history_index == null) {
+                    fallbackBlock = matches[0];
+                } else {
+                    fallbackBlock = matches.sort((left, right) => {
+                        const leftIndex = Number.parseInt(left.dataset.reviewHistoryIndex || '0', 10);
+                        const rightIndex = Number.parseInt(right.dataset.reviewHistoryIndex || '0', 10);
+
+                        return (
+                            Math.abs(leftIndex - comment.anchor_history_index!) -
+                            Math.abs(rightIndex - comment.anchor_history_index!)
+                        );
+                    })[0];
+                }
+            }
+        }
+
+        return { exactBlock, fallbackBlock, localX, localY };
+    }, []);
+
+    const reviewThreadEntries = useMemo<ReviewThreadRenderState[]>(() => {
+        void reviewLayoutVersion;
+        const surface = commentSurfaceRef.current;
+        if (!surface) {
+            return visibleThreads.map((thread) => ({
+                thread,
+                pin: null,
+                status: 'rail-only',
+                detail: 'Comment anchor not available yet.',
+            }));
+        }
+
+        const currentPathSignature = reviewState.pathSignature || '';
+
+        return visibleThreads.map((thread) => {
+            const root = thread.root;
+            const commentPathSignature = root.path_signature || '';
+            const { exactBlock, fallbackBlock, localX, localY } = resolveRenderedReviewBlocks(root);
+
+            if (exactBlock) {
+                return {
+                    thread,
+                    pin: getPinPointForElement(exactBlock, localX, localY),
+                    status: 'visible',
+                    detail: null,
+                };
+            }
+
+            if (fallbackBlock) {
+                return {
+                    thread,
+                    pin: getPinPointForElement(fallbackBlock, localX, Math.min(localY, 12)),
+                    status: 'outdated',
+                    detail: 'Comment anchor changed after this flow updated.',
+                };
+            }
+
+            if (commentPathSignature !== currentPathSignature) {
+                return {
+                    thread,
+                    pin: null,
+                    status: 'other-path',
+                    detail: 'Comment was left on another review path.',
+                };
+            }
+
+            return {
+                thread,
+                pin: null,
+                status: 'rail-only',
+                detail: 'Comment anchor is no longer available in this path.',
+            };
+        });
+    }, [
+        getPinPointForElement,
+        resolveRenderedReviewBlocks,
+        reviewLayoutVersion,
+        reviewState.pathSignature,
+        visibleThreads,
+    ]);
+
     useEffect(() => {
         if (!id || !hasLoadedCommentsOnce) return;
         if (hasHandledInitialPanelVisibilityRef.current) return;
@@ -526,13 +963,8 @@ export const ShareView = () => {
             return;
         }
 
-        if (allPinnedThreads.length > 0) {
-            setIsPanelOpen(true);
-            setCommentMode('off');
-        }
-
         hasHandledInitialPanelVisibilityRef.current = true;
-    }, [allPinnedThreads.length, hasLoadedCommentsOnce, id]);
+    }, [hasLoadedCommentsOnce, id]);
 
     useEffect(() => {
         if (!activeThreadId) return;
@@ -549,20 +981,93 @@ export const ShareView = () => {
         setHoveredThreadId(null);
     }, [hoveredThreadId, visibleThreads]);
 
-    const activeThread = useMemo(
-        () => visibleThreads.find((thread) => thread.id === activeThreadId) || null,
-        [activeThreadId, visibleThreads]
+    useEffect(() => {
+        if (!pendingThreadPathNavigation) {
+            lastAutoPathRequestKeyRef.current = null;
+            return;
+        }
+
+        const threadEntry = reviewThreadEntries.find(
+            (entry) => entry.thread.id === pendingThreadPathNavigation.threadId
+        );
+
+        if (threadEntry && threadEntry.status !== 'other-path') {
+            setPendingThreadPathNavigation(null);
+            lastAutoPathRequestKeyRef.current = null;
+            return;
+        }
+
+        const currentSelections = new Map(
+            reviewState.pathSelections.map((selection) => [selection.stepId, selection.selectedBranchId])
+        );
+
+        for (const targetSelection of pendingThreadPathNavigation.targetSelections) {
+            if (currentSelections.get(targetSelection.stepId) === targetSelection.branchId) continue;
+
+            const matchingDecision = reviewState.decisions.find(
+                (decision) => decision.stepId === targetSelection.stepId
+            );
+
+            if (!matchingDecision) return;
+
+            const requestKey = [
+                pendingThreadPathNavigation.threadId,
+                reviewState.pathSignature || '',
+                targetSelection.stepId,
+                targetSelection.branchId,
+            ].join('|');
+
+            if (lastAutoPathRequestKeyRef.current === requestKey) return;
+            lastAutoPathRequestKeyRef.current = requestKey;
+
+            setReviewPathChangeRequest({
+                token: Date.now() + Math.random(),
+                stepId: matchingDecision.stepId,
+                branchId: targetSelection.branchId,
+                mode: matchingDecision.mode,
+            });
+            return;
+        }
+
+        setPendingThreadPathNavigation(null);
+        lastAutoPathRequestKeyRef.current = null;
+    }, [
+        pendingThreadPathNavigation,
+        reviewState.decisions,
+        reviewState.pathSelections,
+        reviewState.pathSignature,
+        reviewThreadEntries,
+    ]);
+
+    const activeThreadEntry = useMemo(
+        () => reviewThreadEntries.find((entry) => entry.thread.id === activeThreadId) || null,
+        [activeThreadId, reviewThreadEntries]
     );
+    const activeThread = activeThreadEntry?.thread || null;
+
+    useEffect(() => {
+        if (!pendingThreadRevealId) return;
+
+        const threadEntry = reviewThreadEntries.find((entry) => entry.thread.id === pendingThreadRevealId);
+        if (!threadEntry || threadEntry.status === 'other-path') return;
+
+        const { exactBlock, fallbackBlock } = resolveRenderedReviewBlocks(threadEntry.thread.root);
+        const targetBlock = exactBlock || fallbackBlock;
+
+        if (!targetBlock) {
+            setPendingThreadRevealId(null);
+            return;
+        }
+
+        targetBlock.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+        setPendingThreadRevealId(null);
+    }, [pendingThreadRevealId, resolveRenderedReviewBlocks, reviewThreadEntries]);
 
     const composerAnchor = useMemo<PinPoint | null>(() => {
         if (pendingPin) return pendingPin;
-        if (!activeThread || !hasValidPin(activeThread.root)) return null;
-
-        return {
-            x: activeThread.root.pin_x as number,
-            y: activeThread.root.pin_y as number,
-        };
-    }, [pendingPin, activeThread]);
+        if (!activeThreadEntry?.pin) return null;
+        return activeThreadEntry.pin;
+    }, [activeThreadEntry, pendingPin]);
 
     const isComposerForNewComment = !!pendingPin;
     const isComposerOpen = !!composerAnchor;
@@ -581,8 +1086,13 @@ export const ShareView = () => {
         [canManageComment, canUsePinDrag, isSavingDragPin]
     );
 
+    const restorePlacementMode = useCallback(() => {
+        setCommentMode(isPanelOpen ? 'placing' : 'off');
+    }, [isPanelOpen]);
+
     const dismissComposer = useCallback(() => {
         setPendingPin(null);
+        setPendingReviewAnchor(null);
         setNewCommentText('');
         setActiveThreadId(null);
         setHoveredThreadId(null);
@@ -590,8 +1100,8 @@ export const ShareView = () => {
         setEditingCommentId(null);
         setEditDraft('');
         setActiveReplyThreadId(null);
-        setCommentMode('off');
-    }, []);
+        restorePlacementMode();
+    }, [restorePlacementMode]);
 
     useEffect(() => {
         if (!isComposerOpen) return;
@@ -601,6 +1111,8 @@ export const ShareView = () => {
             if (!target) return;
             if (composerCardRef.current?.contains(target)) return;
             if ((target as HTMLElement).closest?.('[data-comment-pin-id]')) return;
+            suppressedPlacementPointerIdRef.current = event.pointerId;
+            commentPlacementRef.current = null;
             dismissComposer();
         };
 
@@ -685,6 +1197,38 @@ export const ShareView = () => {
     }, [shouldUseBottomSheetComposer]);
 
     useEffect(() => {
+        const surface = commentSurfaceRef.current;
+        if (!surface) return;
+
+        const scrollContainer = surface.querySelector<HTMLElement>('[data-review-scroll-container="true"]');
+        if (!scrollContainer) return;
+
+        let frameId = 0;
+        const syncLayout = () => {
+            window.cancelAnimationFrame(frameId);
+            frameId = window.requestAnimationFrame(() => {
+                setReviewLayoutVersion((version) => version + 1);
+            });
+        };
+
+        syncLayout();
+        scrollContainer.addEventListener('scroll', syncLayout, { passive: true });
+        window.addEventListener('resize', syncLayout);
+
+        const resizeObserver =
+            typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(syncLayout);
+        resizeObserver?.observe(surface);
+        resizeObserver?.observe(scrollContainer);
+
+        return () => {
+            window.cancelAnimationFrame(frameId);
+            scrollContainer.removeEventListener('scroll', syncLayout);
+            window.removeEventListener('resize', syncLayout);
+            resizeObserver?.disconnect();
+        };
+    }, [commentMode, isPanelOpen, resetKey, reviewState.pathSignature]);
+
+    useEffect(() => {
         if (canUsePinDrag) return;
         setDragState(null);
         setIsSavingDragPin(false);
@@ -730,32 +1274,95 @@ export const ShareView = () => {
 
     const handleCommentFilterChange = useCallback((value: CommentFilter) => {
         setCommentFilter(value);
+        setPendingThreadPathNavigation(null);
+        setPendingThreadRevealId(null);
         setPendingPin(null);
+        setPendingReviewAnchor(null);
         setHoveredThreadId(null);
         setCommentMode('off');
     }, []);
 
-    const handleCanvasPlaceComment = (event: React.MouseEvent<HTMLDivElement>) => {
-        if (commentMode !== 'placing') return;
+    const finalizePlacedComment = useCallback(
+        (clientX: number, clientY: number) => {
+            const placement = resolveReviewAnchorFromClient(clientX, clientY);
+            if (!placement?.pin) {
+                setCommentsError('Could not place a comment here. Try again on the transcript.');
+                return;
+            }
 
-        const surface = commentSurfaceRef.current;
-        if (!surface) return;
+            setPendingPin(placement.pin);
+            setPendingReviewAnchor(placement.reviewAnchor);
+            setActiveThreadId(null);
+            setEditingCommentId(null);
+            setEditDraft('');
+            setCommentMode('off');
+        },
+        [resolveReviewAnchorFromClient]
+    );
 
-        const rect = surface.getBoundingClientRect();
-        if (rect.width <= 0 || rect.height <= 0) return;
+    const handleCommentSurfacePointerDown = useCallback(
+        (event: React.PointerEvent<HTMLDivElement>) => {
+            if (commentMode !== 'placing') return;
+            if (event.button !== 0) return;
+            if (suppressedPlacementPointerIdRef.current === event.pointerId) return;
+            if ((event.target as HTMLElement).closest?.('[data-comment-placement-ignore="true"]')) return;
+            if ((event.target as HTMLElement).closest?.('[data-comment-pin-id]')) return;
+            if ((event.target as HTMLElement).closest?.('#share-comment-popover')) return;
 
-        const x = clampPercent(((event.clientX - rect.left) / rect.width) * 100);
-        const y = clampPercent(((event.clientY - rect.top) / rect.height) * 100);
+            commentPlacementRef.current = {
+                pointerId: event.pointerId,
+                startClientX: event.clientX,
+                startClientY: event.clientY,
+                movedPx: 0,
+            };
+        },
+        [commentMode]
+    );
 
-        setPendingPin({ x: Number(x.toFixed(2)), y: Number(y.toFixed(2)) });
-        setActiveThreadId(null);
-        setEditingCommentId(null);
-        setEditDraft('');
-        setCommentMode('off');
-    };
+    const handleCommentSurfacePointerMove = useCallback(
+        (event: React.PointerEvent<HTMLDivElement>) => {
+            if (suppressedPlacementPointerIdRef.current === event.pointerId) {
+                suppressedPlacementPointerIdRef.current = null;
+                commentPlacementRef.current = null;
+                return;
+            }
+
+            const activePlacement = commentPlacementRef.current;
+            if (!activePlacement || activePlacement.pointerId !== event.pointerId) return;
+
+            activePlacement.movedPx = Math.hypot(
+                event.clientX - activePlacement.startClientX,
+                event.clientY - activePlacement.startClientY
+            );
+        },
+        []
+    );
+
+    const handleCommentSurfacePointerUp = useCallback(
+        (event: React.PointerEvent<HTMLDivElement>) => {
+            const activePlacement = commentPlacementRef.current;
+            if (!activePlacement || activePlacement.pointerId !== event.pointerId) return;
+
+            commentPlacementRef.current = null;
+
+            if (activePlacement.movedPx >= COMMENT_PLACE_THRESHOLD_PX) return;
+
+            finalizePlacedComment(event.clientX, event.clientY);
+        },
+        [finalizePlacedComment]
+    );
+
+    const handleCommentSurfacePointerCancel = useCallback((event?: React.PointerEvent<HTMLDivElement>) => {
+        if (event && suppressedPlacementPointerIdRef.current === event.pointerId) {
+            suppressedPlacementPointerIdRef.current = null;
+        }
+        commentPlacementRef.current = null;
+    }, []);
 
     const handleSelectThread = useCallback((threadId: string) => {
+        setPendingThreadPathNavigation(null);
         setPendingPin(null);
+        setPendingReviewAnchor(null);
         setActiveThreadId(threadId);
         setEditingCommentId(null);
         setEditDraft('');
@@ -764,17 +1371,29 @@ export const ShareView = () => {
         setHoveredThreadId(null);
     }, []);
 
-    const getPinPointFromClient = useCallback((clientX: number, clientY: number): PinPoint | null => {
-        const surface = commentSurfaceRef.current;
-        if (!surface) return null;
+    const handleSelectThreadFromRail = useCallback((entry: ReviewThreadRenderState) => {
+        setPendingPin(null);
+        setPendingReviewAnchor(null);
+        setActiveThreadId(entry.thread.id);
+        setEditingCommentId(null);
+        setEditDraft('');
+        setCommentMode('off');
+        setIsPanelOpen(true);
+        setHoveredThreadId(null);
+        setPendingThreadRevealId(entry.thread.id);
 
-        const rect = surface.getBoundingClientRect();
-        if (rect.width <= 0 || rect.height <= 0) return null;
+        if (entry.status === 'other-path') {
+            const targetSelections = parseReviewPathSignature(entry.thread.root.path_signature);
+            if (targetSelections.length > 0) {
+                setPendingThreadPathNavigation({
+                    threadId: entry.thread.id,
+                    targetSelections,
+                });
+                return;
+            }
+        }
 
-        const x = clampPercent(((clientX - rect.left) / rect.width) * 100);
-        const y = clampPercent(((clientY - rect.top) / rect.height) * 100);
-
-        return { x: Number(x.toFixed(2)), y: Number(y.toFixed(2)) };
+        setPendingThreadPathNavigation(null);
     }, []);
 
     const handleStartEditComment = useCallback((comment: FlowComment) => {
@@ -1035,6 +1654,9 @@ export const ShareView = () => {
             const nextPin = activeDrag.draftPin;
             const originPin = activeDrag.originPin;
             const commentId = activeDrag.commentId;
+            const originalThread = threads.find((thread) => thread.id === targetThreadId) || null;
+            const nextPlacement = resolveReviewAnchorFromClient(event.clientX, event.clientY);
+            const nextReviewAnchor = nextPlacement?.reviewAnchor;
 
             if (!wasDrag) {
                 setDragState(null);
@@ -1057,6 +1679,19 @@ export const ShareView = () => {
                                 ...thread.root,
                                 pin_x: nextPin.x,
                                 pin_y: nextPin.y,
+                                anchor_mode: nextReviewAnchor?.anchorMode || thread.root.anchor_mode,
+                                anchor_kind: nextReviewAnchor?.anchorKind || thread.root.anchor_kind,
+                                anchor_block_id: nextReviewAnchor?.anchorBlockId || thread.root.anchor_block_id,
+                                anchor_step_id: nextReviewAnchor?.anchorStepId || thread.root.anchor_step_id,
+                                anchor_component_id:
+                                    nextReviewAnchor?.anchorComponentId || thread.root.anchor_component_id,
+                                anchor_history_index:
+                                    nextReviewAnchor?.anchorHistoryIndex ?? thread.root.anchor_history_index,
+                                anchor_local_x:
+                                    nextReviewAnchor?.anchorLocalX ?? thread.root.anchor_local_x,
+                                anchor_local_y:
+                                    nextReviewAnchor?.anchorLocalY ?? thread.root.anchor_local_y,
+                                path_signature: nextReviewAnchor?.pathSignature || thread.root.path_signature,
                                 updated_at: optimisticUpdatedAt,
                             },
                         }
@@ -1073,6 +1708,7 @@ export const ShareView = () => {
                     commentId,
                     pinX: nextPin.x,
                     pinY: nextPin.y,
+                    reviewAnchor: nextReviewAnchor || undefined,
                 });
                 await loadComments(id);
             } catch (dragError: unknown) {
@@ -1083,13 +1719,29 @@ export const ShareView = () => {
                             ? {
                                 ...thread,
                                 root: {
-                                    ...thread.root,
-                                    pin_x: originPin.x,
-                                    pin_y: originPin.y,
-                                    updated_at: new Date().toISOString(),
-                                },
-                            }
-                            : thread
+                                ...thread.root,
+                                pin_x: originPin.x,
+                                pin_y: originPin.y,
+                                anchor_mode: originalThread?.root.anchor_mode || thread.root.anchor_mode,
+                                anchor_kind: originalThread?.root.anchor_kind || thread.root.anchor_kind,
+                                anchor_block_id:
+                                    originalThread?.root.anchor_block_id || thread.root.anchor_block_id,
+                                anchor_step_id:
+                                    originalThread?.root.anchor_step_id || thread.root.anchor_step_id,
+                                anchor_component_id:
+                                    originalThread?.root.anchor_component_id || thread.root.anchor_component_id,
+                                anchor_history_index:
+                                    originalThread?.root.anchor_history_index ?? thread.root.anchor_history_index,
+                                anchor_local_x:
+                                    originalThread?.root.anchor_local_x ?? thread.root.anchor_local_x,
+                                anchor_local_y:
+                                    originalThread?.root.anchor_local_y ?? thread.root.anchor_local_y,
+                                path_signature:
+                                    originalThread?.root.path_signature || thread.root.path_signature,
+                                updated_at: new Date().toISOString(),
+                            },
+                        }
+                        : thread
                     )
                 );
                 setCommentsError('Could not move comment pin. Please try again.');
@@ -1097,11 +1749,11 @@ export const ShareView = () => {
                 setIsSavingDragPin(false);
             }
         },
-        [dragState, handleSelectThread, id, loadComments]
+        [dragState, handleSelectThread, id, loadComments, resolveReviewAnchorFromClient, threads]
     );
 
     const handleCreateComment = async () => {
-        if (!id || !pendingPin || !user) return;
+        if (!id || !pendingPin || !pendingReviewAnchor || !user) return;
 
         const message = newCommentText.trim();
         const authorName = commenterName.trim();
@@ -1112,7 +1764,7 @@ export const ShareView = () => {
         setCommentsError(null);
 
         try {
-            const createdComment = await createFlowRootComment({
+            await createFlowRootComment({
                 flowId: id,
                 authorName,
                 authorUserId: user.id,
@@ -1120,11 +1772,15 @@ export const ShareView = () => {
                 message,
                 pinX: pendingPin.x,
                 pinY: pendingPin.y,
+                reviewAnchor: pendingReviewAnchor,
             });
 
             setNewCommentText('');
             setPendingPin(null);
-            setActiveThreadId(createdComment.id);
+            setPendingReviewAnchor(null);
+            setActiveThreadId(null);
+            setHoveredThreadId(null);
+            restorePlacementMode();
 
             await loadComments(id);
         } catch (createError: unknown) {
@@ -1345,12 +2001,13 @@ export const ShareView = () => {
     };
 
     const renderThreadListItem = ({
-        thread,
+        entry,
         compact = false,
     }: {
-        thread: FlowCommentThread;
+        entry: ReviewThreadRenderState;
         compact?: boolean;
     }) => {
+        const { thread } = entry;
         const isSelected = activeThreadId === thread.id;
 
         return (
@@ -1359,7 +2016,7 @@ export const ShareView = () => {
                 tone="cinematicDark"
                 size={compact ? 'compact' : 'default'}
                 selected={isSelected}
-                onClick={() => handleSelectThread(thread.id)}
+                onClick={() => handleSelectThreadFromRail(entry)}
             >
                 {renderAvatar({
                     name: thread.root.author_name,
@@ -1374,6 +2031,16 @@ export const ShareView = () => {
                         </span>
                         <div className="flex items-center justify-end gap-2 shrink-0">
                             {thread.root.status === 'resolved' ? renderResolvedBadge() : null}
+                            {entry.status === 'other-path' ? (
+                                <span className="rounded-full border border-shell-node-condition/35 bg-[rgb(var(--shell-node-condition-surface)/1)] px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.08em] text-shell-muted">
+                                    Another path
+                                </span>
+                            ) : null}
+                            {entry.status === 'outdated' || entry.status === 'rail-only' ? (
+                                <span className="rounded-full border border-shell-dark-border bg-shell-dark-surface px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.08em] text-shell-dark-muted">
+                                    Outdated
+                                </span>
+                            ) : null}
                             <span
                                 className={cn(compact ? 'text-[10px]' : 'text-[10px]', 'text-shell-dark-muted shrink-0')}
                                 title={formatCommentDate(thread.latestActivityAt)}
@@ -1385,6 +2052,11 @@ export const ShareView = () => {
                     <p className={cn(compact ? 'text-[10px]' : 'text-xs', 'text-shell-dark-text/90 leading-relaxed truncate')}>
                         {getPreviewText(thread.root.message)}
                     </p>
+                    {entry.detail ? (
+                        <p className={cn(compact ? 'mt-1 text-[10px]' : 'mt-1.5 text-[10px]', 'text-shell-dark-muted')}>
+                            {entry.detail}
+                        </p>
+                    ) : null}
                     {thread.replies.length > 0 ? (
                         <p className={cn(compact ? 'mt-1 text-[10px]' : 'mt-1.5 text-[10px]', 'text-shell-dark-accent')}>
                             {thread.replies.length} {thread.replies.length === 1 ? 'reply' : 'replies'}
@@ -1396,9 +2068,8 @@ export const ShareView = () => {
     };
 
     const renderCommentComposerContent = () => {
-        if (!composerAnchor) return null;
-
         if (isComposerForNewComment) {
+            if (!composerAnchor) return null;
             const canSubmitComment = newCommentText.trim().length > 0;
             const isCreateDisabled = isPostingComment || !canSubmitComment;
             const isCreateButtonActiveVisual = isPostingComment || canSubmitComment;
@@ -1494,6 +2165,7 @@ export const ShareView = () => {
         const canToggleThreadStatus = canResolveThread(activeThread);
         const isStatusPending = threadStatusPendingId === activeThread.id;
         const isResolved = activeThread.root.status === 'resolved';
+        const threadDetail = activeThreadEntry?.detail || null;
 
         return (
             <div className="w-full md:w-[400px] max-w-[calc(100vw-40px)] rounded-3xl border border-shell-dark-border bg-shell-dark-panel/95 shadow-2xl backdrop-blur overflow-hidden">
@@ -1542,6 +2214,12 @@ export const ShareView = () => {
                         </ShellIconButton>
                     </div>
                 </div>
+
+                {threadDetail ? (
+                    <div className="px-4 py-2 border-b border-shell-dark-border bg-shell-dark-surface/35 text-[11px] text-shell-dark-muted">
+                        {threadDetail}
+                    </div>
+                ) : null}
 
                 <div className="max-h-[340px] overflow-y-auto thin-scrollbar divide-y divide-shell-dark-border">
                     {renderCommentBody({
@@ -1642,10 +2320,15 @@ export const ShareView = () => {
     };
 
     const renderComposer = () => {
-        if (!composerAnchor) return null;
-
         const content = renderCommentComposerContent();
         if (!content) return null;
+        const isFallbackThreadComposer =
+            !composerAnchor &&
+            !!activeThread &&
+            !isComposerForNewComment &&
+            !pendingThreadPathNavigation;
+
+        if (!composerAnchor && !isFallbackThreadComposer) return null;
 
         if (shouldUseBottomSheetComposer) {
             return (
@@ -1655,6 +2338,21 @@ export const ShareView = () => {
                         id="share-comment-popover"
                         aria-expanded={isComposerOpen}
                         className="max-h-[72vh] overflow-y-auto thin-scrollbar"
+                    >
+                        {content}
+                    </div>
+                </div>
+            );
+        }
+
+        if (isFallbackThreadComposer) {
+            return (
+                <div className="absolute top-4 right-4 md:right-[356px] z-[70] pointer-events-auto">
+                    <div
+                        ref={composerCardRef}
+                        id="share-comment-popover"
+                        aria-expanded={isComposerOpen}
+                        className="transition-all duration-150 ease-out"
                     >
                         {content}
                     </div>
@@ -1752,17 +2450,134 @@ export const ShareView = () => {
                 className="rounded-none border-x-0 border-t-0"
             />
         ) : null;
+    const renderPathSelectionControls = ({ compact = false }: { compact?: boolean } = {}) =>
+        reviewState.decisions.length > 0 ? (
+            <div className={cn('space-y-2.5', compact ? 'px-2.5 py-2.5' : 'px-3 py-3')}>
+                {reviewState.decisions.map((decision) => {
+                    const selectedLabel = getReviewBranchLabel(decision);
+                    const isPendingChoice = decision.mode === 'interceptor';
+
+                    return (
+                        <div
+                            key={`${decision.mode}:${decision.stepId}`}
+                            className={cn(
+                                'rounded-xl border p-2.5 shadow-[0_14px_28px_rgb(0_0_0/0.18)]',
+                                isPendingChoice
+                                    ? 'border-shell-dark-accent/25 bg-shell-dark-surface/45'
+                                    : 'border-shell-dark-border bg-shell-dark-panel/70'
+                            )}
+                        >
+                            <div className="mb-2 flex items-center gap-2 px-0.5">
+                                <Split
+                                    size={13}
+                                    className={cn(
+                                        'shrink-0',
+                                        isPendingChoice ? 'text-shell-node-condition' : 'text-shell-node-condition/85'
+                                    )}
+                                />
+                                <span
+                                    className={cn(
+                                        'min-w-0 truncate text-[10px] font-medium uppercase tracking-[0.08em]',
+                                        isPendingChoice ? 'text-shell-dark-accent-text/90' : 'text-shell-dark-muted'
+                                    )}
+                                    title={decision.stepLabel || undefined}
+                                >
+                                    {decision.stepLabel}
+                                </span>
+                            </div>
+
+                            <ShellSelect
+                                value={decision.selectedBranchId ?? undefined}
+                                onValueChange={(branchId) =>
+                                    handleReviewBranchChange(decision, branchId)
+                                }
+                            >
+                                <ShellSelectTrigger
+                                    tone="cinematicDark"
+                                    className={cn(
+                                        'h-auto min-h-[46px] w-full rounded-xl border border-shell-dark-border bg-shell-dark-surface px-3 py-2.5 whitespace-normal shadow-none transition-colors hover:border-shell-dark-border-strong focus:border-shell-dark-accent focus:ring-shell-dark-accent/30 data-[state=open]:border-shell-dark-accent [&>span]:flex [&>span]:min-w-0 [&>span]:flex-1 [&>svg]:text-shell-dark-muted'
+                                    )}
+                                    aria-label={`${decision.stepLabel} path selector`}
+                                >
+                                    <span className="flex min-w-0 items-center">
+                                        <span
+                                            className="truncate text-sm font-medium text-shell-dark-text"
+                                            title={selectedLabel}
+                                        >
+                                            {selectedLabel}
+                                        </span>
+                                    </span>
+                                </ShellSelectTrigger>
+
+                                <ShellSelectContent tone="cinematicDark" className="min-w-[220px]">
+                                    {decision.branches.map((branch) => {
+                                        const label = getReviewBranchOptionLabel(branch);
+
+                                        return (
+                                            <ShellSelectItem
+                                                key={branch.id}
+                                                tone="cinematicDark"
+                                                size="compact"
+                                                value={branch.id}
+                                                className={cn(
+                                                    'pr-8',
+                                                    branch.isDefault
+                                                        ? 'text-shell-dark-muted'
+                                                        : 'text-shell-dark-text'
+                                                )}
+                                            >
+                                                {label}
+                                            </ShellSelectItem>
+                                        );
+                                    })}
+                                </ShellSelectContent>
+                            </ShellSelect>
+                        </div>
+                    );
+                })}
+            </div>
+        ) : (
+            <div className={cn(compact ? 'px-2.5 py-3' : 'px-3 py-4')}>
+                <div className="rounded-xl border border-shell-dark-border bg-shell-dark-surface px-3 py-3 text-xs font-medium text-shell-dark-muted">
+                    Single path
+                </div>
+            </div>
+        );
 
     return (
         <>
             <div className="flex flex-col h-screen bg-shell-dark-bg overflow-hidden text-shell-dark-text font-sans">
-                <div className="h-12 bg-shell-dark-panel flex items-center justify-between px-4 shrink-0 shadow-md z-50 border-b border-shell-dark-border">
-                    <div className="flex items-center gap-4">
-                        <ShellIconButton asChild tone="cinematicDark" shape="circle" aria-label="Return to home">
-                            <a href="/" title="Return to Home">
-                                <Home size={20} />
-                            </a>
-                        </ShellIconButton>
+                <div className="h-12 bg-shell-dark-panel flex items-center justify-between pr-4 shrink-0 shadow-md z-50 border-b border-shell-dark-border overflow-visible">
+                    <div className="flex self-stretch items-stretch">
+                        <ShellHeaderRail tone="cinematicDark" aria-label="Share navigation">
+                            <ActionTooltip content="Home" side="bottom">
+                                <ShellHeaderRailItem
+                                    asChild
+                                    tone="cinematicDark"
+                                    iconOnly
+                                    aria-label="Return to home"
+                                >
+                                    <a href="/" title="Return to Home">
+                                        <Home />
+                                    </a>
+                                </ShellHeaderRailItem>
+                            </ActionTooltip>
+
+                            <ActionTooltip content="Comments" shortcut="C" side="bottom">
+                                <ShellHeaderRailItem
+                                    tone="cinematicDark"
+                                    iconOnly
+                                    active={isCommentsWorkspaceActive}
+                                    onClick={toggleCommentsWorkspace}
+                                    aria-label="Toggle comments"
+                                    aria-keyshortcuts="C"
+                                    aria-pressed={isCommentsWorkspaceActive}
+                                    aria-controls="share-comment-popover"
+                                >
+                                    <MessageSquare />
+                                </ShellHeaderRailItem>
+                            </ActionTooltip>
+                        </ShellHeaderRail>
                     </div>
 
                     <div className="absolute left-1/2 flex max-w-[34vw] -translate-x-1/2 items-center gap-2 px-4">
@@ -1770,24 +2585,6 @@ export const ShareView = () => {
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <ActionTooltip content="Comments" side="bottom">
-                            <ShellIconButton
-                                size="sm"
-                                tone="cinematicDark"
-                                shape="circle"
-                                className={cn(
-                                    isCommentsWorkspaceActive &&
-                                        'bg-shell-dark-accent-soft text-shell-dark-accent hover:bg-shell-dark-accent-soft hover:text-shell-dark-accent'
-                                )}
-                                onClick={toggleCommentsWorkspace}
-                                aria-label="Toggle comments"
-                                aria-pressed={isCommentsWorkspaceActive}
-                                aria-controls="share-comment-popover"
-                            >
-                                <MessageSquare size={14} />
-                            </ShellIconButton>
-                        </ActionTooltip>
-
                         <ShellSegmentedControl tone="cinematicDark" size="compact" aria-label="Preview mode">
                             <ActionTooltip content="Desktop preview" side="bottom">
                                 <ShellSegmentedControlItem
@@ -1840,13 +2637,16 @@ export const ShareView = () => {
                                 Hotspots
                             </PreviewHeaderActionButton>
 
-                            <PreviewHeaderActionButton
-                                tone="cinematicDark"
-                                onClick={() => setResetKey((prev) => prev + 1)}
-                            >
-                                <RotateCcw size={14} />
-                                Restart
-                            </PreviewHeaderActionButton>
+                            <ActionTooltip content="Restart" shortcut="R" side="bottom">
+                                <PreviewHeaderActionButton
+                                    tone="cinematicDark"
+                                    onClick={handleRestart}
+                                    aria-keyshortcuts="R"
+                                >
+                                    <RotateCcw size={14} />
+                                    Restart
+                                </PreviewHeaderActionButton>
+                            </ActionTooltip>
                         </div>
 
                         <ShareDialog
@@ -1868,9 +2668,45 @@ export const ShareView = () => {
                     </div>
                 </div>
 
-                <div className="flex-1 flex items-center justify-center overflow-hidden relative">
+                <div
+                    className={cn(
+                        'flex-1 flex items-center justify-center overflow-hidden relative',
+                        isCommentsWorkspaceActive ? 'md:px-[356px]' : ''
+                    )}
+                >
                     <div ref={commentSurfaceRef} className="w-full h-full relative">
-                        <div className="w-full h-full">
+                        {isCommentsWorkspaceActive ? (
+                            <div className="md:hidden absolute top-2 left-2 right-2 z-[55] max-w-[calc(100%-1rem)] pointer-events-none">
+                                <div
+                                    data-comment-placement-ignore="true"
+                                    className={cn(
+                                        'pointer-events-auto inline-flex max-w-full flex-col items-stretch rounded-2xl border border-shell-dark-border bg-shell-dark-panel/95 shadow-xl backdrop-blur'
+                                    )}
+                                >
+                                    <div className="p-3 border-b border-shell-dark-border flex items-center justify-between gap-3">
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <h2 className="text-sm font-medium text-shell-dark-text">Choose path</h2>
+                                        </div>
+                                    </div>
+                                    <div className="max-h-[220px] overflow-y-auto thin-scrollbar">
+                                        {renderPathSelectionControls({ compact: true })}
+                                    </div>
+                                </div>
+                            </div>
+                        ) : null}
+
+                        <div
+                            className="w-full h-full"
+                            onPointerDown={handleCommentSurfacePointerDown}
+                            onPointerMove={handleCommentSurfacePointerMove}
+                            onPointerUp={handleCommentSurfacePointerUp}
+                            onPointerCancel={handleCommentSurfacePointerCancel}
+                            style={
+                                commentMode === 'placing'
+                                    ? { touchAction: 'pan-y', cursor: COMMENT_PLACEMENT_CURSOR }
+                                    : undefined
+                            }
+                        >
                             <FlowPreview
                                 key={resetKey}
                                 flow={flow}
@@ -1878,30 +2714,26 @@ export const ShareView = () => {
                                 isMobile={isMobile}
                                 variables={{}}
                                 desktopPosition="center"
+                                reviewMode={isCommentsWorkspaceActive}
+                                initialReviewSnapshot={reviewSnapshot}
+                                onReviewStateChange={setReviewState}
+                                onReviewSnapshotChange={setReviewSnapshot}
+                                reviewPathChangeRequest={reviewPathChangeRequest}
                             />
                         </div>
 
-                        {commentMode === 'placing' ? (
-                            <div
-                                className="absolute inset-0 z-20 cursor-crosshair"
-                                onClick={handleCanvasPlaceComment}
-                            />
-                        ) : null}
-
                         {showPins ? (
                             <div className="absolute inset-0 z-30 pointer-events-none">
-                                {visibleThreads.map((thread) => {
+                                {reviewThreadEntries.map((entry) => {
+                                    const { thread, pin } = entry;
                                     const root = thread.root;
-                                    if (!hasValidPin(root)) return null;
+                                    if (!pin) return null;
 
                                     const isSelected = activeThreadId === thread.id;
                                     const isDraggingThisPin = dragState?.threadId === thread.id;
                                     const effectivePin = isDraggingThisPin
                                         ? dragState.draftPin
-                                        : {
-                                              x: root.pin_x as number,
-                                              y: root.pin_y as number,
-                                          };
+                                        : pin;
                                     const isHovered = hoveredThreadId === thread.id;
                                     const canShowHoverPreview =
                                         isDesktopHoverPreviewEnabled &&
@@ -1949,10 +2781,7 @@ export const ShareView = () => {
                                                         event,
                                                         thread.id,
                                                         root.id,
-                                                        {
-                                                            x: root.pin_x as number,
-                                                            y: root.pin_y as number,
-                                                        },
+                                                        pin,
                                                         canDragPin
                                                     )
                                                 }
@@ -2032,7 +2861,7 @@ export const ShareView = () => {
                                             <ShellButton
                                                 variant="ghost"
                                                 className={cn(
-                                                    'absolute left-[44px] top-1/2 -translate-y-1/2 h-auto min-w-[220px] max-w-[286px] rounded-[24px] border border-shell-dark-border/50 bg-shell-dark-panel/96 text-shell-dark-text hover:text-shell-dark-text hover:bg-shell-dark-panel/96 px-3.5 py-3 text-left shadow-[0_20px_48px_rgb(0_0_0/0.38)] backdrop-blur-md justify-start pointer-events-auto transition-all duration-150 ease-out origin-left focus-visible:ring-0 focus-visible:outline-none z-10',
+                                                    'absolute left-[44px] top-1/2 -translate-y-1/2 h-auto min-w-[220px] max-w-[286px] rounded-[24px] border border-shell-dark-border/30 bg-shell-dark-panel text-shell-dark-text hover:text-shell-dark-text hover:bg-shell-dark-panel px-3.5 py-3 text-left shadow-[0_20px_48px_rgb(0_0_0/0.38)] justify-start pointer-events-auto transition-all duration-150 ease-out origin-left focus-visible:ring-0 focus-visible:outline-none z-10',
                                                     canShowHoverPreview
                                                         ? 'opacity-100 translate-x-0 scale-100'
                                                         : 'opacity-0 -translate-x-2 scale-95 pointer-events-none'
@@ -2079,7 +2908,7 @@ export const ShareView = () => {
                                                             {isResolvedThread ? renderResolvedBadge() : null}
                                                             <span
                                                                 className="text-[11px] text-shell-dark-muted shrink-0"
-                                                                title={formatCommentDate(thread.latestActivityAt)}
+                                                        title={formatCommentDate(thread.latestActivityAt)}
                                                             >
                                                                 {formatCommentRelativeTime(thread.latestActivityAt)}
                                                             </span>
@@ -2087,6 +2916,11 @@ export const ShareView = () => {
                                                         <p className="mt-0.5 text-xs text-shell-dark-text/90 truncate max-w-[200px]">
                                                             {getPreviewText(root.message)}
                                                         </p>
+                                                        {entry.detail ? (
+                                                            <p className="mt-0.5 text-[10px] text-shell-dark-muted max-w-[200px] truncate">
+                                                                {entry.detail}
+                                                            </p>
+                                                        ) : null}
                                                         {thread.replies.length > 0 ? (
                                                             <p className="mt-0.5 text-[10px] text-shell-dark-accent">
                                                                 {thread.replies.length}{' '}
@@ -2119,6 +2953,20 @@ export const ShareView = () => {
 
                     {isPanelOpen ? (
                         <>
+                            <div className="hidden md:block absolute top-3 left-3 bottom-3 w-[340px] z-[60]">
+                                <div className="h-full w-full bg-shell-dark-panel border border-shell-dark-border rounded-xl shadow-2xl overflow-hidden flex flex-col">
+                                    <div className="p-3 border-b border-shell-dark-border flex items-center justify-between gap-3">
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <h2 className="text-sm font-medium text-shell-dark-text">Choose path</h2>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex-1 overflow-y-auto thin-scrollbar">
+                                        {renderPathSelectionControls()}
+                                    </div>
+                                </div>
+                            </div>
+
                             <div className="hidden md:block absolute top-3 right-3 bottom-3 w-[340px] z-[60]">
                                 <div className="h-full w-full bg-shell-dark-panel border border-shell-dark-border rounded-xl shadow-2xl overflow-hidden flex flex-col">
                                     <div className="p-3 border-b border-shell-dark-border flex items-center justify-between gap-3">
@@ -2167,14 +3015,14 @@ export const ShareView = () => {
                                                 <div className="text-sm font-medium text-shell-dark-text mb-1">
                                                     {commentsEmptyState.title}
                                                 </div>
-                                                <p className="text-xs leading-relaxed">
+                                                <p className="text-xs leading-relaxed text-shell-dark-muted">
                                                     {commentsEmptyState.description}
                                                 </p>
                                             </div>
                                         ) : (
                                             <div className="px-2 py-2 space-y-1.5">
-                                                {visibleThreads.map((thread) =>
-                                                    renderThreadListItem({ thread })
+                                                {reviewThreadEntries.map((entry) =>
+                                                    renderThreadListItem({ entry })
                                                 )}
                                             </div>
                                         )}
@@ -2230,12 +3078,14 @@ export const ShareView = () => {
                                                 <div className="text-shell-dark-text font-medium mb-1">
                                                     {commentsEmptyState.title}
                                                 </div>
-                                                <div>{commentsEmptyState.description}</div>
+                                                <p className="text-shell-dark-muted">
+                                                    {commentsEmptyState.description}
+                                                </p>
                                             </div>
                                         ) : (
                                             <div className="px-2 py-2 space-y-1">
-                                                {visibleThreads.map((thread) =>
-                                                    renderThreadListItem({ thread, compact: true })
+                                                {reviewThreadEntries.map((entry) =>
+                                                    renderThreadListItem({ entry, compact: true })
                                                 )}
                                             </div>
                                         )}

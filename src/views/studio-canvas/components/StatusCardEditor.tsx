@@ -73,27 +73,28 @@ export function StatusCardEditor({
             <EditorContent>
                 <EditorSection>
                     <EditorField
-                        label="Loading label"
+                        label="Loading card label"
                         value={localLoadingTitle}
                         onChange={handleLoadingTitleChange}
-                        placeholder="e.g., Removing user..."
+                        placeholder="Removing user"
                         readOnly={readOnly}
                     />
 
                     <EditorField
-                        label="Success label"
+                        label="Success card label"
                         value={localSuccessTitle}
                         onChange={handleSuccessTitleChange}
-                        placeholder="e.g., User removed from Flexis Recruiter"
+                        placeholder="User removed from Flexis Recruiter"
                         readOnly={readOnly}
                     />
 
-                    <EditorField label="Success description" renderInput={false}>
+                    <EditorField label="Success card caption" renderInput={false}>
                         <RichTextEditor
                             value={localSuccessDesc}
                             onChange={handleSuccessDescChange}
-                            placeholder="Provide additional context or next steps..."
+                            placeholder="You can view details in the Admin Center."
                             readOnly={readOnly}
+                            surfaceVariant="field"
                         />
                     </EditorField>
                 </EditorSection>

@@ -9,7 +9,6 @@ import { EditorField } from './editor-ui/EditorField';
 
 interface PromptEditorProps {
     component: Component;
-    entryPoint?: string;
     onChange: (updates: Partial<PromptContent>) => void;
     children: React.ReactNode;
     isOpen: boolean;
@@ -19,7 +18,6 @@ interface PromptEditorProps {
 
 export function PromptEditor({
     component,
-    entryPoint,
     onChange,
     children,
     isOpen,
@@ -43,25 +41,6 @@ export function PromptEditor({
         onChange({ ...content, text: value });
     };
 
-    const getPlaceholder = () => {
-        switch (entryPoint) {
-            case 'flagship':
-                return 'Learn about Premium features, Manage subscription, Billing...';
-            case 'recruiter':
-                return 'Search for candidates, Schedule an interview, View job posts...';
-            case 'admin-center':
-                return 'Add or remove a user, Manage licenses, View billing...';
-            case 'sales-navigator':
-                return 'Find leads, Save searches, Manage account lists...';
-            case 'learning':
-                return 'Find a course, Track learning progress, Get recommendations...';
-            case 'campaign-manager':
-                return 'Create a campaign, View analytics, Manage budget...';
-            default:
-                return 'Type prompt text...';
-        }
-    };
-
     const editorContent = (
         <EditorRoot>
             <EditorHeader
@@ -71,12 +50,12 @@ export function PromptEditor({
             />
             <EditorContent>
                 <EditorField
+                    label="Prompt text"
                     value={localText}
                     onChange={handleTextChange}
-                    placeholder={getPlaceholder()}
+                    placeholder="Learn about Premium features"
                     type="textarea"
                     minRows={2}
-                    hint="Instructions for how the AI should behave in this turn."
                     readOnly={readOnly}
                 />
             </EditorContent>

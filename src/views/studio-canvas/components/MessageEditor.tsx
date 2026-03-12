@@ -5,6 +5,7 @@ import { ComponentEditorPopover } from './ComponentEditorPopover';
 import { EditorRoot } from './editor-ui/EditorRoot';
 import { EditorHeader } from './editor-ui/EditorHeader';
 import { EditorContent } from './editor-ui/EditorContent';
+import { EditorField } from './editor-ui/EditorField';
 import { RichTextEditor } from './RichTextEditor';
 
 interface MessageEditorProps {
@@ -49,15 +50,15 @@ export function MessageEditor({
                 onClose={() => onOpenChange(false)}
             />
             <EditorContent>
-                <div className="flex flex-col gap-1.5 w-full">
-
+                <EditorField label="Message text" renderInput={false}>
                     <RichTextEditor
                         value={localText}
                         onChange={handleTextChange}
-                        placeholder="Type your message here..."
+                        placeholder="How can I help?"
                         readOnly={readOnly}
+                        surfaceVariant="field"
                     />
-                </div>
+                </EditorField>
             </EditorContent>
         </EditorRoot>
     );

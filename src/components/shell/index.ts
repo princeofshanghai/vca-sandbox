@@ -1,11 +1,13 @@
 export { ShellButton } from './ShellButton';
 export { ShellDialogActions } from './ShellDialogActions';
+export { ShellHeaderRail, ShellHeaderRailItem } from './ShellHeaderRail';
 export { ShellInput } from './ShellInput';
 export { ShellIconButton } from './ShellIconButton';
 export { ShellNotice } from './ShellNotice';
 export { ShellSelectableRow } from './ShellSelectableRow';
 export { ShellSwitch } from './ShellSwitch';
 export { ShellTextarea } from './ShellTextarea';
+export { ShellTextareaAutosize } from './ShellTextareaAutosize';
 export {
   ShellMenu,
   ShellMenuCheckboxItem,
@@ -36,3 +38,4 @@ export {
   ShellSelectTrigger,
   ShellSelectValue,
 } from './ShellSelect';
+export { ShellTooltip } from './ShellTooltip';

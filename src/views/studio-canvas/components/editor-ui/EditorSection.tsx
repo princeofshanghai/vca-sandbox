@@ -15,11 +15,11 @@ export function EditorSection({ title, children, defaultOpen = true, className, 
     const [isOpen, setIsOpen] = useState(defaultOpen);
 
     if (!title) {
-        return <div className={cn("space-y-3", className)}>{children}</div>;
+        return <div className={cn("space-y-4", className)}>{children}</div>;
     }
 
     return (
-        <div className={cn("space-y-3", className)}>
+        <div className={cn("space-y-4", className)}>
             <div className="flex items-center justify-between select-none">
                 <div
                     className={cn(
@@ -41,7 +41,7 @@ export function EditorSection({ title, children, defaultOpen = true, className, 
             </div>
 
             {isOpen && (
-                <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+                <div className="space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
                     {children}
                 </div>
             )}

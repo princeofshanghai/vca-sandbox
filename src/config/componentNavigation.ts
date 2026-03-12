@@ -103,11 +103,11 @@ const rawNavigation: NavigationConfig = {
       label: 'Actions',
       items: [
         { path: '/components/checkbox-group', label: 'Checkbox Group' },
-        { path: '/components/confirmation-card', label: 'Confirmation Card' },
+        { path: '/components/display-card', label: 'Display Card' },
         { path: '/components/recommendation-card', label: 'Recommendation Card' },
         { path: '/components/prompt', label: 'Prompt' },
         { path: '/components/prompt-group', label: 'Prompt Group' },
-        { path: '/components/selection-list', label: 'Selection List' },
+        { path: '/components/select-cards', label: 'Select Cards' },
         { path: '/components/status-card', label: 'Status Card' },
       ],
     },

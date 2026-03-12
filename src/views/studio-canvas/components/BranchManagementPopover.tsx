@@ -17,7 +17,7 @@ export function BranchManagementContent({ branches, onChange }: BranchManagement
     const handleAddBranch = () => {
         const newBranch: Branch = {
             id: `branch-${Date.now()}`,
-            condition: 'New Option',
+            condition: 'New path',
         };
         onChange([...branches, newBranch]);
     };
@@ -41,7 +41,7 @@ export function BranchManagementContent({ branches, onChange }: BranchManagement
         >
             <div className="flex items-center gap-2 mb-3 text-shell-dark-muted px-1">
                 <GitBranch className="w-4 h-4" />
-                <span className="text-xs font-medium text-shell-dark-muted">Condition branches</span>
+                <span className="text-xs font-medium text-shell-dark-muted">Paths</span>
             </div>
 
             <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1 thin-scrollbar">
@@ -55,7 +55,7 @@ export function BranchManagementContent({ branches, onChange }: BranchManagement
                                     value={branch.condition}
                                     onChange={(e) => handleUpdateBranch(branch.id, { condition: e.target.value })}
                                     className="w-full bg-shell-dark-bg border border-shell-dark-border rounded-md px-3 py-1.5 text-sm text-shell-dark-text focus:border-shell-accent focus:outline-none focus:ring-1 focus:ring-shell-accent transition-all placeholder:text-shell-dark-muted"
-                                    placeholder="Branch label (e.g. Yes)..."
+                                    placeholder="Path label (e.g. Premium members)..."
                                 />
                             </div>
                             <button
@@ -109,7 +109,7 @@ export function BranchManagementContent({ branches, onChange }: BranchManagement
                 className="w-full mt-3 flex items-center justify-center gap-2 py-2 rounded-md border border-dashed border-shell-dark-border text-shell-dark-muted hover:text-shell-accent-text hover:border-shell-accent-border hover:bg-shell-dark-surface transition-all text-sm font-medium cursor-pointer"
             >
                 <Plus className="w-4 h-4" />
-                <span>Add Branch</span>
+                <span>Add path</span>
             </button>
 
             <Popover.Arrow className="fill-shell-dark-panel stroke-shell-dark-border" />

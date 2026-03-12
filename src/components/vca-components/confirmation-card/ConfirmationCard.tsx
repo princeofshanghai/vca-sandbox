@@ -1,21 +1,10 @@
 import { cn } from '@/utils';
-import { Avatar, AvatarFallbackTone } from '../avatar';
+import { Avatar, getAvatarFallbackTone } from '../avatar';
 import { VcaIcon, VcaIconName } from '../icons';
 import { Button } from '../buttons';
 import { HotspotBeacon } from '../hotspot';
 
 export type ConfirmationVisualType = 'avatar' | 'icon' | 'none';
-
-const FALLBACK_AVATAR_TONES: AvatarFallbackTone[] = ['amber', 'rose', 'green', 'blue', 'taupe'];
-
-const getFallbackToneFromSeed = (seed: string): AvatarFallbackTone => {
-    let hash = 0;
-    for (let i = 0; i < seed.length; i += 1) {
-        hash = (hash << 5) - hash + seed.charCodeAt(i);
-        hash |= 0;
-    }
-    return FALLBACK_AVATAR_TONES[Math.abs(hash) % FALLBACK_AVATAR_TONES.length];
-};
 
 export interface ConfirmationEntity {
     id: string;
@@ -28,6 +17,7 @@ export interface ConfirmationEntity {
 
 export interface ConfirmationCardProps {
     item: ConfirmationEntity;
+    showActions?: boolean;
     confirmLabel?: string;
     rejectLabel?: string;
     onConfirm?: (item: ConfirmationEntity) => void;
@@ -40,8 +30,9 @@ export interface ConfirmationCardProps {
 
 export const ConfirmationCard = ({
     item,
-    confirmLabel = 'Yes, confirm',
-    rejectLabel = 'No, not this person',
+    showActions = true,
+    confirmLabel = 'Confirm',
+    rejectLabel = 'Cancel',
     onConfirm,
     onReject,
     disabled = false,
@@ -55,7 +46,8 @@ export const ConfirmationCard = ({
             : item.visualType || (item.iconName ? 'icon' : 'none');
     const showAvatar = resolvedVisualType === 'avatar';
     const showIcon = resolvedVisualType === 'icon';
-    const fallbackTone = getFallbackToneFromSeed(item.id || item.title || 'candidate');
+    const fallbackTone = getAvatarFallbackTone(item.id || item.title || 'item');
+    const rendersActions = showActions;
 
     return (
         <div className={cn("w-full max-w-sm", className)}>
@@ -67,13 +59,13 @@ export const ConfirmationCard = ({
                                 <Avatar
                                     size={32}
                                     src={item.imageUrl}
-                                    alt={item.title ? `${item.title} avatar` : 'Candidate avatar'}
+                                    alt={item.title ? `${item.title} avatar` : 'Item avatar'}
                                     fallbackStyle="silhouette"
                                     fallbackTone={fallbackTone}
                                 />
                             ) : (
                                 <div className="flex h-full w-full items-center justify-center rounded-lg bg-vca-background-neutral-soft text-vca-text-meta">
-                                    <VcaIcon icon={item.iconName || 'user'} size="md" />
+                                    <VcaIcon icon={item.iconName || 'placeholder'} size="md" />
                                 </div>
                             )}
                         </div>
@@ -91,35 +83,42 @@ export const ConfirmationCard = ({
                     </div>
                 </div>
 
-                <div className="flex items-center gap-0">
-                    <div className="relative">
-                        {showConfirmHotspot && (
-                            <HotspotBeacon className="-right-2 top-1/2 -translate-y-1/2" />
-                        )}
-                        <Button
-                            variant="secondary"
-                            emphasis={true}
-                            disabled={disabled}
-                            onClick={() => onConfirm?.(item)}
-                        >
-                            {confirmLabel}
-                        </Button>
+                {rendersActions && (
+                    <div className="flex items-center gap-2">
+                        <div className="relative">
+                            {showConfirmHotspot && (
+                                <HotspotBeacon className="-right-2 top-1/2 -translate-y-1/2" />
+                            )}
+                            <Button
+                                variant="secondary"
+                                emphasis={true}
+                                disabled={disabled}
+                                onClick={() => onConfirm?.(item)}
+                            >
+                                {confirmLabel}
+                            </Button>
+                        </div>
+                        <div className="relative">
+                            {showRejectHotspot && (
+                                <HotspotBeacon className="-right-2 top-1/2 -translate-y-1/2" />
+                            )}
+                            <Button
+                                variant="tertiary"
+                                emphasis={false}
+                                disabled={disabled}
+                                onClick={() => onReject?.(item)}
+                            >
+                                {rejectLabel}
+                            </Button>
+                        </div>
                     </div>
-                    <div className="relative">
-                        {showRejectHotspot && (
-                            <HotspotBeacon className="-right-2 top-1/2 -translate-y-1/2" />
-                        )}
-                        <Button
-                            variant="tertiary"
-                            emphasis={false}
-                            disabled={disabled}
-                            onClick={() => onReject?.(item)}
-                        >
-                            {rejectLabel}
-                        </Button>
-                    </div>
-                </div>
+                )}
             </div>
         </div>
     );
 };
+
+export type DisplayCardVisualType = ConfirmationVisualType;
+export type DisplayCardEntity = ConfirmationEntity;
+export type DisplayCardProps = ConfirmationCardProps;
+export const DisplayCard = ConfirmationCard;

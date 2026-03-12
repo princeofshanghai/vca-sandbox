@@ -6,6 +6,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import BubbleMenuExtension from '@tiptap/extension-bubble-menu';
 import { Bold, Italic, List, ListOrdered, Link as LinkIcon } from 'lucide-react';
 import { useCallback, useEffect } from 'react';
+import { ShellIconButton } from '@/components/shell';
 import { cn } from '@/utils/cn';
 
 interface RichTextEditorProps {
@@ -15,6 +16,7 @@ interface RichTextEditorProps {
     className?: string;
     autoFocus?: boolean;
     readOnly?: boolean;
+    surfaceVariant?: 'default' | 'field';
 }
 
 export function RichTextEditor({
@@ -24,6 +26,7 @@ export function RichTextEditor({
     className,
     autoFocus = false,
     readOnly = false,
+    surfaceVariant = 'default',
 }: RichTextEditorProps) {
 
     // --- HTML <-> Markdown Conversion (Robust DOM Approach) ---
@@ -131,6 +134,7 @@ export function RichTextEditor({
             }),
             Placeholder.configure({
                 placeholder,
+                showOnlyCurrent: false,
             }),
             BubbleMenuExtension.configure({
                 pluginKey: 'bubbleMenu',
@@ -140,6 +144,11 @@ export function RichTextEditor({
             attributes: {
                 class: cn(
                     "max-w-none outline-none text-[13px] leading-relaxed text-shell-text min-h-[60px] p-2.5",
+                    "[&_.is-editor-empty:first-child::before]:pointer-events-none",
+                    "[&_.is-editor-empty:first-child::before]:float-left",
+                    "[&_.is-editor-empty:first-child::before]:h-0",
+                    "[&_.is-editor-empty:first-child::before]:text-shell-muted/55",
+                    "[&_.is-editor-empty:first-child::before]:content-[attr(data-placeholder)]",
                     // List Styling
                     "[&_ul]:list-disc [&_ul]:pl-4 [&_ul]:my-2 [&_ul]:space-y-1.5",
                     "[&_ol]:list-decimal [&_ol]:pl-4 [&_ol]:my-2 [&_ol]:space-y-1.5 [&_ol>li::marker]:font-semibold",
@@ -187,10 +196,15 @@ export function RichTextEditor({
         editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
     };
 
+    const getToolbarButtonClassName = (isActive: boolean) => cn(
+        isActive && 'bg-shell-accent-soft text-shell-accent hover:bg-shell-accent-soft hover:text-shell-accent'
+    );
+
     return (
         <div
             className={cn(
-                "border border-shell-border rounded-lg bg-shell-bg overflow-hidden transition-all focus-within:ring-2 focus-within:ring-shell-accent/20 focus-within:border-shell-accent",
+                "border border-shell-border rounded-lg overflow-hidden transition-all focus-within:ring-2 focus-within:ring-shell-accent/20 focus-within:border-shell-accent",
+                surfaceVariant === 'field' ? "bg-shell-surface" : "bg-shell-bg",
                 readOnly ? "focus-within:ring-0 focus-within:border-shell-border" : "",
                 className
             )}
@@ -198,24 +212,59 @@ export function RichTextEditor({
         >
             {/* Bubble Menu */}
             {editor && !readOnly && (
-                <BubbleMenu className="flex bg-shell-surface shadow-xl border border-shell-border rounded-lg overflow-hidden" editor={editor}>
-                    <button onClick={() => editor.chain().focus().toggleBold().run()} className={cn("p-2 hover:bg-shell-surface-subtle", editor.isActive('bold') ? 'text-shell-accent' : 'text-shell-muted-strong')}>
+                <BubbleMenu
+                    className="flex items-center gap-1 rounded-lg border border-shell-border bg-shell-surface p-1 shadow-xl"
+                    editor={editor}
+                    id="markdown-toolbar"
+                    data-editor-keep-open
+                >
+                    <ShellIconButton
+                        type="button"
+                        size="sm"
+                        aria-label="Bold"
+                        className={getToolbarButtonClassName(editor.isActive('bold'))}
+                        onClick={() => editor.chain().focus().toggleBold().run()}
+                    >
                         <Bold size={14} />
-                    </button>
-                    <button onClick={() => editor.chain().focus().toggleItalic().run()} className={cn("p-2 hover:bg-shell-surface-subtle", editor.isActive('italic') ? 'text-shell-accent' : 'text-shell-muted-strong')}>
+                    </ShellIconButton>
+                    <ShellIconButton
+                        type="button"
+                        size="sm"
+                        aria-label="Italic"
+                        className={getToolbarButtonClassName(editor.isActive('italic'))}
+                        onClick={() => editor.chain().focus().toggleItalic().run()}
+                    >
                         <Italic size={14} />
-                    </button>
+                    </ShellIconButton>
                     <div className="w-px h-4 bg-shell-border-subtle my-auto mx-1" />
-                    <button onClick={() => editor.chain().focus().toggleBulletList().run()} className={cn("p-2 hover:bg-shell-surface-subtle", editor.isActive('bulletList') ? 'text-shell-accent' : 'text-shell-muted-strong')}>
+                    <ShellIconButton
+                        type="button"
+                        size="sm"
+                        aria-label="Bulleted list"
+                        className={getToolbarButtonClassName(editor.isActive('bulletList'))}
+                        onClick={() => editor.chain().focus().toggleBulletList().run()}
+                    >
                         <List size={14} />
-                    </button>
-                    <button onClick={() => editor.chain().focus().toggleOrderedList().run()} className={cn("p-2 hover:bg-shell-surface-subtle", editor.isActive('orderedList') ? 'text-shell-accent' : 'text-shell-muted-strong')}>
+                    </ShellIconButton>
+                    <ShellIconButton
+                        type="button"
+                        size="sm"
+                        aria-label="Numbered list"
+                        className={getToolbarButtonClassName(editor.isActive('orderedList'))}
+                        onClick={() => editor.chain().focus().toggleOrderedList().run()}
+                    >
                         <ListOrdered size={14} />
-                    </button>
+                    </ShellIconButton>
                     <div className="w-px h-4 bg-shell-border-subtle my-auto mx-1" />
-                    <button onClick={setLink} className={cn("p-2 hover:bg-shell-surface-subtle", editor.isActive('link') ? 'text-shell-accent' : 'text-shell-muted-strong')}>
+                    <ShellIconButton
+                        type="button"
+                        size="sm"
+                        aria-label="Link"
+                        className={getToolbarButtonClassName(editor.isActive('link'))}
+                        onClick={setLink}
+                    >
                         <LinkIcon size={14} />
-                    </button>
+                    </ShellIconButton>
                 </BubbleMenu>
             )}
 

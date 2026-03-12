@@ -37,9 +37,9 @@ const triggerSizeClasses: Record<ShellSelectSize, string> = {
 };
 
 const contentToneClasses: Record<ShellSelectTone, string> = {
-  default: 'rounded-shell-lg border-shell-border bg-shell-bg text-shell-text shadow-shell-lg',
+  default: 'z-[1100] rounded-shell-lg border-shell-border bg-shell-bg text-shell-text shadow-shell-lg',
   cinematicDark:
-    'z-[90] rounded-lg border-shell-dark-border bg-shell-dark-panel text-shell-dark-text shadow-2xl',
+    'z-[1100] rounded-lg border-shell-dark-border bg-shell-dark-panel text-shell-dark-text shadow-2xl',
 };
 
 const itemToneClasses: Record<ShellSelectTone, string> = {

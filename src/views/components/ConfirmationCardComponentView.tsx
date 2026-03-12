@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ConfirmationCard, type ConfirmationEntity } from '@/components/vca-components/confirmation-card';
+import { DisplayCard, type DisplayCardEntity } from '@/components/vca-components/confirmation-card';
 import { Message } from '@/components/vca-components/messages';
 import { PromptGroup } from '@/components/vca-components/prompt-group/PromptGroup';
 import { Container } from '@/components/vca-components/container/Container';
@@ -12,34 +12,43 @@ import { Button } from '@/components/ui/button';
 const AVATAR_URL = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80';
 
 const ConfirmationCardComponentView = () => {
+    const [showActions, setShowActions] = useState(true);
     const [visualType, setVisualType] = useState<'avatar' | 'icon' | 'none'>('avatar');
     const [showPhoto, setShowPhoto] = useState(true);
     const [disabled, setDisabled] = useState(false);
-    const [title, setTitle] = useState('Sarah Jenkins');
-    const [subtitle, setSubtitle] = useState('sarah.j@example.com');
-    const [confirmLabel, setConfirmLabel] = useState('Yes, confirm');
-    const [rejectLabel, setRejectLabel] = useState('No, not this person');
+    const [title, setTitle] = useState('Acme Workspace');
+    const [subtitle, setSubtitle] = useState('Enterprise account');
+    const [confirmLabel, setConfirmLabel] = useState('Open workspace');
+    const [rejectLabel, setRejectLabel] = useState('Choose another');
     const [lastAction, setLastAction] = useState<'none' | 'confirm' | 'reject'>('none');
     const [conversationState, setConversationState] = useState<'awaiting' | 'confirmed' | 'rejected'>('awaiting');
 
-    const demoItem = useMemo<ConfirmationEntity>(() => ({
-        id: 'sarah-jenkins',
-        title: title || 'Sarah Jenkins',
+    const demoItem = useMemo<DisplayCardEntity>(() => ({
+        id: 'acme-workspace',
+        title: title || 'Acme Workspace',
         subtitle: subtitle || undefined,
         visualType,
-        iconName: visualType === 'icon' ? ('user' as const) : undefined,
+        iconName: visualType === 'icon' ? ('building' as const) : undefined,
         imageUrl: visualType === 'avatar' && showPhoto ? AVATAR_URL : undefined,
     }), [title, subtitle, visualType, showPhoto]);
 
     return (
         <ComponentViewLayout
-            title="Confirmation Card"
-            description="A focused confirmation card for a single candidate with two clear actions: confirm or reject."
+            title="Display Card"
+            description="A richer card for showing a single entity with optional actions."
         >
             <div className="space-y-20">
                 <DemoSection
                     controls={
                         <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                            <FormCheckbox
+                                id="show-actions"
+                                label="show actions"
+                                checked={showActions}
+                                onCheckedChange={setShowActions}
+                            />
+                            <div />
+
                             <ToggleButtons
                                 label="Visual"
                                 options={['avatar', 'icon', 'none'] as const}
@@ -49,34 +58,42 @@ const ConfirmationCardComponentView = () => {
                             <div />
 
                             <FormInput
-                                id="candidate-name"
-                                label="Candidate name"
+                                id="card-title"
+                                label="Card title"
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
-                                placeholder="Sarah Jenkins"
+                                placeholder="Acme Workspace"
                             />
                             <FormInput
-                                id="candidate-subtitle"
+                                id="card-subtitle"
                                 label="Subtitle"
                                 value={subtitle}
                                 onChange={(e) => setSubtitle(e.target.value)}
-                                placeholder="sarah.j@example.com"
+                                placeholder="Enterprise account"
                             />
 
-                            <FormInput
-                                id="confirm-label"
-                                label="Confirm button"
-                                value={confirmLabel}
-                                onChange={(e) => setConfirmLabel(e.target.value)}
-                                placeholder="Yes, confirm"
-                            />
-                            <FormInput
-                                id="reject-label"
-                                label="Reject button"
-                                value={rejectLabel}
-                                onChange={(e) => setRejectLabel(e.target.value)}
-                                placeholder="No, not this person"
-                            />
+                            {showActions ? (
+                                <>
+                                    <FormInput
+                                        id="confirm-label"
+                                        label="Primary cta"
+                                        value={confirmLabel}
+                                        onChange={(e) => setConfirmLabel(e.target.value)}
+                                        placeholder="Open workspace"
+                                    />
+                                    <FormInput
+                                        id="reject-label"
+                                        label="Secondary cta"
+                                        value={rejectLabel}
+                                        onChange={(e) => setRejectLabel(e.target.value)}
+                                        placeholder="Choose another"
+                                    />
+                                </>
+                            ) : (
+                                <div className="col-span-2 rounded-md border border-dashed border-shell-border bg-shell-surface-subtle px-3 py-2 text-xs text-shell-muted">
+                                    This card is in display-only mode, so it renders with no buttons.
+                                </div>
+                            )}
 
                             <FormCheckbox
                                 id="show-photo"
@@ -95,17 +112,20 @@ const ConfirmationCardComponentView = () => {
                     }
                 >
                     <div className="w-full rounded-xl bg-shell-surface-subtle p-6 flex flex-col items-center gap-3">
-                        <ConfirmationCard
+                        <DisplayCard
                             item={demoItem}
+                            showActions={showActions}
                             confirmLabel={confirmLabel}
                             rejectLabel={rejectLabel}
                             disabled={disabled}
                             onConfirm={() => setLastAction('confirm')}
                             onReject={() => setLastAction('reject')}
                         />
-                        <p className="text-xs text-shell-muted">
-                            Last action: {lastAction === 'none' ? 'none' : lastAction}
-                        </p>
+                        {showActions && (
+                            <p className="text-xs text-shell-muted">
+                                Last action: {lastAction === 'none' ? 'none' : lastAction}
+                            </p>
+                        )}
                     </div>
                 </DemoSection>
 
@@ -113,48 +133,51 @@ const ConfirmationCardComponentView = () => {
                     <div>
                         <h2>States</h2>
                         <p className="mt-4 text-shell-muted">
-                            Use this component when the AI already narrowed to one candidate and needs a clear yes/no confirmation.
+                            Use this component when the AI needs to highlight one richer item, account, or profile. Actions are optional.
                         </p>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <div className="bg-shell-surface-subtle border border-shell-border rounded-lg p-4">
-                            <h3 className="text-sm font-semibold mb-3">Happy</h3>
-                            <ConfirmationCard
+                            <h3 className="text-sm font-semibold mb-3">Display only</h3>
+                            <DisplayCard
                                 item={{
-                                    id: 'happy',
-                                    title: 'Sarah Jenkins',
-                                    subtitle: 'sarah.j@example.com',
+                                    id: 'display',
+                                    title: 'Acme Workspace',
+                                    subtitle: 'Enterprise account',
                                     visualType: 'avatar',
                                     imageUrl: AVATAR_URL,
                                 }}
+                                showActions={false}
                             />
                         </div>
 
                         <div className="bg-shell-surface-subtle border border-shell-border rounded-lg p-4">
-                            <h3 className="text-sm font-semibold mb-3">Loading</h3>
-                            <ConfirmationCard
+                            <h3 className="text-sm font-semibold mb-3">With actions</h3>
+                            <DisplayCard
                                 item={{
-                                    id: 'loading',
-                                    title: 'Looking up user...',
-                                    subtitle: 'Please wait',
-                                    visualType: 'none',
+                                    id: 'actions',
+                                    title: 'Team updates',
+                                    subtitle: 'Private channel',
+                                    visualType: 'icon',
+                                    iconName: 'messages',
                                 }}
-                                disabled={true}
-                                confirmLabel="Confirm"
-                                rejectLabel="Not correct"
+                                showActions={true}
+                                confirmLabel="Open channel"
+                                rejectLabel="Dismiss"
                             />
                         </div>
 
                         <div className="bg-shell-surface-subtle border border-shell-border rounded-lg p-4">
-                            <h3 className="text-sm font-semibold mb-3">Empty / fallback</h3>
-                            <ConfirmationCard
+                            <h3 className="text-sm font-semibold mb-3">Fallback visual</h3>
+                            <DisplayCard
                                 item={{
                                     id: 'fallback',
-                                    title: 'Unknown candidate',
+                                    title: 'Quarterly report',
                                     visualType: 'icon',
-                                    iconName: 'user',
+                                    iconName: 'document',
                                 }}
+                                showActions={false}
                             />
                         </div>
                     </div>
@@ -164,11 +187,11 @@ const ConfirmationCardComponentView = () => {
                     <div>
                         <h2>Realistic Usage</h2>
                         <p className="mt-4 text-shell-muted">
-                            Example flow for remove-user confirmation with separate outcomes for confirm and reject.
+                            Example flow where a display card includes two branching actions.
                         </p>
                     </div>
 
-                    <ExampleShowcase title="Remove User Confirmation Flow">
+                    <ExampleShowcase title="Workspace Selection Flow">
                         <Container
                             headerTitle="Help"
                             className="h-[620px] mx-auto shadow-sm"
@@ -179,24 +202,25 @@ const ConfirmationCardComponentView = () => {
                             <div className="flex flex-col gap-vca-lg">
                                 <Message
                                     variant="user"
-                                    userText="Remove user Sarah Jenkins"
+                                    userText="Open the Acme workspace"
                                     className="flex justify-end"
                                 />
 
                                 <Message
                                     variant="ai"
-                                    defaultText="I found this user. Is this the right person?"
+                                    defaultText="I found the workspace you're looking for."
                                 />
 
                                 {conversationState === 'awaiting' && (
-                                    <ConfirmationCard
+                                    <DisplayCard
                                         item={{
-                                            id: 'sarah',
-                                            title: 'Sarah Jenkins',
-                                            subtitle: 'sarah.j@example.com',
-                                            visualType: 'avatar',
-                                            imageUrl: AVATAR_URL,
+                                            id: 'workspace',
+                                            title: 'Acme Workspace',
+                                            subtitle: 'Enterprise account',
+                                            visualType: 'icon',
+                                            iconName: 'building',
                                         }}
+                                        showActions={true}
                                         confirmLabel={confirmLabel}
                                         rejectLabel={rejectLabel}
                                         onConfirm={() => setConversationState('confirmed')}
@@ -213,7 +237,7 @@ const ConfirmationCardComponentView = () => {
                                         />
                                         <Message
                                             variant="ai"
-                                            defaultText="Done. Sarah Jenkins has been removed from the project."
+                                            defaultText="Opening the Acme workspace now."
                                             className="animate-in fade-in slide-in-from-bottom-2 duration-300"
                                         />
                                     </>
@@ -228,13 +252,13 @@ const ConfirmationCardComponentView = () => {
                                         />
                                         <Message
                                             variant="ai"
-                                            defaultText="No problem. Want to search by email or try another name?"
+                                            defaultText="No problem. Want to browse another workspace or search again?"
                                             className="animate-in fade-in slide-in-from-bottom-2 duration-300"
                                         />
                                         <PromptGroup
                                             prompts={[
-                                                { text: 'Search by email' },
-                                                { text: 'Try another name' },
+                                                { text: 'Browse other workspaces' },
+                                                { text: 'Search again' },
                                             ]}
                                         />
                                     </>

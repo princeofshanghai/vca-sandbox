@@ -2,21 +2,10 @@ import { useState } from 'react';
 import { cn } from '@/utils';
 import { VcaIcon, VcaIconName } from '../icons';
 import { ButtonLink } from '../buttons/ButtonLink';
-import { Avatar, AvatarFallbackTone } from '../avatar';
+import { Avatar, getAvatarFallbackTone } from '../avatar';
 import { HotspotBeacon } from '../hotspot';
 
 export type SelectionItemVisualType = 'avatar' | 'icon' | 'none';
-
-const FALLBACK_AVATAR_TONES: AvatarFallbackTone[] = ['amber', 'rose', 'green', 'blue', 'taupe'];
-
-const getFallbackToneFromSeed = (seed: string): AvatarFallbackTone => {
-    let hash = 0;
-    for (let i = 0; i < seed.length; i += 1) {
-        hash = (hash << 5) - hash + seed.charCodeAt(i);
-        hash |= 0;
-    }
-    return FALLBACK_AVATAR_TONES[Math.abs(hash) % FALLBACK_AVATAR_TONES.length];
-};
 
 export interface SelectionItem {
     id: string;
@@ -50,7 +39,7 @@ export interface SelectionListProps {
 }
 
 /**
- * SelectionList - A generic component for selecting items (users, accounts, licenses, etc.)
+ * Select Cards - A generic set of selectable cards with optional leading visuals.
  */
 export const SelectionList = ({
     items,
@@ -97,7 +86,7 @@ export const SelectionList = ({
                             : item.visualType || (item.iconName ? 'icon' : 'none');
                     const showAvatar = resolvedVisualType === 'avatar';
                     const showIcon = resolvedVisualType === 'icon';
-                    const fallbackTone = getFallbackToneFromSeed(item.id || item.title || 'item');
+                    const fallbackTone = getAvatarFallbackTone(item.id || item.title || 'item');
 
                     return (
                         <button
@@ -124,13 +113,13 @@ export const SelectionList = ({
                                         <Avatar
                                             size={32}
                                             src={item.imageUrl}
-                                            alt={item.title ? `${item.title} avatar` : 'Item avatar'}
+                                            alt={item.title ? `${item.title} avatar` : 'Card avatar'}
                                             fallbackStyle="silhouette"
                                             fallbackTone={fallbackTone}
                                         />
                                     ) : (
                                         <div className="w-full h-full rounded-lg overflow-hidden bg-vca-background-neutral-soft flex items-center justify-center text-vca-text-meta">
-                                            <VcaIcon icon={item.iconName || 'user'} size="md" />
+                                            <VcaIcon icon={item.iconName || 'placeholder'} size="md" />
                                         </div>
                                     )}
                                 </div>
@@ -142,7 +131,7 @@ export const SelectionList = ({
                                     {item.title}
                                 </span>
                                 {item.subtitle && (
-                                    <span className="font-vca-text text-vca-xsmall text-vca-text truncate mt-0.5">
+                                    <span className="font-vca-text text-vca-xsmall text-vca-text-meta truncate mt-0.5">
                                         {item.subtitle}
                                     </span>
                                 )}
@@ -170,3 +159,8 @@ export const SelectionList = ({
         </div >
     );
 };
+
+export type SelectCardVisualType = SelectionItemVisualType;
+export type SelectCard = SelectionItem;
+export type SelectCardsProps = SelectionListProps;
+export const SelectCards = SelectionList;

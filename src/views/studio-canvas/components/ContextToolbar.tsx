@@ -77,7 +77,7 @@ export function ContextToolbar({
     }
 
     return createPortal(
-        <div id="context-toolbar" style={getToolbarStyle()}>
+        <div id="context-toolbar" data-editor-keep-open style={getToolbarStyle()}>
             <div className="animate-in fade-in zoom-in-98 duration-100 ease-out">
                 <div className="bg-shell-dark-panel rounded-xl shadow-2xl px-2 py-1.5 flex items-center gap-1 border border-shell-dark-border">
                     {/* Add Component Popover (Only for AI Turns) */}
@@ -170,10 +170,10 @@ export function ContextToolbar({
 
                     {/* Condition Branch Management */}
                     {currentBranches && onUpdateBranches && (
-                        <ActionTooltip content="Add branch">
+                        <ActionTooltip content="Add path">
                             <button
                                 onClick={() => {
-                                    const newBranch = { id: `branch-${Date.now()}`, condition: 'New Option' };
+                                    const newBranch = { id: `branch-${Date.now()}`, condition: 'New path' };
                                     onUpdateBranches([...currentBranches, newBranch]);
                                 }}
                                 className="flex items-center gap-1.5 px-3 py-1.5 text-shell-dark-text hover:bg-shell-dark-surface rounded transition-colors text-sm cursor-pointer"

@@ -11,11 +11,24 @@ export interface CheckboxOption {
     disabled?: boolean;
 }
 
+interface CheckboxGroupActionConfig {
+    primaryLabel?: string;
+    secondaryLabel?: string;
+    saveLabel?: string;
+    cancelLabel?: string;
+}
+
+export const getCheckboxGroupPrimaryLabel = ({
+    primaryLabel,
+    saveLabel,
+}: CheckboxGroupActionConfig): string => primaryLabel?.trim() || saveLabel?.trim() || 'Select';
+
+export const getCheckboxGroupSecondaryLabel = ({
+    secondaryLabel,
+    cancelLabel,
+}: CheckboxGroupActionConfig): string => secondaryLabel?.trim() || cancelLabel?.trim() || 'Cancel';
+
 export interface CheckboxGroupProps {
-    /** Title of the group (e.g. question) */
-    title?: string;
-    /** Helper description text */
-    description?: string;
     /** Array of checkbox options */
     options: CheckboxOption[];
     /** Controlled value: array of selected IDs */
@@ -24,32 +37,47 @@ export interface CheckboxGroupProps {
     defaultValue?: string[];
     /** Callback when selection changes */
     onChange?: (selectedIds: string[]) => void;
-    /** Callback for primary action (Save) */
-    onSave?: (selectedIds: string[]) => void;
-    /** Callback for secondary action (Cancel) */
-    onCancel?: () => void;
+    /** Callback for primary action */
+    onPrimaryAction?: (selectedIds: string[]) => void;
+    /** Callback for secondary action */
+    onSecondaryAction?: (selectedIds: string[]) => void;
     /** Label for primary action */
-    saveLabel?: string;
+    primaryLabel?: string;
     /** Label for secondary action */
+    secondaryLabel?: string;
+    /** @deprecated Use onPrimaryAction instead. */
+    onSave?: (selectedIds: string[]) => void;
+    /** @deprecated Use onSecondaryAction instead. */
+    onCancel?: () => void;
+    /** @deprecated Use primaryLabel instead. */
+    saveLabel?: string;
+    /** @deprecated Use secondaryLabel instead. */
     cancelLabel?: string;
     showOptionHotspots?: boolean;
+    showPrimaryHotspot?: boolean;
+    showSecondaryHotspot?: boolean;
+    /** @deprecated Use showPrimaryHotspot instead. */
     showSaveHotspot?: boolean;
     /** Additional classes */
     className?: string;
 }
 
 export const CheckboxGroup = ({
-    title,
-    description,
     options,
     value,
     defaultValue = [],
     onChange,
+    onPrimaryAction,
+    onSecondaryAction,
+    primaryLabel,
+    secondaryLabel,
     onSave,
     onCancel,
-    saveLabel = 'Save',
-    cancelLabel = 'Cancel',
+    saveLabel,
+    cancelLabel,
     showOptionHotspots = false,
+    showPrimaryHotspot = false,
+    showSecondaryHotspot = false,
     showSaveHotspot = false,
     className,
 }: CheckboxGroupProps) => {
@@ -80,24 +108,14 @@ export const CheckboxGroup = ({
         onChange?.(newSelection);
     };
 
+    const resolvedPrimaryLabel = getCheckboxGroupPrimaryLabel({ primaryLabel, saveLabel });
+    const resolvedSecondaryLabel = getCheckboxGroupSecondaryLabel({ secondaryLabel, cancelLabel });
+    const primaryAction = onPrimaryAction ?? onSave;
+    const secondaryAction = onSecondaryAction ?? (onCancel ? () => onCancel() : undefined);
+    const shouldShowPrimaryHotspot = showPrimaryHotspot || showSaveHotspot;
+
     return (
         <div className={cn("flex flex-col space-y-6", className)}>
-            {/* Header */}
-            {(title || description) && (
-                <div className="space-y-1">
-                    {title && (
-                        <p className="font-vca-text text-vca-medium-bold text-gray-900">
-                            {title}
-                        </p>
-                    )}
-                    {description && (
-                        <p className="text-vca-text-meta text-vca-small">
-                            {description}
-                        </p>
-                    )}
-                </div>
-            )}
-
             {/* List */}
             <div className="flex flex-col space-y-4">
                 {options.map((option) => (
@@ -109,6 +127,7 @@ export const CheckboxGroup = ({
                             id={option.id}
                             label={option.label}
                             description={option.description}
+                            labelClassName="font-vca-text text-vca-small-bold text-vca-text"
                             disabled={option.disabled}
                             checked={selectedIds.includes(option.id)}
                             onCheckedChange={(checked) => handleToggle(option.id, checked)}
@@ -118,33 +137,32 @@ export const CheckboxGroup = ({
             </div>
 
             {/* Actions */}
-            {(onSave || onCancel) && (
-                <div className="flex items-center gap-2 pt-2">
-                    {onSave && (
-                        <div className="relative">
-                            {showSaveHotspot && (
-                                <HotspotBeacon className="-right-2 top-1/2 -translate-y-1/2" />
-                            )}
-                            <Button
-                                variant="primary"
-                                emphasis={true}
-                                onClick={() => onSave(selectedIds)}
-                            >
-                                {saveLabel}
-                            </Button>
-                        </div>
+            <div className="flex items-center gap-2 pt-2">
+                <div className="relative">
+                    {shouldShowPrimaryHotspot && (
+                        <HotspotBeacon className="-right-2 top-1/2 -translate-y-1/2" />
                     )}
-                    {onCancel && (
-                        <Button
-                            variant="tertiary"
-                            emphasis={false}
-                            onClick={onCancel}
-                        >
-                            {cancelLabel}
-                        </Button>
-                    )}
+                    <Button
+                        variant="secondary"
+                        emphasis={true}
+                        onClick={() => primaryAction?.(selectedIds)}
+                    >
+                        {resolvedPrimaryLabel}
+                    </Button>
                 </div>
-            )}
+                <div className="relative">
+                    {showSecondaryHotspot && (
+                        <HotspotBeacon className="-right-2 top-1/2 -translate-y-1/2" />
+                    )}
+                    <Button
+                        variant="tertiary"
+                        emphasis={false}
+                        onClick={() => secondaryAction?.(selectedIds)}
+                    >
+                        {resolvedSecondaryLabel}
+                    </Button>
+                </div>
+            </div>
         </div>
     );
 };

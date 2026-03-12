@@ -26,6 +26,13 @@ export function ComponentEditorPopover({
     componentId,
     readOnly = false,
 }: ComponentEditorPopoverProps) {
+    const shouldKeepPopoverOpen = (target: HTMLElement) => {
+        return Boolean(
+            target.closest(`#component-${componentId}`) ||
+            target.closest('[data-editor-keep-open]')
+        );
+    };
+
     return (
         <Popover.Root open={isOpen} onOpenChange={onOpenChange} modal={false}>
             <Popover.Anchor asChild>
@@ -38,7 +45,7 @@ export function ComponentEditorPopover({
                     sideOffset={16}
                     align="start"
                     collisionPadding={20}
-                    className="bg-shell-bg rounded-xl shadow-2xl border border-shell-border p-0 z-[1001]"
+                    className="z-[1001] rounded-2xl border border-shell-border-subtle bg-shell-bg p-0 shadow-[0_28px_72px_rgb(15_23_42/0.18)]"
                     style={{
                         width: `${width}px`,
                         maxHeight: 'calc(100vh - 40px)',
@@ -46,16 +53,16 @@ export function ComponentEditorPopover({
                     }}
                     onOpenAutoFocus={(e) => e.preventDefault()}
                     onPointerDownOutside={(e) => {
-                        // Prevent closing when clicking the trigger element, contextual toolbar, or markdown toolbar
+                        // Prevent closing when clicking the trigger element or related floating editor controls.
                         const target = e.target as HTMLElement;
-                        if (target.closest(`#component-${componentId}`) || target.closest('#context-toolbar') || target.closest('#markdown-toolbar')) {
+                        if (shouldKeepPopoverOpen(target)) {
                             e.preventDefault();
                         }
                     }}
                     onInteractOutside={(e) => {
-                        // Prevent closing when clicking the trigger element, contextual toolbar, or markdown toolbar
+                        // Prevent closing when clicking the trigger element or related floating editor controls.
                         const target = e.target as HTMLElement;
-                        if (target.closest(`#component-${componentId}`) || target.closest('#context-toolbar') || target.closest('#markdown-toolbar')) {
+                        if (shouldKeepPopoverOpen(target)) {
                             e.preventDefault();
                         }
                     }}

@@ -26,12 +26,6 @@ interface TurnNodeData {
 
     onLabelChange?: (nodeId: string, newLabel: string) => void;
     onComponentUpdate?: (nodeId: string, componentId: string, updates: Partial<Component>) => void;
-    onQuickCreateFromHandle?: (
-        nodeId: string,
-        handleId: string | null,
-        handleEl?: HTMLElement | null,
-        pointerClient?: { x: number; y: number }
-    ) => void;
 }
 
 export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
@@ -86,7 +80,6 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
     const accentClassName = isAI ? 'text-shell-accent' : 'text-shell-node-user';
     const handleClassName = isAI ? '!bg-shell-accent' : '!bg-shell-node-user';
     const labelInputBorderClassName = isAI ? 'border-shell-accent' : 'border-shell-node-user';
-    const createHandlePreviewClassName = isAI ? 'flow-create-handle flow-create-handle-neutral' : '';
 
     return (
         <div
@@ -155,7 +148,6 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
                     components={components}
                     selectedComponentIds={typedData.selectedComponentIds}
                     openComponentId={typedData.openComponentId}
-                    entryPoint={typedData.entryPoint}
                     surfaceClassName={nodeSurfaceClassName}
                     onSelectComponent={typedData.onSelectComponent}
                     onDeselect={typedData.onDeselect}
@@ -163,7 +155,6 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
                     onComponentUpdate={typedData.onComponentUpdate}
                     isAiTurn={isAI}
                     readOnly={typedData.readOnly}
-                    onQuickCreateFromHandle={typedData.onQuickCreateFromHandle}
                 />
             </div>
 
@@ -172,20 +163,8 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
                 type="source"
                 id="main-output"
                 position={Position.Right}
-                className={`${handleClassName} ${createHandlePreviewClassName} !w-3.5 !h-3.5 !border-2 !border-shell-bg !z-50`}
+                className={`${handleClassName} !w-3.5 !h-3.5 !border-2 !border-shell-bg !z-50`}
                 style={hasComponents ? { top: 19 } : undefined}
-                onClick={(event) => {
-                    event.stopPropagation();
-                    if (typedData.readOnly) return;
-                    if (isAI) {
-                        typedData.onQuickCreateFromHandle?.(
-                            nodeId,
-                            'main-output',
-                            event.currentTarget as HTMLElement,
-                            { x: event.clientX, y: event.clientY }
-                        );
-                    }
-                }}
             />
         </div >
     );

@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
-import { MessageSquareText, Plus, X } from 'lucide-react';
+import { MessageSquareText, X } from 'lucide-react';
+import { ShellIconButton } from '@/components/shell';
 import { Component, AIInfoContent } from '../../studio/types';
 import { ComponentEditorPopover } from './ComponentEditorPopover';
 import { EditorRoot } from './editor-ui/EditorRoot';
 import { EditorHeader } from './editor-ui/EditorHeader';
 import { EditorContent } from './editor-ui/EditorContent';
 import { EditorSection } from './editor-ui/EditorSection';
+import { EditorAddButton } from './editor-ui/EditorAddButton';
 import { EditorField } from './editor-ui/EditorField';
 import { RichTextEditor } from './RichTextEditor';
 
@@ -64,29 +66,38 @@ export function InfoMessageEditor({
 
 
                 <EditorSection>
-                    <EditorField renderInput={false}>
+                    <EditorField label="Info Message text" renderInput={false}>
                         <RichTextEditor
                             value={localBody}
                             onChange={handleBodyChange}
-                            placeholder="Type your message here..."
+                            placeholder="To add a user in LinkedIn Recruiter, you need to be a Product Settings or Account Center Admin. Here's how you can do it"
                             readOnly={readOnly}
+                            surfaceVariant="field"
                         />
                     </EditorField>
                 </EditorSection>
 
                 {/* 3. Sources Section */}
-                <EditorSection>
+                <EditorSection title={`Sources (${(content.sources || []).length})`}>
                         <div className="space-y-4">
+                            {(content.sources || []).length === 0 && (
+                                <div className="rounded-lg border border-dashed border-shell-border px-3 py-3 text-xs text-shell-muted">
+                                    No sources yet. Add links people can open from the info message.
+                                </div>
+                            )}
                             {(content.sources || []).map((source, idx) => (
                             <div key={idx} className="group/source relative p-3 bg-shell-surface-subtle rounded-lg border border-shell-border-subtle space-y-2 animate-in fade-in slide-in-from-top-1">
                                 <div className="flex justify-between items-start">
-                                    <span className="text-[10px] font-semibold text-shell-muted tracking-wider">source {idx + 1}</span>
-                                    <button
+                                    <span className="text-[10px] font-semibold text-shell-muted tracking-wider">Source {idx + 1}</span>
+                                    <ShellIconButton
+                                        type="button"
+                                        size="sm"
+                                        disabled={readOnly}
+                                        aria-label={`Remove source ${idx + 1}`}
                                         onClick={() => updateSources((content.sources || []).filter((_, i) => i !== idx))}
-                                        className="text-shell-muted hover:text-shell-danger transition-colors"
                                     >
                                         <X size={12} />
-                                    </button>
+                                    </ShellIconButton>
                                 </div>
 
                                 <EditorField
@@ -123,13 +134,12 @@ export function InfoMessageEditor({
                             </div>
                         ))}
 
-                        <button
+                        <EditorAddButton
+                            disabled={readOnly}
                             onClick={() => updateSources([...(content.sources || []), { text: '', url: '' }])}
-                            className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-shell-border text-shell-muted text-xs font-medium hover:border-shell-accent-border hover:text-shell-accent hover:bg-shell-accent-soft transition-all"
                         >
-                            <Plus className="w-3.5 h-3.5" />
-                            <span>Add source</span>
-                        </button>
+                            Add source
+                        </EditorAddButton>
                     </div>
                 </EditorSection>
             </EditorContent>

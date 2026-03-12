@@ -12,6 +12,7 @@ export type HeaderProps = {
   showBack?: boolean;
   showPremiumIcon?: boolean;
   showAction?: boolean;
+  showClose?: boolean;
   showPremiumBorder?: boolean;
   onBack?: () => void;
   onAction?: () => void;
@@ -31,6 +32,7 @@ export const Header = ({
   showBack = true,
   showPremiumIcon = true,
   showAction = true,
+  showClose = true,
   showPremiumBorder = false,
   onBack,
   onAction,
@@ -56,16 +58,18 @@ export const Header = ({
         <div className="w-12 h-1 bg-gray-400 rounded-full" />
 
         {/* Close button - right side */}
-        <div className="absolute right-2 top-1/2 -translate-y-1/2">
-          <ButtonIcon
-            variant="tertiary"
-            size="md"
-            emphasis={false}
-            icon="close"
-            onClick={onClose}
-            ariaLabel="Close"
-          />
-        </div>
+        {showClose && (
+          <div className="absolute right-2 top-1/2 -translate-y-1/2">
+            <ButtonIcon
+              variant="tertiary"
+              size="md"
+              emphasis={false}
+              icon="close"
+              onClick={onClose}
+              ariaLabel="Close"
+            />
+          </div>
+        )}
       </div>
     );
   }
@@ -116,14 +120,16 @@ export const Header = ({
               ariaLabel="Minimize"
             />
           )}
-          <ButtonIcon
-            variant="tertiary"
-            size="md"
-            emphasis={false}
-            icon="close"
-            onClick={onClose}
-            ariaLabel="Close"
-          />
+          {showClose && (
+            <ButtonIcon
+              variant="tertiary"
+              size="md"
+              emphasis={false}
+              icon="close"
+              onClick={onClose}
+              ariaLabel="Close"
+            />
+          )}
         </div>
       </div>
     );
@@ -175,16 +181,17 @@ export const Header = ({
             ariaLabel="Minimize"
           />
         )}
-        <ButtonIcon
-          variant="tertiary"
-          size="md"
-          emphasis={false}
-          icon="close"
-          onClick={onClose}
-          ariaLabel="Close"
-        />
+        {showClose && (
+          <ButtonIcon
+            variant="tertiary"
+            size="md"
+            emphasis={false}
+            icon="close"
+            onClick={onClose}
+            ariaLabel="Close"
+          />
+        )}
       </div>
     </div>
   );
 };
-

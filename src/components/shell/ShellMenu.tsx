@@ -5,7 +5,6 @@ import {
   DropdownMenuCheckboxItem as DropdownMenuCheckboxItemBase,
   DropdownMenuContent as DropdownMenuContentBase,
   DropdownMenuGroup,
-  DropdownMenuItem as DropdownMenuItemBase,
   DropdownMenuLabel as DropdownMenuLabelBase,
   DropdownMenuPortal,
   DropdownMenuSeparator as DropdownMenuSeparatorBase,
@@ -41,8 +40,8 @@ const ShellMenuContext = React.createContext<{
 
 const contentToneClasses: Record<ShellMenuTone, string> = {
   default:
-    'rounded-xl border-shell-border bg-shell-bg p-1.5 text-shell-text shadow-[0_20px_48px_rgb(15_23_42/0.18)] dark:bg-shell-surface dark:shadow-[0_22px_56px_rgb(0_0_0/0.34)]',
-  cinematicDark: 'rounded-xl border-shell-dark-border bg-shell-dark-panel p-1.5 text-shell-dark-text shadow-2xl',
+    'z-[1100] rounded-xl border-shell-border bg-shell-bg p-1.5 text-shell-text shadow-[0_20px_48px_rgb(15_23_42/0.18)] dark:bg-shell-surface dark:shadow-[0_22px_56px_rgb(0_0_0/0.34)]',
+  cinematicDark: 'z-[1100] rounded-xl border-shell-dark-border bg-shell-dark-panel p-1.5 text-shell-dark-text shadow-2xl',
 };
 
 const itemSizeClasses: Record<ShellMenuSize, string> = {
@@ -65,6 +64,43 @@ const separatorToneClasses: Record<ShellMenuTone, string> = {
   cinematicDark: 'bg-shell-dark-border',
 };
 
+const normalizeMenuChildren = (children: React.ReactNode) => {
+  if (typeof children === 'string') {
+    return children.trim();
+  }
+
+  return children;
+};
+
+const getShellMenuItemClassName = ({
+  className,
+  tone,
+  size,
+  variant = 'default',
+}: {
+  className?: string;
+  tone: ShellMenuTone;
+  size: ShellMenuSize;
+  variant?: ShellMenuItemVariant;
+}) =>
+  cn(
+    'shell-dropdown-item relative flex cursor-pointer select-none items-center rounded-lg px-2.5 font-normal outline-none transition-colors data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+    itemSizeClasses[size],
+    tone === 'default' &&
+      variant === 'default' &&
+      'text-shell-text data-[highlighted]:bg-shell-surface data-[highlighted]:text-shell-text dark:data-[highlighted]:bg-shell-surface-subtle',
+    tone === 'default' &&
+      variant === 'destructive' &&
+      'text-shell-danger [&_svg]:text-shell-danger data-[highlighted]:bg-shell-danger-soft data-[highlighted]:text-shell-danger',
+    tone === 'cinematicDark' &&
+      variant === 'default' &&
+      'text-shell-dark-text data-[highlighted]:bg-shell-dark-surface data-[highlighted]:text-shell-dark-text',
+    tone === 'cinematicDark' &&
+      variant === 'destructive' &&
+      'text-shell-dark-danger [&_svg]:text-shell-dark-danger data-[highlighted]:bg-shell-dark-danger-soft data-[highlighted]:text-shell-dark-danger',
+    className
+  );
+
 export type ShellMenuContentProps = React.ComponentPropsWithoutRef<typeof DropdownMenuContentBase> & {
   tone?: ShellMenuTone;
   size?: ShellMenuSize;
@@ -86,7 +122,7 @@ export const ShellMenuContent = React.forwardRef<
 ShellMenuContent.displayName = 'ShellMenuContent';
 
 export type ShellMenuItemProps = Omit<
-  React.ComponentPropsWithoutRef<typeof DropdownMenuItemBase>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item>,
   'variant'
 > & {
   tone?: ShellMenuTone;
@@ -95,12 +131,13 @@ export type ShellMenuItemProps = Omit<
 };
 
 export const ShellMenuItem = React.forwardRef<
-  React.ElementRef<typeof DropdownMenuItemBase>,
+  React.ElementRef<typeof DropdownMenuPrimitive.Item>,
   ShellMenuItemProps
 >((props, ref) => {
   const context = React.useContext(ShellMenuContext);
   const {
     className,
+    children,
     tone = context.tone,
     size = context.size,
     variant = 'default',
@@ -108,28 +145,16 @@ export const ShellMenuItem = React.forwardRef<
   } = props;
 
   return (
-    <DropdownMenuItemBase
+    <DropdownMenuPrimitive.Item
       ref={ref}
-      variant={variant === 'destructive' ? 'destructive' : 'default'}
       className={cn(
-        'gap-2.5 rounded-lg px-2.5',
-        itemSizeClasses[size],
-        tone === 'default' &&
-          variant === 'default' &&
-          'text-shell-text data-[highlighted]:bg-shell-surface data-[highlighted]:text-shell-text dark:data-[highlighted]:bg-shell-surface-subtle',
-        tone === 'default' &&
-          variant === 'destructive' &&
-          'text-shell-danger [&_svg]:text-shell-danger data-[highlighted]:bg-shell-danger-soft data-[highlighted]:text-shell-danger',
-        tone === 'cinematicDark' &&
-          variant === 'default' &&
-          'text-shell-dark-text data-[highlighted]:bg-shell-dark-surface data-[highlighted]:text-shell-dark-text',
-        tone === 'cinematicDark' &&
-          variant === 'destructive' &&
-          'text-shell-dark-danger [&_svg]:text-shell-dark-danger data-[highlighted]:bg-shell-dark-danger-soft data-[highlighted]:text-shell-dark-danger',
-        className
+        getShellMenuItemClassName({ className, tone, size, variant }),
+        'gap-2.5'
       )}
       {...rest}
-    />
+    >
+      {normalizeMenuChildren(children)}
+    </DropdownMenuPrimitive.Item>
   );
 });
 
@@ -171,7 +196,7 @@ export const ShellMenuCheckboxItem = React.forwardRef<
       )}
       {...rest}
     >
-      {children}
+      {normalizeMenuChildren(children)}
       <span className="absolute right-2 flex h-3.5 w-3.5 items-center justify-center">
         <DropdownMenuPrimitive.ItemIndicator>
           <svg
@@ -231,24 +256,19 @@ export const ShellMenuSwitchItem = React.forwardRef<
       checked={checked}
       onSelect={handleSelect}
       className={cn(
-        'relative flex w-full cursor-pointer select-none items-center justify-between gap-3 rounded-lg px-2.5 outline-none transition-colors data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
-        itemSizeClasses[size],
-        tone === 'default' &&
-          'text-shell-text data-[highlighted]:bg-shell-surface data-[highlighted]:text-shell-text dark:data-[highlighted]:bg-shell-surface-subtle',
-        tone === 'cinematicDark' &&
-          'text-shell-dark-text data-[highlighted]:bg-shell-dark-surface data-[highlighted]:text-shell-dark-text',
-        className
+        getShellMenuItemClassName({ className, tone, size }),
+        'w-full gap-2.5'
       )}
       {...rest}
     >
-      <span className="min-w-0 flex-1 truncate">{children}</span>
+      <span className="min-w-0 flex-1 truncate">{normalizeMenuChildren(children)}</span>
       <ShellSwitch
         aria-hidden="true"
         checked={checked}
         tone={tone}
         size={size === 'compact' ? 'compact' : 'default'}
         tabIndex={-1}
-        className="pointer-events-none"
+        className="ml-auto pointer-events-none"
       />
     </DropdownMenuPrimitive.CheckboxItem>
   );

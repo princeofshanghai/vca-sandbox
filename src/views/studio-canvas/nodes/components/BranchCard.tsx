@@ -2,6 +2,7 @@ import { memo, forwardRef } from 'react';
 import { StudioCard } from './StudioCard';
 import { Branch } from '../../../studio/types';
 import { CARD_EDGE_OUTPUT_HANDLE_OFFSET_PX } from './handleOffsets';
+import { getConditionPathLabel } from '../../../studio/conditionBranchLabels';
 
 interface BranchCardProps extends React.HTMLAttributes<HTMLDivElement> {
     branch: Branch;
@@ -13,22 +14,17 @@ interface BranchCardProps extends React.HTMLAttributes<HTMLDivElement> {
 export const BranchCard = memo(forwardRef<HTMLDivElement, BranchCardProps>(({
     branch,
     isSelected,
-    readOnly = false,
     onCardClick,
     ...props
 }, ref) => {
+    const pathLabel = getConditionPathLabel(branch);
 
     const renderContent = () => {
         return (
             <div className="flex flex-col gap-1.5">
                 {branch.isDefault ? (
-                    <div className="flex items-center gap-1">
-                        <span className="text-xs text-shell-muted-strong font-medium bg-shell-surface px-1.5 py-0.5 rounded border border-shell-border uppercase tracking-wide">
-                            Else
-                        </span>
-                        <span className="text-sm text-shell-muted-strong ml-1">
-                            Fallback path (else)
-                        </span>
+                    <div className="text-sm text-shell-muted-strong">
+                        Anything else
                     </div>
                 ) : branch.logic?.variable ? (
                     <div className="flex flex-wrap gap-1 items-center">
@@ -50,7 +46,7 @@ export const BranchCard = memo(forwardRef<HTMLDivElement, BranchCardProps>(({
                     </div>
                 ) : (
                     <div className="text-sm text-shell-muted-strong">
-                        No conditions set
+                        Rule not set
                     </div>
                 )}
             </div>
@@ -66,14 +62,13 @@ export const BranchCard = memo(forwardRef<HTMLDivElement, BranchCardProps>(({
         >
             <StudioCard
                 icon={null}
-                title={branch.condition}
+                title={pathLabel}
                 theme="amber"
                 selected={isSelected}
                 onClick={(event) => onCardClick(event.currentTarget as HTMLElement)}
                 showOutputHandle={true}
                 outputHandleId={branch.id}
                 outputHandleOffsetPx={CARD_EDGE_OUTPUT_HANDLE_OFFSET_PX}
-                outputHandleClassName={readOnly ? undefined : 'flow-create-handle flow-create-handle-neutral'}
             >
                 {renderContent()}
             </StudioCard>

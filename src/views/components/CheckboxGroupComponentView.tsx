@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ComponentViewLayout } from '@/components/component-library/ComponentViewLayout';
 import { DemoSection } from '@/components/component-library/DemoSection';
 import { FormCheckbox } from '@/components/component-library/DemoControls';
+import { Message } from '@/components/vca-components/messages/Message';
 import { CheckboxGroup, CheckboxOption } from '@/components/vca-components/checkbox-group/CheckboxGroup';
 
 const funnelOptions: CheckboxOption[] = [
@@ -26,7 +27,7 @@ const CheckboxGroupComponentView = () => {
     return (
         <ComponentViewLayout
             title="Checkbox Group (WIP)"
-            description="A managed group of checkboxes with optional header and actions."
+            description="A managed group of checkboxes with primary and secondary actions."
         >
             <div className="space-y-20">
 
@@ -44,13 +45,16 @@ const CheckboxGroupComponentView = () => {
                     }
                 >
                     <div className="w-full max-w-sm bg-shell-bg p-6 rounded-lg shadow-sm border border-shell-border-subtle">
+                        <div className="mb-4">
+                            <Message variant="ai" defaultText="Which funnel stages should be part of the plan?" />
+                        </div>
                         <CheckboxGroup
-                            title="Which funnel stages should be part of the plan?"
                             options={funnelOptions.map(opt => ({ ...opt, disabled }))}
                             defaultValue={[]}
-                            onSave={(ids) => alert(`Saved funnel stages: ${ids.join(', ')}`)}
-                            onCancel={() => alert('Cancelled')}
-                            saveLabel="Save funnel"
+                            onPrimaryAction={(ids) => alert(`Saved funnel stages: ${ids.join(', ')}`)}
+                            onSecondaryAction={() => alert('Cancelled')}
+                            primaryLabel="Save funnel"
+                            secondaryLabel="Cancel"
                         />
                     </div>
                 </DemoSection>
@@ -61,14 +65,17 @@ const CheckboxGroupComponentView = () => {
                         <h2 className="text-xl font-medium text-shell-text mb-4">Controlled Mode with Descriptions</h2>
                         <div className="p-8 border border-shell-border rounded-lg bg-shell-surface-subtle flex justify-center">
                             <div className="w-full max-w-md bg-shell-bg p-8 rounded-xl border border-shell-border shadow-sm">
+                                <div className="mb-4">
+                                    <Message variant="ai" defaultText="Select your interests. We'll customize your feed based on these choices." />
+                                </div>
                                 <CheckboxGroup
-                                    title="Select your interests"
-                                    description="We'll customize your feed based on these choices."
                                     options={interestOptions}
                                     value={selectedInterests}
                                     onChange={setSelectedInterests}
-                                    onSave={(ids) => alert(`Updated interests: ${ids.join(', ')}`)}
-                                    saveLabel="Update Preferences"
+                                    onPrimaryAction={(ids) => alert(`Updated interests: ${ids.join(', ')}`)}
+                                    onSecondaryAction={() => alert('Cancelled')}
+                                    primaryLabel="Update Preferences"
+                                    secondaryLabel="Cancel"
                                 />
                                 <div className="mt-6 pt-4 border-t border-shell-border-subtle text-xs text-shell-muted">
                                     Current Selection: {selectedInterests.join(', ') || 'None'}

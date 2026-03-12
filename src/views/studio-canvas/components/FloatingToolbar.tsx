@@ -136,7 +136,7 @@ export function FloatingToolbar({ onAddAiTurn, onAddUserTurn, onAddCondition, on
             {/* Group 1: Logic Nodes */}
             <div className="flex items-center gap-1">
                 {/* AI Turn */}
-                <ActionTooltip content="AI turn">
+                <ActionTooltip content="AI turn" shortcut="A">
                     <button
                         onClick={onAddAiTurn}
                         draggable
@@ -148,7 +148,7 @@ export function FloatingToolbar({ onAddAiTurn, onAddUserTurn, onAddCondition, on
                 </ActionTooltip>
 
                 {/* User Turn */}
-                <ActionTooltip content="User turn">
+                <ActionTooltip content="User turn" shortcut="U">
                     <button
                         onClick={onAddUserTurn}
                         draggable
@@ -160,7 +160,7 @@ export function FloatingToolbar({ onAddAiTurn, onAddUserTurn, onAddCondition, on
                 </ActionTooltip>
 
                 {/* Condition */}
-                <ActionTooltip content="Condition">
+                <ActionTooltip content="Condition" shortcut="D">
                     <button
                         onClick={onAddCondition}
                         draggable
@@ -177,7 +177,7 @@ export function FloatingToolbar({ onAddAiTurn, onAddUserTurn, onAddCondition, on
 
             {/* Group 2: Annotations */}
             {/* Sticky Note */}
-            <ActionTooltip content="Sticky note">
+            <ActionTooltip content="Sticky note" shortcut="N">
                 <button
                     draggable
                     onDragStart={(e) => onDragStart(e, 'note')}

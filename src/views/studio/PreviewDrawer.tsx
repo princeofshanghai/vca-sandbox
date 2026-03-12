@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { cn } from '@/utils/cn';
 import { FlowPreview } from './FlowPreview';
 import { Flow } from './types';
@@ -36,13 +36,21 @@ export function PreviewDrawer({
     const [activeFlow, setActiveFlow] = useState<Flow>(flow);
     const [resetKey, setResetKey] = useState(0);
     const [simulationVariables, setSimulationVariables] = useState<Record<string, string>>({});
+    const [lastRestartedModifiedAt, setLastRestartedModifiedAt] = useState(flow.lastModified);
     const isDarkMode = state.theme === 'dark';
     const previewControlTone = isDarkMode ? 'cinematicDark' : 'default';
     const areHotspotsVisible = flow.settings?.showHotspots ?? true;
 
     const debounceTimerRef = useRef<NodeJS.Timeout | undefined>(undefined);
+    const latestFlowModifiedAtRef = useRef(flow.lastModified);
 
-    const handleRestart = () => {
+    useEffect(() => {
+        latestFlowModifiedAtRef.current = flow.lastModified;
+    }, [flow.lastModified]);
+
+    const shouldShowRestartIndicator = flow.lastModified > lastRestartedModifiedAt;
+
+    const handleRestart = useCallback(() => {
         // 1. Cancel any pending debounce updates to prevent race conditions
         if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
 
@@ -52,9 +60,12 @@ export function PreviewDrawer({
         // 3. Reset simulation variables so required path choices appear again.
         setSimulationVariables({});
 
-        // 4. Trigger reset
+        // 4. Mark the preview as replayed against the latest flow revision.
+        setLastRestartedModifiedAt(flow.lastModified);
+
+        // 5. Trigger reset
         setResetKey(prev => prev + 1);
-    };
+    }, [flow]);
 
     const handleToggleHotspots = () => {
         if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
@@ -88,11 +99,42 @@ export function PreviewDrawer({
     useEffect(() => {
         if (isOpen) {
             setShouldRender(true);
+            setLastRestartedModifiedAt(latestFlowModifiedAtRef.current);
         } else {
             const timer = setTimeout(() => setShouldRender(false), 300);
             return () => clearTimeout(timer);
         }
     }, [isOpen]);
+
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.defaultPrevented || event.repeat) return;
+            if (event.metaKey || event.ctrlKey || event.altKey) return;
+
+            const target = event.target as HTMLElement | null;
+            if (
+                target &&
+                (
+                    target instanceof HTMLInputElement ||
+                    target instanceof HTMLTextAreaElement ||
+                    target instanceof HTMLSelectElement ||
+                    target.isContentEditable
+                )
+            ) {
+                return;
+            }
+
+            if (event.key.toLowerCase() !== 'r') return;
+
+            event.preventDefault();
+            handleRestart();
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [handleRestart, isOpen]);
 
     if (!shouldRender) return null;
 
@@ -171,13 +213,24 @@ export function PreviewDrawer({
                                 Hotspots
                             </PreviewHeaderActionButton>
 
-                            <PreviewHeaderActionButton
-                                tone={previewControlTone}
-                                onClick={handleRestart}
-                            >
-                                <RotateCcw size={14} />
-                                Restart
-                            </PreviewHeaderActionButton>
+                            <ActionTooltip content="Restart" shortcut="R" side="bottom">
+                                <div className="relative">
+                                    <PreviewHeaderActionButton
+                                        tone={previewControlTone}
+                                        onClick={handleRestart}
+                                        aria-keyshortcuts="R"
+                                    >
+                                        <RotateCcw size={14} />
+                                        Restart
+                                    </PreviewHeaderActionButton>
+                                    {shouldShowRestartIndicator && (
+                                        <span
+                                            aria-hidden="true"
+                                            className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full border-2 border-shell-surface bg-shell-danger"
+                                        />
+                                    )}
+                                </div>
+                            </ActionTooltip>
 
                             {/* Share Button */}
                             <ShareDialog

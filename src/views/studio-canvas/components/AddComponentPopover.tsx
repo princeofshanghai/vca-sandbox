@@ -1,6 +1,6 @@
 import * as HoverCard from '@radix-ui/react-hover-card';
 import * as Popover from '@radix-ui/react-popover';
-import { MessageSquare, MessageCirclePlus, MessageSquareText, Zap, LayoutList, CheckSquare, User } from 'lucide-react';
+import { MessageSquare, MessageCirclePlus, MessageSquareText, Zap, LayoutList, CheckSquare, IdCard } from 'lucide-react';
 import { toast } from 'sonner';
 import type { ComponentType } from '../../studio/types';
 import { Message } from '@/components/vca-components/messages/Message';
@@ -92,8 +92,8 @@ const componentOptions: ComponentOption[] = [
     {
         type: 'selectionList',
         icon: <LayoutList className="w-4 h-4" />,
-        name: 'Selection List',
-        description: 'Select one from a list of options',
+        name: 'Select Cards',
+        description: 'Choose one card from a set',
         previewComponent: (
             <div className="w-[300px] flex flex-col gap-2 p-2">
                 <div className="flex items-center gap-2 p-2 rounded border border-shell-border bg-shell-bg">
@@ -109,9 +109,9 @@ const componentOptions: ComponentOption[] = [
     },
     {
         type: 'confirmationCard',
-        icon: <User className="w-4 h-4" />,
-        name: 'Confirmation Card',
-        description: 'Displays rich content cards with CTAs',
+        icon: <IdCard className="w-4 h-4" />,
+        name: 'Display Card',
+        description: 'Rich content card with optional actions',
         previewComponent: (
             <div className="w-[300px] flex flex-col gap-2 p-2">
                 <div className="flex items-center gap-2 p-2 rounded border border-shell-border bg-shell-bg">
@@ -129,10 +129,9 @@ const componentOptions: ComponentOption[] = [
         type: 'checkboxGroup',
         icon: <CheckSquare className="w-4 h-4" />,
         name: 'Checkbox Group',
-        description: 'Select multiple options in a list',
+        description: 'Select multiple options with primary and secondary actions',
         previewComponent: (
             <div className="w-[300px] flex flex-col gap-2 p-2">
-                <div className="text-xs font-bold mb-1">Select topics:</div>
                 <div className="flex items-center gap-2">
                     <div className="w-3 h-3 border border-shell-border rounded-[2px]" />
                     <div className="text-xs text-shell-muted">Option 1</div>
@@ -141,8 +140,9 @@ const componentOptions: ComponentOption[] = [
                     <div className="w-3 h-3 border border-shell-accent rounded-[2px] bg-shell-accent" />
                     <div className="text-xs text-shell-text">Option 2</div>
                 </div>
-                <div className="w-16 h-6 bg-shell-accent rounded text-center text-[10px] text-white flex items-center justify-center mt-2">
-                    Save
+                <div className="grid grid-cols-2 gap-2 pt-2">
+                    <div className="h-7 rounded bg-shell-accent/20 border border-shell-accent/40" />
+                    <div className="h-7 rounded bg-shell-surface border border-shell-border" />
                 </div>
             </div>
         ),

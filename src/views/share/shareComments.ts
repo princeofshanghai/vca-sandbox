@@ -2,6 +2,20 @@ import { supabase } from '@/lib/supabase';
 
 export type CommentStatus = 'open' | 'resolved';
 export type CommentFilter = 'open' | 'all' | 'resolved';
+export type CommentAnchorMode = 'canvas' | 'review';
+export type CommentAnchorKind = 'turn' | 'component' | 'decision' | 'feedback';
+
+export interface FlowCommentReviewAnchor {
+    anchorMode: 'review';
+    anchorKind: CommentAnchorKind;
+    anchorBlockId: string;
+    anchorStepId: string;
+    anchorComponentId?: string | null;
+    anchorHistoryIndex: number;
+    anchorLocalX: number;
+    anchorLocalY: number;
+    pathSignature: string;
+}
 
 export interface FlowComment {
     id: string;
@@ -14,6 +28,15 @@ export interface FlowComment {
     status: CommentStatus;
     pin_x: number | null;
     pin_y: number | null;
+    anchor_mode?: CommentAnchorMode | null;
+    anchor_kind?: CommentAnchorKind | null;
+    anchor_block_id?: string | null;
+    anchor_step_id?: string | null;
+    anchor_component_id?: string | null;
+    anchor_history_index?: number | null;
+    anchor_local_x?: number | null;
+    anchor_local_y?: number | null;
+    path_signature?: string | null;
     created_at: string;
     updated_at: string;
 }
@@ -44,6 +67,7 @@ export const createFlowRootComment = async ({
     message,
     pinX,
     pinY,
+    reviewAnchor,
 }: {
     flowId: string;
     authorName: string;
@@ -52,6 +76,7 @@ export const createFlowRootComment = async ({
     message: string;
     pinX: number;
     pinY: number;
+    reviewAnchor?: FlowCommentReviewAnchor;
 }) => {
     const { data, error } = await supabase
         .from('flow_comments')
@@ -65,6 +90,15 @@ export const createFlowRootComment = async ({
             pin_x: pinX,
             pin_y: pinY,
             status: 'open',
+            anchor_mode: reviewAnchor?.anchorMode || null,
+            anchor_kind: reviewAnchor?.anchorKind || null,
+            anchor_block_id: reviewAnchor?.anchorBlockId || null,
+            anchor_step_id: reviewAnchor?.anchorStepId || null,
+            anchor_component_id: reviewAnchor?.anchorComponentId || null,
+            anchor_history_index: reviewAnchor?.anchorHistoryIndex ?? null,
+            anchor_local_x: reviewAnchor?.anchorLocalX ?? null,
+            anchor_local_y: reviewAnchor?.anchorLocalY ?? null,
+            path_signature: reviewAnchor?.pathSignature || null,
         })
         .select('*')
         .single();
@@ -148,16 +182,27 @@ export const updateFlowCommentPin = async ({
     commentId,
     pinX,
     pinY,
+    reviewAnchor,
 }: {
     commentId: string;
     pinX: number;
     pinY: number;
+    reviewAnchor?: Partial<FlowCommentReviewAnchor>;
 }) => {
     const { data, error } = await supabase
         .from('flow_comments')
         .update({
             pin_x: pinX,
             pin_y: pinY,
+            anchor_mode: reviewAnchor?.anchorMode,
+            anchor_kind: reviewAnchor?.anchorKind,
+            anchor_block_id: reviewAnchor?.anchorBlockId,
+            anchor_step_id: reviewAnchor?.anchorStepId,
+            anchor_component_id: reviewAnchor?.anchorComponentId,
+            anchor_history_index: reviewAnchor?.anchorHistoryIndex,
+            anchor_local_x: reviewAnchor?.anchorLocalX,
+            anchor_local_y: reviewAnchor?.anchorLocalY,
+            path_signature: reviewAnchor?.pathSignature,
             updated_at: new Date().toISOString(),
         })
         .eq('id', commentId)

@@ -46,11 +46,11 @@ Live Agent:
 ### Components
 Actions:
 - Checkbox Group
-- Confirmation Card
+- Display Card
 - Prompt
 - Prompt Group
 - Recommendation Card
-- Selection List
+- Select Cards
 - Status Card
 
 Layout:

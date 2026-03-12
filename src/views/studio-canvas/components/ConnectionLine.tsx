@@ -2,8 +2,7 @@ import { ConnectionLineComponentProps, getBezierPath, Position } from '@xyflow/r
 import {
     CONNECTION_PREVIEW_CARD_HEIGHT_PX,
     CONNECTION_PREVIEW_CARD_WIDTH_PX,
-    CONNECTION_PREVIEW_DRAG_CARD_OFFSET_X_PX,
-    CONNECTION_PREVIEW_HOVER_CARD_OFFSET_X_PX
+    CONNECTION_PREVIEW_DRAG_CARD_OFFSET_X_PX
 } from './connectionPreviewConstants';
 
 export type ConnectionPreviewVariant = 'neutral' | 'accent' | 'ai' | 'condition';
@@ -15,12 +14,6 @@ interface ConnectionPreviewGhostProps {
     variant: ConnectionPreviewVariant;
     cardOffsetX: number;
     tone?: ConnectionPreviewTone;
-}
-
-interface HandleHoverPreviewProps {
-    x: number;
-    y: number;
-    variant: ConnectionPreviewVariant;
 }
 
 interface FrozenConnectionPreviewProps {
@@ -124,16 +117,6 @@ const ConnectionPreviewGhost = ({
         </g>
     );
 };
-
-export const HandleHoverPreview = ({ x, y, variant }: HandleHoverPreviewProps) => (
-    <ConnectionPreviewGhost
-        anchorX={x}
-        anchorY={y}
-        variant={variant}
-        cardOffsetX={CONNECTION_PREVIEW_HOVER_CARD_OFFSET_X_PX}
-        tone="subtle"
-    />
-);
 
 export const FrozenConnectionPreview = ({
     fromX,

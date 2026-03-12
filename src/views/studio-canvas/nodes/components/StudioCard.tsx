@@ -126,14 +126,19 @@ export const StudioCard = memo(({
                                 {icon}
                             </span>
                         )}
-                        <span className={cn("text-sm font-semibold", selected ? activeTheme.text : "text-shell-muted-strong")}>
+                        <span className={cn("text-sm font-bold", selected ? activeTheme.text : "text-shell-muted-strong")}>
                             {title}
                         </span>
                     </div>
                 )}
 
                 {/* Body */}
-                <div className={cn("w-full p-3 bg-shell-node-card-surface", !isPlaceholder && "pt-2")}>
+                <div
+                    className={cn(
+                        "w-full bg-shell-node-card-surface p-3",
+                        isPlaceholder ? "rounded-[inherit]" : "rounded-b-[inherit] pt-2"
+                    )}
+                >
                     {isPlaceholder ? (
                         <div className="flex items-center gap-2">
                             {icon && (

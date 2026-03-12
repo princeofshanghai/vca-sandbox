@@ -32,16 +32,11 @@ import { ActionTooltip } from './components/ActionTooltip';
 import {
     ConnectionLine,
     FrozenConnectionPreview,
-    HandleHoverPreview,
     type ConnectionPreviewVariant
 } from './components/ConnectionLine';
 import { ConnectionQuickAddMenu, QuickAddNodeType } from './components/ConnectionQuickAddMenu';
-import {
-    CONNECTION_PREVIEW_CARD_HEIGHT_PX,
-    CONNECTION_PREVIEW_HOVER_CARD_OFFSET_X_PX
-} from './components/connectionPreviewConstants';
 import { ShareDialog } from '../studio/components/ShareDialog';
-import { ArrowLeft, Play, PanelRightOpen, ExternalLink, Download } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Download, ExternalLink, PanelRightOpen, Play, Split, StickyNote, UserRound } from 'lucide-react';
 import {
     ShellButton,
     ShellIconButton,
@@ -51,6 +46,8 @@ import {
     ShellMenuSeparator,
     ShellMenuTrigger,
 } from '@/components/shell';
+import { UserMenu } from '@/components/layout/UserMenu';
+import { VcaIcon } from '@/components/vca-components/icons/VcaIcon';
 
 
 // Register custom node types
@@ -75,34 +72,26 @@ const getDefaultContent = (type: ComponentType): ComponentContent => {
             return { loadingTitle: '', successTitle: '', successDescription: '' };
         case 'selectionList':
             return {
-                title: 'Select an option',
                 layout: 'list',
-                items: [
-                    { id: '1', title: 'Option 1', subtitle: 'Description' },
-                    { id: '2', title: 'Option 2', subtitle: 'Description' }
-                ]
+                items: []
             };
         case 'confirmationCard':
             return {
                 item: {
-                    id: 'candidate-1',
-                    title: 'Sarah Jenkins',
-                    subtitle: 'sarah.j@example.com',
-                    visualType: 'avatar'
+                    id: 'item-1',
+                    title: '',
+                    subtitle: '',
+                    visualType: 'none'
                 },
-                confirmLabel: 'Yes, confirm',
-                rejectLabel: 'No, not this person'
+                showActions: false,
+                confirmLabel: 'Confirm',
+                rejectLabel: 'Cancel'
             };
         case 'checkboxGroup':
             return {
-                title: 'Which options apply?',
-                description: 'Select all that apply.',
-                saveLabel: 'Save',
-                options: [
-                    { id: '1', label: 'Option 1' },
-                    { id: '2', label: 'Option 2' },
-                    { id: '3', label: 'Option 3' }
-                ]
+                primaryLabel: 'Select',
+                secondaryLabel: 'Cancel',
+                options: []
             };
         default: {
             const exhaustiveCheck: never = type;
@@ -122,10 +111,6 @@ interface CanvasEditorProps {
 }
 
 const QUICK_CONNECT_CLICK_DISTANCE_PX = 6;
-const QUICK_CONNECT_HORIZONTAL_OFFSET_PX = 320;
-const HANDLE_HOVER_SUPPRESSION_MS = 900;
-const HANDLE_HOVER_SUPPRESSION_MIN_MS = 550;
-const HANDLE_HOVER_SUPPRESSION_MOVE_PX = 6;
 const NODE_PASTE_OFFSET_PX = 40;
 type ConnectionDropBehavior = 'popover' | 'auto-user-turn';
 
@@ -135,7 +120,6 @@ interface ConnectionGestureState {
     startClient: { x: number; y: number };
     sourceCanvasPoint: { x: number; y: number } | null;
     dropBehavior: ConnectionDropBehavior;
-    previewVariant: ConnectionPreviewVariant;
 }
 
 interface QuickAddMenuState {
@@ -143,12 +127,6 @@ interface QuickAddMenuState {
     sourceHandleId: string | null;
     screenPosition: { x: number; y: number };
     flowPosition: { x: number; y: number };
-}
-
-interface HoverHandlePreviewState {
-    x: number;
-    y: number;
-    variant: ConnectionPreviewVariant;
 }
 
 interface QuickAddConnectionPreviewState {
@@ -160,6 +138,51 @@ interface QuickAddConnectionPreviewState {
     toPosition: Position;
     variant: ConnectionPreviewVariant;
 }
+
+type ToolbarPlacementType = QuickAddNodeType | 'note';
+
+interface PendingToolbarPlacementState {
+    type: ToolbarPlacementType;
+    canvasPosition: { x: number; y: number } | null;
+}
+
+const getToolbarPlacementPreviewConfig = (type: ToolbarPlacementType): {
+    label: string;
+    borderClassName: string;
+    surfaceClassName: string;
+    icon: React.ReactNode;
+} => {
+    switch (type) {
+        case 'turn':
+            return {
+                label: 'AI Turn',
+                borderClassName: 'border-shell-accent',
+                surfaceClassName: 'bg-[rgb(var(--shell-node-ai-surface)/0.96)]',
+                icon: <VcaIcon icon="signal-ai" size="md" className="text-shell-accent" />,
+            };
+        case 'user-turn':
+            return {
+                label: 'User Turn',
+                borderClassName: 'border-shell-node-user',
+                surfaceClassName: 'bg-[rgb(var(--shell-node-user-surface)/0.96)]',
+                icon: <UserRound className="text-shell-node-user" size={18} />,
+            };
+        case 'condition':
+            return {
+                label: 'Condition',
+                borderClassName: 'border-shell-node-condition',
+                surfaceClassName: 'bg-[rgb(var(--shell-node-condition-surface)/0.96)]',
+                icon: <Split className="text-shell-node-condition" size={18} />,
+            };
+        case 'note':
+            return {
+                label: 'Sticky Note',
+                borderClassName: 'border-shell-node-note',
+                surfaceClassName: 'bg-[rgb(var(--shell-node-note)/0.14)]',
+                icon: <StickyNote className="text-shell-node-note" size={18} fill="currentColor" />,
+            };
+    }
+};
 
 const getClientPositionFromPointerEvent = (
     event: MouseEvent | TouchEvent
@@ -273,6 +296,11 @@ const cloneNodeStepForPaste = (step: ClipboardNodeStep, pasteCount: number): Cli
 const cloneNodeStepsForPaste = (steps: ClipboardNodeStep[], pasteCount: number): ClipboardNodeStep[] =>
     steps.map((step) => cloneNodeStepForPaste(step, pasteCount));
 
+const getDisplayCardActionHandleIds = (componentId: string): string[] => [
+    `handle-${componentId}-confirm`,
+    `handle-${componentId}-reject`,
+];
+
 const areStringArraysEqual = (left: string[] | undefined, right: string[] | undefined): boolean => {
     if (left === right) {
         return true;
@@ -345,14 +373,11 @@ function CanvasEditorInner({
     const flowRef = useRef(flow);
     const clipboardRef = useRef<CanvasClipboardPayload | null>(null);
     const connectionGestureRef = useRef<ConnectionGestureState | null>(null);
-    const hoverPreviewSuppressionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const hoverPreviewSuppressionOriginRef = useRef<{ x: number; y: number } | null>(null);
-    const hoverPreviewSuppressionStartedAtRef = useRef<number>(0);
-    const [connectionPreviewVariant, setConnectionPreviewVariant] = useState<ConnectionPreviewVariant | null>(null);
-    const [isHandleHoverPreviewSuppressed, setIsHandleHoverPreviewSuppressed] = useState(false);
-    const [hoverHandlePreview, setHoverHandlePreview] = useState<HoverHandlePreviewState | null>(null);
+    const lastCanvasPointerClientRef = useRef<{ x: number; y: number } | null>(null);
+    const isCanvasPointerInsideRef = useRef(false);
     const [quickAddMenu, setQuickAddMenu] = useState<QuickAddMenuState | null>(null);
     const [quickAddConnectionPreview, setQuickAddConnectionPreview] = useState<QuickAddConnectionPreviewState | null>(null);
+    const [pendingToolbarPlacement, setPendingToolbarPlacement] = useState<PendingToolbarPlacementState | null>(null);
 
     const applyFlowUpdate = useCallback((nextFlow: Flow) => {
         if (isReadOnly) return;
@@ -363,8 +388,7 @@ function CanvasEditorInner({
         if (!isReadOnly) return;
         setQuickAddMenu(null);
         setQuickAddConnectionPreview(null);
-        setConnectionPreviewVariant(null);
-        setHoverHandlePreview(null);
+        setPendingToolbarPlacement(null);
     }, [isReadOnly]);
 
     useEffect(() => {
@@ -380,113 +404,216 @@ function CanvasEditorInner({
         flowRef.current = flow;
     }, [flow]);
 
-    useEffect(() => {
-        return () => {
-            if (hoverPreviewSuppressionTimeoutRef.current) {
-                clearTimeout(hoverPreviewSuppressionTimeoutRef.current);
-                hoverPreviewSuppressionTimeoutRef.current = null;
-            }
+    const getCanvasPositionFromClient = useCallback((client: { x: number; y: number }) => {
+        const canvasRect = canvasAreaRef.current?.getBoundingClientRect();
+        if (!canvasRect) return null;
+
+        const isInsideCanvas = (
+            client.x >= canvasRect.left &&
+            client.x <= canvasRect.right &&
+            client.y >= canvasRect.top &&
+            client.y <= canvasRect.bottom
+        );
+
+        if (!isInsideCanvas) return null;
+
+        return {
+            x: client.x - canvasRect.left,
+            y: client.y - canvasRect.top,
         };
     }, []);
 
-    useEffect(() => {
-        if (!isHandleHoverPreviewSuppressed) {
+    const focusNodeWithToolbar = useCallback((nodeId: string, openAddComponentPopover = false) => {
+        let attempts = 0;
+        const maxAttempts = 24;
+
+        const syncSelectionToNode = () => {
+            const nodeEl = document.getElementById(`node-${nodeId}`) as HTMLElement | null;
+            if (nodeEl || attempts >= maxAttempts) {
+                setCanvasSelection({ type: 'node', nodeId });
+                setSelectionAnchorEl(nodeEl);
+                setPendingAutoOpenAddComponentNodeId(openAddComponentPopover ? nodeId : null);
+                setPendingReactFlowSelectedNodeIds([nodeId]);
+                return;
+            }
+
+            attempts += 1;
+            requestAnimationFrame(syncSelectionToNode);
+        };
+
+        requestAnimationFrame(syncSelectionToNode);
+    }, [setCanvasSelection]);
+
+    const createToolbarNodeAtPosition = useCallback((type: ToolbarPlacementType, position: { x: number; y: number }) => {
+        const currentFlow = flowRef.current;
+        const currentSteps = currentFlow.steps || [];
+
+        if (type === 'turn') {
+            const aiTurnCount = currentSteps.filter((step) => step.type === 'turn').length + 1;
+            const newTurn: Turn = {
+                id: crypto.randomUUID(),
+                type: 'turn',
+                speaker: 'ai',
+                label: `AI Turn ${aiTurnCount}`,
+                components: [],
+                position,
+            };
+
+            applyFlowUpdate({
+                ...currentFlow,
+                steps: [...currentSteps, newTurn],
+                lastModified: Date.now(),
+            });
+            focusNodeWithToolbar(newTurn.id, true);
             return;
         }
 
-        const handlePointerMove = (event: PointerEvent) => {
-            const origin = hoverPreviewSuppressionOriginRef.current;
-            if (!origin) {
-                setIsHandleHoverPreviewSuppressed(false);
-                return;
-            }
+        if (type === 'user-turn') {
+            const userTurnCount = currentSteps.filter((step) => step.type === 'user-turn').length + 1;
+            const newUserTurn: UserTurn = {
+                id: crypto.randomUUID(),
+                type: 'user-turn',
+                label: `User Turn ${userTurnCount}`,
+                inputType: 'text',
+                position,
+            };
 
-            const elapsedMs = Date.now() - hoverPreviewSuppressionStartedAtRef.current;
-            if (elapsedMs < HANDLE_HOVER_SUPPRESSION_MIN_MS) {
-                return;
-            }
-
-            const distance = Math.hypot(event.clientX - origin.x, event.clientY - origin.y);
-            if (distance < HANDLE_HOVER_SUPPRESSION_MOVE_PX) {
-                return;
-            }
-
-            if (hoverPreviewSuppressionTimeoutRef.current) {
-                clearTimeout(hoverPreviewSuppressionTimeoutRef.current);
-                hoverPreviewSuppressionTimeoutRef.current = null;
-            }
-            hoverPreviewSuppressionOriginRef.current = null;
-            setIsHandleHoverPreviewSuppressed(false);
-        };
-
-        window.addEventListener('pointermove', handlePointerMove, true);
-        return () => {
-            window.removeEventListener('pointermove', handlePointerMove, true);
-        };
-    }, [isHandleHoverPreviewSuppressed]);
-
-    useEffect(() => {
-        if (isHandleHoverPreviewSuppressed || connectionPreviewVariant || quickAddMenu) {
-            setHoverHandlePreview(null);
-        }
-    }, [connectionPreviewVariant, isHandleHoverPreviewSuppressed, quickAddMenu]);
-
-    useEffect(() => {
-        if (isReadOnly) {
-            setHoverHandlePreview(null);
+            applyFlowUpdate({
+                ...currentFlow,
+                steps: [...currentSteps, newUserTurn],
+                lastModified: Date.now(),
+            });
             return;
         }
+
+        if (type === 'condition') {
+            const conditionCount = currentSteps.filter((step) => step.type === 'condition').length + 1;
+            const newCondition: Condition = {
+                id: crypto.randomUUID(),
+                type: 'condition',
+                label: `Condition ${conditionCount}`,
+                branches: [
+                    { id: crypto.randomUUID(), condition: 'Yes' },
+                    { id: crypto.randomUUID(), condition: 'No' },
+                ],
+                position,
+            };
+
+            applyFlowUpdate({
+                ...currentFlow,
+                steps: [...currentSteps, newCondition],
+                lastModified: Date.now(),
+            });
+            return;
+        }
+
+        const noteCount = currentSteps.filter((step) => step.type === 'note').length + 1;
+        const newNote: Note = {
+            id: crypto.randomUUID(),
+            type: 'note',
+            label: `Sticky note ${noteCount}`,
+            content: '',
+            position,
+        };
+
+        applyFlowUpdate({
+            ...currentFlow,
+            steps: [...currentSteps, newNote],
+            lastModified: Date.now(),
+        });
+    }, [applyFlowUpdate, focusNodeWithToolbar]);
+
+    const updatePendingToolbarPlacementPreview = useCallback((client: { x: number; y: number }) => {
+        lastCanvasPointerClientRef.current = client;
+
+        setPendingToolbarPlacement((current) => {
+            if (!current) {
+                return current;
+            }
+
+            const nextCanvasPosition = getCanvasPositionFromClient(client);
+            const currentCanvasPosition = current.canvasPosition;
+
+            if (!nextCanvasPosition && !currentCanvasPosition) {
+                return current;
+            }
+
+            if (
+                nextCanvasPosition &&
+                currentCanvasPosition &&
+                Math.abs(nextCanvasPosition.x - currentCanvasPosition.x) < 0.5 &&
+                Math.abs(nextCanvasPosition.y - currentCanvasPosition.y) < 0.5
+            ) {
+                return current;
+            }
+
+            return {
+                ...current,
+                canvasPosition: nextCanvasPosition,
+            };
+        });
+    }, [getCanvasPositionFromClient]);
+
+    const cancelPendingToolbarPlacement = useCallback(() => {
+        setPendingToolbarPlacement(null);
+    }, []);
+
+    const armPendingToolbarPlacement = useCallback((type: ToolbarPlacementType) => {
+        if (isReadOnly) return;
+
+        const initialCanvasPosition = (
+            isCanvasPointerInsideRef.current && lastCanvasPointerClientRef.current
+        )
+            ? getCanvasPositionFromClient(lastCanvasPointerClientRef.current)
+            : null;
+
+        setQuickAddMenu(null);
+        setQuickAddConnectionPreview(null);
+        setPendingToolbarPlacement({ type, canvasPosition: initialCanvasPosition });
+    }, [getCanvasPositionFromClient, isReadOnly]);
+
+    const placePendingToolbarPlacementAtClient = useCallback((client: { x: number; y: number }) => {
+        if (!pendingToolbarPlacement) return false;
+
+        const canvasPosition = getCanvasPositionFromClient(client);
+        if (!canvasPosition) return false;
+
+        createToolbarNodeAtPosition(pendingToolbarPlacement.type, screenToFlowPosition(client));
+        setPendingToolbarPlacement(null);
+        return true;
+    }, [createToolbarNodeAtPosition, getCanvasPositionFromClient, pendingToolbarPlacement, screenToFlowPosition]);
+
+    useEffect(() => {
+        if (isReadOnly) return;
 
         const canvasEl = canvasAreaRef.current;
-        if (!canvasEl) {
-            return;
-        }
+        if (!canvasEl) return;
 
         const handlePointerMove = (event: PointerEvent) => {
-            if (isHandleHoverPreviewSuppressed || connectionPreviewVariant || quickAddMenu) {
-                return;
-            }
-
-            const target = (event.target as HTMLElement | null)?.closest('.flow-create-handle') as HTMLElement | null;
-            if (!target || !canvasEl.contains(target)) {
-                setHoverHandlePreview(null);
-                return;
-            }
-
-            const canvasRect = canvasEl.getBoundingClientRect();
-            const handleRect = target.getBoundingClientRect();
-            const x = handleRect.left + handleRect.width / 2 - canvasRect.left;
-            const y = handleRect.top + handleRect.height / 2 - canvasRect.top;
-            const variant: ConnectionPreviewVariant = target.classList.contains('flow-create-handle-accent')
-                ? 'accent'
-                : 'neutral';
-
-            setHoverHandlePreview((current) => {
-                if (
-                    current &&
-                    current.variant === variant &&
-                    Math.abs(current.x - x) < 0.5 &&
-                    Math.abs(current.y - y) < 0.5
-                ) {
-                    return current;
-                }
-
-                return { x, y, variant };
-            });
+            isCanvasPointerInsideRef.current = true;
+            updatePendingToolbarPlacementPreview({ x: event.clientX, y: event.clientY });
         };
 
         const handlePointerLeave = () => {
-            setHoverHandlePreview(null);
+            isCanvasPointerInsideRef.current = false;
+            setPendingToolbarPlacement((current) => current ? { ...current, canvasPosition: null } : current);
+        };
+
+        const handlePointerEnter = (event: PointerEvent) => {
+            isCanvasPointerInsideRef.current = true;
+            updatePendingToolbarPlacementPreview({ x: event.clientX, y: event.clientY });
         };
 
         canvasEl.addEventListener('pointermove', handlePointerMove, true);
         canvasEl.addEventListener('pointerleave', handlePointerLeave, true);
+        canvasEl.addEventListener('pointerenter', handlePointerEnter, true);
 
         return () => {
             canvasEl.removeEventListener('pointermove', handlePointerMove, true);
             canvasEl.removeEventListener('pointerleave', handlePointerLeave, true);
+            canvasEl.removeEventListener('pointerenter', handlePointerEnter, true);
         };
-    }, [connectionPreviewVariant, isHandleHoverPreviewSuppressed, isReadOnly, quickAddMenu]);
+    }, [isReadOnly, updatePendingToolbarPlacementPreview]);
 
     // Export/Import handlers
     const handleExportJSON = () => {
@@ -524,27 +651,6 @@ function CanvasEditorInner({
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
     };
-
-    const focusNodeWithToolbar = useCallback((nodeId: string, openAddComponentPopover = false) => {
-        let attempts = 0;
-        const maxAttempts = 24;
-
-        const syncSelectionToNode = () => {
-            const nodeEl = document.getElementById(`node-${nodeId}`) as HTMLElement | null;
-            if (nodeEl || attempts >= maxAttempts) {
-                setCanvasSelection({ type: 'node', nodeId });
-                setSelectionAnchorEl(nodeEl);
-                setPendingAutoOpenAddComponentNodeId(openAddComponentPopover ? nodeId : null);
-                setPendingReactFlowSelectedNodeIds([nodeId]);
-                return;
-            }
-
-            attempts += 1;
-            requestAnimationFrame(syncSelectionToNode);
-        };
-
-        requestAnimationFrame(syncSelectionToNode);
-    }, [setCanvasSelection]);
 
     const isEmptyAiTurnNode = useCallback((nodeId: string): boolean => {
         const step = flowRef.current.steps?.find((candidate) => candidate.id === nodeId);
@@ -621,20 +727,49 @@ function CanvasEditorInner({
     const handleTurnComponentUpdate = useCallback((nodeId: string, componentId: string, updates: Partial<Component>) => {
         const currentFlow = flowRef.current;
         if (!currentFlow.steps) return;
+        const sourceTurn = currentFlow.steps.find(
+            (step): step is Turn => step.id === nodeId && step.type === 'turn'
+        );
+        const previousComponent = sourceTurn?.components.find((component) => component.id === componentId) ?? null;
+        const nextComponent = previousComponent ? { ...previousComponent, ...updates } : null;
+
         const updatedSteps = currentFlow.steps.map(s => {
             if (s.id === nodeId && s.type === 'turn') {
                 return {
                     ...s,
                     components: s.components.map(c =>
-                        c.id === componentId
-                            ? { ...c, ...updates }
+                        c.id === componentId && nextComponent
+                            ? nextComponent
                             : c
                     )
                 };
             }
             return s;
         });
-        applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
+
+        let updatedConnections = currentFlow.connections;
+        if (
+            previousComponent?.type === 'confirmationCard' &&
+            nextComponent?.type === 'confirmationCard'
+        ) {
+            const previousContent = previousComponent.content as import('../studio/types').ConfirmationCardContent;
+            const nextContent = nextComponent.content as import('../studio/types').ConfirmationCardContent;
+            const turnedDisplayOnly = (previousContent.showActions ?? true) && nextContent.showActions === false;
+
+            if (turnedDisplayOnly && currentFlow.connections?.length) {
+                const disabledHandleIds = new Set(getDisplayCardActionHandleIds(componentId));
+                updatedConnections = currentFlow.connections.filter((connection) =>
+                    !(connection.source === nodeId && disabledHandleIds.has(connection.sourceHandle || ''))
+                );
+            }
+        }
+
+        applyFlowUpdate({
+            ...currentFlow,
+            steps: updatedSteps,
+            connections: updatedConnections,
+            lastModified: Date.now()
+        });
     }, [onUpdateFlow]);
 
     const handleTurnComponentReorder = useCallback((nodeId: string, activeComponentId: string, overComponentId: string) => {
@@ -833,16 +968,6 @@ function CanvasEditorInner({
         }
     }, [focusNodeWithToolbar, onUpdateFlow, resolveDefaultUserTurnInputType]);
 
-    const getQuickConnectPosition = useCallback((sourceNodeId: string) => {
-        const sourceStep = flowRef.current.steps?.find(step => step.id === sourceNodeId);
-        const sourcePosition = sourceStep?.position || { x: 250, y: 0 };
-
-        return {
-            x: sourcePosition.x + QUICK_CONNECT_HORIZONTAL_OFFSET_PX,
-            y: sourcePosition.y,
-        };
-    }, []);
-
     const onConnectStart: OnConnectStart = useCallback((event, params) => {
         if (isReadOnly) return;
 
@@ -851,7 +976,6 @@ function CanvasEditorInner({
 
         if (params.handleType !== 'source' || !params.nodeId) {
             connectionGestureRef.current = null;
-            setConnectionPreviewVariant(null);
             return;
         }
 
@@ -877,14 +1001,12 @@ function CanvasEditorInner({
 
         if (!dropBehavior || !previewVariant) {
             connectionGestureRef.current = null;
-            setConnectionPreviewVariant(null);
             return;
         }
 
         const startClient = getClientPositionFromPointerEvent(event);
         if (!startClient) {
             connectionGestureRef.current = null;
-            setConnectionPreviewVariant(null);
             return;
         }
 
@@ -902,9 +1024,7 @@ function CanvasEditorInner({
             startClient,
             sourceCanvasPoint,
             dropBehavior,
-            previewVariant,
         };
-        setConnectionPreviewVariant(previewVariant);
     }, [isReadOnly]);
 
     const onConnectEnd: OnConnectEnd = useCallback((event, connectionState) => {
@@ -912,7 +1032,6 @@ function CanvasEditorInner({
 
         const gesture = connectionGestureRef.current;
         connectionGestureRef.current = null;
-        setConnectionPreviewVariant(null);
 
         if (!gesture) return;
 
@@ -945,8 +1064,7 @@ function CanvasEditorInner({
         );
 
         if (distance <= QUICK_CONNECT_CLICK_DISTANCE_PX) {
-            // Simple click creation is handled directly on the handle click event.
-            // We only use connect-end for drag-release affordances.
+            // Ignore short clicks so handles only create nodes when the user drags.
             return;
         }
 
@@ -1022,55 +1140,6 @@ function CanvasEditorInner({
         });
     }, []);
 
-    const handleQuickCreateFromHandle = useCallback((
-        sourceNodeId: string,
-        sourceHandleId: string | null,
-        sourceHandleEl?: HTMLElement | null,
-        pointerClient?: { x: number; y: number }
-    ) => {
-        if (isReadOnly) return;
-
-        setQuickAddMenu(null);
-        setQuickAddConnectionPreview(null);
-
-        if (hoverPreviewSuppressionTimeoutRef.current) {
-            clearTimeout(hoverPreviewSuppressionTimeoutRef.current);
-            hoverPreviewSuppressionTimeoutRef.current = null;
-        }
-        hoverPreviewSuppressionOriginRef.current = pointerClient || null;
-        hoverPreviewSuppressionStartedAtRef.current = Date.now();
-        setIsHandleHoverPreviewSuppressed(true);
-        hoverPreviewSuppressionTimeoutRef.current = setTimeout(() => {
-            hoverPreviewSuppressionOriginRef.current = null;
-            hoverPreviewSuppressionStartedAtRef.current = 0;
-            setIsHandleHoverPreviewSuppressed(false);
-            hoverPreviewSuppressionTimeoutRef.current = null;
-        }, HANDLE_HOVER_SUPPRESSION_MS);
-
-        let position = getQuickConnectPosition(sourceNodeId);
-        if (sourceHandleEl) {
-            const handleRect = sourceHandleEl.getBoundingClientRect();
-            const handleCenter = {
-                x: handleRect.left + handleRect.width / 2,
-                y: handleRect.top + handleRect.height / 2,
-            };
-
-            const previewTopLeft = {
-                x: handleCenter.x + CONNECTION_PREVIEW_HOVER_CARD_OFFSET_X_PX,
-                y: handleCenter.y - CONNECTION_PREVIEW_CARD_HEIGHT_PX / 2,
-            };
-
-            position = screenToFlowPosition(previewTopLeft);
-        }
-
-        createConnectedNode({
-            sourceNodeId,
-            sourceHandleId,
-            targetType: 'user-turn',
-            position,
-        });
-    }, [createConnectedNode, getQuickConnectPosition, isReadOnly, screenToFlowPosition]);
-
     const handleComponentAdd = useCallback((type: ComponentType, targetNodeId?: string) => {
         const currentFlow = flowRef.current;
         const currentSelection = selectionRef.current;
@@ -1141,7 +1210,6 @@ function CanvasEditorInner({
                         onComponentReorder: handleTurnComponentReorder,
                         onLabelChange: handleTurnLabelChange,
                         onComponentUpdate: handleTurnComponentUpdate,
-                        onQuickCreateFromHandle: handleQuickCreateFromHandle,
                     },
                 };
             } else if (step.type === 'user-turn') {
@@ -1213,7 +1281,6 @@ function CanvasEditorInner({
         handleTurnComponentReorder,
         handleTurnComponentUpdate,
         handleTurnLabelChange,
-        handleQuickCreateFromHandle,
         handleUserTurnUpdate,
     ]);
 
@@ -1255,6 +1322,12 @@ function CanvasEditorInner({
 
     // Handle node clicks natively from React Flow
     const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
+        if (placePendingToolbarPlacementAtClient({ x: event.clientX, y: event.clientY })) {
+            event.preventDefault();
+            event.stopPropagation();
+            return;
+        }
+
         if (event.shiftKey) {
             return;
         }
@@ -1264,7 +1337,16 @@ function CanvasEditorInner({
         setCanvasSelection({ type: 'node', nodeId: node.id });
         setSelectionAnchorEl(event.currentTarget as HTMLElement);
         setPendingAutoOpenAddComponentNodeId(isEmptyAiTurnNode(node.id) ? node.id : null);
-    }, [isEmptyAiTurnNode, setCanvasSelection]);
+    }, [isEmptyAiTurnNode, placePendingToolbarPlacementAtClient, setCanvasSelection]);
+
+    const onEdgeClick = useCallback((event: React.MouseEvent) => {
+        if (!placePendingToolbarPlacementAtClient({ x: event.clientX, y: event.clientY })) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+    }, [placePendingToolbarPlacementAtClient]);
 
     const onSelectionChange = useCallback(({ nodes: selectedNodes }: { nodes: Node[]; edges: Edge[] }) => {
         const selectedNodeIds = selectedNodes.map((node) => node.id);
@@ -1507,10 +1589,20 @@ function CanvasEditorInner({
                             }
                         } else if (component.type === 'confirmationCard') {
                             const confirmationContent = component.content as import('../studio/types').ConfirmationCardContent;
-                            const actionId = handleId.split(`${component.id}-`)[1];
-                            textToFill = actionId === 'reject'
-                                ? (confirmationContent.rejectLabel || 'No, not this person')
-                                : (confirmationContent.confirmLabel || 'Yes, confirm');
+                            if (confirmationContent.showActions === false) {
+                                textToFill = '';
+                            } else {
+                                const actionId = handleId.split(`${component.id}-`)[1];
+                                textToFill = actionId === 'reject'
+                                    ? (confirmationContent.rejectLabel || 'Cancel')
+                                    : (confirmationContent.confirmLabel || 'Confirm');
+                            }
+                        } else if (component.type === 'checkboxGroup') {
+                            const checkboxContent = component.content as import('../studio/types').CheckboxGroupContent;
+                            const isSecondaryAction = handleId.endsWith('-secondary');
+                            textToFill = isSecondaryAction
+                                ? (checkboxContent.secondaryLabel || checkboxContent.cancelLabel || 'Cancel')
+                                : (checkboxContent.primaryLabel || checkboxContent.saveLabel || 'Save');
                         }
 
                         if (textToFill) {
@@ -2095,7 +2187,38 @@ function CanvasEditorInner({
                 return;
             }
 
+            if (!isMetaOrCtrl && !e.altKey && !e.shiftKey) {
+                if (keyLower === 'a') {
+                    e.preventDefault();
+                    armPendingToolbarPlacement('turn');
+                    return;
+                }
+
+                if (keyLower === 'u') {
+                    e.preventDefault();
+                    armPendingToolbarPlacement('user-turn');
+                    return;
+                }
+
+                if (keyLower === 'd') {
+                    e.preventDefault();
+                    armPendingToolbarPlacement('condition');
+                    return;
+                }
+
+                if (keyLower === 'n') {
+                    e.preventDefault();
+                    armPendingToolbarPlacement('note');
+                    return;
+                }
+            }
+
             if (e.key === 'Escape') {
+                if (pendingToolbarPlacement) {
+                    e.preventDefault();
+                    cancelPendingToolbarPlacement();
+                    return;
+                }
                 handleDeselect();
             } else if (e.key === 'Delete' || e.key === 'Backspace') {
                 // Only hijack delete for nested cards (React Flow only knows about node deletion).
@@ -2145,7 +2268,7 @@ function CanvasEditorInner({
             window.removeEventListener('keydown', handleKeyDown, true);
             window.removeEventListener('keyup', handleKeyUp);
         };
-    }, [handleCopySelection, handleDeleteSelection, handleDeselect, handleMoveComponentDown, handleMoveComponentUp, handlePasteSelection, moveSelectedBranch]);
+    }, [armPendingToolbarPlacement, cancelPendingToolbarPlacement, handleCopySelection, handleDeleteSelection, handleDeselect, handleMoveComponentDown, handleMoveComponentUp, handlePasteSelection, moveSelectedBranch, pendingToolbarPlacement]);
 
     // Node Cloning Logic
     const onNodeDragStart = useCallback((event: React.MouseEvent, node: Node) => {
@@ -2248,82 +2371,27 @@ function CanvasEditorInner({
                 return;
             }
 
-            const position = screenToFlowPosition({
+            if (type !== 'turn' && type !== 'user-turn' && type !== 'condition' && type !== 'note') {
+                return;
+            }
+
+            createToolbarNodeAtPosition(type, screenToFlowPosition({
                 x: event.clientX,
                 y: event.clientY,
-            });
-
-            if (type === 'turn') {
-                const aiTurnCount = (flow.steps?.filter(s => s.type === 'turn').length || 0) + 1;
-                const newTurn: Turn = {
-                    id: crypto.randomUUID(),
-                    type: 'turn',
-                    speaker: 'ai',
-                    label: `AI Turn ${aiTurnCount}`,
-                    components: [],
-                    position
-                };
-                applyFlowUpdate({
-                    ...flow,
-                    steps: [...(flow.steps || []), newTurn],
-                    lastModified: Date.now()
-                });
-                focusNodeWithToolbar(newTurn.id, true);
-            } else if (type === 'note') {
-                const noteCount = (flow.steps?.filter(s => s.type === 'note').length || 0) + 1;
-                const newNote: Note = {
-                    id: crypto.randomUUID(),
-                    type: 'note',
-                    label: `Sticky note ${noteCount}`,
-                    content: '',
-                    position
-                };
-                applyFlowUpdate({
-                    ...flow,
-                    steps: [...(flow.steps || []), newNote],
-                    lastModified: Date.now()
-                });
-            } else if (type === 'user-turn') {
-                const userTurnCount = (flow.steps?.filter(s => s.type === 'user-turn').length || 0) + 1;
-                const newUserTurn: UserTurn = {
-                    id: crypto.randomUUID(),
-                    type: 'user-turn',
-                    label: `User Turn ${userTurnCount}`,
-                    inputType: 'text',
-                    position
-                };
-                applyFlowUpdate({
-                    ...flow,
-                    steps: [...(flow.steps || []), newUserTurn],
-                    lastModified: Date.now()
-                });
-            } else if (type === 'condition') {
-                const conditionCount = (flow.steps?.filter(s => s.type === 'condition').length || 0) + 1;
-                const newCondition: Condition = {
-                    id: crypto.randomUUID(),
-                    type: 'condition',
-                    label: `Condition ${conditionCount}`,
-                    branches: [
-                        { id: crypto.randomUUID(), condition: 'Yes' },
-                        { id: crypto.randomUUID(), condition: 'No' },
-                    ],
-                    position
-                };
-                applyFlowUpdate({
-                    ...flow,
-                    steps: [...(flow.steps || []), newCondition],
-                    lastModified: Date.now()
-                });
-            }
+            }));
         },
-        [flow, focusNodeWithToolbar, onUpdateFlow, screenToFlowPosition]
+        [createToolbarNodeAtPosition, screenToFlowPosition]
     );
 
-    const handlePaneClick = useCallback(() => {
+    const handlePaneClick = useCallback((event: React.MouseEvent) => {
+        if (placePendingToolbarPlacementAtClient({ x: event.clientX, y: event.clientY })) {
+            return;
+        }
+
         handleDeselect();
         setQuickAddMenu(null);
         setQuickAddConnectionPreview(null);
-    }, [handleDeselect]);
+    }, [handleDeselect, placePendingToolbarPlacementAtClient]);
 
     const connectionLineWithPreview = useCallback((props: ConnectionLineComponentProps) => (
         <ConnectionLine {...props} />
@@ -2392,14 +2460,43 @@ function CanvasEditorInner({
             {/* Header */}
             {/* Top Left Pill: Back & Title */}
             <div className="absolute top-4 left-4 z-50 flex items-center h-11 gap-1.5 bg-shell-bg dark:bg-shell-surface-subtle px-2 rounded-xl shadow-sm dark:shadow-[0_14px_32px_rgb(0_0_0/0.26)] border border-shell-border/70 dark:border-shell-border/55 backdrop-blur-sm">
-                <ActionTooltip content={isReadOnly ? 'Back to home' : 'Back to dashboard'}>
-                    <ShellIconButton
-                        onClick={onBack}
-                        aria-label={isReadOnly ? 'Back to home' : 'Back to dashboard'}
-                    >
-                        <ArrowLeft size={18} />
-                    </ShellIconButton>
-                </ActionTooltip>
+                {isReadOnly ? (
+                    <ActionTooltip content="Back to dashboard">
+                        <ShellIconButton
+                            onClick={onBack}
+                            aria-label="Back to dashboard"
+                        >
+                            <ArrowLeft size={18} />
+                        </ShellIconButton>
+                    </ActionTooltip>
+                ) : (
+                    <UserMenu
+                        backItem={{ label: 'Back to dashboard', onSelect: onBack }}
+                        contentAlign="start"
+                        showAccountDetails={false}
+                        trigger={(
+                            <button
+                                type="button"
+                                aria-label="Open studio menu"
+                                className="flex h-8 items-center gap-1 rounded-lg border border-transparent px-2 text-shell-muted transition-colors hover:border-shell-border/70 hover:bg-shell-surface hover:text-shell-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-shell-accent/20 data-[state=open]:border-shell-border/70 data-[state=open]:bg-shell-surface data-[state=open]:text-shell-text dark:hover:bg-shell-surface dark:data-[state=open]:bg-shell-surface"
+                            >
+                                <img
+                                    src="/vca-bug-black.svg"
+                                    alt=""
+                                    aria-hidden="true"
+                                    className="h-[19px] w-auto shrink-0 dark:hidden"
+                                />
+                                <img
+                                    src="/vca-bug-white.svg"
+                                    alt=""
+                                    aria-hidden="true"
+                                    className="hidden h-[19px] w-auto shrink-0 dark:block"
+                                />
+                                <ChevronDown size={14} className="shrink-0 text-current opacity-80" />
+                            </button>
+                        )}
+                    />
+                )}
                 <div className="h-5 w-px bg-shell-chrome-divider" />
                 <div className="relative inline-grid items-center min-w-[60px] max-w-[320px]">
                     <span className="invisible px-3 py-1 text-sm font-medium whitespace-pre border border-transparent col-start-1 row-start-1">
@@ -2482,6 +2579,13 @@ function CanvasEditorInner({
                     .is-alt-pressed .react-flow__node:hover * {
                         cursor: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23FFF' stroke='%23000' stroke-width='2' d='M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87a.5.5 0 0 0 .35-.85L6.35 2.85a.5.5 0 0 0-.85.35Z'%3E%3Cpath fill='%23000' stroke='%23FFF' stroke-width='1.5' d='M16 12a4 4 0 1 1 0 8 4 4 0 0 1 0-8Zm0 1.5a.5.5 0 0 0-.5.5v1.5H14a.5.5 0 0 0 0 1h1.5V18a.5.5 0 0 0 1 0v-1.5H18a.5.5 0 0 0 0-1h-1.5V14a.5.5 0 0 0-.5-.5Z'/%3E%3C/svg%3E") 6 3, copy !important;
                     }
+                    .is-placement-active .react-flow__pane,
+                    .is-placement-active .react-flow__selection-pane,
+                    .is-placement-active .react-flow__node,
+                    .is-placement-active .react-flow__node *,
+                    .is-placement-active .react-flow__edge-path {
+                        cursor: copy !important;
+                    }
                     .thin-scrollbar::-webkit-scrollbar {
                         width: 6px;
                     }
@@ -2512,6 +2616,7 @@ function CanvasEditorInner({
                     onConnectStart={isReadOnly ? undefined : onConnectStart}
                     onConnectEnd={isReadOnly ? undefined : onConnectEnd}
                     onNodeClick={onNodeClick}
+                    onEdgeClick={onEdgeClick}
                     onNodeDragStart={isReadOnly ? undefined : onNodeDragStart}
                     onNodesDelete={isReadOnly ? undefined : onNodesDelete}
                     onEdgesDelete={isReadOnly ? undefined : onEdgesDelete}
@@ -2533,7 +2638,7 @@ function CanvasEditorInner({
                     onDragOver={isReadOnly ? undefined : onDragOver}
                     onDrop={isReadOnly ? undefined : onDrop}
                     connectionLineComponent={connectionLineWithPreview}
-                    className={`bg-shell-studio-canvas ${!isReadOnly && isAltPressed ? 'is-alt-pressed' : ''}`}
+                    className={`bg-shell-studio-canvas ${!isReadOnly && isAltPressed ? 'is-alt-pressed' : ''} ${!isReadOnly && pendingToolbarPlacement ? 'is-placement-active' : ''}`}
                 >
 
                     <Background color="rgb(var(--shell-studio-canvas-grid) / 1)" gap={20} size={2} />
@@ -2624,6 +2729,29 @@ function CanvasEditorInner({
                     ) : null}
                     <ZoomControls />
                 </ReactFlow>
+                {!isReadOnly && pendingToolbarPlacement?.canvasPosition ? (() => {
+                    const preview = getToolbarPlacementPreviewConfig(pendingToolbarPlacement.type);
+
+                    return (
+                        <div
+                            className="pointer-events-none absolute z-[54]"
+                            style={{
+                                left: pendingToolbarPlacement.canvasPosition.x,
+                                top: pendingToolbarPlacement.canvasPosition.y,
+                                transform: 'translate(12px, 12px)',
+                            }}
+                        >
+                            <div className={`flex items-center gap-2 rounded-xl border-2 px-4 py-3 shadow-[0_18px_36px_rgb(15_23_42/0.18)] ${preview.borderClassName} ${preview.surfaceClassName}`}>
+                                <div className="shrink-0">
+                                    {preview.icon}
+                                </div>
+                                <span className="whitespace-nowrap text-sm font-medium text-shell-text">
+                                    {preview.label}
+                                </span>
+                            </div>
+                        </div>
+                    );
+                })() : null}
                 {!isReadOnly && quickAddMenu && quickAddConnectionPreview && (
                     <svg
                         className="pointer-events-none absolute inset-0 z-[55] overflow-visible"
@@ -2639,20 +2767,6 @@ function CanvasEditorInner({
                             toY={quickAddConnectionPreview.toY}
                             toPosition={quickAddConnectionPreview.toPosition}
                             variant={quickAddConnectionPreview.variant}
-                        />
-                    </svg>
-                )}
-                {!isReadOnly && hoverHandlePreview && !isHandleHoverPreviewSuppressed && !connectionPreviewVariant && !quickAddMenu && (
-                    <svg
-                        className="pointer-events-none absolute inset-0 z-[60] overflow-visible"
-                        width="100%"
-                        height="100%"
-                        aria-hidden="true"
-                    >
-                        <HandleHoverPreview
-                            x={hoverHandlePreview.x}
-                            y={hoverHandlePreview.y}
-                            variant={hoverHandlePreview.variant}
                         />
                     </svg>
                 )}

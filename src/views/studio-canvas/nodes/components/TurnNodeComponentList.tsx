@@ -56,7 +56,6 @@ interface TurnNodeComponentListProps {
     components: Component[];
     selectedComponentIds?: string[];
     openComponentId?: string;
-    entryPoint?: string;
     isAiTurn?: boolean;
     readOnly?: boolean;
     surfaceClassName?: string;
@@ -69,12 +68,6 @@ interface TurnNodeComponentListProps {
     onDeselect?: () => void;
     onComponentUpdate?: (nodeId: string, componentId: string, updates: Partial<Component>) => void;
     onComponentReorder?: (nodeId: string, activeComponentId: string, overComponentId: string) => void;
-    onQuickCreateFromHandle?: (
-        nodeId: string,
-        handleId: string | null,
-        handleEl?: HTMLElement | null,
-        pointerClient?: { x: number; y: number }
-    ) => void;
 }
 
 interface ComponentRowProps {
@@ -82,7 +75,6 @@ interface ComponentRowProps {
     component: Component;
     isSelected: boolean;
     isOpen: boolean;
-    entryPoint?: string;
     readOnly?: boolean;
     onSelectComponent?: (
         nodeId: string,
@@ -92,12 +84,6 @@ interface ComponentRowProps {
     ) => void;
     onDeselect?: () => void;
     onComponentUpdate?: (nodeId: string, componentId: string, updates: Partial<Component>) => void;
-    onQuickCreateFromHandle?: (
-        nodeId: string,
-        handleId: string | null,
-        handleEl?: HTMLElement | null,
-        pointerClient?: { x: number; y: number }
-    ) => void;
     lastDragAt: number;
 }
 
@@ -106,12 +92,10 @@ const ComponentRow = memo(({
     component,
     isSelected,
     isOpen,
-    entryPoint,
     readOnly = false,
     onSelectComponent,
     onDeselect,
     onComponentUpdate,
-    onQuickCreateFromHandle,
     lastDragAt,
 }: ComponentRowProps) => {
     const display = useMemo(() => getComponentDisplay(component), [component]);
@@ -147,7 +131,6 @@ const ComponentRow = memo(({
             isSelected={isSelected}
             readOnly={readOnly}
             onClick={handleClick}
-            onHandleClick={(handleId, handleEl, pointerClient) => onQuickCreateFromHandle?.(nodeId, handleId, handleEl, pointerClient)}
         />
     );
 
@@ -169,7 +152,6 @@ const ComponentRow = memo(({
         return (
             <PromptEditor
                 component={component}
-                entryPoint={entryPoint}
                 onChange={handleComponentChange}
                 isOpen={isOpen}
                 onOpenChange={handleOpenChange}
@@ -293,7 +275,6 @@ export const TurnNodeComponentList = ({
     components,
     selectedComponentIds = [],
     openComponentId,
-    entryPoint,
     isAiTurn = false,
     readOnly = false,
     surfaceClassName = 'bg-shell-bg',
@@ -301,7 +282,6 @@ export const TurnNodeComponentList = ({
     onDeselect,
     onComponentUpdate,
     onComponentReorder,
-    onQuickCreateFromHandle,
 }: TurnNodeComponentListProps) => {
     const [lastDragAt, setLastDragAt] = useState(0);
     const canReorder = !readOnly && components.length > 1;
@@ -392,12 +372,10 @@ export const TurnNodeComponentList = ({
                                     component={component}
                                     isSelected={selectedComponentIds.includes(component.id)}
                                     isOpen={openComponentId === component.id}
-                                    entryPoint={entryPoint}
                                     readOnly={readOnly}
                                     onSelectComponent={onSelectComponent}
                                     onDeselect={onDeselect}
                                     onComponentUpdate={onComponentUpdate}
-                                    onQuickCreateFromHandle={onQuickCreateFromHandle}
                                     lastDragAt={lastDragAt}
                                 />
                             </SortableComponentRow>

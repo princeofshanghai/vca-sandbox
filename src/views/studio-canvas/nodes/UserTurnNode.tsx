@@ -17,10 +17,14 @@ interface LinkedTurnComponent {
     content?: {
         text?: string;
         items?: Array<{ id: string; title: string }>;
+        showActions?: boolean;
         confirmLabel?: string;
         rejectLabel?: string;
         title?: string;
+        primaryLabel?: string;
+        secondaryLabel?: string;
         saveLabel?: string;
+        cancelLabel?: string;
     };
 }
 
@@ -127,14 +131,18 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
         }
 
         if (component.type === 'confirmationCard') {
+            if (component.content?.showActions === false) return null;
             const actionId = handleId.split(`${component.id}-`)[1];
             return actionId === 'reject'
-                ? (component.content?.rejectLabel || 'No, not this person')
-                : (component.content?.confirmLabel || 'Yes, confirm');
+                ? (component.content?.rejectLabel || 'Cancel')
+                : (component.content?.confirmLabel || 'Confirm');
         }
 
         if (component.type === 'checkboxGroup') {
-            return component.content?.saveLabel || component.content?.title || 'Save';
+            const isSecondary = handleId.endsWith('-secondary');
+            return isSecondary
+                ? (component.content?.secondaryLabel || component.content?.cancelLabel || 'Cancel')
+                : (component.content?.primaryLabel || component.content?.saveLabel || 'Save');
         }
 
         return null;
@@ -188,6 +196,7 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
     const userSurfaceClassName = 'bg-[rgb(var(--shell-node-user-surface)/1)]';
 
     const promptText = getLinkedPromptText();
+    const linkedButtonText = getLinkedButtonText();
 
     return (
         <UserTurnEditor
@@ -198,6 +207,7 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
             onChange={handleUpdate}
             isLinked={isLinked}
             promptText={promptText || undefined}
+            buttonText={linkedButtonText || undefined}
             isOpen={isEditorOpen}
             onOpenChange={setIsEditorOpen}
             readOnly={typedData.readOnly}
@@ -271,7 +281,7 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
                     type="source"
                     id="user-output"
                     position={Position.Right}
-                    className="flow-create-handle flow-create-handle-neutral !bg-shell-node-user !w-3.5 !h-3.5 !border-2 !border-shell-bg !z-50"
+                    className="!bg-shell-node-user !w-3.5 !h-3.5 !border-2 !border-shell-bg !z-50"
                 />
             </div >
         </UserTurnEditor>

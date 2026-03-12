@@ -127,18 +127,27 @@ export interface SelectionListContent {
     }[];
 }
 
-// Confirmation Card Content
+// Display Card Content
+// Stored under the legacy confirmationCard type for backward compatibility.
 export interface ConfirmationCardContent {
     item: SelectionListContent['items'][0];
+    showActions?: boolean;
     confirmLabel?: string;
     rejectLabel?: string;
 }
 
 // Checkbox Group Content
 export interface CheckboxGroupContent {
+    /** @deprecated Legacy header text no longer rendered by Checkbox Group. */
     title?: string;
+    /** @deprecated Legacy helper text no longer rendered by Checkbox Group. */
     description?: string;
-    saveLabel?: string; // Button label, default "Save"
+    primaryLabel?: string;
+    secondaryLabel?: string;
+    /** @deprecated Use primaryLabel. */
+    saveLabel?: string;
+    /** @deprecated Use secondaryLabel. */
+    cancelLabel?: string;
     options: {
         id: string;
         label: string;
