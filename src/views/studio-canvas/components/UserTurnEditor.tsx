@@ -1,4 +1,4 @@
-import { User, MessageSquare, MousePointerClick } from 'lucide-react';
+import { ALargeSmall, MessageCirclePlus, MousePointerClick } from 'lucide-react';
 import { ComponentEditorPopover } from './ComponentEditorPopover';
 import { EditorRoot } from './editor-ui/EditorRoot';
 import { EditorHeader } from './editor-ui/EditorHeader';
@@ -47,15 +47,16 @@ export const UserTurnEditor = ({
 
     const getIcon = () => {
         switch (inputType) {
-            case 'text': return MessageSquare;
+            case 'text': return ALargeSmall;
             case 'button': return MousePointerClick;
-            default: return User;
+            case 'prompt': return MessageCirclePlus;
+            default: return ALargeSmall;
         }
     };
 
     const getTitle = () => {
         switch (inputType) {
-            case 'text': return 'User Text Input';
+            case 'text': return 'user message';
             case 'button': return 'User Button Click';
             case 'prompt': return 'AI Prompt Trigger';
             default: return 'User Turn';
@@ -90,7 +91,7 @@ export const UserTurnEditor = ({
                 {inputType === 'text' && (
                     <div className="space-y-1">
                         <EditorField
-                            label="User Says"
+                            label="User says"
                             placeholder={'e.g. "I want to book", "Pricing", "How much?"'}
                             value={triggerValue}
                             onChange={(val) => onChange({ triggerValue: val })}
@@ -104,24 +105,16 @@ export const UserTurnEditor = ({
                 )}
 
                 {inputType === 'button' && (
-                    <div className="p-3 bg-shell-accent-soft rounded border border-shell-accent-border text-xs text-shell-accent-text leading-normal font-medium flex items-start gap-2">
-                        <div className="mt-0.5">
-                            <MousePointerClick size={14} />
-                        </div>
-                        <div>{getButtonHelperText()}</div>
+                    <div className="text-sm leading-relaxed text-shell-text">
+                        {getButtonHelperText()}
                     </div>
                 )}
 
                 {inputType === 'prompt' && (
-                    <div className="p-3 bg-shell-accent-soft rounded border border-shell-accent-border text-xs text-shell-accent-text leading-normal font-medium flex items-start gap-2">
-                        <div className="mt-0.5">
-                            <User size={14} />
-                        </div>
-                        <div>
-                            {isLinked
-                                ? `Triggers when user clicks: ${promptText || 'AI Prompt'}`
-                                : "Link an AI Prompt on the canvas to trigger this path."}
-                        </div>
+                    <div className="text-sm leading-relaxed text-shell-text">
+                        {isLinked
+                            ? `Triggers when user clicks: ${promptText || 'AI Prompt'}`
+                            : "Link an AI Prompt on the canvas to trigger this path."}
                     </div>
                 )}
             </EditorContent>
