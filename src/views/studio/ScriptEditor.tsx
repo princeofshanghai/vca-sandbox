@@ -1,6 +1,5 @@
 import { Flow, Block, BlockType, AIBlock, AIBlockVariant, AIMessageContent, AIInfoContent, AIStatusContent, FlowPhase } from './types';
 import { VcaIcon } from '@/components/vca-components/icons/VcaIcon';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Trash2, User, GripVertical, Plus } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import {
@@ -287,18 +286,6 @@ const BlockEditor = ({ block, index, onUpdate, onDelete }: {
                             </div>
                         </div>
 
-                        {/* Feedback Toggle */}
-                        {/* Feedback Toggle */}
-                        <div className="flex items-center gap-2 pt-2 border-t border-shell-border-subtle mt-3">
-                            <Checkbox
-                                id={`feedback-${block.id}`}
-                                checked={(block.content as AIInfoContent).showFeedback !== false}
-                                onCheckedChange={(checked) => onUpdate({ content: { ...block.content, showFeedback: checked as boolean } })}
-                            />
-                            <label htmlFor={`feedback-${block.id}`} className="text-xs font-medium text-shell-muted select-none cursor-pointer">
-                                User feedback
-                            </label>
-                        </div>
                     </div>
                 )}
 
@@ -365,4 +352,3 @@ const BlockEditor = ({ block, index, onUpdate, onDelete }: {
         </div >
     );
 };
-

@@ -17,6 +17,8 @@ interface RichTextEditorProps {
     autoFocus?: boolean;
     readOnly?: boolean;
     surfaceVariant?: 'default' | 'field';
+    minHeight?: number;
+    resizable?: boolean;
 }
 
 export function RichTextEditor({
@@ -27,6 +29,8 @@ export function RichTextEditor({
     autoFocus = false,
     readOnly = false,
     surfaceVariant = 'default',
+    minHeight = 60,
+    resizable = false,
 }: RichTextEditorProps) {
 
     // --- HTML <-> Markdown Conversion (Robust DOM Approach) ---
@@ -143,7 +147,7 @@ export function RichTextEditor({
         editorProps: {
             attributes: {
                 class: cn(
-                    "max-w-none outline-none text-[13px] leading-relaxed text-shell-text min-h-[60px] p-2.5",
+                    "max-w-none outline-none text-[13px] leading-relaxed text-shell-text min-h-full p-2.5",
                     "[&_.is-editor-empty:first-child::before]:pointer-events-none",
                     "[&_.is-editor-empty:first-child::before]:float-left",
                     "[&_.is-editor-empty:first-child::before]:h-0",
@@ -268,7 +272,18 @@ export function RichTextEditor({
                 </BubbleMenu>
             )}
 
-            <EditorContent editor={editor} />
+            <div
+                className={cn(
+                    "min-h-0",
+                    resizable ? "resize-y overflow-auto" : ""
+                )}
+                style={{ minHeight }}
+            >
+                <EditorContent
+                    editor={editor}
+                    className="[&_.ProseMirror]:h-full [&_.ProseMirror]:min-h-full [&_.tiptap]:h-full [&_.tiptap]:min-h-full"
+                />
+            </div>
         </div>
     );
 }

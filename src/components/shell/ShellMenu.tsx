@@ -311,12 +311,17 @@ export type ShellMenuSeparatorProps = React.ComponentPropsWithoutRef<typeof Drop
 export const ShellMenuSeparator = React.forwardRef<
   React.ElementRef<typeof DropdownMenuSeparatorBase>,
   ShellMenuSeparatorProps
->(({ className, tone = 'default', ...props }, ref) => (
-  <DropdownMenuSeparatorBase
-    ref={ref}
-    className={cn('my-1', separatorToneClasses[tone], className)}
-    {...props}
-  />
-));
+>((props, ref) => {
+  const context = React.useContext(ShellMenuContext);
+  const { className, tone = context.tone, ...rest } = props;
+
+  return (
+    <DropdownMenuSeparatorBase
+      ref={ref}
+      className={cn('my-1', separatorToneClasses[tone], className)}
+      {...rest}
+    />
+  );
+});
 
 ShellMenuSeparator.displayName = 'ShellMenuSeparator';

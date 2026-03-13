@@ -76,6 +76,7 @@ Why this works:
 - The control reads as interactive because it is one step lighter than its parent panel.
 - Separation comes from surface contrast first, not loud borders.
 - The dark UI stays calm because blue is not constantly “on.”
+- Dividers and separators must inherit the tone of their parent shell surface. In cinematic dark menus, use `shell-dark-border` so separators stay quiet and never become the brightest line in the component.
 
 ## Non-Negotiables
 1. In shell surfaces, do not use raw `<button>`, `<input>`, `<select>`, or `<textarea>`.
@@ -85,6 +86,7 @@ Why this works:
 5. Do not place an interactive dark control on the exact same fill as its parent panel when hierarchy matters.
 6. Use pill shapes only when the component is semantically a chip, badge, or toolbar pill.
 7. When shell screens render VCA components, fix styling leaks in the VCA layer, not by restyling the shell preview container.
+8. Reusable shell primitives must inherit tone from their container by default when the component has a dark/default variant. Do not require view-level one-off tone props for routine dark menu dividers, labels, or similar structural elements.
 
 ## QA Checklist
 1. Verify light and dark themes when applicable.
@@ -95,6 +97,7 @@ Why this works:
 6. Check that controls are visibly one step above their parent panel.
 7. If a shell surface contains VCA components, verify shell typography does not leak into VCA internals.
 8. In previews, verify VCA text still reads correctly inside light VCA surfaces while the surrounding shell is in dark mode.
+9. In dropdowns and popovers, verify separators inherit the container tone and do not read brighter than item text or container borders.
 
 ## Useful References
 - `src/components/shell`

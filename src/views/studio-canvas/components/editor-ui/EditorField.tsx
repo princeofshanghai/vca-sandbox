@@ -1,5 +1,6 @@
 import React from 'react';
 import { ShellInput, ShellTextareaAutosize } from '@/components/shell';
+import type { ShellTextareaVariant } from '@/components/shell/ShellTextarea';
 import { cn } from '@/utils/cn';
 
 interface EditorFieldProps {
@@ -9,6 +10,7 @@ interface EditorFieldProps {
     placeholder?: string;
     type?: 'text' | 'textarea';
     minRows?: number;
+    textareaVariant?: ShellTextareaVariant;
     className?: string;
     inputRef?: React.Ref<HTMLInputElement | HTMLTextAreaElement>;
     hint?: string;
@@ -28,6 +30,7 @@ export const EditorField = ({
     placeholder,
     type = 'text',
     minRows = 2,
+    textareaVariant = 'default',
     className,
     inputRef,
     hint,
@@ -73,6 +76,7 @@ export const EditorField = ({
                 <ShellTextareaAutosize
                     id={fieldId}
                     ref={inputRef as React.Ref<HTMLTextAreaElement>}
+                    variant={textareaVariant}
                     value={value || ''}
                     onChange={(e) => onChange?.(e.target.value)}
                     placeholder={placeholder}
@@ -84,7 +88,9 @@ export const EditorField = ({
                     aria-invalid={Boolean(error)}
                     aria-describedby={describedBy}
                     className={cn(
-                        "min-h-[88px] rounded-lg bg-shell-surface px-3 py-2 text-[13px] leading-relaxed placeholder:text-shell-muted/55 md:text-[13px]",
+                        textareaVariant === 'compact'
+                            ? "min-h-[40px] rounded-lg bg-shell-surface px-3 py-2 text-[13px] leading-5 placeholder:text-shell-muted/55 md:text-[13px]"
+                            : "min-h-[88px] rounded-lg bg-shell-surface px-3 py-2 text-[13px] leading-relaxed placeholder:text-shell-muted/55 md:text-[13px]",
                         error
                             ? "border-shell-danger-border bg-shell-danger-soft/20 focus-visible:border-shell-danger focus-visible:ring-shell-danger/20"
                             : null

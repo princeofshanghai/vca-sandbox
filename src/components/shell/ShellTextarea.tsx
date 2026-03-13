@@ -8,7 +8,7 @@ import {
 } from './shellTextareaStyles';
 
 export type ShellTextareaTone = 'default' | 'cinematicDark';
-export type ShellTextareaVariant = 'default' | 'bare';
+export type ShellTextareaVariant = 'default' | 'compact' | 'bare';
 
 export type ShellTextareaProps = React.ComponentProps<typeof Textarea> & {
   tone?: ShellTextareaTone;

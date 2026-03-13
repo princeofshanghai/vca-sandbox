@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Flow } from '@/views/studio/types';
 import {
@@ -28,6 +28,15 @@ import {
 import { INITIAL_FLOW } from '@/utils/flowStorage';
 import { ShareDialog } from '../studio/components/ShareDialog';
 import { PreviewHeaderActionButton } from '../studio/components/PreviewHeaderActionButton';
+import {
+    ShareCommentPin,
+    SHARE_COMMENT_PIN_HEIGHT_PX,
+    SHARE_COMMENT_PIN_HEAD_CENTER_OFFSET_PX,
+    SHARE_COMMENT_PIN_TIP_OFFSET_PX,
+    SHARE_COMMENT_PIN_TIP_TO_CENTER_OFFSET_PX,
+    SHARE_COMMENT_PIN_VISUAL_RADIUS_PX,
+    SHARE_COMMENT_PIN_WIDTH_PX,
+} from './components/ShareCommentPin';
 import {
     Dialog,
     DialogContent,
@@ -140,16 +149,16 @@ type PendingThreadPathNavigation = {
     targetSelections: ParsedPathSelection[];
 };
 
-const PIN_VISUAL_RADIUS_PX = 18;
 const PIN_TO_POPOVER_GAP_PX = 8;
-const COMPOSER_GAP_PX = PIN_VISUAL_RADIUS_PX + PIN_TO_POPOVER_GAP_PX;
 const COMPOSER_EDGE_PADDING_PX = 12;
 const DEFAULT_COMPOSER_WIDTH_PX = 400;
 const DEFAULT_NEW_COMMENT_HEIGHT_PX = 88;
 const DEFAULT_THREAD_HEIGHT_PX = 320;
 const DRAG_THRESHOLD_PX = 5;
+const PIN_VISUAL_RADIUS_PX = SHARE_COMMENT_PIN_VISUAL_RADIUS_PX;
+const COMPOSER_GAP_PX = PIN_VISUAL_RADIUS_PX + PIN_TO_POPOVER_GAP_PX;
 const NEW_COMMENT_COMPOSER_GAP_PX = PIN_VISUAL_RADIUS_PX + PIN_TO_POPOVER_GAP_PX;
-const PIN_TIP_TO_CIRCLE_CENTER_OFFSET_PX = 14;
+const PIN_TIP_TO_CIRCLE_CENTER_OFFSET_PX = SHARE_COMMENT_PIN_TIP_TO_CENTER_OFFSET_PX;
 const COMMENT_PLACE_THRESHOLD_PX = 8;
 const COMMENT_PLACEMENT_CURSOR_SVG = `
 <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none">
@@ -393,6 +402,7 @@ const getReviewBranchOptionLabel = (branch: FlowPreviewReviewDecision['branches'
 
 export const ShareView = () => {
     const { user, isLoading: isAuthLoading } = useAuth();
+    const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
 
     const [flow, setFlow] = useState<Flow | null>(null);
@@ -733,6 +743,8 @@ export const ShareView = () => {
     );
 
     const isFlowOwner = !!user && user.id === flowOwnerId;
+    const dashboardMenuLabel = user ? 'Go to dashboard' : 'Sign in to dashboard';
+    const editorMenuLabel = isFlowOwner ? 'Open in editor' : 'Open in canvas';
 
     const canManageComment = useCallback(
         (comment: FlowComment) => !!user && (comment.author_user_id === user.id || isFlowOwner),
@@ -743,6 +755,16 @@ export const ShareView = () => {
         (thread: FlowCommentThread) => canManageComment(thread.root),
         [canManageComment]
     );
+
+    const handleDashboardNavigation = useCallback(() => {
+        navigate(user ? '/' : '/login');
+    }, [navigate, user]);
+
+    const handleCanvasNavigation = useCallback(() => {
+        if (!id) return;
+
+        navigate(isFlowOwner ? `/studio/${id}` : `/share/studio/${id}`);
+    }, [id, isFlowOwner, navigate]);
 
     const getPinPointFromClient = useCallback((clientX: number, clientY: number): PinPoint | null => {
         const surface = commentSurfaceRef.current;
@@ -1148,7 +1170,7 @@ export const ShareView = () => {
                 popoverRect?.height ||
                 (isComposerForNewComment ? DEFAULT_NEW_COMMENT_HEIGHT_PX : DEFAULT_THREAD_HEIGHT_PX);
             const gapPx = isComposerForNewComment ? NEW_COMMENT_COMPOSER_GAP_PX : COMPOSER_GAP_PX;
-            const anchorOffsetYPx = isComposerForNewComment ? -PIN_TIP_TO_CIRCLE_CENTER_OFFSET_PX : 0;
+            const anchorOffsetYPx = -PIN_TIP_TO_CIRCLE_CENTER_OFFSET_PX;
 
             setDesktopComposerPlacement(
                 getAnchoredPopoverPosition({
@@ -2550,18 +2572,42 @@ export const ShareView = () => {
                 <div className="h-12 bg-shell-dark-panel flex items-center justify-between pr-4 shrink-0 shadow-md z-50 border-b border-shell-dark-border overflow-visible">
                     <div className="flex self-stretch items-stretch">
                         <ShellHeaderRail tone="cinematicDark" aria-label="Share navigation">
-                            <ActionTooltip content="Home" side="bottom">
-                                <ShellHeaderRailItem
-                                    asChild
+                            <ShellMenu>
+                                <ActionTooltip content="Navigation" side="bottom">
+                                    <ShellMenuTrigger asChild>
+                                        <ShellHeaderRailItem
+                                            tone="cinematicDark"
+                                            iconOnly
+                                            aria-label="Open navigation menu"
+                                        >
+                                            <Home />
+                                        </ShellHeaderRailItem>
+                                    </ShellMenuTrigger>
+                                </ActionTooltip>
+
+                                <ShellMenuContent
                                     tone="cinematicDark"
-                                    iconOnly
-                                    aria-label="Return to home"
+                                    size="compact"
+                                    align="start"
+                                    side="bottom"
+                                    sideOffset={6}
+                                    className="w-[196px]"
                                 >
-                                    <a href="/" title="Return to Home">
-                                        <Home />
-                                    </a>
-                                </ShellHeaderRailItem>
-                            </ActionTooltip>
+                                    <ShellMenuItem onClick={handleDashboardNavigation}>
+                                        <Home size={14} className="text-current opacity-70" />
+                                        <span>{dashboardMenuLabel}</span>
+                                    </ShellMenuItem>
+                                    <ShellMenuSeparator />
+                                    <ShellMenuItem onClick={handleCanvasNavigation}>
+                                        {isFlowOwner ? (
+                                            <Pencil size={14} className="text-current opacity-70" />
+                                        ) : (
+                                            <Monitor size={14} className="text-current opacity-70" />
+                                        )}
+                                        <span>{editorMenuLabel}</span>
+                                    </ShellMenuItem>
+                                </ShellMenuContent>
+                            </ShellMenu>
 
                             <ActionTooltip content="Comments" shortcut="C" side="bottom">
                                 <ShellHeaderRailItem
@@ -2744,12 +2790,17 @@ export const ShareView = () => {
                                         !isDraggingThisPin;
                                     const canDragPin = canDragThreadPin(thread);
                                     const isResolvedThread = root.status === 'resolved';
+                                    const pinTone = isSelected
+                                        ? 'selected'
+                                        : isResolvedThread
+                                          ? 'resolved'
+                                          : 'default';
 
                                     return (
                                         <div
                                             key={thread.id}
                                             className={cn(
-                                                'absolute -translate-x-1/2 -translate-y-[72%] pointer-events-none',
+                                                'absolute -translate-x-1/2 pointer-events-none',
                                                 isDraggingThisPin
                                                     ? 'z-[96]'
                                                     : canShowHoverPreview
@@ -2762,19 +2813,23 @@ export const ShareView = () => {
                                             )}
                                             style={{
                                                 left: `${effectivePin.x}%`,
-                                                top: `${effectivePin.y}%`,
+                                                top: `calc(${effectivePin.y}% - ${SHARE_COMMENT_PIN_TIP_OFFSET_PX}px)`,
                                             }}
                                         >
                                             <ShellButton
                                                 size="compact"
                                                 variant="ghost"
                                                 className={cn(
-                                                    'relative w-11 h-11 rounded-none border-0 bg-transparent shadow-none transition-all duration-150 ease-out pointer-events-auto p-0 hover:bg-transparent focus-visible:ring-0 focus-visible:outline-none',
+                                                    'relative rounded-none border-0 bg-transparent shadow-none transition-all duration-150 ease-out pointer-events-auto p-0 hover:bg-transparent focus-visible:ring-0 focus-visible:outline-none',
                                                     isSelected || isHovered ? 'scale-105' : 'scale-100',
                                                     canDragPin ? 'cursor-grab' : 'cursor-pointer',
                                                     isDraggingThisPin ? 'cursor-grabbing scale-110 drop-shadow-2xl' : '',
                                                     isResolvedThread && !isSelected ? 'opacity-90' : ''
                                                 )}
+                                                style={{
+                                                    width: SHARE_COMMENT_PIN_WIDTH_PX,
+                                                    height: SHARE_COMMENT_PIN_HEIGHT_PX,
+                                                }}
                                                 data-comment-pin-id={thread.id}
                                                 onPointerDown={(event) =>
                                                     handlePinPointerDown(
@@ -2822,40 +2877,11 @@ export const ShareView = () => {
                                                 }}
                                                 aria-label={`Open comment by ${root.author_name}`}
                                             >
-                                                <span
-                                                    className={cn(
-                                                        'absolute bottom-[6px] left-1/2 -translate-x-1/2 w-2.5 h-2.5 rotate-45 border-r border-b',
-                                                        isSelected
-                                                            ? 'bg-shell-dark-accent border-shell-dark-accent/85'
-                                                            : isResolvedThread
-                                                              ? 'bg-shell-dark-surface border-shell-dark-border/55'
-                                                              : 'bg-shell-dark-panel border-shell-dark-border/35'
-                                                    )}
+                                                <ShareCommentPin
+                                                    name={root.author_name}
+                                                    avatarUrl={root.author_avatar_url}
+                                                    tone={pinTone}
                                                 />
-                                                <span
-                                                    className={cn(
-                                                        'absolute top-0 left-1/2 -translate-x-1/2 w-9 h-9 rounded-full overflow-hidden shadow-[0_14px_28px_rgb(0_0_0/0.34)]',
-                                                        isSelected
-                                                            ? 'bg-shell-dark-accent ring-2 ring-shell-dark-accent/30'
-                                                            : isResolvedThread
-                                                              ? 'bg-shell-dark-surface ring-1 ring-shell-dark-border/55'
-                                                              : 'bg-shell-dark-panel ring-1 ring-shell-dark-border/35'
-                                                    )}
-                                                >
-                                                    <span className="absolute inset-[3px] rounded-full overflow-hidden bg-shell-dark-surface">
-                                                        {root.author_avatar_url ? (
-                                                            <img
-                                                                src={root.author_avatar_url}
-                                                                alt={`${root.author_name} avatar`}
-                                                                className="w-full h-full object-cover"
-                                                            />
-                                                        ) : (
-                                                            <span className="w-full h-full flex items-center justify-center text-[10px] font-semibold text-shell-dark-text">
-                                                                {getInitialsFromName(root.author_name)}
-                                                            </span>
-                                                        )}
-                                                    </span>
-                                                </span>
                                             </ShellButton>
 
                                             <ShellButton
@@ -2866,6 +2892,7 @@ export const ShareView = () => {
                                                         ? 'opacity-100 translate-x-0 scale-100'
                                                         : 'opacity-0 -translate-x-2 scale-95 pointer-events-none'
                                                 )}
+                                                style={{ top: SHARE_COMMENT_PIN_HEAD_CENTER_OFFSET_PX }}
                                                 onClick={(event) => {
                                                     event.stopPropagation();
                                                     handleSelectThread(thread.id);
@@ -2936,13 +2963,17 @@ export const ShareView = () => {
 
                                 {pendingPin ? (
                                     <div
-                                        className="absolute -translate-x-1/2 -translate-y-[72%] w-11 h-11 z-50"
-                                        style={{ left: `${pendingPin.x}%`, top: `${pendingPin.y}%` }}
+                                        className="absolute -translate-x-1/2 z-50"
+                                        style={{
+                                            left: `${pendingPin.x}%`,
+                                            top: `calc(${pendingPin.y}% - ${SHARE_COMMENT_PIN_TIP_OFFSET_PX}px)`,
+                                        }}
                                     >
-                                        <div className="absolute bottom-[6px] left-1/2 -translate-x-1/2 w-2.5 h-2.5 rotate-45 border-r border-b border-shell-dark-accent/85 bg-shell-dark-accent" />
-                                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-9 h-9 rounded-full bg-shell-dark-accent shadow-xl ring-2 ring-shell-dark-accent/35 text-white text-[14px] font-semibold flex items-center justify-center">
-                                            +
-                                        </div>
+                                        <ShareCommentPin
+                                            name="New comment"
+                                            tone="pending"
+                                            pending={true}
+                                        />
                                     </div>
                                 ) : null}
                             </div>

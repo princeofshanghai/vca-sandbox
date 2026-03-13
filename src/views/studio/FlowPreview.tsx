@@ -924,7 +924,11 @@ const PreviewContent = ({
                                         })}
                                     >
                                         <InfoMessage
-                                            sources={content.sources?.map(s => ({ text: s.text, url: s.url }))}
+                                            sources={content.sources?.map((source) => ({
+                                                text: source.text,
+                                                href: source.url,
+                                            }))}
+                                            onFeedbackChange={!isStreaming ? () => undefined : undefined}
                                             className={!isStreaming && !reviewMode ? "animate-fade-in" : ""}
                                         >
                                             {bodyToDisplay}

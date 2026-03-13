@@ -14,5 +14,6 @@ export const shellTextareaSurfaceToneClasses: Record<ShellTextareaTone, string> 
 
 export const shellTextareaVariantClasses: Record<ShellTextareaVariant, string> = {
   default: 'min-h-[88px] rounded-shell-lg px-shell-3 py-shell-2 shadow-none text-sm leading-5',
+  compact: 'min-h-[40px] rounded-shell-lg px-shell-3 py-shell-2 shadow-none text-sm leading-5',
   bare: 'min-h-0 rounded-none border-0 bg-transparent px-0 py-1 shadow-none text-sm leading-5 focus-visible:ring-0 focus-visible:border-transparent',
 };

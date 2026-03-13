@@ -55,7 +55,8 @@ export function PromptEditor({
                     onChange={handleTextChange}
                     placeholder="Learn about Premium features"
                     type="textarea"
-                    minRows={2}
+                    minRows={1}
+                    textareaVariant="compact"
                     readOnly={readOnly}
                 />
             </EditorContent>

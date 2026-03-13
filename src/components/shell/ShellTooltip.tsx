@@ -29,7 +29,7 @@ export function ShellTooltip({
           <Tooltip.Content
             side={side}
             sideOffset={8}
-            className="z-[1100] overflow-hidden rounded-[10px] border border-shell-dark-border bg-shell-dark-panel px-2.5 py-1.5 text-shell-dark-text shadow-[0_18px_40px_rgb(0_0_0/0.36)] animate-in fade-in zoom-in-95 duration-150"
+            className="relative z-[1100] rounded-[10px] border border-shell-dark-border bg-shell-dark-panel px-2.5 py-1.5 text-shell-dark-text shadow-[0_18px_40px_rgb(0_0_0/0.36)] animate-in fade-in zoom-in-95 duration-150"
           >
             <div className={cn('flex items-center whitespace-nowrap', shortcut ? 'gap-2.5' : 'gap-0')}>
               <span className="text-[11px] font-medium leading-none text-shell-dark-text">{label}</span>
@@ -39,7 +39,26 @@ export function ShellTooltip({
                 </span>
               ) : null}
             </div>
-            <Tooltip.Arrow className="fill-shell-dark-panel" />
+            <Tooltip.Arrow asChild>
+              <svg
+                width="14"
+                height="8"
+                viewBox="0 0 30 10"
+                preserveAspectRatio="none"
+                className="block"
+                aria-hidden="true"
+              >
+                <polygon points="0,0 30,0 15,10" fill="rgb(var(--shell-dark-panel))" />
+                <path
+                  d="M0 0 L15 10 L30 0"
+                  fill="none"
+                  stroke="rgb(var(--shell-dark-border) / var(--shell-dark-border-alpha))"
+                  strokeWidth="1.25"
+                  strokeLinejoin="round"
+                  vectorEffect="non-scaling-stroke"
+                />
+              </svg>
+            </Tooltip.Arrow>
           </Tooltip.Content>
         </Tooltip.Portal>
       </Tooltip.Root>
