@@ -5,11 +5,15 @@ import { cn } from '@/utils/cn';
 import { ShellButton, ShellInput } from '@/components/shell';
 import { getConditionPathLabel, getConditionQuestionLabel, getConditionRuleSummary } from '../conditionBranchLabels';
 
+export type ContextInterceptorResolution =
+    | { type: 'branch'; branchId: string }
+    | { type: 'value'; value: string };
+
 interface ContextInterceptorMessageProps {
     question?: string;
     variableName: string;
     branches: Branch[];
-    onResolve: (value: string) => void;
+    onResolve: (resolution: ContextInterceptorResolution) => void;
     className?: string;
     showRuleSummary?: boolean;
 }
@@ -28,18 +32,16 @@ export function ContextInterceptorMessage({
 
     const relevantBranches = branches.filter((branch) => (
         branch.isDefault ||
-        (branch.logic?.variable === variableName && branch.logic?.value !== undefined)
+        (branch.logic?.value !== undefined && String(branch.logic.value).trim() !== '')
     ));
 
     const pathChoices = relevantBranches.map((branch) => {
         const isDefault = !!branch.isDefault;
         const pathLabel = getConditionPathLabel(branch);
         const ruleSummary = getConditionRuleSummary(branch, variableName);
-        const ruleValue = branch.logic?.value !== undefined ? String(branch.logic.value) : '';
 
         return {
             id: branch.id,
-            value: isDefault ? '__USE_DEFAULT__' : ruleValue,
             isDefault,
             pathLabel,
             ruleSummary
@@ -63,11 +65,11 @@ export function ContextInterceptorMessage({
                 <div className="space-y-2">
                     {pathChoices.length > 0 && (
                         <div className="max-h-[220px] space-y-2 overflow-y-auto pr-1 thin-scrollbar">
-                            {pathChoices.map(({ id, value, pathLabel, ruleSummary, isDefault }) => (
+                            {pathChoices.map(({ id, pathLabel, ruleSummary, isDefault }) => (
                                 <ShellButton
                                     key={id}
                                     variant="outline"
-                                    onClick={() => onResolve(value)}
+                                    onClick={() => onResolve({ type: 'branch', branchId: id })}
                                     className={cn(
                                         'h-auto w-full items-start justify-start border-shell-border bg-shell-bg px-3 py-2.5 text-left shadow-sm hover:border-shell-node-condition/60 hover:bg-shell-surface',
                                         isDefault ? 'text-shell-muted-strong' : 'text-shell-text'
@@ -103,14 +105,14 @@ export function ContextInterceptorMessage({
                                 className="text-xs focus-visible:border-shell-node-condition focus-visible:ring-shell-node-condition/20"
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter' && customValue.trim()) {
-                                        onResolve(customValue.trim());
+                                        onResolve({ type: 'value', value: customValue.trim() });
                                     }
                                 }}
                             />
                             <ShellButton
                                 size="compact"
                                 variant="outline"
-                                onClick={() => customValue.trim() && onResolve(customValue.trim())}
+                                onClick={() => customValue.trim() && onResolve({ type: 'value', value: customValue.trim() })}
                                 className="border-shell-node-condition/50 bg-shell-bg px-3 text-xs text-shell-text hover:bg-shell-surface"
                             >
                                 Continue

@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
-import { Plus, Split, Trash2 } from 'lucide-react';
+import { AlertTriangle, Plus, Split, Trash2 } from 'lucide-react';
 import { Branch } from '../../studio/types';
 import { createConditionBranch } from '../../studio/conditionBranches';
 import { getConditionPathLabel } from '../../studio/conditionBranchLabels';
-import { ShellButton, ShellIconButton } from '@/components/shell';
+import { ShellButton, ShellIconButton, ShellNotice } from '@/components/shell';
 import { ComponentEditorPopover } from './ComponentEditorPopover';
 import { EditorRoot } from './editor-ui/EditorRoot';
 import { EditorHeader } from './editor-ui/EditorHeader';
@@ -84,6 +84,18 @@ export function ConditionBranchEditor({
     const editorBranches = useMemo(() => normalizeBranchesForEditor(branches), [branches]);
     const fallbackIndex = editorBranches.findIndex((branch) => branch.isDefault);
     const hasFallback = fallbackIndex !== -1;
+    const distinctFieldNames = useMemo(
+        () => Array.from(
+            new Set(
+                editorBranches
+                    .filter((branch) => !branch.isDefault)
+                    .map((branch) => branch.logic?.variable?.trim() || '')
+                    .filter(Boolean)
+            )
+        ),
+        [editorBranches]
+    );
+    const hasMixedFields = distinctFieldNames.length > 1;
 
     const updateBranch = (branchId: string, updater: (branch: Branch) => Branch) => {
         if (readOnly) return;
@@ -145,6 +157,16 @@ export function ConditionBranchEditor({
                 </EditorSection>
 
                 <EditorSection title="Branches">
+                    {hasMixedFields && (
+                        <ShellNotice
+                            size="compact"
+                            variant="error"
+                            icon={<AlertTriangle size={14} />}
+                            title="Use one field per condition"
+                            description={`Preview works best when all matching branches check the same field. This condition mixes: ${distinctFieldNames.join(', ')}`}
+                        />
+                    )}
+
                     <div className="space-y-3">
                         {editorBranches.map((branch, index) => {
                             return (

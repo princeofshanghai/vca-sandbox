@@ -607,6 +607,25 @@ export const useSmartFlowEngine = ({
         replayFromCondition?: boolean;
     }) => {
         const selectionMeta = getConditionSelectionMeta(stepId, variableName, value, branches);
+        applyResolvedConditionSelection({
+            stepId,
+            selectionMeta,
+            interceptorStepId,
+            replayFromCondition,
+        });
+    };
+
+    const applyResolvedConditionSelection = ({
+        stepId,
+        selectionMeta,
+        interceptorStepId,
+        replayFromCondition,
+    }: {
+        stepId: string;
+        selectionMeta: ConditionPathSelection;
+        interceptorStepId?: string;
+        replayFromCondition?: boolean;
+    }) => {
         const selectionStep = buildConditionSelectionStep(selectionMeta);
         const nextSelections = mergePathSelections(pathSelectionsRef.current, selectionMeta);
 
@@ -614,8 +633,8 @@ export const useSmartFlowEngine = ({
         pathSelectionsRef.current = nextSelections;
         setPathSelections(nextSelections);
 
-        if (value !== '__USE_DEFAULT__') {
-            onVariableUpdate?.(variableName, value);
+        if (selectionMeta.selectedValue !== '__USE_DEFAULT__') {
+            onVariableUpdate?.(selectionMeta.variableName, selectionMeta.selectedValue);
         }
 
         if (replayFromCondition) {
@@ -663,6 +682,44 @@ export const useSmartFlowEngine = ({
         setTimeout(() => {
             traverse(stepId, selectionMeta.selectedBranchId || undefined);
         }, 50);
+    };
+
+    const applyConditionBranchSelection = ({
+        stepId,
+        branchId,
+        branches,
+        interceptorStepId,
+        replayFromCondition,
+    }: {
+        stepId: string;
+        branchId: string;
+        branches: Branch[];
+        interceptorStepId?: string;
+        replayFromCondition?: boolean;
+    }) => {
+        const selectedBranch = branches.find((branch) => branch.id === branchId);
+        if (!selectedBranch) return;
+
+        const selectedValue = selectedBranch.isDefault
+            ? '__USE_DEFAULT__'
+            : String(selectedBranch.logic?.value ?? '');
+        const resolvedVariableName =
+            selectedBranch.logic?.variable ||
+            getConditionVariableName(branches, stepId);
+        const selectionMeta = getConditionSelectionMetaForBranch({
+            stepId,
+            branches,
+            selectedBranchId: branchId,
+            selectedValue,
+            variableName: resolvedVariableName,
+        });
+
+        applyResolvedConditionSelection({
+            stepId,
+            selectionMeta,
+            interceptorStepId,
+            replayFromCondition,
+        });
     };
 
 
@@ -1058,11 +1115,30 @@ export const useSmartFlowEngine = ({
         });
     };
 
+    const resolveInterceptorBranch = (stepId: string, branchId: string, branches: Branch[], interceptorStepId: string) => {
+        applyConditionBranchSelection({
+            stepId,
+            branchId,
+            branches,
+            interceptorStepId,
+            replayFromCondition: false,
+        });
+    };
+
     const switchConditionPath = (stepId: string, variableName: string, value: string, branches: Branch[]) => {
         applyConditionSelection({
             stepId,
             variableName,
             value,
+            branches,
+            replayFromCondition: true,
+        });
+    };
+
+    const switchConditionPathBranch = (stepId: string, branchId: string, branches: Branch[]) => {
+        applyConditionBranchSelection({
+            stepId,
+            branchId,
             branches,
             replayFromCondition: true,
         });
@@ -1082,7 +1158,9 @@ export const useSmartFlowEngine = ({
         handleConfirmationAction,
         handleCheckboxAction,
         resolveInterceptor,
+        resolveInterceptorBranch,
         switchConditionPath,
+        switchConditionPathBranch,
         lastConditionSelection,
         pathSelections,
         setHistory

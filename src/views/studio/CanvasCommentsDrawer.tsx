@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AlertCircle, Loader2, MessageSquare, X } from 'lucide-react';
+import { AlertCircle, Loader2, X } from 'lucide-react';
 import {
     ShellIconButton,
     ShellNotice,
@@ -89,10 +89,7 @@ export function CanvasCommentsDrawer({
                             <ShellIconButton onClick={onClose} aria-label="Close comments panel">
                                 <X size={20} />
                             </ShellIconButton>
-                            <div className="flex items-center gap-2">
-                                <MessageSquare size={16} className="text-shell-accent" />
-                                <span className="text-sm font-medium text-shell-text">Comments</span>
-                            </div>
+                            <span className="text-sm font-medium text-shell-text">Comments</span>
                         </div>
 
                         <ShellSelect
@@ -172,10 +169,6 @@ export function CanvasCommentsDrawer({
 
                                                     <p className="text-xs leading-relaxed text-shell-text/90 truncate">
                                                         {getCommentExcerpt(thread.root.message)}
-                                                    </p>
-
-                                                    <p className="mt-1.5 text-[10px] text-shell-muted">
-                                                        Canvas comment
                                                     </p>
 
                                                     {thread.replies.length > 0 ? (

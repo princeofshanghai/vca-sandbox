@@ -19,7 +19,10 @@ import {
     getCheckboxGroupPrimaryLabel,
     getCheckboxGroupSecondaryLabel,
 } from '@/components/vca-components/checkbox-group/CheckboxGroup';
-import { ContextInterceptorMessage } from './components/ContextInterceptorMessage';
+import {
+    ContextInterceptorMessage,
+    type ContextInterceptorResolution,
+} from './components/ContextInterceptorMessage';
 import { getConditionQuestionLabel } from './conditionBranchLabels';
 import {
     type ConditionPathSelection,
@@ -329,7 +332,9 @@ const PreviewContent = ({
         handleConfirmationAction,
         handleCheckboxAction,
         resolveInterceptor,
+        resolveInterceptorBranch,
         switchConditionPath,
+        switchConditionPathBranch,
         lastConditionSelection,
         pathSelections,
     } = useSmartFlowEngine({
@@ -472,25 +477,21 @@ const PreviewContent = ({
 
         if (!nextBranch) return;
 
-        const nextValue = nextBranch.logic?.value ?? '__USE_DEFAULT__';
-
         if (reviewPathChangeRequest.mode === 'interceptor') {
-            resolveInterceptor(
+            resolveInterceptorBranch(
                 decision.stepId,
-                decision.variableName,
-                nextValue,
+                nextBranch.id,
                 decision.branches,
                 `interceptor-${decision.stepId}`
             );
         } else {
-            switchConditionPath(
+            switchConditionPathBranch(
                 decision.stepId,
-                decision.variableName,
-                nextValue,
-                decision.branches
+                nextBranch.id,
+                decision.branches,
             );
         }
-    }, [resolveInterceptor, reviewDecisions, reviewPathChangeRequest, switchConditionPath]);
+    }, [resolveInterceptorBranch, reviewDecisions, reviewPathChangeRequest, switchConditionPathBranch]);
 
     const shouldShowFullPathPanel = !reviewMode && !!overlaySelection && isPathPanelExpanded;
     const shouldShowCompactPathPill = !reviewMode && !!overlaySelection && !isPathPanelExpanded;
@@ -605,24 +606,41 @@ const PreviewContent = ({
         onComposerGuidanceChange?.(interactionHotspots?.composer || EMPTY_COMPOSER_GUIDANCE);
     }, [interactionHotspots, onComposerGuidanceChange, reviewMode, shouldShowFullPathPanel, showHotspotsEnabled]);
 
-    const handleOverlayResolve = (value: string) => {
+    const handleOverlayResolve = (resolution: ContextInterceptorResolution) => {
         if (!overlaySelection) return;
 
-        if (overlaySelection.mode === 'interceptor') {
-            resolveInterceptor(
-                overlaySelection.stepId,
-                overlaySelection.variableName,
-                value,
-                overlaySelection.branches,
-                overlaySelection.interceptorId
-            );
+        if (resolution.type === 'branch') {
+            if (overlaySelection.mode === 'interceptor') {
+                resolveInterceptorBranch(
+                    overlaySelection.stepId,
+                    resolution.branchId,
+                    overlaySelection.branches,
+                    overlaySelection.interceptorId
+                );
+            } else {
+                switchConditionPathBranch(
+                    overlaySelection.stepId,
+                    resolution.branchId,
+                    overlaySelection.branches
+                );
+            }
         } else {
-            switchConditionPath(
-                overlaySelection.stepId,
-                overlaySelection.variableName,
-                value,
-                overlaySelection.branches
-            );
+            if (overlaySelection.mode === 'interceptor') {
+                resolveInterceptor(
+                    overlaySelection.stepId,
+                    overlaySelection.variableName,
+                    resolution.value,
+                    overlaySelection.branches,
+                    overlaySelection.interceptorId
+                );
+            } else {
+                switchConditionPath(
+                    overlaySelection.stepId,
+                    overlaySelection.variableName,
+                    resolution.value,
+                    overlaySelection.branches
+                );
+            }
         }
 
         setIsPathPanelExpanded(false);
