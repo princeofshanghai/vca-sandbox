@@ -2,12 +2,14 @@ import { memo, useState, useRef, useEffect } from 'react';
 import { Handle, Position, NodeProps, useStore, useReactFlow, useHandleConnections, useNodesData } from '@xyflow/react';
 import { MousePointerClick, ALargeSmall, MessageCirclePlus } from 'lucide-react';
 import { UserTurnEditor } from '../components/UserTurnEditor';
+import { CanvasNodeCommentState } from '../types';
 
 interface UserTurnNodeData {
     label?: string;
     inputType?: 'text' | 'prompt' | 'button';
     triggerValue?: string;
     readOnly?: boolean;
+    commentState?: CanvasNodeCommentState;
     onUpdate?: (nodeId: string, updates: { label?: string; inputType?: 'text' | 'button' | 'prompt'; triggerValue?: string }) => void;
 }
 
@@ -194,6 +196,16 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
     const zoom = useStore((s) => s.transform[2]);
     const scale = Math.max(1, 1 / zoom);
     const userSurfaceClassName = 'bg-[rgb(var(--shell-node-user-surface)/1)]';
+    const commentState = typedData.commentState;
+    const isCommentHighlighted = Boolean(commentState?.isActive);
+    const isCommentPlacementMode = Boolean(commentState?.isPlacementMode);
+    const borderClassName = selected || isEditorOpen
+        ? 'border-shell-node-user ring-1 ring-shell-node-user/30'
+        : isCommentHighlighted
+            ? 'border-shell-accent ring-2 ring-shell-accent/28 shadow-[0_16px_36px_rgb(var(--shell-accent)/0.12)]'
+            : isCommentPlacementMode
+                ? 'border-shell-node-user/35 hover:border-shell-accent/60 hover:ring-1 hover:ring-shell-accent/18 cursor-pointer'
+                : 'border-shell-node-user/35 hover:border-shell-node-user/60';
 
     const promptText = getLinkedPromptText();
     const linkedButtonText = getLinkedButtonText();
@@ -214,12 +226,10 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
         >
             <div
                 id={`node-${id}`}
-                className={`${userSurfaceClassName} rounded-lg border shadow-sm w-[280px] transition-all relative overflow-visible ${selected || isEditorOpen
-                    ? 'border-shell-node-user ring-1 ring-shell-node-user/30'
-                    : 'border-shell-node-user/35 hover:border-shell-node-user/60'
-                    }`}
+                className={`${userSurfaceClassName} rounded-lg border shadow-sm w-[280px] transition-all relative overflow-visible ${borderClassName}`}
                 onClick={() => {
                     // Don't stop propagation so React Flow selects the node
+                    if (typedData.commentState?.isPlacementMode) return;
                     setIsEditorOpen(true);
                 }}
             >

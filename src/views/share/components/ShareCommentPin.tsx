@@ -83,6 +83,11 @@ export function ShareCommentPin({
                 viewBox={`0 0 ${SHARE_COMMENT_PIN_WIDTH_PX} ${SHARE_COMMENT_PIN_HEIGHT_PX}`}
                 className="absolute inset-0 h-full w-full overflow-visible"
                 aria-hidden="true"
+                style={{
+                    width: '100%',
+                    height: '100%',
+                    display: 'block',
+                }}
             >
                 {pinStyle.glowStroke ? (
                     <path

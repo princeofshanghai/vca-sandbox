@@ -15,6 +15,7 @@ import {
     MarkerType,
     Position,
     SelectionMode,
+    useViewport,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { TurnNode } from './nodes/TurnNode';
@@ -48,6 +49,24 @@ import {
 } from '@/components/shell';
 import { UserMenu } from '@/components/layout/UserMenu';
 import { VcaIcon } from '@/components/vca-components/icons/VcaIcon';
+import { cn } from '@/utils/cn';
+import { CanvasCommentPopover } from '../studio/CanvasCommentPopover';
+import {
+    getCanvasCommentAnchor,
+} from '../studio/canvasComments';
+import { createDefaultConditionBranches } from '../studio/conditionBranches';
+import { materializeConditionQuestion } from '../studio/conditionBranchLabels';
+import type { CanvasCommentsController } from '../studio/useCanvasCommentsController';
+import {
+    type FlowCommentCanvasAnchor,
+    type FlowCommentThread,
+    isFlowCommentCanvasNodeAnchor,
+} from '../share/shareComments';
+import {
+    ShareCommentPin,
+    SHARE_COMMENT_PIN_TIP_OFFSET_PX,
+    SHARE_COMMENT_PIN_TIP_TO_CENTER_OFFSET_PX,
+} from '../share/components/ShareCommentPin';
 
 
 // Register custom node types
@@ -106,6 +125,15 @@ interface CanvasEditorProps {
     onBack: () => void;
     onPreview: () => void;
     isPreviewActive?: boolean;
+    onToggleComments?: () => void;
+    onOpenCommentsPanel?: () => void;
+    isCommentModeActive?: boolean;
+    isCommentsPanelOpen?: boolean;
+    comments?: CanvasCommentsController | null;
+    showCommentsToggle?: {
+        checked: boolean;
+        onCheckedChange: (checked: boolean) => void;
+    };
     header?: React.ReactNode;
     mode?: 'edit' | 'share-readonly';
 }
@@ -145,6 +173,96 @@ interface PendingToolbarPlacementState {
     type: ToolbarPlacementType;
     canvasPosition: { x: number; y: number } | null;
 }
+
+type CanvasPinPoint = {
+    x: number;
+    y: number;
+};
+
+type ComposerSide = 'left' | 'right';
+
+type ComposerPlacement = {
+    left: number;
+    top: number;
+    side: ComposerSide;
+};
+
+type RenderedCanvasCommentPin = {
+    thread: FlowCommentThread;
+    anchor: FlowCommentCanvasAnchor;
+    point: CanvasPinPoint;
+};
+
+type CommentDragState = {
+    threadId: string;
+    pointerId: number;
+    startClientX: number;
+    startClientY: number;
+    movedPx: number;
+    originPoint: CanvasPinPoint;
+    draftPoint: CanvasPinPoint;
+    draftAnchor: FlowCommentCanvasAnchor;
+};
+
+const COMMENT_POPUP_EDGE_PADDING_PX = 12;
+const COMMENT_POPUP_WIDTH_PX = 400;
+const COMMENT_POPUP_NEW_HEIGHT_PX = 104;
+const COMMENT_POPUP_THREAD_HEIGHT_PX = 380;
+const COMMENT_POPUP_GAP_PX = 8 + 20;
+const COMMENT_DRAG_THRESHOLD_PX = 5;
+const COMMENT_PLACE_CURSOR_SVG = `
+<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none">
+  <path
+    fill="#FFF"
+    stroke="#000"
+    stroke-width="2"
+    stroke-linejoin="round"
+    d="M7.5 5.5h13A4.5 4.5 0 0 1 25 10v5.5A4.5 4.5 0 0 1 20.5 20H15l-4.75 4.5a.75.75 0 0 1-1.27-.54V20H7.5A4.5 4.5 0 0 1 3 15.5V10a4.5 4.5 0 0 1 4.5-4.5Z"
+  />
+</svg>
+`.trim();
+const COMMENT_PLACEMENT_CURSOR = `url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(
+    COMMENT_PLACE_CURSOR_SVG
+)}") 10 24, crosshair`;
+
+const clampValue = (value: number, min: number, max: number) => {
+    if (max < min) return min;
+    return Math.min(Math.max(value, min), max);
+};
+
+const getAnchoredPopoverPosition = ({
+    surfaceRect,
+    anchor,
+    popoverWidth,
+    popoverHeight,
+    gapPx = COMMENT_POPUP_GAP_PX,
+    anchorOffsetYPx = 0,
+}: {
+    surfaceRect: DOMRect;
+    anchor: CanvasPinPoint;
+    popoverWidth: number;
+    popoverHeight: number;
+    gapPx?: number;
+    anchorOffsetYPx?: number;
+}): ComposerPlacement => {
+    const availableRight = surfaceRect.width - anchor.x;
+    const availableLeft = anchor.x;
+    const side: ComposerSide =
+        availableRight >= popoverWidth + gapPx || availableRight >= availableLeft ? 'right' : 'left';
+
+    const left =
+        side === 'right'
+            ? clampValue(anchor.x + gapPx, COMMENT_POPUP_EDGE_PADDING_PX, surfaceRect.width - popoverWidth - COMMENT_POPUP_EDGE_PADDING_PX)
+            : clampValue(anchor.x - gapPx - popoverWidth, COMMENT_POPUP_EDGE_PADDING_PX, surfaceRect.width - popoverWidth - COMMENT_POPUP_EDGE_PADDING_PX);
+
+    const top = clampValue(
+        anchor.y + anchorOffsetYPx - popoverHeight / 2,
+        COMMENT_POPUP_EDGE_PADDING_PX,
+        surfaceRect.height - popoverHeight - COMMENT_POPUP_EDGE_PADDING_PX
+    );
+
+    return { left, top, side };
+};
 
 const getToolbarPlacementPreviewConfig = (type: ToolbarPlacementType): {
     label: string;
@@ -257,6 +375,7 @@ const cloneNodeStepForPaste = (step: ClipboardNodeStep, pasteCount: number): Cli
             ...clonedStep,
             id: crypto.randomUUID(),
             label: withCopySuffix(clonedStep.label, 'Condition'),
+            question: materializeConditionQuestion(clonedStep.question, clonedStep.label),
             position: {
                 x: (clonedStep.position?.x ?? 250) + offset,
                 y: (clonedStep.position?.y ?? 0) + offset,
@@ -357,11 +476,23 @@ function CanvasEditorInner({
     onBack,
     onPreview,
     isPreviewActive,
+    onToggleComments,
+    onOpenCommentsPanel,
+    isCommentModeActive: isCommentModeActiveProp = false,
+    isCommentsPanelOpen = false,
+    comments = null,
+    showCommentsToggle,
     mode = 'edit',
 }: CanvasEditorProps) {
-    const { screenToFlowPosition } = useReactFlow();
+    const { screenToFlowPosition, setCenter } = useReactFlow();
+    const viewport = useViewport();
     const canvasAreaRef = useRef<HTMLDivElement | null>(null);
+    const commentPopoverRef = useRef<HTMLDivElement | null>(null);
+    const suppressNextCommentPlacementRef = useRef(false);
+    const suppressCommentClickRef = useRef<{ threadId: string; expiresAt: number } | null>(null);
     const isReadOnly = mode === 'share-readonly';
+    const isCommentModeActive = !isReadOnly && isCommentModeActiveProp;
+    const areCommentsVisible = !!comments;
 
     // Selection state
     const [selection, setSelection] = useState<SelectionState | null>(null);
@@ -378,6 +509,10 @@ function CanvasEditorInner({
     const [quickAddMenu, setQuickAddMenu] = useState<QuickAddMenuState | null>(null);
     const [quickAddConnectionPreview, setQuickAddConnectionPreview] = useState<QuickAddConnectionPreviewState | null>(null);
     const [pendingToolbarPlacement, setPendingToolbarPlacement] = useState<PendingToolbarPlacementState | null>(null);
+    const [commentDragState, setCommentDragState] = useState<CommentDragState | null>(null);
+    const [commentComposerPlacement, setCommentComposerPlacement] = useState<ComposerPlacement | null>(null);
+    const [renderedCommentPins, setRenderedCommentPins] = useState<RenderedCanvasCommentPin[]>([]);
+    const [pendingCommentPoint, setPendingCommentPoint] = useState<CanvasPinPoint | null>(null);
 
     const applyFlowUpdate = useCallback((nextFlow: Flow) => {
         if (isReadOnly) return;
@@ -422,6 +557,54 @@ function CanvasEditorInner({
             y: client.y - canvasRect.top,
         };
     }, []);
+
+    const getCanvasPointFromClient = useCallback((clientX: number, clientY: number): CanvasPinPoint | null => {
+        const canvasRect = canvasAreaRef.current?.getBoundingClientRect();
+        if (!canvasRect) return null;
+
+        return {
+            x: clientX - canvasRect.left,
+            y: clientY - canvasRect.top,
+        };
+    }, []);
+
+    const getFreeAnchorFromClient = useCallback((clientX: number, clientY: number) => {
+        const worldPoint = screenToFlowPosition({ x: clientX, y: clientY });
+        const point = getCanvasPointFromClient(clientX, clientY);
+        if (!point) return null;
+
+        return {
+            anchor: {
+                anchorMode: 'canvas' as const,
+                anchorKind: 'feedback' as const,
+                canvasAnchorType: 'free' as const,
+                anchorCanvasX: Number(worldPoint.x.toFixed(2)),
+                anchorCanvasY: Number(worldPoint.y.toFixed(2)),
+            },
+            point,
+        };
+    }, [getCanvasPointFromClient, screenToFlowPosition]);
+
+    const resolveCanvasPointForAnchor = useCallback((anchor: FlowCommentCanvasAnchor): CanvasPinPoint | null => {
+        if (isFlowCommentCanvasNodeAnchor(anchor)) {
+            const canvasRect = canvasAreaRef.current?.getBoundingClientRect();
+            const nodeEl = document.getElementById(`node-${anchor.anchorStepId}`);
+            if (!canvasRect || !nodeEl) return null;
+
+            const nodeRect = nodeEl.getBoundingClientRect();
+            if (nodeRect.width <= 0 || nodeRect.height <= 0) return null;
+
+            return {
+                x: nodeRect.left - canvasRect.left + (nodeRect.width * anchor.anchorLocalX) / 100,
+                y: nodeRect.top - canvasRect.top + (nodeRect.height * anchor.anchorLocalY) / 100,
+            };
+        }
+
+        return {
+            x: viewport.x + anchor.anchorCanvasX * viewport.zoom,
+            y: viewport.y + anchor.anchorCanvasY * viewport.zoom,
+        };
+    }, [viewport.x, viewport.y, viewport.zoom]);
 
     const focusNodeWithToolbar = useCallback((nodeId: string, openAddComponentPopover = false) => {
         let attempts = 0;
@@ -492,10 +675,8 @@ function CanvasEditorInner({
                 id: crypto.randomUUID(),
                 type: 'condition',
                 label: `Condition ${conditionCount}`,
-                branches: [
-                    { id: crypto.randomUUID(), condition: 'Yes' },
-                    { id: crypto.randomUUID(), condition: 'No' },
-                ],
+                question: '',
+                branches: createDefaultConditionBranches(),
                 position,
             };
 
@@ -664,6 +845,15 @@ function CanvasEditorInner({
         setPendingReactFlowSelectedNodeIds([]);
     }, [setCanvasSelection]);
 
+    useEffect(() => {
+        if (!isCommentModeActive) return;
+        handleDeselect();
+        setQuickAddMenu(null);
+        setQuickAddConnectionPreview(null);
+        setPendingToolbarPlacement(null);
+        setPendingAutoOpenAddComponentNodeId(null);
+    }, [handleDeselect, isCommentModeActive]);
+
     const handleSelectComponent = useCallback((
         nodeId: string,
         componentId: string,
@@ -706,13 +896,6 @@ function CanvasEditorInner({
         setPendingReactFlowSelectedNodeIds([]);
     }, [setCanvasSelection]);
 
-    const handleSelectBranch = useCallback((nodeId: string, branchId: string, _anchorEl: HTMLElement) => {
-        setCanvasSelection({ type: 'branch', nodeId, branchId });
-        setSelectionAnchorEl(null);
-        setPendingAutoOpenAddComponentNodeId(null);
-        setPendingReactFlowSelectedNodeIds([]);
-    }, [setCanvasSelection]);
-
     const handleTurnLabelChange = useCallback((nodeId: string, newLabel: string) => {
         const currentFlow = flowRef.current;
         if (!currentFlow.steps) return;
@@ -722,7 +905,7 @@ function CanvasEditorInner({
                 : s
         );
         applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
-    }, [onUpdateFlow]);
+    }, [applyFlowUpdate]);
 
     const handleTurnComponentUpdate = useCallback((nodeId: string, componentId: string, updates: Partial<Component>) => {
         const currentFlow = flowRef.current;
@@ -770,7 +953,7 @@ function CanvasEditorInner({
             connections: updatedConnections,
             lastModified: Date.now()
         });
-    }, [onUpdateFlow]);
+    }, [applyFlowUpdate]);
 
     const handleTurnComponentReorder = useCallback((nodeId: string, activeComponentId: string, overComponentId: string) => {
         if (activeComponentId === overComponentId) return;
@@ -805,7 +988,7 @@ function CanvasEditorInner({
         if (!didReorder) return;
 
         applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
-    }, [onUpdateFlow]);
+    }, [applyFlowUpdate]);
 
     const handleUserTurnUpdate = useCallback((nodeId: string, updates: Partial<UserTurn>) => {
         const currentFlow = flowRef.current;
@@ -816,18 +999,33 @@ function CanvasEditorInner({
                 : s
         );
         applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
-    }, [onUpdateFlow]);
+    }, [applyFlowUpdate]);
 
     const handleConditionLabelChange = useCallback((nodeId: string, newLabel: string) => {
         const currentFlow = flowRef.current;
         if (!currentFlow.steps) return;
         const updatedSteps = currentFlow.steps.map(s =>
             s.id === nodeId && s.type === 'condition'
-                ? { ...s, label: newLabel }
+                ? {
+                    ...s,
+                    label: newLabel,
+                    question: materializeConditionQuestion(s.question, s.label),
+                }
                 : s
         );
         applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
-    }, [onUpdateFlow]);
+    }, [applyFlowUpdate]);
+
+    const handleConditionQuestionChange = useCallback((nodeId: string, newQuestion: string) => {
+        const currentFlow = flowRef.current;
+        if (!currentFlow.steps) return;
+        const updatedSteps = currentFlow.steps.map(s =>
+            s.id === nodeId && s.type === 'condition'
+                ? { ...s, question: newQuestion }
+                : s
+        );
+        applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
+    }, [applyFlowUpdate]);
 
     const handleConditionUpdateBranches = useCallback((nodeId: string, branches: Branch[]) => {
         const currentFlow = flowRef.current;
@@ -838,7 +1036,7 @@ function CanvasEditorInner({
                 : s
         );
         applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
-    }, [onUpdateFlow]);
+    }, [applyFlowUpdate]);
 
     const handleNoteLabelChange = useCallback((nodeId: string, newLabel: string) => {
         const currentFlow = flowRef.current;
@@ -849,7 +1047,7 @@ function CanvasEditorInner({
                 : s
         );
         applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
-    }, [onUpdateFlow]);
+    }, [applyFlowUpdate]);
 
     const handleNoteContentChange = useCallback((nodeId: string, newContent: string) => {
         const currentFlow = flowRef.current;
@@ -860,7 +1058,7 @@ function CanvasEditorInner({
                 : s
         );
         applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
-    }, [onUpdateFlow]);
+    }, [applyFlowUpdate]);
 
     const resolveDefaultUserTurnInputType = useCallback((
         sourceNodeId: string,
@@ -932,10 +1130,8 @@ function CanvasEditorInner({
                 id: crypto.randomUUID(),
                 type: 'condition',
                 label: `Condition ${conditionCount}`,
-                branches: [
-                    { id: crypto.randomUUID(), condition: 'Yes' },
-                    { id: crypto.randomUUID(), condition: 'No' },
-                ],
+                question: '',
+                branches: createDefaultConditionBranches(),
                 position,
             };
         } else {
@@ -966,7 +1162,7 @@ function CanvasEditorInner({
         if (newStep.type === 'turn') {
             focusNodeWithToolbar(newStep.id, true);
         }
-    }, [focusNodeWithToolbar, onUpdateFlow, resolveDefaultUserTurnInputType]);
+    }, [applyFlowUpdate, focusNodeWithToolbar, resolveDefaultUserTurnInputType]);
 
     const onConnectStart: OnConnectStart = useCallback((event, params) => {
         if (isReadOnly) return;
@@ -1164,7 +1360,15 @@ function CanvasEditorInner({
 
         applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
         setPendingAutoOpenAddComponentNodeId(null);
-    }, [onUpdateFlow]);
+    }, [applyFlowUpdate]);
+
+    const getNodeCommentState = useCallback(() => {
+        return {
+            hasComments: false,
+            isActive: false,
+            isPlacementMode: isCommentModeActive,
+        };
+    }, [isCommentModeActive]);
 
     // Convert flow steps to React Flow nodes
     const baseNodes = useMemo(() => {
@@ -1193,6 +1397,8 @@ function CanvasEditorInner({
 
         // Use new Turn structure
         return steps.map((step) => {
+            const commentState = getNodeCommentState();
+
             if (step.type === 'turn') {
                 return {
                     id: step.id,
@@ -1205,6 +1411,7 @@ function CanvasEditorInner({
                         components: step.components,
                         entryPoint: flow.settings.entryPoint,
                         readOnly: isReadOnly,
+                        commentState,
                         onSelectComponent: handleSelectComponent,
                         onDeselect: handleDeselect,
                         onComponentReorder: handleTurnComponentReorder,
@@ -1222,6 +1429,7 @@ function CanvasEditorInner({
                         inputType: step.inputType || 'button', // Default key
                         triggerValue: step.triggerValue,
                         readOnly: isReadOnly,
+                        commentState,
                         onUpdate: handleUserTurnUpdate,
                     }
                 };
@@ -1233,13 +1441,13 @@ function CanvasEditorInner({
                     position: step.position || { x: 250, y: 0 },
                     data: {
                         label: step.label,
+                        question: step.question,
                         branches: step.branches,
-                        selectedBranchId: undefined,
                         readOnly: isReadOnly,
+                        commentState,
                         onLabelChange: handleConditionLabelChange,
+                        onQuestionChange: handleConditionQuestionChange,
                         onUpdateBranches: handleConditionUpdateBranches,
-                        onSelectBranch: handleSelectBranch,
-                        onDeselect: handleDeselect,
                     },
                 };
             } else if (step.type === 'note') {
@@ -1251,6 +1459,7 @@ function CanvasEditorInner({
                         label: step.label,
                         content: step.content,
                         readOnly: isReadOnly,
+                        commentState,
                         onLabelChange: handleNoteLabelChange,
                         onContentChange: handleNoteContentChange,
                     },
@@ -1272,11 +1481,12 @@ function CanvasEditorInner({
         flow.settings.entryPoint,
         flow.steps,
         handleConditionLabelChange,
+        handleConditionQuestionChange,
         handleConditionUpdateBranches,
         handleDeselect,
+        getNodeCommentState,
         handleNoteContentChange,
         handleNoteLabelChange,
-        handleSelectBranch,
         handleSelectComponent,
         handleTurnComponentReorder,
         handleTurnComponentUpdate,
@@ -1320,8 +1530,167 @@ function CanvasEditorInner({
     const [nodes, setNodes, onNodesChange] = useNodesState(baseNodes as Node[]);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges as Edge[]);
 
+    useEffect(() => {
+        if (!comments) {
+            setRenderedCommentPins([]);
+            setPendingCommentPoint(null);
+            return;
+        }
+
+        const nextRenderedPins = comments.threads
+            .map((thread) => {
+                const fallbackAnchor = getCanvasCommentAnchor(thread.root);
+                const anchor =
+                    commentDragState?.threadId === thread.id
+                        ? commentDragState.draftAnchor
+                        : fallbackAnchor;
+
+                if (!anchor) return null;
+
+                const point =
+                    commentDragState?.threadId === thread.id
+                        ? commentDragState.draftPoint
+                        : resolveCanvasPointForAnchor(anchor);
+
+                if (!point) return null;
+
+                return {
+                    thread,
+                    anchor,
+                    point,
+                };
+            })
+            .filter((pin): pin is RenderedCanvasCommentPin => !!pin);
+
+        setRenderedCommentPins(nextRenderedPins);
+        setPendingCommentPoint(
+            comments.pendingComment
+                ? resolveCanvasPointForAnchor(comments.pendingComment.anchor)
+                : null
+        );
+    }, [commentDragState, comments, resolveCanvasPointForAnchor]);
+
+    const renderedCommentPinMap = useMemo(
+        () => new Map(renderedCommentPins.map((pin) => [pin.thread.id, pin])),
+        [renderedCommentPins]
+    );
+
+    const commentComposerAnchor = pendingCommentPoint ||
+        (comments?.activeThreadId
+            ? renderedCommentPinMap.get(comments.activeThreadId)?.point || null
+            : null);
+
+    useEffect(() => {
+        if (!isCommentModeActive) {
+            setCommentDragState(null);
+            setCommentComposerPlacement(null);
+            suppressNextCommentPlacementRef.current = false;
+        }
+    }, [isCommentModeActive]);
+
+    useEffect(() => {
+        if (!commentComposerAnchor) {
+            setCommentComposerPlacement(null);
+            return;
+        }
+
+        const updatePlacement = () => {
+            const canvasRect = canvasAreaRef.current?.getBoundingClientRect();
+            if (!canvasRect) return;
+
+            const popoverRect = commentPopoverRef.current?.getBoundingClientRect();
+            const popoverWidth = popoverRect?.width || COMMENT_POPUP_WIDTH_PX;
+            const popoverHeight =
+                popoverRect?.height ||
+                (comments?.pendingComment ? COMMENT_POPUP_NEW_HEIGHT_PX : COMMENT_POPUP_THREAD_HEIGHT_PX);
+
+            setCommentComposerPlacement(
+                getAnchoredPopoverPosition({
+                    surfaceRect: canvasRect,
+                    anchor: commentComposerAnchor,
+                    popoverWidth,
+                    popoverHeight,
+                    anchorOffsetYPx: -SHARE_COMMENT_PIN_TIP_TO_CENTER_OFFSET_PX,
+                })
+            );
+        };
+
+        updatePlacement();
+
+        const resizeObserver = typeof ResizeObserver !== 'undefined'
+            ? new ResizeObserver(() => updatePlacement())
+            : null;
+
+        if (resizeObserver) {
+            if (canvasAreaRef.current) resizeObserver.observe(canvasAreaRef.current);
+            if (commentPopoverRef.current) resizeObserver.observe(commentPopoverRef.current);
+        }
+
+        window.addEventListener('resize', updatePlacement);
+        return () => {
+            window.removeEventListener('resize', updatePlacement);
+            resizeObserver?.disconnect();
+        };
+    }, [commentComposerAnchor, comments?.pendingComment]);
+
+    useEffect(() => {
+        if (!comments?.pendingRevealThreadId) return;
+
+        const targetPin = renderedCommentPinMap.get(comments.pendingRevealThreadId);
+        if (!targetPin) {
+            comments.markRevealHandled();
+            return;
+        }
+
+        const worldPoint = {
+            x: (targetPin.point.x - viewport.x) / viewport.zoom,
+            y: (targetPin.point.y - viewport.y) / viewport.zoom,
+        };
+
+        setCenter(worldPoint.x, worldPoint.y, {
+            zoom: viewport.zoom,
+            duration: 260,
+        });
+        comments.markRevealHandled();
+    }, [comments, renderedCommentPinMap, setCenter, viewport.x, viewport.y, viewport.zoom]);
+
+    useEffect(() => {
+        if (!comments && !isCommentModeActive) return;
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key !== 'Escape') return;
+
+            if (comments?.pendingComment || comments?.activeThreadId) {
+                comments?.dismissComposer();
+                return;
+            }
+
+            onToggleComments?.();
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [comments, isCommentModeActive, onToggleComments]);
+
     // Handle node clicks natively from React Flow
     const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
+        if (isCommentModeActive) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            if (suppressNextCommentPlacementRef.current) {
+                suppressNextCommentPlacementRef.current = false;
+                return;
+            }
+
+            const placement = getFreeAnchorFromClient(event.clientX, event.clientY);
+            if (!placement) return;
+
+            comments?.startPendingComment(placement.anchor);
+
+            return;
+        }
+
         if (placePendingToolbarPlacementAtClient({ x: event.clientX, y: event.clientY })) {
             event.preventDefault();
             event.stopPropagation();
@@ -1337,7 +1706,7 @@ function CanvasEditorInner({
         setCanvasSelection({ type: 'node', nodeId: node.id });
         setSelectionAnchorEl(event.currentTarget as HTMLElement);
         setPendingAutoOpenAddComponentNodeId(isEmptyAiTurnNode(node.id) ? node.id : null);
-    }, [isEmptyAiTurnNode, placePendingToolbarPlacementAtClient, setCanvasSelection]);
+    }, [comments, getFreeAnchorFromClient, isCommentModeActive, isEmptyAiTurnNode, placePendingToolbarPlacementAtClient, setCanvasSelection]);
 
     const onEdgeClick = useCallback((event: React.MouseEvent) => {
         if (!placePendingToolbarPlacementAtClient({ x: event.clientX, y: event.clientY })) {
@@ -1349,6 +1718,10 @@ function CanvasEditorInner({
     }, [placePendingToolbarPlacementAtClient]);
 
     const onSelectionChange = useCallback(({ nodes: selectedNodes }: { nodes: Node[]; edges: Edge[] }) => {
+        if (isCommentModeActive) {
+            return;
+        }
+
         const selectedNodeIds = selectedNodes.map((node) => node.id);
         const currentSelection = selectionRef.current;
 
@@ -1371,7 +1744,7 @@ function CanvasEditorInner({
         setCanvasSelection({ type: 'nodes', nodeIds: selectedNodeIds });
         setSelectionAnchorEl(null);
         setPendingAutoOpenAddComponentNodeId(null);
-    }, [handleDeselect, setCanvasSelection]);
+    }, [handleDeselect, isCommentModeActive, setCanvasSelection]);
 
     // Sync edges when flow model changes
     useEffect(() => {
@@ -1424,7 +1797,6 @@ function CanvasEditorInner({
                     const existingData = existingNode.data as {
                         selectedComponentIds?: string[];
                         openComponentId?: string;
-                        selectedBranchId?: string;
                     } | undefined;
                     let nextData: unknown = newNode.data;
 
@@ -1433,11 +1805,6 @@ function CanvasEditorInner({
                             ...(newNode.data as Record<string, unknown>),
                             selectedComponentIds: existingData?.selectedComponentIds,
                             openComponentId: existingData?.openComponentId,
-                        };
-                    } else if (newNode.type === 'condition') {
-                        nextData = {
-                            ...(newNode.data as Record<string, unknown>),
-                            selectedBranchId: existingData?.selectedBranchId,
                         };
                     }
 
@@ -1471,8 +1838,6 @@ function CanvasEditorInner({
                     ? selection.componentIds
                     : [];
         const openComponentId = selection?.type === 'component' ? selection.componentId : undefined;
-        const selectedBranchNodeId = selection?.type === 'branch' ? selection.nodeId : null;
-        const selectedBranchId = selection?.type === 'branch' ? selection.branchId : undefined;
 
         setNodes((currentNodes) => {
             let didChange = false;
@@ -1495,19 +1860,6 @@ function CanvasEditorInner({
                             selectedComponentIds: nextSelectedIds,
                             openComponentId: nextOpenId,
                         }
-                    };
-                }
-
-                if (node.type === 'condition') {
-                    const data = node.data as { selectedBranchId?: string };
-                    const nextSelected = node.id === selectedBranchNodeId ? selectedBranchId : undefined;
-                    if (data.selectedBranchId === nextSelected) {
-                        return node;
-                    }
-                    didChange = true;
-                    return {
-                        ...node,
-                        data: { ...data, selectedBranchId: nextSelected }
                     };
                 }
 
@@ -1536,7 +1888,7 @@ function CanvasEditorInner({
         });
 
         applyFlowUpdate({ ...flow, steps: updatedSteps, lastModified: Date.now() });
-    }, [flow, onUpdateFlow]);
+    }, [flow, applyFlowUpdate]);
 
     // Connection handler
     const onConnect: OnConnect = useCallback(
@@ -1632,7 +1984,7 @@ function CanvasEditorInner({
                 lastModified: Date.now()
             });
         },
-        [flow, onUpdateFlow]
+        [flow, applyFlowUpdate]
     );
 
     const handleChangeUserTurnInputType = (inputType: 'text' | 'prompt' | 'button') => {
@@ -1674,7 +2026,7 @@ function CanvasEditorInner({
                 }
             }
         }
-    }, [onUpdateFlow]); // implementation uses refs
+    }, [applyFlowUpdate]); // implementation uses refs
 
     const handleMoveComponentDown = useCallback(() => {
         const currentSelection = selectionRef.current;
@@ -1704,7 +2056,7 @@ function CanvasEditorInner({
                 }
             }
         }
-    }, [onUpdateFlow]); // implementation uses refs
+    }, [applyFlowUpdate]); // implementation uses refs
 
 
     // Native React Flow delete handler (supports multi-selection)
@@ -1736,7 +2088,7 @@ function CanvasEditorInner({
         if (getSelectionNodeIds(currentSelection).some((nodeId) => deletedIds.has(nodeId))) {
             handleDeselect();
         }
-    }, [onUpdateFlow, handleDeselect]); // flowRef used inside
+    }, [applyFlowUpdate, handleDeselect]); // flowRef used inside
 
     const onEdgesDelete = useCallback((deletedEdges: Edge[]) => {
         const currentFlow = flowRef.current;
@@ -1751,7 +2103,7 @@ function CanvasEditorInner({
             connections: updatedConnections,
             lastModified: Date.now()
         });
-    }, [onUpdateFlow]);
+    }, [applyFlowUpdate]);
 
 
     const handleDeleteComponent = useCallback(() => {
@@ -2167,6 +2519,16 @@ function CanvasEditorInner({
             const isMetaOrCtrl = e.metaKey || e.ctrlKey;
             const keyLower = e.key.toLowerCase();
 
+            if (!isMetaOrCtrl && !e.altKey && !e.shiftKey && keyLower === 'c') {
+                e.preventDefault();
+                onToggleComments?.();
+                return;
+            }
+
+            if (isCommentModeActive) {
+                return;
+            }
+
             if (isMetaOrCtrl && keyLower === 'c' && !e.altKey) {
                 const didCopy = handleCopySelection();
                 if (didCopy) {
@@ -2268,7 +2630,7 @@ function CanvasEditorInner({
             window.removeEventListener('keydown', handleKeyDown, true);
             window.removeEventListener('keyup', handleKeyUp);
         };
-    }, [armPendingToolbarPlacement, cancelPendingToolbarPlacement, handleCopySelection, handleDeleteSelection, handleDeselect, handleMoveComponentDown, handleMoveComponentUp, handlePasteSelection, moveSelectedBranch, pendingToolbarPlacement]);
+    }, [armPendingToolbarPlacement, cancelPendingToolbarPlacement, handleCopySelection, handleDeleteSelection, handleDeselect, handleMoveComponentDown, handleMoveComponentUp, handlePasteSelection, isCommentModeActive, moveSelectedBranch, onToggleComments, pendingToolbarPlacement]);
 
     // Node Cloning Logic
     const onNodeDragStart = useCallback((event: React.MouseEvent, node: Node) => {
@@ -2300,6 +2662,7 @@ function CanvasEditorInner({
                 staticOriginalClone = {
                     ...originalStep,
                     id: newOriginalId,
+                    question: materializeConditionQuestion(originalStep.question, originalStep.label),
                     // Keep branch IDs so branch-handle connections remain valid.
                     branches: originalStep.branches.map(b => ({ ...b })),
                 };
@@ -2336,10 +2699,21 @@ function CanvasEditorInner({
             const draggedNodeIndex = updatedSteps.findIndex(s => s.id === node.id);
             if (draggedNodeIndex !== -1) {
                 const nodeToUpdate = updatedSteps[draggedNodeIndex];
-                if (nodeToUpdate.type !== 'start' && 'label' in nodeToUpdate) {
+                if (nodeToUpdate.type === 'condition') {
                     updatedSteps[draggedNodeIndex] = {
                         ...nodeToUpdate,
-                        label: `${nodeToUpdate.label} (Copy)`
+                        label: withCopySuffix(nodeToUpdate.label, 'Condition'),
+                        question: materializeConditionQuestion(nodeToUpdate.question, nodeToUpdate.label),
+                    };
+                } else if (nodeToUpdate.type !== 'start' && 'label' in nodeToUpdate) {
+                    const fallbackLabel = nodeToUpdate.type === 'turn'
+                        ? 'AI Turn'
+                        : nodeToUpdate.type === 'user-turn'
+                            ? 'User Turn'
+                            : 'Sticky note';
+                    updatedSteps[draggedNodeIndex] = {
+                        ...nodeToUpdate,
+                        label: withCopySuffix(nodeToUpdate.label, fallbackLabel),
                     };
                 }
             }
@@ -2354,7 +2728,7 @@ function CanvasEditorInner({
                 lastModified: Date.now()
             });
         }
-    }, [flow, onUpdateFlow]);
+    }, [flow, applyFlowUpdate]);
 
     // Drag and Drop handlers
     const onDragOver = useCallback((event: React.DragEvent) => {
@@ -2384,6 +2758,18 @@ function CanvasEditorInner({
     );
 
     const handlePaneClick = useCallback((event: React.MouseEvent) => {
+        if (isCommentModeActive) {
+            if (suppressNextCommentPlacementRef.current) {
+                suppressNextCommentPlacementRef.current = false;
+                return;
+            }
+
+            const placement = getFreeAnchorFromClient(event.clientX, event.clientY);
+            if (!placement) return;
+            comments?.startPendingComment(placement.anchor);
+            return;
+        }
+
         if (placePendingToolbarPlacementAtClient({ x: event.clientX, y: event.clientY })) {
             return;
         }
@@ -2391,7 +2777,115 @@ function CanvasEditorInner({
         handleDeselect();
         setQuickAddMenu(null);
         setQuickAddConnectionPreview(null);
-    }, [handleDeselect, placePendingToolbarPlacementAtClient]);
+    }, [comments, getFreeAnchorFromClient, handleDeselect, isCommentModeActive, placePendingToolbarPlacementAtClient]);
+
+    const handleCanvasPointerDownCapture = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+        if (!comments?.pendingComment && !comments?.activeThreadId) {
+            return;
+        }
+
+        const target = event.target as HTMLElement | null;
+        if (!target) return;
+        if (commentPopoverRef.current?.contains(target)) return;
+        if (target.closest('[data-comment-pin-id]')) return;
+
+        suppressNextCommentPlacementRef.current = true;
+        comments.dismissComposer();
+    }, [comments]);
+
+    const openCommentThread = useCallback((threadId: string, options?: { reveal?: boolean }) => {
+        onOpenCommentsPanel?.();
+        comments?.selectThread(threadId, options);
+    }, [comments, onOpenCommentsPanel]);
+
+    const handleCommentPinPointerDown = useCallback((
+        event: React.PointerEvent<HTMLButtonElement>,
+        renderedPin: RenderedCanvasCommentPin
+    ) => {
+        if (!comments?.canManageComment(renderedPin.thread.root)) return;
+        if (renderedPin.thread.root.status === 'resolved') return;
+        if (event.button !== 0 || event.pointerType === 'touch') return;
+
+        event.preventDefault();
+        event.stopPropagation();
+        event.currentTarget.setPointerCapture(event.pointerId);
+
+        setCommentDragState({
+            threadId: renderedPin.thread.id,
+            pointerId: event.pointerId,
+            startClientX: event.clientX,
+            startClientY: event.clientY,
+            movedPx: 0,
+            originPoint: renderedPin.point,
+            draftPoint: renderedPin.point,
+            draftAnchor: renderedPin.anchor,
+        });
+    }, [comments]);
+
+    const handleCommentPinPointerMove = useCallback((
+        event: React.PointerEvent<HTMLButtonElement>,
+        renderedPin: RenderedCanvasCommentPin
+    ) => {
+        setCommentDragState((current) => {
+            if (!current || current.threadId !== renderedPin.thread.id || current.pointerId !== event.pointerId) {
+                return current;
+            }
+
+            const movedPx = Math.hypot(event.clientX - current.startClientX, event.clientY - current.startClientY);
+            if (movedPx < COMMENT_DRAG_THRESHOLD_PX) {
+                return current.movedPx === movedPx ? current : { ...current, movedPx };
+            }
+
+            const nextPlacement = getFreeAnchorFromClient(event.clientX, event.clientY);
+            if (!nextPlacement) {
+                return { ...current, movedPx };
+            }
+
+            return {
+                ...current,
+                movedPx,
+                draftPoint: nextPlacement.point,
+                draftAnchor: nextPlacement.anchor,
+            };
+        });
+    }, [getFreeAnchorFromClient]);
+
+    const handleCommentPinPointerCancel = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
+        if (!commentDragState || commentDragState.pointerId !== event.pointerId) return;
+        if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+            event.currentTarget.releasePointerCapture(event.pointerId);
+        }
+        setCommentDragState(null);
+    }, [commentDragState]);
+
+    const handleCommentPinPointerUp = useCallback((
+        event: React.PointerEvent<HTMLButtonElement>,
+        renderedPin: RenderedCanvasCommentPin
+    ) => {
+        const current = commentDragState;
+        if (!current || current.threadId !== renderedPin.thread.id || current.pointerId !== event.pointerId) {
+            return;
+        }
+
+        if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+            event.currentTarget.releasePointerCapture(event.pointerId);
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (current.movedPx < COMMENT_DRAG_THRESHOLD_PX) {
+            setCommentDragState(null);
+            return;
+        }
+
+        suppressCommentClickRef.current = {
+            threadId: renderedPin.thread.id,
+            expiresAt: Date.now() + 300,
+        };
+        setCommentDragState(null);
+        void comments?.moveThreadAnchor(renderedPin.thread.id, current.draftAnchor);
+    }, [commentDragState, comments]);
 
     const connectionLineWithPreview = useCallback((props: ConnectionLineComponentProps) => (
         <ConnectionLine {...props} />
@@ -2401,22 +2895,6 @@ function CanvasEditorInner({
     const currentUserTurnInputType = selectedNodeId
         ? (flow.steps?.find(s => s.id === selectedNodeId && s.type === 'user-turn') as UserTurn | undefined)?.inputType
         : undefined;
-
-    // Get current branches for toolbar (Condition Node)
-    const currentBranches = selectedNodeId
-        ? (flow.steps?.find(s => s.id === selectedNodeId && s.type === 'condition') as Condition | undefined)?.branches
-        : undefined;
-
-    const handleUpdateBranches = (branches: Branch[]) => {
-        if (selectedNodeId) {
-            const updatedSteps = flow.steps?.map(s =>
-                s.id === selectedNodeId && s.type === 'condition'
-                    ? { ...s, branches }
-                    : s
-            );
-            applyFlowUpdate({ ...flow, steps: updatedSteps, lastModified: Date.now() });
-        }
-    };
 
     const renderPreviewOpenMenu = () => (
         <ShellMenu>
@@ -2472,6 +2950,11 @@ function CanvasEditorInner({
                 ) : (
                     <UserMenu
                         backItem={{ label: 'Back to dashboard', onSelect: onBack }}
+                        switchItems={showCommentsToggle ? [{
+                            label: 'Show comments',
+                            checked: showCommentsToggle.checked,
+                            onCheckedChange: showCommentsToggle.onCheckedChange,
+                        }] : []}
                         contentAlign="start"
                         showAccountDetails={false}
                         trigger={(
@@ -2563,7 +3046,12 @@ function CanvasEditorInner({
             </div>
 
             {/* Canvas Area */}
-            <div ref={canvasAreaRef} className="flex-1 w-full relative overflow-hidden h-full">
+            <div
+                ref={canvasAreaRef}
+                className="flex-1 w-full relative overflow-hidden h-full"
+                onPointerDownCapture={handleCanvasPointerDownCapture}
+                style={{ overscrollBehaviorX: 'none' }}
+            >
                 <style>{`
                     .react-flow__pane, 
                     .react-flow__selection-pane {
@@ -2585,6 +3073,19 @@ function CanvasEditorInner({
                     .is-placement-active .react-flow__node *,
                     .is-placement-active .react-flow__edge-path {
                         cursor: copy !important;
+                    }
+                    .is-comment-mode .react-flow__node * {
+                        pointer-events: none !important;
+                    }
+                    .is-comment-mode .react-flow__pane,
+                    .is-comment-mode .react-flow__selection-pane {
+                        cursor: ${COMMENT_PLACEMENT_CURSOR} !important;
+                    }
+                    .is-comment-mode .react-flow__node {
+                        cursor: ${COMMENT_PLACEMENT_CURSOR} !important;
+                    }
+                    .is-comment-mode .react-flow__node:hover {
+                        filter: drop-shadow(0 10px 24px rgb(15 23 42 / 0.08));
                     }
                     .thin-scrollbar::-webkit-scrollbar {
                         width: 6px;
@@ -2612,45 +3113,44 @@ function CanvasEditorInner({
                     }}
                     onNodesChange={onNodesChange}
                     onEdgesChange={onEdgesChange}
-                    onConnect={isReadOnly ? undefined : onConnect}
-                    onConnectStart={isReadOnly ? undefined : onConnectStart}
-                    onConnectEnd={isReadOnly ? undefined : onConnectEnd}
+                    onConnect={isReadOnly || isCommentModeActive ? undefined : onConnect}
+                    onConnectStart={isReadOnly || isCommentModeActive ? undefined : onConnectStart}
+                    onConnectEnd={isReadOnly || isCommentModeActive ? undefined : onConnectEnd}
                     onNodeClick={onNodeClick}
                     onEdgeClick={onEdgeClick}
-                    onNodeDragStart={isReadOnly ? undefined : onNodeDragStart}
-                    onNodesDelete={isReadOnly ? undefined : onNodesDelete}
-                    onEdgesDelete={isReadOnly ? undefined : onEdgesDelete}
-                    onNodeDragStop={isReadOnly ? undefined : onNodeDragStop}
+                    onNodeDragStart={isReadOnly || isCommentModeActive ? undefined : onNodeDragStart}
+                    onNodesDelete={isReadOnly || isCommentModeActive ? undefined : onNodesDelete}
+                    onEdgesDelete={isReadOnly || isCommentModeActive ? undefined : onEdgesDelete}
+                    onNodeDragStop={isReadOnly || isCommentModeActive ? undefined : onNodeDragStop}
                     onPaneClick={handlePaneClick}
                     onSelectionChange={onSelectionChange}
                     panOnScroll
-                    selectionOnDrag={!isReadOnly}
+                    selectionOnDrag={!isReadOnly && !isCommentModeActive}
                     selectionMode={SelectionMode.Partial}
+                    elementsSelectable={!isCommentModeActive}
                     multiSelectionKeyCode={['Shift']}
-                    panOnDrag={isReadOnly ? true : isAltPressed}
+                    panOnDrag={isReadOnly ? true : (isCommentModeActive || isAltPressed)}
                     zoomOnScroll={isReadOnly ? true : !isAltPressed}
-                    deleteKeyCode={isReadOnly ? null : ['Delete', 'Backspace']}
-                    nodesDraggable={!isReadOnly}
-                    nodesConnectable={!isReadOnly}
+                    deleteKeyCode={isReadOnly || isCommentModeActive ? null : ['Delete', 'Backspace']}
+                    nodesDraggable={!isReadOnly && !isCommentModeActive}
+                    nodesConnectable={!isReadOnly && !isCommentModeActive}
                     proOptions={{ hideAttribution: true }}
                     minZoom={0.1}
                     maxZoom={2}
-                    onDragOver={isReadOnly ? undefined : onDragOver}
-                    onDrop={isReadOnly ? undefined : onDrop}
+                    onDragOver={isReadOnly || isCommentModeActive ? undefined : onDragOver}
+                    onDrop={isReadOnly || isCommentModeActive ? undefined : onDrop}
                     connectionLineComponent={connectionLineWithPreview}
-                    className={`bg-shell-studio-canvas ${!isReadOnly && isAltPressed ? 'is-alt-pressed' : ''} ${!isReadOnly && pendingToolbarPlacement ? 'is-placement-active' : ''}`}
+                    className={`bg-shell-studio-canvas ${!isReadOnly && isAltPressed ? 'is-alt-pressed' : ''} ${!isReadOnly && pendingToolbarPlacement ? 'is-placement-active' : ''} ${isCommentModeActive ? 'is-comment-mode' : ''}`}
                 >
 
                     <Background color="rgb(var(--shell-studio-canvas-grid) / 1)" gap={20} size={2} />
-                    {!isReadOnly && selectedNodeId && (
+                    {!isReadOnly && !isCommentModeActive && selectedNodeId && (
                         <ContextToolbar
                             selection={{ type: 'node', nodeId: selectedNodeId }}
                             anchorEl={selectionAnchorEl}
                             onAddComponent={(type: ComponentType) => handleComponentAdd(type, selectedNodeId)}
                             onChangeUserTurnInputType={handleChangeUserTurnInputType}
                             currentUserTurnInputType={currentUserTurnInputType}
-                            currentBranches={currentBranches}
-                            onUpdateBranches={handleUpdateBranches}
                             autoOpenAddComponentPopover={pendingAutoOpenAddComponentNodeId === selectedNodeId}
                             onAutoOpenAddComponentHandled={() => setPendingAutoOpenAddComponentNodeId(null)}
                             isAiTurn={flow.steps?.some(s => s.id === selectedNodeId && s.type === 'turn')}
@@ -2698,10 +3198,8 @@ function CanvasEditorInner({
                                     id: crypto.randomUUID(),
                                     type: 'condition',
                                     label: `Condition ${conditionCount}`,
-                                    branches: [
-                                        { id: crypto.randomUUID(), condition: 'Yes' },
-                                        { id: crypto.randomUUID(), condition: 'No' }
-                                    ],
+                                    question: '',
+                                    branches: createDefaultConditionBranches(),
                                     position: { x: 100, y: 100 + (flow.steps?.length || 0) * 50 }
                                 };
                                 applyFlowUpdate({
@@ -2725,10 +3223,167 @@ function CanvasEditorInner({
                                     lastModified: Date.now()
                                 });
                             }}
+                            onToggleComments={() => onToggleComments?.()}
+                            isCommentsActive={isCommentModeActive || isCommentsPanelOpen}
                         />
                     ) : null}
                     <ZoomControls />
                 </ReactFlow>
+                {areCommentsVisible ? (
+                    <>
+                        <div className="absolute inset-0 z-[108] pointer-events-none">
+                            {renderedCommentPins.map((renderedPin) => {
+                                const root = renderedPin.thread.root;
+                                const isSelected = comments?.activeThreadId === renderedPin.thread.id;
+                                const isHovered = comments?.hoveredThreadId === renderedPin.thread.id;
+                                const isDragging = commentDragState?.threadId === renderedPin.thread.id;
+                                const canDrag =
+                                    !!comments?.userCanComment &&
+                                    comments.canManageComment(root) &&
+                                    root.status === 'open';
+                                const tone = isSelected
+                                    ? 'selected'
+                                    : root.status === 'resolved'
+                                        ? 'resolved'
+                                        : 'default';
+
+                                return (
+                                    <div
+                                        key={renderedPin.thread.id}
+                                        className={cn(
+                                            'absolute -translate-x-1/2 pointer-events-none',
+                                            isDragging ? 'z-[118]' : isSelected ? 'z-[114]' : 'z-[110]'
+                                        )}
+                                        style={{
+                                            left: `${renderedPin.point.x}px`,
+                                            top: `${renderedPin.point.y - SHARE_COMMENT_PIN_TIP_OFFSET_PX}px`,
+                                        }}
+                                    >
+                                        <button
+                                            type="button"
+                                            className={cn(
+                                                'pointer-events-auto bg-transparent border-0 p-0 transition-transform duration-150 ease-out',
+                                                canDrag ? 'cursor-grab' : 'cursor-pointer',
+                                                isDragging ? 'cursor-grabbing scale-110' : isSelected || isHovered ? 'scale-105' : 'scale-100'
+                                            )}
+                                            data-comment-pin-id={renderedPin.thread.id}
+                                            onPointerDown={(event) => handleCommentPinPointerDown(event, renderedPin)}
+                                            onPointerMove={(event) => handleCommentPinPointerMove(event, renderedPin)}
+                                            onPointerUp={(event) => void handleCommentPinPointerUp(event, renderedPin)}
+                                            onPointerCancel={handleCommentPinPointerCancel}
+                                            onClick={(event) => {
+                                                event.preventDefault();
+                                                event.stopPropagation();
+                                                const suppressedClick = suppressCommentClickRef.current;
+                                                if (
+                                                    suppressedClick &&
+                                                    suppressedClick.threadId === renderedPin.thread.id &&
+                                                    suppressedClick.expiresAt > Date.now()
+                                                ) {
+                                                    suppressCommentClickRef.current = null;
+                                                    return;
+                                                }
+                                                if (suppressedClick && suppressedClick.expiresAt <= Date.now()) {
+                                                    suppressCommentClickRef.current = null;
+                                                }
+                                                if (commentDragState?.threadId === renderedPin.thread.id) return;
+                                                openCommentThread(renderedPin.thread.id, { reveal: true });
+                                            }}
+                                            onMouseEnter={() => comments?.setHoveredThreadId(renderedPin.thread.id)}
+                                            onMouseLeave={() => comments?.setHoveredThreadId(null)}
+                                            onFocus={() => comments?.setHoveredThreadId(renderedPin.thread.id)}
+                                            onBlur={() => comments?.setHoveredThreadId(null)}
+                                            aria-label={`Open comment by ${root.author_name}`}
+                                        >
+                                            <ShareCommentPin
+                                                name={root.author_name}
+                                                avatarUrl={root.author_avatar_url}
+                                                tone={tone}
+                                            />
+                                        </button>
+                                    </div>
+                                );
+                            })}
+
+                            {pendingCommentPoint ? (
+                                <div
+                                    className="absolute -translate-x-1/2 z-[116]"
+                                    style={{
+                                        left: `${pendingCommentPoint.x}px`,
+                                        top: `${pendingCommentPoint.y - SHARE_COMMENT_PIN_TIP_OFFSET_PX}px`,
+                                    }}
+                                >
+                                    <ShareCommentPin name="New comment" tone="pending" pending={true} />
+                                </div>
+                            ) : null}
+                        </div>
+
+                        {commentComposerAnchor && (comments?.pendingComment || comments?.activeThread) ? (
+                            <div
+                                className="absolute z-[120] pointer-events-auto"
+                                style={{
+                                    left: `${commentComposerPlacement?.left ?? COMMENT_POPUP_EDGE_PADDING_PX}px`,
+                                    top: `${commentComposerPlacement?.top ?? COMMENT_POPUP_EDGE_PADDING_PX}px`,
+                                }}
+                            >
+                                <div
+                                    ref={commentPopoverRef}
+                                    className={cn(
+                                        'transition-all duration-150 ease-out',
+                                        commentComposerPlacement?.side === 'left' ? 'origin-right' : 'origin-left'
+                                    )}
+                                >
+                                    {comments?.pendingComment ? (
+                                        <CanvasCommentPopover
+                                            mode="new"
+                                            error={comments.error}
+                                            isAuthLoading={comments.isAuthLoading}
+                                            userCanComment={comments.userCanComment}
+                                            value={comments.newCommentText}
+                                            isSubmitting={comments.postingRootComment}
+                                            onValueChange={comments.setNewCommentText}
+                                            onSubmit={() => void comments.submitPendingComment()}
+                                            onClose={comments.dismissPendingComment}
+                                        />
+                                    ) : comments?.activeThread ? (
+                                        <CanvasCommentPopover
+                                            mode="thread"
+                                            error={comments.error}
+                                            isAuthLoading={comments.isAuthLoading}
+                                            userCanComment={comments.userCanComment}
+                                            thread={comments.activeThread}
+                                            replyDraft={comments.replyDrafts[comments.activeThread.id] || ''}
+                                            onReplyDraftChange={(value) => comments.setReplyDraft(comments.activeThread!.id, value)}
+                                            onReplySubmit={() => void comments.submitReply(comments.activeThread!.id)}
+                                            isReplySubmitting={comments.postingReplyThreadId === comments.activeThread.id}
+                                            canManageComment={comments.canManageComment}
+                                            canResolveThread={comments.canResolveThread(comments.activeThread)}
+                                            editingCommentId={comments.editingCommentId}
+                                            editDraft={comments.editDraft}
+                                            onStartEditing={comments.startEditingComment}
+                                            onEditDraftChange={comments.setEditDraft}
+                                            onSaveEdit={(commentId) => void comments.saveEditingComment(commentId)}
+                                            onCancelEdit={comments.cancelEditingComment}
+                                            savingEditCommentId={comments.savingEditCommentId}
+                                            onToggleThreadStatus={() =>
+                                                void comments.toggleThreadStatus(
+                                                    comments.activeThread!,
+                                                    comments.activeThread!.root.status === 'open' ? 'resolved' : 'open'
+                                                )
+                                            }
+                                            isStatusUpdating={comments.updatingStatusThreadId === comments.activeThread.id}
+                                            deletingCommentId={comments.deletingCommentId}
+                                            onDeleteComment={(comment) =>
+                                                void comments.deleteComment(comments.activeThread!, comment)
+                                            }
+                                            onClose={comments.dismissComposer}
+                                        />
+                                    ) : null}
+                                </div>
+                            </div>
+                        ) : null}
+                    </>
+                ) : null}
                 {!isReadOnly && pendingToolbarPlacement?.canvasPosition ? (() => {
                     const preview = getToolbarPlacementPreviewConfig(pendingToolbarPlacement.type);
 

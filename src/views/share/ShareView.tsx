@@ -1730,7 +1730,20 @@ export const ShareView = () => {
                     commentId,
                     pinX: nextPin.x,
                     pinY: nextPin.y,
-                    reviewAnchor: nextReviewAnchor || undefined,
+                    anchor: nextReviewAnchor || {
+                        anchorMode: 'review',
+                        anchorKind:
+                            (originalThread?.root.anchor_kind as FlowCommentReviewAnchor['anchorKind']) ||
+                            'component',
+                        canvasAnchorType: null,
+                        anchorBlockId: originalThread?.root.anchor_block_id || '',
+                        anchorStepId: originalThread?.root.anchor_step_id || '',
+                        anchorComponentId: originalThread?.root.anchor_component_id || null,
+                        anchorHistoryIndex: originalThread?.root.anchor_history_index ?? 0,
+                        anchorLocalX: originalThread?.root.anchor_local_x ?? 50,
+                        anchorLocalY: originalThread?.root.anchor_local_y ?? 50,
+                        pathSignature: originalThread?.root.path_signature || '',
+                    },
                 });
                 await loadComments(id);
             } catch (dragError: unknown) {
@@ -1794,7 +1807,7 @@ export const ShareView = () => {
                 message,
                 pinX: pendingPin.x,
                 pinY: pendingPin.y,
-                reviewAnchor: pendingReviewAnchor,
+                anchor: pendingReviewAnchor,
             });
 
             setNewCommentText('');
@@ -2439,6 +2452,27 @@ export const ShareView = () => {
     const showPins = isCommentsWorkspaceActive || isComposerOpen;
     const isDesktopHoverPreviewEnabled = !shouldUseBottomSheetComposer;
     const commentsEmptyState = getCommentEmptyState(commentFilter);
+    const snapshotHistoryLength = reviewSnapshot?.history.length ?? 0;
+    const snapshotPathSelectionCount = reviewSnapshot?.pathSelections.length ?? 0;
+    const hasLiveReviewState = reviewState.historyLength > 0;
+    const hasSnapshotPathChoices = snapshotPathSelectionCount > 0;
+    const hasPathChoices = hasLiveReviewState
+        ? reviewState.decisions.length > 0
+        : reviewState.decisions.length > 0 || hasSnapshotPathChoices;
+    const isPathPanelLoading = !hasLiveReviewState && (!snapshotHistoryLength || hasSnapshotPathChoices);
+    const shouldShowPathPanel = hasPathChoices || isPathPanelLoading;
+    const commentsWorkspacePaddingClass = isCommentsWorkspaceActive
+        ? shouldShowPathPanel
+            ? 'md:pl-[356px] md:pr-[356px]'
+            : ''
+        : '';
+    const commentsWorkspaceSurfaceStyle =
+        isCommentsWorkspaceActive && !shouldShowPathPanel && !isNarrowViewport
+            ? {
+                  paddingLeft: 'clamp(0px, calc(100vw - 756px), 356px)',
+                  paddingRight: '356px',
+              }
+            : undefined;
     const renderCommentsReadOnlyBanner = () =>
         !user ? (
             <ShellNotice
@@ -2472,8 +2506,21 @@ export const ShareView = () => {
                 className="rounded-none border-x-0 border-t-0"
             />
         ) : null;
-    const renderPathSelectionControls = ({ compact = false }: { compact?: boolean } = {}) =>
-        reviewState.decisions.length > 0 ? (
+    const renderPathSelectionControls = ({ compact = false }: { compact?: boolean } = {}) => {
+        if (isPathPanelLoading) {
+            return (
+                <div className={cn(compact ? 'px-2.5 py-3' : 'px-3 py-4')}>
+                    <div className="flex items-center gap-2 rounded-xl border border-shell-dark-border bg-shell-dark-surface px-3 py-3 text-xs font-medium text-shell-dark-muted">
+                        <Loader2 size={13} className="shrink-0 animate-spin" />
+                        Loading route options...
+                    </div>
+                </div>
+            );
+        }
+
+        if (!hasPathChoices) return null;
+
+        return (
             <div className={cn('space-y-2.5', compact ? 'px-2.5 py-2.5' : 'px-3 py-3')}>
                 {reviewState.decisions.map((decision) => {
                     const selectedLabel = getReviewBranchLabel(decision);
@@ -2558,13 +2605,8 @@ export const ShareView = () => {
                     );
                 })}
             </div>
-        ) : (
-            <div className={cn(compact ? 'px-2.5 py-3' : 'px-3 py-4')}>
-                <div className="rounded-xl border border-shell-dark-border bg-shell-dark-surface px-3 py-3 text-xs font-medium text-shell-dark-muted">
-                    Single path
-                </div>
-            </div>
         );
+    };
 
     return (
         <>
@@ -2717,11 +2759,12 @@ export const ShareView = () => {
                 <div
                     className={cn(
                         'flex-1 flex items-center justify-center overflow-hidden relative',
-                        isCommentsWorkspaceActive ? 'md:px-[356px]' : ''
+                        commentsWorkspacePaddingClass
                     )}
+                    style={commentsWorkspaceSurfaceStyle}
                 >
                     <div ref={commentSurfaceRef} className="w-full h-full relative">
-                        {isCommentsWorkspaceActive ? (
+                        {isCommentsWorkspaceActive && shouldShowPathPanel ? (
                             <div className="md:hidden absolute top-2 left-2 right-2 z-[55] max-w-[calc(100%-1rem)] pointer-events-none">
                                 <div
                                     data-comment-placement-ignore="true"
@@ -2887,7 +2930,7 @@ export const ShareView = () => {
                                             <ShellButton
                                                 variant="ghost"
                                                 className={cn(
-                                                    'absolute left-[44px] top-1/2 -translate-y-1/2 h-auto min-w-[220px] max-w-[286px] rounded-[24px] border border-shell-dark-border/30 bg-shell-dark-panel text-shell-dark-text hover:text-shell-dark-text hover:bg-shell-dark-panel px-3.5 py-3 text-left shadow-[0_20px_48px_rgb(0_0_0/0.38)] justify-start pointer-events-auto transition-all duration-150 ease-out origin-left focus-visible:ring-0 focus-visible:outline-none z-10',
+                                                    'absolute left-[44px] top-1/2 -translate-y-1/2 h-auto min-w-[220px] max-w-[286px] rounded-[24px] border border-shell-dark-border/18 bg-shell-dark-panel text-shell-dark-text hover:text-shell-dark-text hover:bg-shell-dark-panel px-3.5 py-3 text-left shadow-[0_20px_48px_rgb(0_0_0/0.38)] justify-start pointer-events-auto transition-all duration-150 ease-out origin-left focus-visible:ring-0 focus-visible:outline-none z-10',
                                                     canShowHoverPreview
                                                         ? 'opacity-100 translate-x-0 scale-100'
                                                         : 'opacity-0 -translate-x-2 scale-95 pointer-events-none'
@@ -2984,19 +3027,21 @@ export const ShareView = () => {
 
                     {isPanelOpen ? (
                         <>
-                            <div className="hidden md:block absolute top-3 left-3 bottom-3 w-[340px] z-[60]">
-                                <div className="h-full w-full bg-shell-dark-panel border border-shell-dark-border rounded-xl shadow-2xl overflow-hidden flex flex-col">
-                                    <div className="p-3 border-b border-shell-dark-border flex items-center justify-between gap-3">
-                                        <div className="flex items-center gap-2 min-w-0">
-                                            <h2 className="text-sm font-medium text-shell-dark-text">Choose path</h2>
+                            {shouldShowPathPanel ? (
+                                <div className="hidden md:block absolute top-3 left-3 bottom-3 w-[340px] z-[60]">
+                                    <div className="h-full w-full bg-shell-dark-panel border border-shell-dark-border rounded-xl shadow-2xl overflow-hidden flex flex-col">
+                                        <div className="p-3 border-b border-shell-dark-border flex items-center justify-between gap-3">
+                                            <div className="flex items-center gap-2 min-w-0">
+                                                <h2 className="text-sm font-medium text-shell-dark-text">Choose path</h2>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex-1 overflow-y-auto thin-scrollbar">
+                                            {renderPathSelectionControls()}
                                         </div>
                                     </div>
-
-                                    <div className="flex-1 overflow-y-auto thin-scrollbar">
-                                        {renderPathSelectionControls()}
-                                    </div>
                                 </div>
-                            </div>
+                            ) : null}
 
                             <div className="hidden md:block absolute top-3 right-3 bottom-3 w-[340px] z-[60]">
                                 <div className="h-full w-full bg-shell-dark-panel border border-shell-dark-border rounded-xl shadow-2xl overflow-hidden flex flex-col">

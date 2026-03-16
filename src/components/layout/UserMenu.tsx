@@ -18,14 +18,27 @@ type UserMenuBackItem = {
     onSelect: () => void;
 };
 
+type UserMenuSwitchItemConfig = {
+    label: string;
+    checked: boolean;
+    onCheckedChange: (checked: boolean) => void;
+};
+
 type UserMenuProps = {
     trigger?: ReactElement;
     backItem?: UserMenuBackItem;
+    switchItems?: UserMenuSwitchItemConfig[];
     contentAlign?: 'start' | 'center' | 'end';
     showAccountDetails?: boolean;
 };
 
-export function UserMenu({ trigger, backItem, contentAlign = 'end', showAccountDetails = true }: UserMenuProps) {
+export function UserMenu({
+    trigger,
+    backItem,
+    switchItems = [],
+    contentAlign = 'end',
+    showAccountDetails = true,
+}: UserMenuProps) {
     const { user, signOut } = useAuth();
     const { state, setTheme } = useApp();
 
@@ -85,6 +98,16 @@ export function UserMenu({ trigger, backItem, contentAlign = 'end', showAccountD
                         <span>{backItem.label}</span>
                     </ShellMenuItem>
                 ) : null}
+
+                {switchItems.map((item) => (
+                    <ShellMenuSwitchItem
+                        key={item.label}
+                        checked={item.checked}
+                        onCheckedChange={(checked) => item.onCheckedChange(checked === true)}
+                    >
+                        {item.label}
+                    </ShellMenuSwitchItem>
+                ))}
 
                 <ShellMenuSwitchItem
                     checked={isDarkMode}

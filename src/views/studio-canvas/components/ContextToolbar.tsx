@@ -1,11 +1,10 @@
 import { createPortal } from 'react-dom';
-import { Plus, Component, MousePointerClick, GitBranch, ALargeSmall, MessageCirclePlus, ChevronDown } from 'lucide-react';
+import { Plus, Component, MousePointerClick, ALargeSmall, MessageCirclePlus, ChevronDown } from 'lucide-react';
 import { useStore } from '@xyflow/react';
 import { SelectionState } from '../types';
 import * as Popover from '@radix-ui/react-popover';
 import { AddComponentContent } from './AddComponentPopover';
 import { ActionTooltip } from './ActionTooltip';
-import { Branch } from '../../studio/types'; // Import Branch type
 import { useEffect, useState } from 'react';
 
 interface ContextToolbarProps {
@@ -14,8 +13,6 @@ interface ContextToolbarProps {
     anchorEl: HTMLElement | null;
     currentUserTurnInputType?: 'text' | 'prompt' | 'button';
     onChangeUserTurnInputType?: (type: 'text' | 'prompt' | 'button') => void;
-    currentBranches?: Branch[];
-    onUpdateBranches?: (branches: Branch[]) => void;
     autoOpenAddComponentPopover?: boolean;
     onAutoOpenAddComponentHandled?: () => void;
 }
@@ -28,8 +25,6 @@ export function ContextToolbar({
     anchorEl,
     currentUserTurnInputType,
     onChangeUserTurnInputType,
-    currentBranches,
-    onUpdateBranches,
     autoOpenAddComponentPopover = false,
     onAutoOpenAddComponentHandled,
     isAiTurn = false, // New prop
@@ -68,8 +63,7 @@ export function ContextToolbar({
     // Check if we have any actions to render
     const hasNodeActions = selection.type === 'node' && (
         isAiTurn ||
-        (currentUserTurnInputType && onChangeUserTurnInputType) ||
-        (currentBranches && onUpdateBranches)
+        (currentUserTurnInputType && onChangeUserTurnInputType)
     );
 
     if (!hasNodeActions || selection.type !== 'node') {
@@ -167,23 +161,6 @@ export function ContextToolbar({
                             </Popover.Portal>
                         </Popover.Root>
                     )}
-
-                    {/* Condition Branch Management */}
-                    {currentBranches && onUpdateBranches && (
-                        <ActionTooltip content="Add path">
-                            <button
-                                onClick={() => {
-                                    const newBranch = { id: `branch-${Date.now()}`, condition: 'New path' };
-                                    onUpdateBranches([...currentBranches, newBranch]);
-                                }}
-                                className="flex items-center gap-1.5 px-3 py-1.5 text-shell-dark-text hover:bg-shell-dark-surface rounded transition-colors text-sm cursor-pointer"
-                            >
-                                <Plus className="w-3 h-3 text-shell-dark-muted" />
-                                <GitBranch className="w-4 h-4" />
-                            </button>
-                        </ActionTooltip>
-                    )}
-
                 </div>
             </div>
         </div>,

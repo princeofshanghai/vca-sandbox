@@ -91,15 +91,53 @@ create table if not exists public.flow_comments (
   constraint flow_comments_root_or_reply_pin_check check (
     (
       parent_id is null
-      and pin_x is not null
-      and pin_y is not null
-      and pin_x >= 0 and pin_x <= 100
-      and pin_y >= 0 and pin_y <= 100
+      and (
+        (
+          anchor_mode is null
+          and pin_x is not null
+          and pin_y is not null
+          and pin_x >= 0 and pin_x <= 100
+          and pin_y >= 0 and pin_y <= 100
+        )
+        or (
+          anchor_mode = 'review'
+          and pin_x is not null
+          and pin_y is not null
+          and pin_x >= 0 and pin_x <= 100
+          and pin_y >= 0 and pin_y <= 100
+        )
+        or (
+          anchor_mode = 'canvas'
+          and anchor_canvas_type = 'node'
+          and pin_x is null
+          and pin_y is null
+          and anchor_step_id is not null
+          and anchor_local_x is not null
+          and anchor_local_y is not null
+          and anchor_local_x >= 0 and anchor_local_x <= 100
+          and anchor_local_y >= 0 and anchor_local_y <= 100
+          and anchor_canvas_x is null
+          and anchor_canvas_y is null
+        )
+        or (
+          anchor_mode = 'canvas'
+          and anchor_canvas_type = 'free'
+          and pin_x is null
+          and pin_y is null
+          and anchor_step_id is null
+          and anchor_local_x is null
+          and anchor_local_y is null
+          and anchor_canvas_x is not null
+          and anchor_canvas_y is not null
+        )
+      )
     )
     or (
       parent_id is not null
       and pin_x is null
       and pin_y is null
+      and anchor_canvas_x is null
+      and anchor_canvas_y is null
     )
   )
 );
@@ -113,7 +151,65 @@ alter table public.flow_comments add column if not exists anchor_component_id te
 alter table public.flow_comments add column if not exists anchor_history_index integer;
 alter table public.flow_comments add column if not exists anchor_local_x double precision;
 alter table public.flow_comments add column if not exists anchor_local_y double precision;
+alter table public.flow_comments add column if not exists anchor_canvas_type text;
+alter table public.flow_comments add column if not exists anchor_canvas_x double precision;
+alter table public.flow_comments add column if not exists anchor_canvas_y double precision;
 alter table public.flow_comments add column if not exists path_signature text;
+
+alter table public.flow_comments drop constraint if exists flow_comments_root_or_reply_pin_check;
+alter table public.flow_comments add constraint flow_comments_root_or_reply_pin_check
+  check (
+    (
+      parent_id is null
+      and (
+        (
+          anchor_mode is null
+          and pin_x is not null
+          and pin_y is not null
+          and pin_x >= 0 and pin_x <= 100
+          and pin_y >= 0 and pin_y <= 100
+        )
+        or (
+          anchor_mode = 'review'
+          and pin_x is not null
+          and pin_y is not null
+          and pin_x >= 0 and pin_x <= 100
+          and pin_y >= 0 and pin_y <= 100
+        )
+        or (
+          anchor_mode = 'canvas'
+          and anchor_canvas_type = 'node'
+          and pin_x is null
+          and pin_y is null
+          and anchor_step_id is not null
+          and anchor_local_x is not null
+          and anchor_local_y is not null
+          and anchor_local_x >= 0 and anchor_local_x <= 100
+          and anchor_local_y >= 0 and anchor_local_y <= 100
+          and anchor_canvas_x is null
+          and anchor_canvas_y is null
+        )
+        or (
+          anchor_mode = 'canvas'
+          and anchor_canvas_type = 'free'
+          and pin_x is null
+          and pin_y is null
+          and anchor_step_id is null
+          and anchor_local_x is null
+          and anchor_local_y is null
+          and anchor_canvas_x is not null
+          and anchor_canvas_y is not null
+        )
+      )
+    )
+    or (
+      parent_id is not null
+      and pin_x is null
+      and pin_y is null
+      and anchor_canvas_x is null
+      and anchor_canvas_y is null
+    )
+  );
 
 alter table public.flow_comments drop constraint if exists flow_comments_anchor_mode_check;
 alter table public.flow_comments add constraint flow_comments_anchor_mode_check
@@ -125,6 +221,10 @@ alter table public.flow_comments add constraint flow_comments_anchor_kind_check
     anchor_kind is null
     or anchor_kind in ('turn', 'component', 'decision', 'feedback')
   );
+
+alter table public.flow_comments drop constraint if exists flow_comments_anchor_canvas_type_check;
+alter table public.flow_comments add constraint flow_comments_anchor_canvas_type_check
+  check (anchor_canvas_type is null or anchor_canvas_type in ('node', 'free'));
 
 create index if not exists flow_comments_flow_id_idx on public.flow_comments(flow_id);
 create index if not exists flow_comments_parent_id_idx on public.flow_comments(parent_id);

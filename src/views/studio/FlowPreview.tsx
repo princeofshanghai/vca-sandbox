@@ -1,6 +1,7 @@
 // ... (imports)
 import { useState, useEffect, useRef, useCallback, useMemo, type ReactNode } from 'react';
 import { Branch, Flow } from './types';
+import { Composer } from '@/components/vca-components/composer';
 import { Container } from '@/components/vca-components/container/Container';
 import { Header } from '@/components/vca-components/header';
 import { Message } from '@/components/vca-components/messages';
@@ -19,6 +20,7 @@ import {
     getCheckboxGroupSecondaryLabel,
 } from '@/components/vca-components/checkbox-group/CheckboxGroup';
 import { ContextInterceptorMessage } from './components/ContextInterceptorMessage';
+import { getConditionQuestionLabel } from './conditionBranchLabels';
 import {
     type ConditionPathSelection,
     type SmartFlowEngineSnapshot,
@@ -201,7 +203,7 @@ export const FlowPreview = ({
                             <div className="w-full max-w-[420px]">{topControl}</div>
                         ) : null}
                         <div
-                            className={`w-full ${isMobile ? 'max-w-[393px]' : 'max-w-[400px]'} overflow-hidden rounded-vca-sm border border-vca-border-faint bg-vca-background shadow-[0_4px_12px_0_rgba(0,0,0,0.30),0_0_1px_0_rgba(140,140,140,0.20)]`}
+                            className={`flex w-full flex-col overflow-hidden rounded-vca-sm border border-vca-border-faint bg-vca-background shadow-[0_4px_12px_0_rgba(0,0,0,0.30),0_0_1px_0_rgba(140,140,140,0.20)] ${isMobile ? 'max-w-[393px] min-h-[772px]' : 'max-w-[400px] min-h-[688px]'}`}
                         >
                             <Header
                                 title="Help"
@@ -213,9 +215,10 @@ export const FlowPreview = ({
                                 showPremiumIcon={isPremium}
                                 showPremiumBorder={isPremium}
                             />
-                            <div className="bg-vca-background px-vca-xxl py-vca-lg">
+                            <div className="flex-1 bg-vca-background px-vca-xxl py-vca-lg">
                                 <PreviewContent {...previewContentProps} />
                             </div>
+                            <Composer status="disabled" className="shrink-0" />
                         </div>
                     </div>
                 ) : isMobile ? (
@@ -361,38 +364,41 @@ const PreviewContent = ({
         }
     }, [activeInterceptor, lastConditionSelection]);
 
+    const conditionStepLabels = useMemo(() => {
+        const entries: Array<[string, string]> = (flow.steps || [])
+            .filter((step): step is Extract<NonNullable<Flow['steps']>[number], { type: 'condition' }> => step.type === 'condition')
+            .map((step) => [step.id, getConditionQuestionLabel(step.question, step.label)]);
+        return new Map(entries);
+    }, [flow.steps]);
+
     const overlaySelection = useMemo(() => (
         activeInterceptor
             ? {
                 mode: 'interceptor' as const,
+                stepLabel: conditionStepLabels.get(activeInterceptor.stepId) || 'Condition',
                 variableName: activeInterceptor.variableName,
                 branches: activeInterceptor.branches,
                 stepId: activeInterceptor.stepId,
                 interceptorId: activeInterceptor.id,
-                selectedLabel: 'Choose a path to continue'
+                selectedLabel: conditionStepLabels.get(activeInterceptor.stepId) || 'Condition'
             }
             : lastConditionSelection
                 ? {
                     mode: 'selection' as const,
+                    stepLabel: conditionStepLabels.get(lastConditionSelection.stepId) || 'Condition',
                     variableName: lastConditionSelection.variableName,
                     branches: lastConditionSelection.branches,
                     stepId: lastConditionSelection.stepId,
                     selectedLabel: lastConditionSelection.selectedLabel
                 }
                 : null
-    ), [activeInterceptor, lastConditionSelection]);
+    ), [activeInterceptor, conditionStepLabels, lastConditionSelection]);
     const pathSignature = useMemo(() => buildPathSignature(pathSelections), [pathSelections]);
-    const conditionStepLabels = useMemo(() => {
-        const entries: Array<[string, string]> = (flow.steps || [])
-            .filter((step): step is Extract<NonNullable<Flow['steps']>[number], { type: 'condition' }> => step.type === 'condition')
-            .map((step) => [step.id, step.label?.trim() || 'Path choice']);
-        return new Map(entries);
-    }, [flow.steps]);
     const reviewPathSelections = useMemo<FlowPreviewReviewPathSelection[]>(
         () =>
             pathSelections.map((selection) => ({
                 stepId: selection.stepId,
-                stepLabel: conditionStepLabels.get(selection.stepId) || selection.variableName || 'Path choice',
+                stepLabel: conditionStepLabels.get(selection.stepId) || 'Condition',
                 variableName: selection.variableName,
                 branches: selection.branches,
                 selectedBranchId: selection.selectedBranchId,
@@ -410,14 +416,11 @@ const PreviewContent = ({
         if (activeInterceptor) {
             decisions.push({
                 stepId: activeInterceptor.stepId,
-                stepLabel:
-                    conditionStepLabels.get(activeInterceptor.stepId) ||
-                    activeInterceptor.variableName ||
-                    'Path choice',
+                stepLabel: conditionStepLabels.get(activeInterceptor.stepId) || 'Condition',
                 variableName: activeInterceptor.variableName,
                 branches: activeInterceptor.branches,
                 selectedBranchId: null,
-                selectedLabel: 'Choose a path',
+                selectedLabel: conditionStepLabels.get(activeInterceptor.stepId) || 'Condition',
                 mode: 'interceptor',
             });
         }
@@ -1162,9 +1165,11 @@ const PreviewContent = ({
                 <div className="mt-2 flex justify-center px-2">
                     <ContextInterceptorMessage
                         className="w-full max-w-[420px]"
+                        question={overlaySelection.stepLabel}
                         variableName={overlaySelection.variableName}
                         branches={overlaySelection.branches}
                         onResolve={handleOverlayResolve}
+                        showRuleSummary={reviewMode}
                     />
                 </div>
             )}

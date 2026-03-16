@@ -3,6 +3,7 @@ import { Handle, Position, NodeProps, useStore } from '@xyflow/react';
 import { VcaIcon } from '@/components/vca-components/icons/VcaIcon';
 import { Component } from '../../studio/types';
 import { TurnNodeComponentList } from './components/TurnNodeComponentList';
+import { CanvasNodeCommentState } from '../types';
 
 
 interface TurnNodeData {
@@ -14,6 +15,7 @@ interface TurnNodeData {
     openComponentId?: string;
     entryPoint?: string;
     readOnly?: boolean;
+    commentState?: CanvasNodeCommentState;
 
     onSelectComponent?: (
         nodeId: string,
@@ -67,13 +69,21 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
 
     const zoom = useStore((s) => s.transform[2]);
     const scale = Math.max(1, 1 / zoom);
-    const borderClassName = isAI
-        ? (selected
-            ? 'border-shell-accent ring-1 ring-shell-accent/30'
-            : 'border-shell-accent/35 hover:border-shell-accent/60')
-        : (selected
-            ? 'border-shell-node-user ring-1 ring-shell-node-user/30'
-            : 'border-shell-node-user/35 hover:border-shell-node-user/60');
+    const commentState = typedData.commentState;
+    const isCommentHighlighted = Boolean(commentState?.isActive);
+    const isCommentPlacementMode = Boolean(commentState?.isPlacementMode);
+    const selectedBorderClassName = isAI
+        ? 'border-shell-accent ring-1 ring-shell-accent/30'
+        : 'border-shell-node-user ring-1 ring-shell-node-user/30';
+    const idleBorderClassName = isAI
+        ? 'border-shell-accent/35 hover:border-shell-accent/60'
+        : 'border-shell-node-user/35 hover:border-shell-node-user/60';
+    const commentBorderClassName = isCommentHighlighted
+        ? 'border-shell-accent ring-2 ring-shell-accent/28 shadow-[0_16px_36px_rgb(var(--shell-accent)/0.12)]'
+        : isCommentPlacementMode
+            ? `${idleBorderClassName} cursor-pointer hover:ring-1 hover:ring-shell-accent/18`
+            : idleBorderClassName;
+    const borderClassName = selected ? selectedBorderClassName : commentBorderClassName;
     const nodeSurfaceClassName = isAI
         ? 'bg-[rgb(var(--shell-node-ai-surface)/1)]'
         : 'bg-[rgb(var(--shell-node-user-surface)/1)]';

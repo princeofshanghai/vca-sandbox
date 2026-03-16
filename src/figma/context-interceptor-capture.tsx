@@ -6,7 +6,7 @@ import '@/index.css';
 const branches: Branch[] = [
   {
     id: 'branch-admin',
-    condition: 'yes',
+    condition: 'Admin',
     logic: {
       variable: 'isAdmin',
       value: 'true',
@@ -15,7 +15,7 @@ const branches: Branch[] = [
   },
   {
     id: 'branch-default',
-    condition: 'No',
+    condition: 'Everyone else',
     isDefault: true,
   },
 ];
@@ -30,6 +30,7 @@ createRoot(rootEl).render(
   <div className="min-h-screen bg-shell-surface-subtle p-10">
     <div className="mx-auto w-full max-w-[560px]">
       <ContextInterceptorMessage
+        question="Is the user an admin?"
         variableName="isAdmin"
         branches={branches}
         onResolve={() => {}}

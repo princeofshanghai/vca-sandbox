@@ -11,4 +11,10 @@ export type SelectionState =
     | { type: 'components'; nodeId: string; componentIds: string[] }
     | { type: 'branch'; nodeId: string; branchId: string };
 
+export interface CanvasNodeCommentState {
+    hasComments: boolean;
+    isActive: boolean;
+    isPlacementMode: boolean;
+}
+
 export { };

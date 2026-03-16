@@ -15,6 +15,8 @@ interface StudioCardProps {
     children: ReactNode;
     /** Optional click handler */
     onClick?: (event: MouseEvent<HTMLDivElement>) => void;
+    /** Whether clicking the card should stop propagation */
+    stopPropagationOnClick?: boolean;
     /** Optional ID for the root element */
     id?: string;
     /** Whether to show the input handle (left) */
@@ -44,6 +46,7 @@ export const StudioCard = memo(({
     selected,
     children,
     onClick,
+    stopPropagationOnClick = true,
     id,
     showInputHandle,
     showOutputHandle,
@@ -97,7 +100,9 @@ export const StudioCard = memo(({
                     // Clicking a connection handle should not select/open the card.
                     return;
                 }
-                e.stopPropagation();
+                if (stopPropagationOnClick) {
+                    e.stopPropagation();
+                }
                 onClick?.(e);
             }}
             className={cn(

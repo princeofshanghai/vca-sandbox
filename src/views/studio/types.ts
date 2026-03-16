@@ -188,7 +188,8 @@ export interface UserTurn {
 export interface Condition {
     id: string;
     type: 'condition';
-    label: string; // e.g., "User has Premium subscription?"
+    label: string; // Internal canvas name
+    question?: string; // User-facing question shown in the prototype
     description?: string; // Additional context
     branches: Branch[];
     position?: { x: number; y: number }; // For canvas positioning

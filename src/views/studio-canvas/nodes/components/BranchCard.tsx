@@ -2,53 +2,67 @@ import { memo, forwardRef } from 'react';
 import { StudioCard } from './StudioCard';
 import { Branch } from '../../../studio/types';
 import { CARD_EDGE_OUTPUT_HANDLE_OFFSET_PX } from './handleOffsets';
-import { getConditionPathLabel } from '../../../studio/conditionBranchLabels';
+import { getConditionPathLabel, getConditionRuleSummary } from '../../../studio/conditionBranchLabels';
+import { cn } from '@/utils/cn';
 
 interface BranchCardProps extends React.HTMLAttributes<HTMLDivElement> {
     branch: Branch;
     isSelected: boolean;
     readOnly?: boolean;
     onCardClick: (anchorEl: HTMLElement) => void;
+    stopPropagationOnClick?: boolean;
 }
 
 export const BranchCard = memo(forwardRef<HTMLDivElement, BranchCardProps>(({
     branch,
     isSelected,
     onCardClick,
+    stopPropagationOnClick = true,
     ...props
 }, ref) => {
     const pathLabel = getConditionPathLabel(branch);
+    const ruleSummary = getConditionRuleSummary(branch);
+    const variable = branch.logic?.variable?.trim() || '';
+    const value = branch.logic?.value !== undefined ? String(branch.logic.value).trim() : '';
+    const hasRuleChips = !branch.isDefault && Boolean(variable || value);
+
+    const chipClassName = cn(
+        'inline-flex items-center rounded-full border border-shell-border bg-shell-surface px-2.5 py-1',
+        'text-[11px] font-medium leading-none text-shell-muted-strong shadow-[0_1px_1px_rgb(15_23_42/0.03)]'
+    );
 
     const renderContent = () => {
+        if (branch.isDefault) {
+            return (
+                <div className="flex flex-col gap-1">
+                    <div
+                        className="text-sm leading-snug break-words text-shell-muted-strong"
+                        title={ruleSummary || undefined}
+                    >
+                        {ruleSummary || 'Used if nothing else matches'}
+                    </div>
+                </div>
+            );
+        }
+
+        if (hasRuleChips) {
+            return (
+                <div className="flex flex-wrap items-center gap-1.5">
+                    <span className={chipClassName}>{variable || 'Field'}</span>
+                    <span className="text-[12px] font-medium leading-none text-shell-muted-strong">is</span>
+                    <span className={chipClassName}>{value || 'Value'}</span>
+                </div>
+            );
+        }
+
         return (
-            <div className="flex flex-col gap-1.5">
-                {branch.isDefault ? (
-                    <div className="text-sm text-shell-muted-strong">
-                        Anything else
-                    </div>
-                ) : branch.logic?.variable ? (
-                    <div className="flex flex-wrap gap-1 items-center">
-                        <span
-                            className="truncate max-w-[120px] rounded border px-1.5 py-0.5 font-mono text-sm border-[rgb(var(--shell-node-condition)/0.22)] bg-[rgb(var(--shell-node-condition-surface)/0.9)] text-[rgb(var(--shell-note-muted)/1)] dark:border-[rgb(var(--shell-node-condition)/0.28)] dark:bg-[rgb(var(--shell-node-condition-surface)/1)] dark:text-[rgb(var(--shell-node-condition)/0.78)]"
-                            title={branch.logic.variable}
-                        >
-                            {branch.logic.variable}
-                        </span>
-                        <span className="text-sm text-shell-muted-strong font-mono bg-shell-surface px-1.5 py-0.5 rounded border border-shell-border shrink-0">
-                            =
-                        </span>
-                        <span
-                            className="truncate max-w-[120px] rounded border px-1.5 py-0.5 font-mono text-sm border-[rgb(var(--shell-node-condition)/0.22)] bg-[rgb(var(--shell-node-condition-surface)/0.9)] text-[rgb(var(--shell-note-muted)/1)] dark:border-[rgb(var(--shell-node-condition)/0.28)] dark:bg-[rgb(var(--shell-node-condition-surface)/1)] dark:text-[rgb(var(--shell-node-condition)/0.78)]"
-                            title={String(branch.logic.value)}
-                        >
-                            {String(branch.logic.value)}
-                        </span>
-                    </div>
-                ) : (
-                    <div className="text-sm text-shell-muted-strong">
-                        Rule not set
-                    </div>
-                )}
+            <div className="flex flex-col gap-1">
+                <div
+                    className={`text-sm leading-snug break-words ${ruleSummary ? 'text-shell-muted-strong' : 'text-shell-muted'}`}
+                    title={ruleSummary || undefined}
+                >
+                    {ruleSummary || 'Choose field + value'}
+                </div>
             </div>
         );
     };
@@ -66,6 +80,7 @@ export const BranchCard = memo(forwardRef<HTMLDivElement, BranchCardProps>(({
                 theme="amber"
                 selected={isSelected}
                 onClick={(event) => onCardClick(event.currentTarget as HTMLElement)}
+                stopPropagationOnClick={stopPropagationOnClick}
                 showOutputHandle={true}
                 outputHandleId={branch.id}
                 outputHandleOffsetPx={CARD_EDGE_OUTPUT_HANDLE_OFFSET_PX}
