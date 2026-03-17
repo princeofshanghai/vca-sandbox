@@ -9,6 +9,7 @@ import {
     FlowPreview,
 } from '@/views/studio/FlowPreview';
 import { PreviewSettingsMenu } from '@/views/studio/PreviewSettingsMenu';
+import { PathsPanel } from '@/views/studio/components/PathsPanel';
 import {
     AlertCircle,
     ArrowUp,
@@ -368,25 +369,6 @@ const getCommentEmptyState = (filter: CommentFilter) => {
     };
 };
 
-const getReviewBranchLabel = (
-    decision: Pick<FlowPreviewReviewDecision, 'branches' | 'selectedBranchId' | 'selectedLabel'>
-) => {
-    if (!decision.selectedBranchId) return decision.selectedLabel;
-
-    const selectedBranch = decision.branches.find(
-        (branch) => branch.id === decision.selectedBranchId
-    );
-    if (!selectedBranch) return decision.selectedLabel;
-
-    const label = selectedBranch.condition?.trim() || (selectedBranch.isDefault ? 'Default' : 'Path');
-    return selectedBranch.isDefault ? `${label} (Fallback)` : label;
-};
-
-const getReviewBranchOptionLabel = (branch: FlowPreviewReviewDecision['branches'][number]) => {
-    const label = branch.condition?.trim() || (branch.isDefault ? 'Default' : 'Path');
-    return branch.isDefault ? `${label} (Fallback)` : label;
-};
-
 export const ShareView = () => {
     const { user, isLoading: isAuthLoading } = useAuth();
     const navigate = useNavigate();
@@ -417,6 +399,7 @@ export const ShareView = () => {
     );
     const [reviewPathChangeRequest, setReviewPathChangeRequest] =
         useState<FlowPreviewReviewPathChangeRequest | null>(null);
+    const [isPathsPanelOpen, setIsPathsPanelOpen] = useState(false);
     const [reviewLayoutVersion, setReviewLayoutVersion] = useState(0);
 
     const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -458,10 +441,10 @@ export const ShareView = () => {
     const commentPlacementRef = useRef<PointerPlacementState | null>(null);
     const suppressedPlacementPointerIdRef = useRef<number | null>(null);
     const lastAutoPathRequestKeyRef = useRef<string | null>(null);
+    const lastAutoOpenPendingPathStepIdRef = useRef<string | null>(null);
 
     const commenterName = useMemo(() => getUserDisplayName(user), [user]);
     const commenterAvatarUrl = useMemo(() => getUserAvatarUrl(user), [user]);
-    const areHotspotsVisible = flow?.settings?.showHotspots ?? true;
 
     const openCommentsWorkspace = useCallback(() => {
         hasHandledInitialPanelVisibilityRef.current = true;
@@ -507,6 +490,10 @@ export const ShareView = () => {
 
         openCommentsWorkspace();
     }, [commentMode, isPanelOpen, closeCommentsWorkspace, openCommentsWorkspace]);
+
+    const togglePathsPanel = useCallback(() => {
+        setIsPathsPanelOpen((current) => !current);
+    }, []);
 
     const handleReviewBranchChange = useCallback(
         (decision: FlowPreviewReviewDecision, branchId: string) => {
@@ -573,20 +560,6 @@ export const ShareView = () => {
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [handleRestart, toggleCommentsWorkspace]);
-
-    const toggleHotspots = useCallback(() => {
-        setFlow((currentFlow) => {
-            if (!currentFlow) return currentFlow;
-
-            return {
-                ...currentFlow,
-                settings: {
-                    ...currentFlow.settings,
-                    showHotspots: !(currentFlow.settings?.showHotspots ?? true),
-                },
-            };
-        });
-    }, []);
 
     const loadComments = useCallback(
         async (flowId: string, options?: { showLoader?: boolean }) => {
@@ -676,6 +649,7 @@ export const ShareView = () => {
         setReviewSnapshot(readStoredReviewSnapshot(id));
         setReviewState(createEmptyReviewState());
         setReviewPathChangeRequest(null);
+        setIsPathsPanelOpen(false);
         void loadComments(id, { showLoader: true });
     }, [id, loadComments]);
 
@@ -1053,6 +1027,19 @@ export const ShareView = () => {
         [activeThreadId, reviewThreadEntries]
     );
     const activeThread = activeThreadEntry?.thread || null;
+
+    useEffect(() => {
+        const pendingDecision = reviewState.decisions.find((decision) => decision.mode === 'interceptor') || null;
+
+        if (!pendingDecision) {
+            lastAutoOpenPendingPathStepIdRef.current = null;
+            return;
+        }
+
+        if (lastAutoOpenPendingPathStepIdRef.current === pendingDecision.stepId) return;
+        lastAutoOpenPendingPathStepIdRef.current = pendingDecision.stepId;
+        setIsPathsPanelOpen(true);
+    }, [reviewState.decisions]);
 
     useEffect(() => {
         if (!pendingThreadRevealId) return;
@@ -2447,19 +2434,25 @@ export const ShareView = () => {
         ? reviewState.decisions.length > 0
         : reviewState.decisions.length > 0 || hasSnapshotPathChoices;
     const isPathPanelLoading = !hasLiveReviewState && (!snapshotHistoryLength || hasSnapshotPathChoices);
-    const shouldShowPathPanel = hasPathChoices || isPathPanelLoading;
-    const commentsWorkspacePaddingClass = isCommentsWorkspaceActive
-        ? shouldShowPathPanel
+    const isPathsWorkspaceActive = isPathsPanelOpen;
+    const hasDesktopPathsPanel = isPathsWorkspaceActive && !isNarrowViewport;
+    const hasDesktopCommentsPanel = isCommentsWorkspaceActive && !isNarrowViewport;
+    const commentsWorkspacePaddingClass =
+        hasDesktopPathsPanel && hasDesktopCommentsPanel
             ? 'md:pl-[356px] md:pr-[356px]'
-            : ''
-        : '';
+            : '';
     const commentsWorkspaceSurfaceStyle =
-        isCommentsWorkspaceActive && !shouldShowPathPanel && !isNarrowViewport
+        hasDesktopPathsPanel && !hasDesktopCommentsPanel
             ? {
-                  paddingLeft: 'clamp(0px, calc(100vw - 756px), 356px)',
-                  paddingRight: '356px',
+                  paddingLeft: '356px',
+                  paddingRight: 'clamp(0px, calc(100vw - 756px), 356px)',
               }
-            : undefined;
+            : !hasDesktopPathsPanel && hasDesktopCommentsPanel
+                ? {
+                      paddingLeft: 'clamp(0px, calc(100vw - 756px), 356px)',
+                      paddingRight: '356px',
+                  }
+                : undefined;
     const renderCommentsReadOnlyBanner = () =>
         !user ? (
             <ShellNotice
@@ -2494,104 +2487,15 @@ export const ShareView = () => {
             />
         ) : null;
     const renderPathSelectionControls = ({ compact = false }: { compact?: boolean } = {}) => {
-        if (isPathPanelLoading) {
-            return (
-                <div className={cn(compact ? 'px-2.5 py-3' : 'px-3 py-4')}>
-                    <div className="flex items-center gap-2 rounded-xl border border-shell-dark-border bg-shell-dark-surface px-3 py-3 text-xs font-medium text-shell-dark-muted">
-                        <Loader2 size={13} className="shrink-0 animate-spin" />
-                        Loading route options...
-                    </div>
-                </div>
-            );
-        }
-
-        if (!hasPathChoices) return null;
-
         return (
-            <div className={cn('space-y-2.5', compact ? 'px-2.5 py-2.5' : 'px-3 py-3')}>
-                {reviewState.decisions.map((decision) => {
-                    const selectedLabel = getReviewBranchLabel(decision);
-                    const isPendingChoice = decision.mode === 'interceptor';
-
-                    return (
-                        <div
-                            key={`${decision.mode}:${decision.stepId}`}
-                            className={cn(
-                                'rounded-xl border p-2.5 shadow-[0_14px_28px_rgb(0_0_0/0.18)]',
-                                isPendingChoice
-                                    ? 'border-shell-dark-accent/25 bg-shell-dark-surface/45'
-                                    : 'border-shell-dark-border bg-shell-dark-panel/70'
-                            )}
-                        >
-                            <div className="mb-2 flex items-center gap-2 px-0.5">
-                                <Split
-                                    size={13}
-                                    className={cn(
-                                        'shrink-0',
-                                        isPendingChoice ? 'text-shell-node-condition' : 'text-shell-node-condition/85'
-                                    )}
-                                />
-                                <span
-                                    className={cn(
-                                        'min-w-0 truncate text-[10px] font-medium uppercase tracking-[0.08em]',
-                                        isPendingChoice ? 'text-shell-dark-accent-text/90' : 'text-shell-dark-muted'
-                                    )}
-                                    title={decision.stepLabel || undefined}
-                                >
-                                    {decision.stepLabel}
-                                </span>
-                            </div>
-
-                            <ShellSelect
-                                value={decision.selectedBranchId ?? undefined}
-                                onValueChange={(branchId) =>
-                                    handleReviewBranchChange(decision, branchId)
-                                }
-                            >
-                                <ShellSelectTrigger
-                                    tone="cinematicDark"
-                                    className={cn(
-                                        'h-auto min-h-[46px] w-full rounded-xl border border-shell-dark-border bg-shell-dark-surface px-3 py-2.5 whitespace-normal shadow-none transition-colors hover:border-shell-dark-border-strong focus:border-shell-dark-accent focus:ring-shell-dark-accent/30 data-[state=open]:border-shell-dark-accent [&>span]:flex [&>span]:min-w-0 [&>span]:flex-1 [&>svg]:text-shell-dark-muted'
-                                    )}
-                                    aria-label={`${decision.stepLabel} path selector`}
-                                >
-                                    <span className="flex min-w-0 items-center">
-                                        <span
-                                            className="truncate text-sm font-medium text-shell-dark-text"
-                                            title={selectedLabel}
-                                        >
-                                            {selectedLabel}
-                                        </span>
-                                    </span>
-                                </ShellSelectTrigger>
-
-                                <ShellSelectContent tone="cinematicDark" className="min-w-[220px]">
-                                    {decision.branches.map((branch) => {
-                                        const label = getReviewBranchOptionLabel(branch);
-
-                                        return (
-                                            <ShellSelectItem
-                                                key={branch.id}
-                                                tone="cinematicDark"
-                                                size="compact"
-                                                value={branch.id}
-                                                className={cn(
-                                                    'pr-8',
-                                                    branch.isDefault
-                                                        ? 'text-shell-dark-muted'
-                                                        : 'text-shell-dark-text'
-                                                )}
-                                            >
-                                                {label}
-                                            </ShellSelectItem>
-                                        );
-                                    })}
-                                </ShellSelectContent>
-                            </ShellSelect>
-                        </div>
-                    );
-                })}
-            </div>
+            <PathsPanel
+                decisions={reviewState.decisions}
+                isLoading={isPathPanelLoading}
+                tone="cinematicDark"
+                onChangePath={(decision, branchId) => handleReviewBranchChange(decision, branchId)}
+                onResetPaths={hasPathChoices ? handleRestart : undefined}
+                className={compact ? 'max-h-[320px]' : 'min-h-0 flex-1'}
+            />
         );
     };
 
@@ -2652,6 +2556,19 @@ export const ShareView = () => {
                                     <MessageSquare />
                                 </ShellHeaderRailItem>
                             </ActionTooltip>
+
+                            <ActionTooltip content="Paths" side="bottom">
+                                <ShellHeaderRailItem
+                                    tone="cinematicDark"
+                                    iconOnly
+                                    active={isPathsWorkspaceActive}
+                                    onClick={togglePathsPanel}
+                                    aria-label="Toggle paths"
+                                    aria-pressed={isPathsWorkspaceActive}
+                                >
+                                    <Split />
+                                </ShellHeaderRailItem>
+                            </ActionTooltip>
                         </ShellHeaderRail>
                     </div>
 
@@ -2703,15 +2620,6 @@ export const ShareView = () => {
                         </ShellSegmentedControl>
 
                         <div className="flex items-center gap-2">
-                            <PreviewHeaderActionButton
-                                tone="cinematicDark"
-                                active={areHotspotsVisible}
-                                onClick={toggleHotspots}
-                                aria-pressed={areHotspotsVisible}
-                            >
-                                Hotspots
-                            </PreviewHeaderActionButton>
-
                             <ActionTooltip content="Restart" shortcut="R" side="bottom">
                                 <PreviewHeaderActionButton
                                     tone="cinematicDark"
@@ -2751,7 +2659,7 @@ export const ShareView = () => {
                     style={commentsWorkspaceSurfaceStyle}
                 >
                     <div ref={commentSurfaceRef} className="w-full h-full relative">
-                        {isCommentsWorkspaceActive && shouldShowPathPanel ? (
+                        {isPathsWorkspaceActive ? (
                             <div className="md:hidden absolute top-2 left-2 right-2 z-[55] max-w-[calc(100%-1rem)] pointer-events-none">
                                 <div
                                     data-comment-placement-ignore="true"
@@ -2761,10 +2669,19 @@ export const ShareView = () => {
                                 >
                                     <div className="p-3 border-b border-shell-dark-border flex items-center justify-between gap-3">
                                         <div className="flex items-center gap-2 min-w-0">
-                                            <h2 className="text-sm font-medium text-shell-dark-text">Choose path</h2>
+                                            <Split size={14} className="shrink-0 text-shell-node-condition" />
+                                            <h2 className="text-sm font-medium text-shell-dark-text">Paths</h2>
                                         </div>
+                                        <ShellIconButton
+                                            size="sm"
+                                            tone="cinematicDark"
+                                            onClick={() => setIsPathsPanelOpen(false)}
+                                            aria-label="Close paths panel"
+                                        >
+                                            <X size={14} />
+                                        </ShellIconButton>
                                     </div>
-                                    <div className="max-h-[220px] overflow-y-auto thin-scrollbar">
+                                    <div className="max-h-[320px] overflow-y-auto thin-scrollbar">
                                         {renderPathSelectionControls({ compact: true })}
                                     </div>
                                 </div>
@@ -2795,6 +2712,7 @@ export const ShareView = () => {
                                 onReviewStateChange={setReviewState}
                                 onReviewSnapshotChange={setReviewSnapshot}
                                 reviewPathChangeRequest={reviewPathChangeRequest}
+                                showInlinePathControls={false}
                             />
                         </div>
 
@@ -3012,24 +2930,33 @@ export const ShareView = () => {
                         {renderComposer()}
                     </div>
 
+                    {isPathsWorkspaceActive ? (
+                        <div className="hidden md:block absolute top-3 left-3 bottom-3 w-[340px] z-[60]">
+                            <div className="h-full w-full bg-shell-dark-panel border border-shell-dark-border rounded-xl shadow-2xl overflow-hidden flex flex-col">
+                                <div className="p-3 border-b border-shell-dark-border flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <Split size={14} className="shrink-0 text-shell-node-condition" />
+                                        <h2 className="text-sm font-medium text-shell-dark-text">Paths</h2>
+                                    </div>
+                                    <ShellIconButton
+                                        size="sm"
+                                        tone="cinematicDark"
+                                        onClick={() => setIsPathsPanelOpen(false)}
+                                        aria-label="Close paths panel"
+                                    >
+                                        <X size={14} />
+                                    </ShellIconButton>
+                                </div>
+
+                                <div className="flex-1 overflow-y-auto thin-scrollbar">
+                                    {renderPathSelectionControls()}
+                                </div>
+                            </div>
+                        </div>
+                    ) : null}
+
                     {isPanelOpen ? (
                         <>
-                            {shouldShowPathPanel ? (
-                                <div className="hidden md:block absolute top-3 left-3 bottom-3 w-[340px] z-[60]">
-                                    <div className="h-full w-full bg-shell-dark-panel border border-shell-dark-border rounded-xl shadow-2xl overflow-hidden flex flex-col">
-                                        <div className="p-3 border-b border-shell-dark-border flex items-center justify-between gap-3">
-                                            <div className="flex items-center gap-2 min-w-0">
-                                                <h2 className="text-sm font-medium text-shell-dark-text">Choose path</h2>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex-1 overflow-y-auto thin-scrollbar">
-                                            {renderPathSelectionControls()}
-                                        </div>
-                                    </div>
-                                </div>
-                            ) : null}
-
                             <div className="hidden md:block absolute top-3 right-3 bottom-3 w-[340px] z-[60]">
                                 <div className="h-full w-full bg-shell-dark-panel border border-shell-dark-border rounded-xl shadow-2xl overflow-hidden flex flex-col">
                                     <div className="p-3 border-b border-shell-dark-border flex items-center justify-between gap-3">

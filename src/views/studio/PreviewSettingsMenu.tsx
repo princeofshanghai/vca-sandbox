@@ -39,7 +39,7 @@ export const PreviewSettingsMenu = ({
 }: PreviewSettingsMenuProps) => {
     const [isOpen, setIsOpen] = useState(false);
 
-    const updateFlowSetting = (key: 'showDisclaimer' | 'simulateThinking') => {
+    const updateFlowSetting = (key: 'showDisclaimer' | 'simulateThinking' | 'showHotspots') => {
         onUpdateFlow({
             ...flow,
             settings: {
@@ -151,6 +151,15 @@ export const PreviewSettingsMenu = ({
                     onCheckedChange={() => updateFlowSetting('simulateThinking')}
                 >
                     <span>Simulate thinking</span>
+                </ShellMenuCheckboxItem>
+
+                <ShellMenuCheckboxItem
+                    tone={tone}
+                    size={size}
+                    checked={flow.settings?.showHotspots ?? true}
+                    onCheckedChange={() => updateFlowSetting('showHotspots')}
+                >
+                    <span>Show hotspots</span>
                 </ShellMenuCheckboxItem>
             </ShellMenuContent>
         </ShellMenu>

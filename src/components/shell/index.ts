@@ -4,6 +4,7 @@ export { ShellHeaderRail, ShellHeaderRailItem } from './ShellHeaderRail';
 export { ShellInput } from './ShellInput';
 export { ShellIconButton } from './ShellIconButton';
 export { ShellNotice } from './ShellNotice';
+export { ShellPopoverContent } from './ShellPopover';
 export { ShellSelectableRow } from './ShellSelectableRow';
 export { ShellSwitch } from './ShellSwitch';
 export { ShellTextarea } from './ShellTextarea';

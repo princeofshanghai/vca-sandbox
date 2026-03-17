@@ -9,7 +9,8 @@ import { InfoMessage } from '@/components/vca-components/info-message/InfoMessag
 import { StatusCard } from '@/components/vca-components/status-card/StatusCard';
 import { PromptGroup } from '@/components/vca-components/prompt-group/PromptGroup';
 import { PhoneFrame } from '@/components/component-library/PhoneFrame';
-import { Split } from 'lucide-react';
+import { Pencil, Split } from 'lucide-react';
+import { ShellIconButton } from '@/components/shell';
 
 import { InlineFeedback } from '@/components/vca-components/inline-feedback';
 import { SelectionList } from '@/components/vca-components/selection-list/SelectionList';
@@ -23,7 +24,7 @@ import {
     ContextInterceptorMessage,
     type ContextInterceptorResolution,
 } from './components/ContextInterceptorMessage';
-import { getConditionQuestionLabel } from './conditionBranchLabels';
+import { getConditionPathLabel, getConditionQuestionLabel } from './conditionBranchLabels';
 import {
     type ConditionPathSelection,
     type SmartFlowEngineSnapshot,
@@ -44,6 +45,7 @@ interface FlowPreviewProps {
     onReviewStateChange?: (state: FlowPreviewReviewState) => void;
     onReviewSnapshotChange?: (snapshot: SmartFlowEngineSnapshot) => void;
     reviewPathChangeRequest?: FlowPreviewReviewPathChangeRequest | null;
+    showInlinePathControls?: boolean;
 }
 
 export interface FlowPreviewReviewPathSelection {
@@ -117,6 +119,18 @@ const getUserTurnDisplayText = (userTurn: { triggerValue?: string; label: string
 const buildPathSignature = (pathSelections: ConditionPathSelection[]) =>
     pathSelections.map((selection) => `${selection.stepId}:${selection.selectedBranchId}`).join('|');
 
+const getSelectedPathDisplayLabel = (
+    branches: Branch[],
+    selectedBranchId: string | null | undefined,
+    fallbackLabel: string
+) => {
+    const selectedBranch = selectedBranchId
+        ? branches.find((branch) => branch.id === selectedBranchId)
+        : null;
+
+    return selectedBranch ? getConditionPathLabel(selectedBranch) : fallbackLabel;
+};
+
 const buildReviewBlockId = ({
     kind,
     stepId,
@@ -142,6 +156,7 @@ export const FlowPreview = ({
     onReviewStateChange,
     onReviewSnapshotChange,
     reviewPathChangeRequest = null,
+    showInlinePathControls = true,
 }: FlowPreviewProps) => {
     const hotspotsEnabled = flow.settings?.showHotspots ?? true;
     // Shared composer state
@@ -185,6 +200,7 @@ export const FlowPreview = ({
         onReviewStateChange,
         onReviewSnapshotChange,
         reviewPathChangeRequest,
+        showInlinePathControls,
     };
 
     return (
@@ -300,6 +316,7 @@ const PreviewContent = ({
     onReviewStateChange,
     onReviewSnapshotChange,
     reviewPathChangeRequest = null,
+    showInlinePathControls = true,
 }: {
     flow: Flow,
     variables?: Record<string, string>,
@@ -315,6 +332,7 @@ const PreviewContent = ({
     onReviewStateChange?: (state: FlowPreviewReviewState) => void,
     onReviewSnapshotChange?: (snapshot: SmartFlowEngineSnapshot) => void,
     reviewPathChangeRequest?: FlowPreviewReviewPathChangeRequest | null,
+    showInlinePathControls?: boolean,
 }) => {
 
     // USE SMART FLOW ENGINE
@@ -385,6 +403,7 @@ const PreviewContent = ({
                 branches: activeInterceptor.branches,
                 stepId: activeInterceptor.stepId,
                 interceptorId: activeInterceptor.id,
+                selectedBranchId: null,
                 selectedLabel: conditionStepLabels.get(activeInterceptor.stepId) || 'Condition'
             }
             : lastConditionSelection
@@ -394,6 +413,7 @@ const PreviewContent = ({
                     variableName: lastConditionSelection.variableName,
                     branches: lastConditionSelection.branches,
                     stepId: lastConditionSelection.stepId,
+                    selectedBranchId: lastConditionSelection.selectedBranchId,
                     selectedLabel: lastConditionSelection.selectedLabel
                 }
                 : null
@@ -493,8 +513,17 @@ const PreviewContent = ({
         }
     }, [resolveInterceptorBranch, reviewDecisions, reviewPathChangeRequest, switchConditionPathBranch]);
 
-    const shouldShowFullPathPanel = !reviewMode && !!overlaySelection && isPathPanelExpanded;
-    const shouldShowCompactPathPill = !reviewMode && !!overlaySelection && !isPathPanelExpanded;
+    const shouldShowFullPathPanel = showInlinePathControls && !reviewMode && !!overlaySelection && isPathPanelExpanded;
+    const shouldShowCompactPathPill = showInlinePathControls && !reviewMode && !!overlaySelection && !isPathPanelExpanded;
+    const compactPathLabel = overlaySelection
+        ? overlaySelection.mode === 'interceptor'
+            ? 'Choose path'
+            : getSelectedPathDisplayLabel(
+                overlaySelection.branches,
+                overlaySelection.selectedBranchId,
+                overlaySelection.selectedLabel
+            )
+        : '';
     const activeInteractiveTurn = useMemo(
         () => [...history].reverse().find((step) => step.type === 'turn') as import('./types').Turn | undefined || null,
         [history]
@@ -757,6 +786,13 @@ const PreviewContent = ({
                 if (step.type === 'condition-selection') {
                     if (!reviewMode) return null;
 
+                    const questionLabel = conditionStepLabels.get(step.stepId) || 'Condition';
+                    const pathLabel = getSelectedPathDisplayLabel(
+                        step.branches,
+                        step.selectedBranchId,
+                        step.selectedLabel
+                    );
+
                     return (
                         <div
                             key={step.id}
@@ -771,17 +807,14 @@ const PreviewContent = ({
                                 <div className="w-full inline-flex items-center gap-2 rounded-xl border border-shell-node-condition/35 bg-[rgb(var(--shell-node-condition-surface)/1)] px-3 py-2 text-left shadow-sm">
                                     <Split size={13} className="shrink-0 text-shell-node-condition" />
                                     <div className="min-w-0 flex-1">
-                                        <p className="text-[10px] font-medium uppercase tracking-wide text-shell-muted">
-                                            Path choice
-                                        </p>
                                         <p
                                             className="truncate text-xs font-medium text-shell-muted-strong"
-                                            title={step.selectedLabel}
+                                            title={questionLabel}
                                         >
-                                            {step.selectedLabel}
+                                            {questionLabel}
                                         </p>
-                                        <p className="mt-1 text-[11px] text-shell-muted">
-                                            Change path from the chips above.
+                                        <p className="mt-0.5 truncate text-[11px] text-shell-text" title={pathLabel}>
+                                            {pathLabel}
                                         </p>
                                     </div>
                                 </div>
@@ -793,6 +826,8 @@ const PreviewContent = ({
                 // 4. Interceptor Step (NEW)
                 if (step.type === 'interceptor') {
                     if (reviewMode) {
+                        const questionLabel = conditionStepLabels.get(step.stepId) || 'Condition';
+
                         return (
                             <div
                                 key={step.id}
@@ -806,12 +841,12 @@ const PreviewContent = ({
                                 <div className="w-full max-w-[420px] rounded-xl border border-shell-node-condition/35 bg-[rgb(var(--shell-node-condition-surface)/1)] px-3 py-2 text-left shadow-sm">
                                     <div className="inline-flex items-center gap-2">
                                         <Split size={13} className="shrink-0 text-shell-node-condition" />
-                                        <div className="min-w-0">
-                                            <p className="text-[10px] font-medium uppercase tracking-wide text-shell-muted">
-                                                Path choice pending
+                                        <div className="min-w-0 flex-1">
+                                            <p className="truncate text-xs font-medium text-shell-muted-strong" title={questionLabel}>
+                                                {questionLabel}
                                             </p>
-                                            <p className="text-xs font-medium text-shell-muted-strong">
-                                                Choose path from the chips above.
+                                            <p className="mt-0.5 text-[11px] text-shell-text">
+                                                Choose path
                                             </p>
                                         </div>
                                     </div>
@@ -1204,29 +1239,40 @@ const PreviewContent = ({
                                 setIsPathPanelExpanded(true);
                             }
                         }}
-                        className="inline-flex max-w-[420px] items-center gap-2 rounded-xl border border-shell-node-condition/35 bg-[rgb(var(--shell-node-condition-surface)/1)] px-3 py-1.5 text-left shadow-sm"
+                        className="flex w-full max-w-[420px] items-center gap-2 rounded-xl border border-shell-node-condition/35 bg-[rgb(var(--shell-node-condition-surface)/1)] px-3 py-2.5 text-left shadow-sm"
                     >
                         <Split size={13} className="shrink-0 text-shell-node-condition" />
-                        <div className="min-w-0">
-                            <p className="text-[10px] font-medium uppercase tracking-wide text-shell-muted">
-                                {overlaySelection.mode === 'interceptor' ? 'Preview paused' : 'Preview path'}
-                            </p>
+                        <div className="min-w-0 flex flex-1 items-center gap-2.5 overflow-hidden">
                             <p
-                                className="max-w-[170px] truncate text-xs font-medium text-shell-muted-strong"
-                                title={overlaySelection.selectedLabel}
+                                className="min-w-0 flex-1 truncate text-[13px] font-semibold text-shell-text"
+                                title={overlaySelection.stepLabel}
                             >
-                                {overlaySelection.selectedLabel}
+                                {overlaySelection.stepLabel}
                             </p>
+                            <span
+                                className={
+                                    overlaySelection.mode === 'interceptor'
+                                        ? 'inline-flex max-w-[48%] shrink-0 items-center truncate rounded-full border border-shell-node-condition/35 bg-shell-bg px-2.5 py-1 text-[11px] font-semibold text-shell-node-condition'
+                                        : 'inline-flex max-w-[48%] shrink-0 items-center truncate rounded-full border border-shell-border bg-shell-bg px-2.5 py-1 text-[11px] font-medium text-shell-muted-strong'
+                                }
+                                title={compactPathLabel}
+                            >
+                                {compactPathLabel}
+                            </span>
                         </div>
-                        <button
+                        <ShellIconButton
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            aria-label="Edit path"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 setIsPathPanelExpanded(true);
                             }}
-                            className="ml-1 text-[11px] font-medium text-shell-accent-text hover:text-shell-accent"
+                            className="shrink-0 text-shell-muted hover:text-shell-node-condition"
                         >
-                            {overlaySelection.mode === 'interceptor' ? 'Open' : 'Change'}
-                        </button>
+                            <Pencil size={14} />
+                        </ShellIconButton>
                     </div>
                 </div>
             )}

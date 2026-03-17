@@ -1,14 +1,22 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import * as Popover from '@radix-ui/react-popover';
 import { cn } from '@/utils/cn';
-import { FlowPreview } from './FlowPreview';
+import { FlowPreview, type FlowPreviewReviewPathChangeRequest, type FlowPreviewReviewState } from './FlowPreview';
 import { Flow } from './types';
 import { PreviewSettingsMenu } from './PreviewSettingsMenu';
 import { PreviewHeaderActionButton } from './components/PreviewHeaderActionButton';
 import { ShareDialog } from './components/ShareDialog';
-import { RotateCcw, X, Monitor, Smartphone } from 'lucide-react';
+import { RotateCcw, Split, X, Monitor, Smartphone } from 'lucide-react';
 import { ActionTooltip } from '../studio-canvas/components/ActionTooltip';
-import { ShellButton, ShellIconButton, ShellSegmentedControl, ShellSegmentedControlItem } from '@/components/shell';
+import {
+    ShellButton,
+    ShellIconButton,
+    ShellPopoverContent,
+    ShellSegmentedControl,
+    ShellSegmentedControlItem,
+} from '@/components/shell';
 import { useApp } from '@/contexts/AppContext';
+import { PathsPanel } from './components/PathsPanel';
 
 interface PreviewDrawerProps {
     isOpen: boolean;
@@ -37,18 +45,40 @@ export function PreviewDrawer({
     const [resetKey, setResetKey] = useState(0);
     const [simulationVariables, setSimulationVariables] = useState<Record<string, string>>({});
     const [lastRestartedModifiedAt, setLastRestartedModifiedAt] = useState(flow.lastModified);
+    const [reviewState, setReviewState] = useState<FlowPreviewReviewState>({
+        pathSelections: [],
+        decisions: [],
+        pathSignature: '',
+        historyLength: 0,
+    });
+    const [reviewPathChangeRequest, setReviewPathChangeRequest] =
+        useState<FlowPreviewReviewPathChangeRequest | null>(null);
+    const [isPathsPanelOpen, setIsPathsPanelOpen] = useState(false);
     const isDarkMode = state.theme === 'dark';
     const previewControlTone = isDarkMode ? 'cinematicDark' : 'default';
-    const areHotspotsVisible = flow.settings?.showHotspots ?? true;
-
     const debounceTimerRef = useRef<NodeJS.Timeout | undefined>(undefined);
     const latestFlowModifiedAtRef = useRef(flow.lastModified);
+    const lastAutoOpenPendingStepIdRef = useRef<string | null>(null);
 
     useEffect(() => {
         latestFlowModifiedAtRef.current = flow.lastModified;
     }, [flow.lastModified]);
 
     const shouldShowRestartIndicator = flow.lastModified > lastRestartedModifiedAt;
+    const hasPathDecisions = reviewState.decisions.length > 0;
+    const pendingPathDecision = reviewState.decisions.find((decision) => decision.mode === 'interceptor') || null;
+
+    const handlePathChange = useCallback((stepId: string, branchId: string, mode: 'selection' | 'interceptor') => {
+        setReviewPathChangeRequest({
+            token: Date.now() + Math.random(),
+            stepId,
+            branchId,
+            mode,
+        });
+        if (mode === 'interceptor') {
+            setIsPathsPanelOpen(false);
+        }
+    }, []);
 
     const handleRestart = useCallback(() => {
         // 1. Cancel any pending debounce updates to prevent race conditions
@@ -59,6 +89,7 @@ export function PreviewDrawer({
 
         // 3. Reset simulation variables so required path choices appear again.
         setSimulationVariables({});
+        setReviewPathChangeRequest(null);
 
         // 4. Mark the preview as replayed against the latest flow revision.
         setLastRestartedModifiedAt(flow.lastModified);
@@ -67,20 +98,22 @@ export function PreviewDrawer({
         setResetKey(prev => prev + 1);
     }, [flow]);
 
-    const handleToggleHotspots = () => {
+    const handlePreviewFlowUpdate = useCallback((nextFlow: Flow) => {
         if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-
-        const nextFlow: Flow = {
-            ...flow,
-            settings: {
-                ...flow.settings,
-                showHotspots: !areHotspotsVisible,
-            },
-        };
-
         onUpdateFlow(nextFlow);
         setActiveFlow(nextFlow);
-    };
+    }, [onUpdateFlow]);
+
+    useEffect(() => {
+        if (!pendingPathDecision) {
+            lastAutoOpenPendingStepIdRef.current = null;
+            return;
+        }
+
+        if (lastAutoOpenPendingStepIdRef.current === pendingPathDecision.stepId) return;
+        lastAutoOpenPendingStepIdRef.current = pendingPathDecision.stepId;
+        setIsPathsPanelOpen(true);
+    }, [pendingPathDecision]);
 
     // Debounced auto-sync: Update preview 1 second after editing stops
     useEffect(() => {
@@ -104,6 +137,12 @@ export function PreviewDrawer({
             const timer = setTimeout(() => setShouldRender(false), 300);
             return () => clearTimeout(timer);
         }
+    }, [isOpen]);
+
+    useEffect(() => {
+        if (isOpen) return;
+        setIsPathsPanelOpen(false);
+        setReviewPathChangeRequest(null);
     }, [isOpen]);
 
     useEffect(() => {
@@ -190,7 +229,7 @@ export function PreviewDrawer({
                                 <div className="flex">
                                     <PreviewSettingsMenu
                                         flow={flow}
-                                        onUpdateFlow={onUpdateFlow}
+                                        onUpdateFlow={handlePreviewFlowUpdate}
                                         isPremium={isPremium}
                                         onTogglePremium={onTogglePremium}
                                         tone={previewControlTone}
@@ -204,14 +243,38 @@ export function PreviewDrawer({
                         </div>
 
                         <div className="flex items-center gap-2">
-                            <PreviewHeaderActionButton
-                                tone={previewControlTone}
-                                active={areHotspotsVisible}
-                                onClick={handleToggleHotspots}
-                                aria-pressed={areHotspotsVisible}
-                            >
-                                Hotspots
-                            </PreviewHeaderActionButton>
+                            <Popover.Root open={isPathsPanelOpen} onOpenChange={setIsPathsPanelOpen}>
+                                <Popover.Trigger asChild>
+                                    <PreviewHeaderActionButton
+                                        tone={previewControlTone}
+                                        active={isPathsPanelOpen || !!pendingPathDecision}
+                                        aria-expanded={isPathsPanelOpen}
+                                    >
+                                        <Split size={14} />
+                                        Paths
+                                    </PreviewHeaderActionButton>
+                                </Popover.Trigger>
+
+                                <ShellPopoverContent
+                                    tone="default"
+                                    side="bottom"
+                                    align="end"
+                                    sideOffset={10}
+                                    collisionPadding={12}
+                                    className="w-[344px] border-shell-border bg-shell-bg p-0"
+                                >
+                                    <PathsPanel
+                                        decisions={reviewState.decisions}
+                                        tone="default"
+                                        variant="popover"
+                                        onChangePath={(decision, branchId) =>
+                                            handlePathChange(decision.stepId, branchId, decision.mode)
+                                        }
+                                        onResetPaths={hasPathDecisions ? handleRestart : undefined}
+                                        className="max-h-[min(68vh,520px)]"
+                                    />
+                                </ShellPopoverContent>
+                            </Popover.Root>
 
                             <ActionTooltip content="Restart" shortcut="R" side="bottom">
                                 <div className="relative">
@@ -254,6 +317,9 @@ export function PreviewDrawer({
                             isMobile={isMobile}
                             variables={simulationVariables}
                             onVariableUpdate={(key, val) => setSimulationVariables(prev => ({ ...prev, [key]: val }))}
+                            onReviewStateChange={setReviewState}
+                            reviewPathChangeRequest={reviewPathChangeRequest}
+                            showInlinePathControls={false}
                         />
                     </div>
                 </div>

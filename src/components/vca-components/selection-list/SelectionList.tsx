@@ -57,8 +57,10 @@ export const SelectionList = ({
         ? items.slice(0, maxDisplayed)
         : items;
 
+    const hasHotspots = hotspotItemIds.length > 0;
+
     // Common item styles
-    const itemBaseStyles = "group flex items-center gap-3 p-3 rounded-lg border border-transparent transition-all cursor-pointer relative overflow-hidden";
+    const itemBaseStyles = "group flex items-center gap-3 p-3 rounded-lg border border-transparent transition-all cursor-pointer relative";
     const itemStateStyles = "bg-white hover:bg-vca-background-transparent-hover";
 
     // Layout-specific container styles
@@ -77,7 +79,7 @@ export const SelectionList = ({
 
     return (
         <div className={cn("selection-list-container", className)}>
-            <div className={cn(containerLayoutStyles[layout])}>
+            <div className={cn(containerLayoutStyles[layout], hasHotspots && "pr-4")}>
                 {displayedItems.map((item) => {
                     const showHotspot = hotspotItemIds.includes(item.id);
                     const resolvedVisualType: SelectionItemVisualType =
