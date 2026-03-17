@@ -243,17 +243,17 @@ export const useCanvasCommentsController = ({
 
     useEffect(() => {
         if (!activeThreadId) return;
-        if (threads.some((thread) => thread.id === activeThreadId)) return;
+        if (visibleThreads.some((thread) => thread.id === activeThreadId)) return;
         setActiveThreadId(null);
         setEditingCommentId(null);
         setEditDraft('');
-    }, [activeThreadId, threads]);
+    }, [activeThreadId, visibleThreads]);
 
     useEffect(() => {
         if (!hoveredThreadId) return;
-        if (threads.some((thread) => thread.id === hoveredThreadId)) return;
+        if (visibleThreads.some((thread) => thread.id === hoveredThreadId)) return;
         setHoveredThreadId(null);
-    }, [hoveredThreadId, threads]);
+    }, [hoveredThreadId, visibleThreads]);
 
     const startPendingComment = useCallback((anchor: FlowCommentCanvasAnchor) => {
         setPendingComment({ anchor });

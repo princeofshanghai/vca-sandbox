@@ -1537,7 +1537,7 @@ function CanvasEditorInner({
             return;
         }
 
-        const nextRenderedPins = comments.threads
+        const nextRenderedPins = comments.visibleThreads
             .map((thread) => {
                 const fallbackAnchor = getCanvasCommentAnchor(thread.root);
                 const anchor =
