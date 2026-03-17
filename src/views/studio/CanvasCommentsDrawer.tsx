@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AlertCircle, Loader2, X } from 'lucide-react';
 import {
+    ShellButton,
     ShellIconButton,
     ShellNotice,
     ShellSelectableRow,
@@ -23,6 +24,7 @@ interface CanvasCommentsDrawerProps {
     isOpen: boolean;
     onClose: () => void;
     comments: CanvasCommentsController;
+    onRequestSignIn?: () => void;
 }
 
 const renderAvatar = ({
@@ -53,6 +55,7 @@ export function CanvasCommentsDrawer({
     isOpen,
     onClose,
     comments,
+    onRequestSignIn,
 }: CanvasCommentsDrawerProps) {
     const [shouldRender, setShouldRender] = useState(isOpen);
 
@@ -114,6 +117,15 @@ export function CanvasCommentsDrawer({
                                     icon={<AlertCircle size={14} />}
                                     title="Sign in required to write comments"
                                     description="You can browse existing feedback here, but posting new comments requires a signed-in editor session."
+                                    action={onRequestSignIn ? (
+                                        <ShellButton
+                                            size="compact"
+                                            className="h-8 text-[11px]"
+                                            onClick={onRequestSignIn}
+                                        >
+                                            Sign in
+                                        </ShellButton>
+                                    ) : undefined}
                                 />
                             ) : null}
 

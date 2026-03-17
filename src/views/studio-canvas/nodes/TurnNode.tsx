@@ -90,11 +90,12 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
     const accentClassName = isAI ? 'text-shell-accent' : 'text-shell-node-user';
     const handleClassName = isAI ? '!bg-shell-accent' : '!bg-shell-node-user';
     const labelInputBorderClassName = isAI ? 'border-shell-accent' : 'border-shell-node-user';
+    const nodeWidthClassName = isAI ? 'w-[360px]' : 'w-[320px]';
 
     return (
         <div
             id={`node-${id}`}
-            className={`${nodeSurfaceClassName} rounded-lg border shadow-sm w-[320px] transition-colors relative overflow-visible ${borderClassName}`}
+            className={`${nodeSurfaceClassName} ${nodeWidthClassName} rounded-lg border shadow-sm transition-colors relative overflow-visible ${borderClassName}`}
         >
             {/* Node Label (Figma Style) - Above the card */}
             < div

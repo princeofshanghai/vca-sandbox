@@ -135,7 +135,8 @@ interface CanvasEditorProps {
         onCheckedChange: (checked: boolean) => void;
     };
     header?: React.ReactNode;
-    mode?: 'edit' | 'share-readonly';
+    mode?: 'edit' | 'share-readonly' | 'share-commentable';
+    onCommentSignIn?: () => void;
 }
 
 const QUICK_CONNECT_CLICK_DISTANCE_PX = 6;
@@ -483,6 +484,7 @@ function CanvasEditorInner({
     comments = null,
     showCommentsToggle,
     mode = 'edit',
+    onCommentSignIn,
 }: CanvasEditorProps) {
     const { screenToFlowPosition, setCenter } = useReactFlow();
     const viewport = useViewport();
@@ -490,8 +492,11 @@ function CanvasEditorInner({
     const commentPopoverRef = useRef<HTMLDivElement | null>(null);
     const suppressNextCommentPlacementRef = useRef(false);
     const suppressCommentClickRef = useRef<{ threadId: string; expiresAt: number } | null>(null);
-    const isReadOnly = mode === 'share-readonly';
-    const isCommentModeActive = !isReadOnly && isCommentModeActiveProp;
+    const isFlowReadOnly = mode !== 'edit';
+    const usesStudioMenuTrigger = mode !== 'share-readonly';
+    const canPlaceComments = mode !== 'share-readonly';
+    const isCommentModeActive = canPlaceComments && isCommentModeActiveProp;
+    const floatingToolbarVariant = mode === 'share-commentable' ? 'comments-only' : 'full';
     const areCommentsVisible = !!comments;
 
     // Selection state
@@ -515,16 +520,16 @@ function CanvasEditorInner({
     const [pendingCommentPoint, setPendingCommentPoint] = useState<CanvasPinPoint | null>(null);
 
     const applyFlowUpdate = useCallback((nextFlow: Flow) => {
-        if (isReadOnly) return;
+        if (isFlowReadOnly) return;
         onUpdateFlow(nextFlow);
-    }, [isReadOnly, onUpdateFlow]);
+    }, [isFlowReadOnly, onUpdateFlow]);
 
     useEffect(() => {
-        if (!isReadOnly) return;
+        if (!isFlowReadOnly) return;
         setQuickAddMenu(null);
         setQuickAddConnectionPreview(null);
         setPendingToolbarPlacement(null);
-    }, [isReadOnly]);
+    }, [isFlowReadOnly]);
 
     useEffect(() => {
         selectionRef.current = selection;
@@ -740,7 +745,7 @@ function CanvasEditorInner({
     }, []);
 
     const armPendingToolbarPlacement = useCallback((type: ToolbarPlacementType) => {
-        if (isReadOnly) return;
+        if (isFlowReadOnly) return;
 
         const initialCanvasPosition = (
             isCanvasPointerInsideRef.current && lastCanvasPointerClientRef.current
@@ -751,7 +756,7 @@ function CanvasEditorInner({
         setQuickAddMenu(null);
         setQuickAddConnectionPreview(null);
         setPendingToolbarPlacement({ type, canvasPosition: initialCanvasPosition });
-    }, [getCanvasPositionFromClient, isReadOnly]);
+    }, [getCanvasPositionFromClient, isFlowReadOnly]);
 
     const placePendingToolbarPlacementAtClient = useCallback((client: { x: number; y: number }) => {
         if (!pendingToolbarPlacement) return false;
@@ -765,7 +770,7 @@ function CanvasEditorInner({
     }, [createToolbarNodeAtPosition, getCanvasPositionFromClient, pendingToolbarPlacement, screenToFlowPosition]);
 
     useEffect(() => {
-        if (isReadOnly) return;
+        if (isFlowReadOnly) return;
 
         const canvasEl = canvasAreaRef.current;
         if (!canvasEl) return;
@@ -794,7 +799,7 @@ function CanvasEditorInner({
             canvasEl.removeEventListener('pointerleave', handlePointerLeave, true);
             canvasEl.removeEventListener('pointerenter', handlePointerEnter, true);
         };
-    }, [isReadOnly, updatePendingToolbarPlacementPreview]);
+    }, [isFlowReadOnly, updatePendingToolbarPlacementPreview]);
 
     // Export/Import handlers
     const handleExportJSON = () => {
@@ -1165,7 +1170,7 @@ function CanvasEditorInner({
     }, [applyFlowUpdate, focusNodeWithToolbar, resolveDefaultUserTurnInputType]);
 
     const onConnectStart: OnConnectStart = useCallback((event, params) => {
-        if (isReadOnly) return;
+        if (isFlowReadOnly) return;
 
         setQuickAddMenu(null);
         setQuickAddConnectionPreview(null);
@@ -1221,10 +1226,10 @@ function CanvasEditorInner({
             sourceCanvasPoint,
             dropBehavior,
         };
-    }, [isReadOnly]);
+    }, [isFlowReadOnly]);
 
     const onConnectEnd: OnConnectEnd = useCallback((event, connectionState) => {
-        if (isReadOnly) return;
+        if (isFlowReadOnly) return;
 
         const gesture = connectionGestureRef.current;
         connectionGestureRef.current = null;
@@ -1301,10 +1306,10 @@ function CanvasEditorInner({
         } else {
             setQuickAddConnectionPreview(null);
         }
-    }, [createConnectedNode, isReadOnly, screenToFlowPosition]);
+    }, [createConnectedNode, isFlowReadOnly, screenToFlowPosition]);
 
     const handleQuickAddSelect = useCallback((targetType: QuickAddNodeType) => {
-        if (isReadOnly) return;
+        if (isFlowReadOnly) return;
         if (!quickAddMenu) return;
 
         createConnectedNode({
@@ -1315,7 +1320,7 @@ function CanvasEditorInner({
         });
         setQuickAddMenu(null);
         setQuickAddConnectionPreview(null);
-    }, [quickAddMenu, createConnectedNode, isReadOnly]);
+    }, [quickAddMenu, createConnectedNode, isFlowReadOnly]);
 
     const handleQuickAddCancel = useCallback(() => {
         setQuickAddMenu(null);
@@ -1388,7 +1393,7 @@ function CanvasEditorInner({
                         ? block.variant
                         : undefined,
                     entryPoint: flow.settings.entryPoint,
-                    readOnly: isReadOnly,
+                    readOnly: isFlowReadOnly,
                     onSelectComponent: handleSelectComponent,
                     onDeselect: handleDeselect,
                 },
@@ -1410,7 +1415,7 @@ function CanvasEditorInner({
                         label: step.label,
                         components: step.components,
                         entryPoint: flow.settings.entryPoint,
-                        readOnly: isReadOnly,
+                        readOnly: isFlowReadOnly,
                         commentState,
                         onSelectComponent: handleSelectComponent,
                         onDeselect: handleDeselect,
@@ -1428,7 +1433,7 @@ function CanvasEditorInner({
                         label: step.label,
                         inputType: step.inputType || 'button', // Default key
                         triggerValue: step.triggerValue,
-                        readOnly: isReadOnly,
+                        readOnly: isFlowReadOnly,
                         commentState,
                         onUpdate: handleUserTurnUpdate,
                     }
@@ -1443,7 +1448,7 @@ function CanvasEditorInner({
                         label: step.label,
                         question: step.question,
                         branches: step.branches,
-                        readOnly: isReadOnly,
+                        readOnly: isFlowReadOnly,
                         commentState,
                         onLabelChange: handleConditionLabelChange,
                         onQuestionChange: handleConditionQuestionChange,
@@ -1458,7 +1463,7 @@ function CanvasEditorInner({
                     data: {
                         label: step.label,
                         content: step.content,
-                        readOnly: isReadOnly,
+                        readOnly: isFlowReadOnly,
                         commentState,
                         onLabelChange: handleNoteLabelChange,
                         onContentChange: handleNoteContentChange,
@@ -1477,7 +1482,7 @@ function CanvasEditorInner({
         });
     }, [
         flow.blocks,
-        isReadOnly,
+        isFlowReadOnly,
         flow.settings.entryPoint,
         flow.steps,
         handleConditionLabelChange,
@@ -2295,7 +2300,7 @@ function CanvasEditorInner({
     }, []);
 
     const handlePasteSelection = useCallback((): boolean => {
-        if (isReadOnly) {
+        if (isFlowReadOnly) {
             return false;
         }
 
@@ -2480,7 +2485,7 @@ function CanvasEditorInner({
         setSelectionAnchorEl(null);
         setPendingReactFlowSelectedNodeIds([]);
         return true;
-    }, [applyFlowUpdate, isReadOnly, setCanvasSelection]);
+    }, [applyFlowUpdate, isFlowReadOnly, setCanvasSelection]);
 
     // Manual delete trigger for nested selections (cards and branch cards).
     const handleDeleteSelection = useCallback(() => {
@@ -2938,18 +2943,9 @@ function CanvasEditorInner({
             {/* Header */}
             {/* Top Left Pill: Back & Title */}
             <div className="absolute top-4 left-4 z-50 flex items-center h-11 gap-1.5 bg-shell-bg dark:bg-shell-surface-subtle px-2 rounded-xl shadow-sm dark:shadow-[0_14px_32px_rgb(0_0_0/0.26)] border border-shell-border/70 dark:border-shell-border/55 backdrop-blur-sm">
-                {isReadOnly ? (
-                    <ActionTooltip content="Back to dashboard">
-                        <ShellIconButton
-                            onClick={onBack}
-                            aria-label="Back to dashboard"
-                        >
-                            <ArrowLeft size={18} />
-                        </ShellIconButton>
-                    </ActionTooltip>
-                ) : (
+                {usesStudioMenuTrigger ? (
                     <UserMenu
-                        backItem={{ label: 'Back to dashboard', onSelect: onBack }}
+                        backItem={{ label: isFlowReadOnly ? 'Go home' : 'Back to dashboard', onSelect: onBack }}
                         switchItems={showCommentsToggle ? [{
                             label: 'Show comments',
                             checked: showCommentsToggle.checked,
@@ -2979,13 +2975,22 @@ function CanvasEditorInner({
                             </button>
                         )}
                     />
+                ) : (
+                    <ActionTooltip content="Back to dashboard">
+                        <ShellIconButton
+                            onClick={onBack}
+                            aria-label="Back to dashboard"
+                        >
+                            <ArrowLeft size={18} />
+                        </ShellIconButton>
+                    </ActionTooltip>
                 )}
                 <div className="h-5 w-px bg-shell-chrome-divider" />
                 <div className="relative inline-grid items-center min-w-[60px] max-w-[320px]">
                     <span className="invisible px-3 py-1 text-sm font-medium whitespace-pre border border-transparent col-start-1 row-start-1">
                         {flow.title || "Untitled flow"}
                     </span>
-                    {isReadOnly ? (
+                    {isFlowReadOnly ? (
                         <div className="absolute inset-0 w-full h-full font-medium text-sm text-shell-text bg-transparent border border-transparent rounded px-3 py-1 flex items-center truncate">
                             {flow.title || 'Untitled flow'}
                         </div>
@@ -3002,7 +3007,7 @@ function CanvasEditorInner({
 
             {/* Top Right Pill: File, Run & Share */}
             <div className="absolute top-4 right-4 z-50 flex items-center h-11 gap-2 bg-shell-bg dark:bg-shell-surface-subtle px-1.5 rounded-xl shadow-sm dark:shadow-[0_14px_32px_rgb(0_0_0/0.26)] border border-shell-border/70 dark:border-shell-border/55 backdrop-blur-sm">
-                {isReadOnly ? (
+                {isFlowReadOnly ? (
                     <>
                         {renderPreviewOpenMenu()}
                         <ShareDialog
@@ -3113,38 +3118,38 @@ function CanvasEditorInner({
                     }}
                     onNodesChange={onNodesChange}
                     onEdgesChange={onEdgesChange}
-                    onConnect={isReadOnly || isCommentModeActive ? undefined : onConnect}
-                    onConnectStart={isReadOnly || isCommentModeActive ? undefined : onConnectStart}
-                    onConnectEnd={isReadOnly || isCommentModeActive ? undefined : onConnectEnd}
+                    onConnect={isFlowReadOnly || isCommentModeActive ? undefined : onConnect}
+                    onConnectStart={isFlowReadOnly || isCommentModeActive ? undefined : onConnectStart}
+                    onConnectEnd={isFlowReadOnly || isCommentModeActive ? undefined : onConnectEnd}
                     onNodeClick={onNodeClick}
                     onEdgeClick={onEdgeClick}
-                    onNodeDragStart={isReadOnly || isCommentModeActive ? undefined : onNodeDragStart}
-                    onNodesDelete={isReadOnly || isCommentModeActive ? undefined : onNodesDelete}
-                    onEdgesDelete={isReadOnly || isCommentModeActive ? undefined : onEdgesDelete}
-                    onNodeDragStop={isReadOnly || isCommentModeActive ? undefined : onNodeDragStop}
+                    onNodeDragStart={isFlowReadOnly || isCommentModeActive ? undefined : onNodeDragStart}
+                    onNodesDelete={isFlowReadOnly || isCommentModeActive ? undefined : onNodesDelete}
+                    onEdgesDelete={isFlowReadOnly || isCommentModeActive ? undefined : onEdgesDelete}
+                    onNodeDragStop={isFlowReadOnly || isCommentModeActive ? undefined : onNodeDragStop}
                     onPaneClick={handlePaneClick}
                     onSelectionChange={onSelectionChange}
                     panOnScroll
-                    selectionOnDrag={!isReadOnly && !isCommentModeActive}
+                    selectionOnDrag={!isFlowReadOnly && !isCommentModeActive}
                     selectionMode={SelectionMode.Partial}
                     elementsSelectable={!isCommentModeActive}
                     multiSelectionKeyCode={['Shift']}
-                    panOnDrag={isReadOnly ? true : (isCommentModeActive || isAltPressed)}
-                    zoomOnScroll={isReadOnly ? true : !isAltPressed}
-                    deleteKeyCode={isReadOnly || isCommentModeActive ? null : ['Delete', 'Backspace']}
-                    nodesDraggable={!isReadOnly && !isCommentModeActive}
-                    nodesConnectable={!isReadOnly && !isCommentModeActive}
+                    panOnDrag={isFlowReadOnly ? true : (isCommentModeActive || isAltPressed)}
+                    zoomOnScroll={isFlowReadOnly ? true : !isAltPressed}
+                    deleteKeyCode={isFlowReadOnly || isCommentModeActive ? null : ['Delete', 'Backspace']}
+                    nodesDraggable={!isFlowReadOnly && !isCommentModeActive}
+                    nodesConnectable={!isFlowReadOnly && !isCommentModeActive}
                     proOptions={{ hideAttribution: true }}
                     minZoom={0.1}
                     maxZoom={2}
-                    onDragOver={isReadOnly || isCommentModeActive ? undefined : onDragOver}
-                    onDrop={isReadOnly || isCommentModeActive ? undefined : onDrop}
+                    onDragOver={isFlowReadOnly || isCommentModeActive ? undefined : onDragOver}
+                    onDrop={isFlowReadOnly || isCommentModeActive ? undefined : onDrop}
                     connectionLineComponent={connectionLineWithPreview}
-                    className={`bg-shell-studio-canvas ${!isReadOnly && isAltPressed ? 'is-alt-pressed' : ''} ${!isReadOnly && pendingToolbarPlacement ? 'is-placement-active' : ''} ${isCommentModeActive ? 'is-comment-mode' : ''}`}
+                    className={`bg-shell-studio-canvas ${!isFlowReadOnly && isAltPressed ? 'is-alt-pressed' : ''} ${!isFlowReadOnly && pendingToolbarPlacement ? 'is-placement-active' : ''} ${isCommentModeActive ? 'is-comment-mode' : ''}`}
                 >
 
                     <Background color="rgb(var(--shell-studio-canvas-grid) / 1)" gap={20} size={2} />
-                    {!isReadOnly && !isCommentModeActive && selectedNodeId && (
+                    {!isFlowReadOnly && !isCommentModeActive && selectedNodeId && (
                         <ContextToolbar
                             selection={{ type: 'node', nodeId: selectedNodeId }}
                             anchorEl={selectionAnchorEl}
@@ -3157,9 +3162,9 @@ function CanvasEditorInner({
                         />
                     )}
 
-                    {!isReadOnly ? (
+                    {onToggleComments ? (
                         <FloatingToolbar
-                            // FloatingToolbar as seen in Step 72 accepts specific callbacks
+                            showCreationTools={floatingToolbarVariant === 'full'}
                             onAddAiTurn={() => {
                                 const aiTurnCount = (flow.steps?.filter(s => s.type === 'turn').length || 0) + 1;
                                 const newTurn: Turn = {
@@ -3231,7 +3236,7 @@ function CanvasEditorInner({
                 </ReactFlow>
                 {areCommentsVisible ? (
                     <>
-                        <div className="absolute inset-0 z-[108] pointer-events-none">
+                        <div className="absolute inset-0 z-[96] pointer-events-none">
                             {renderedCommentPins.map((renderedPin) => {
                                 const root = renderedPin.thread.root;
                                 const isSelected = comments?.activeThreadId === renderedPin.thread.id;
@@ -3344,6 +3349,7 @@ function CanvasEditorInner({
                                             onValueChange={comments.setNewCommentText}
                                             onSubmit={() => void comments.submitPendingComment()}
                                             onClose={comments.dismissPendingComment}
+                                            onSignIn={onCommentSignIn}
                                         />
                                     ) : comments?.activeThread ? (
                                         <CanvasCommentPopover
@@ -3377,6 +3383,7 @@ function CanvasEditorInner({
                                                 void comments.deleteComment(comments.activeThread!, comment)
                                             }
                                             onClose={comments.dismissComposer}
+                                            onSignIn={onCommentSignIn}
                                         />
                                     ) : null}
                                 </div>
@@ -3384,7 +3391,7 @@ function CanvasEditorInner({
                         ) : null}
                     </>
                 ) : null}
-                {!isReadOnly && pendingToolbarPlacement?.canvasPosition ? (() => {
+                {!isFlowReadOnly && pendingToolbarPlacement?.canvasPosition ? (() => {
                     const preview = getToolbarPlacementPreviewConfig(pendingToolbarPlacement.type);
 
                     return (
@@ -3407,7 +3414,7 @@ function CanvasEditorInner({
                         </div>
                     );
                 })() : null}
-                {!isReadOnly && quickAddMenu && quickAddConnectionPreview && (
+                {!isFlowReadOnly && quickAddMenu && quickAddConnectionPreview && (
                     <svg
                         className="pointer-events-none absolute inset-0 z-[55] overflow-visible"
                         width="100%"
@@ -3425,7 +3432,7 @@ function CanvasEditorInner({
                         />
                     </svg>
                 )}
-                {!isReadOnly ? (
+                {!isFlowReadOnly ? (
                     <ConnectionQuickAddMenu
                         open={Boolean(quickAddMenu)}
                         position={quickAddMenu?.screenPosition || null}

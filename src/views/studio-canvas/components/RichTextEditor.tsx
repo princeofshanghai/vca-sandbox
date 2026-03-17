@@ -8,6 +8,7 @@ import { Bold, Italic, List, ListOrdered, Link as LinkIcon } from 'lucide-react'
 import { useCallback, useEffect } from 'react';
 import { ShellIconButton } from '@/components/shell';
 import { cn } from '@/utils/cn';
+import { vcaRichTextEditorContentClassName } from '@/components/vca-components/markdown-renderer/vcaMarkdownTheme';
 
 interface RichTextEditorProps {
     value: string;
@@ -146,22 +147,7 @@ export function RichTextEditor({
         ],
         editorProps: {
             attributes: {
-                class: cn(
-                    "max-w-none outline-none text-[13px] leading-relaxed text-shell-text min-h-full p-2.5",
-                    "[&_.is-editor-empty:first-child::before]:pointer-events-none",
-                    "[&_.is-editor-empty:first-child::before]:float-left",
-                    "[&_.is-editor-empty:first-child::before]:h-0",
-                    "[&_.is-editor-empty:first-child::before]:text-shell-muted/55",
-                    "[&_.is-editor-empty:first-child::before]:content-[attr(data-placeholder)]",
-                    // List Styling
-                    "[&_ul]:list-disc [&_ul]:pl-4 [&_ul]:my-2 [&_ul]:space-y-1.5",
-                    "[&_ol]:list-decimal [&_ol]:pl-4 [&_ol]:my-2 [&_ol]:space-y-1.5 [&_ol>li::marker]:font-semibold",
-                    "[&_li]:my-0 [&_li]:pl-0",
-                    // Nested Paragraphs in Lists (Fix for "moving down")
-                    "[&_li_p]:m-0 [&_li_p]:inline",
-                    // Paragraph Styling - Explicitly force 13px to override global 15px p style
-                    "[&_p]:text-[13px] [&_p]:my-2 [&_p]:leading-relaxed first:[&_p]:mt-0 last:[&_p]:mb-0"
-                ),
+                class: vcaRichTextEditorContentClassName,
             },
             handleKeyDown: (_view, event) => {
                 event.stopPropagation();

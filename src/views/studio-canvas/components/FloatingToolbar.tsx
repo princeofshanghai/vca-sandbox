@@ -5,12 +5,14 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { cn } from '@/utils/cn';
 
 interface FloatingToolbarProps {
-    onAddAiTurn: () => void;
-    onAddUserTurn: () => void;
-    onAddCondition: () => void;
-    onAddNote: () => void;
+    onAddAiTurn?: () => void;
+    onAddUserTurn?: () => void;
+    onAddCondition?: () => void;
+    onAddNote?: () => void;
     onToggleComments: () => void;
     isCommentsActive?: boolean;
+    showCreationTools?: boolean;
+    commentButtonLabel?: string;
 }
 
 // Helper function to create custom drag preview
@@ -72,6 +74,8 @@ export function FloatingToolbar({
     onAddNote,
     onToggleComments,
     isCommentsActive = false,
+    showCreationTools = true,
+    commentButtonLabel = 'Comments',
 }: FloatingToolbarProps) {
     const areCreationToolsDisabled = isCommentsActive;
 
@@ -150,86 +154,84 @@ export function FloatingToolbar({
     return (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 p-1.5 bg-shell-bg dark:bg-shell-surface-subtle rounded-xl shadow-xl dark:shadow-[0_14px_32px_rgb(0_0_0/0.26)] border border-shell-border/70 dark:border-shell-border/55 backdrop-blur-sm">
 
-            {/* Group 1: Logic Nodes */}
-            <div className="flex items-center gap-1">
-                {/* AI Turn */}
-                <ActionTooltip content="AI turn" shortcut="A">
-                    <button
-                        onClick={areCreationToolsDisabled ? undefined : onAddAiTurn}
-                        draggable={!areCreationToolsDisabled}
-                        onDragStart={(e) => onDragStart(e, 'turn')}
-                        disabled={areCreationToolsDisabled}
-                        className={cn(
-                            'group relative flex items-center justify-center w-10 h-10 rounded-md transition-colors tooltip-trigger',
-                            areCreationToolsDisabled
-                                ? 'cursor-not-allowed text-shell-muted/60'
-                                : 'hover:bg-shell-surface cursor-grab active:cursor-grabbing'
-                        )}
-                    >
-                        <VcaIcon icon="signal-ai" size="md" className="text-shell-accent" />
-                    </button>
-                </ActionTooltip>
+            {showCreationTools ? (
+                <>
+                    {/* Group 1: Logic Nodes */}
+                    <div className="flex items-center gap-1">
+                        <ActionTooltip content="AI turn" shortcut="A">
+                            <button
+                                onClick={areCreationToolsDisabled ? undefined : onAddAiTurn}
+                                draggable={!areCreationToolsDisabled}
+                                onDragStart={(e) => onDragStart(e, 'turn')}
+                                disabled={areCreationToolsDisabled}
+                                className={cn(
+                                    'group relative flex items-center justify-center w-10 h-10 rounded-md transition-colors tooltip-trigger',
+                                    areCreationToolsDisabled
+                                        ? 'cursor-not-allowed text-shell-muted/60'
+                                        : 'hover:bg-shell-surface cursor-grab active:cursor-grabbing'
+                                )}
+                            >
+                                <VcaIcon icon="signal-ai" size="md" className="text-shell-accent" />
+                            </button>
+                        </ActionTooltip>
 
-                {/* User Turn */}
-                <ActionTooltip content="User turn" shortcut="U">
-                    <button
-                        onClick={areCreationToolsDisabled ? undefined : onAddUserTurn}
-                        draggable={!areCreationToolsDisabled}
-                        onDragStart={(e) => onDragStart(e, 'user-turn')}
-                        disabled={areCreationToolsDisabled}
-                        className={cn(
-                            'group relative flex items-center justify-center w-10 h-10 rounded-md transition-colors',
-                            areCreationToolsDisabled
-                                ? 'cursor-not-allowed text-shell-muted/60'
-                                : 'hover:bg-shell-surface cursor-grab active:cursor-grabbing'
-                        )}
-                    >
-                        <UserRound className="text-shell-node-user" size={20} />
-                    </button>
-                </ActionTooltip>
+                        <ActionTooltip content="User turn" shortcut="U">
+                            <button
+                                onClick={areCreationToolsDisabled ? undefined : onAddUserTurn}
+                                draggable={!areCreationToolsDisabled}
+                                onDragStart={(e) => onDragStart(e, 'user-turn')}
+                                disabled={areCreationToolsDisabled}
+                                className={cn(
+                                    'group relative flex items-center justify-center w-10 h-10 rounded-md transition-colors',
+                                    areCreationToolsDisabled
+                                        ? 'cursor-not-allowed text-shell-muted/60'
+                                        : 'hover:bg-shell-surface cursor-grab active:cursor-grabbing'
+                                )}
+                            >
+                                <UserRound className="text-shell-node-user" size={20} />
+                            </button>
+                        </ActionTooltip>
 
-                {/* Condition */}
-                <ActionTooltip content="Condition" shortcut="D">
-                    <button
-                        onClick={areCreationToolsDisabled ? undefined : onAddCondition}
-                        draggable={!areCreationToolsDisabled}
-                        onDragStart={(e) => onDragStart(e, 'condition')}
-                        disabled={areCreationToolsDisabled}
-                        className={cn(
-                            'group relative flex items-center justify-center w-10 h-10 rounded-md transition-colors',
-                            areCreationToolsDisabled
-                                ? 'cursor-not-allowed text-shell-muted/60'
-                                : 'hover:bg-shell-surface cursor-grab active:cursor-grabbing'
-                        )}
-                    >
-                        <Split className="text-shell-node-condition" size={20} />
-                    </button>
-                </ActionTooltip>
-            </div>
+                        <ActionTooltip content="Condition" shortcut="D">
+                            <button
+                                onClick={areCreationToolsDisabled ? undefined : onAddCondition}
+                                draggable={!areCreationToolsDisabled}
+                                onDragStart={(e) => onDragStart(e, 'condition')}
+                                disabled={areCreationToolsDisabled}
+                                className={cn(
+                                    'group relative flex items-center justify-center w-10 h-10 rounded-md transition-colors',
+                                    areCreationToolsDisabled
+                                        ? 'cursor-not-allowed text-shell-muted/60'
+                                        : 'hover:bg-shell-surface cursor-grab active:cursor-grabbing'
+                                )}
+                            >
+                                <Split className="text-shell-node-condition" size={20} />
+                            </button>
+                        </ActionTooltip>
+                    </div>
 
-            {/* Divider */}
-            <div className="w-px h-6 bg-shell-chrome-divider mx-1" />
+                    <div className="w-px h-6 bg-shell-chrome-divider mx-1" />
 
-            {/* Group 2: Annotations */}
-            {/* Sticky Note */}
-            <ActionTooltip content="Sticky note" shortcut="N">
-                <button
-                    draggable={!areCreationToolsDisabled}
-                    onDragStart={(e) => onDragStart(e, 'note')}
-                    onClick={areCreationToolsDisabled ? undefined : onAddNote}
-                    disabled={areCreationToolsDisabled}
-                    className={cn(
-                        'group relative flex items-center justify-center w-10 h-10 rounded-md transition-colors tooltip-trigger',
-                        areCreationToolsDisabled
-                            ? 'cursor-not-allowed text-shell-muted/60'
-                            : 'hover:bg-shell-surface cursor-grab active:cursor-grabbing'
-                    )}
-                >
-                    <StickyNote className="text-shell-node-note" size={20} fill="currentColor" />
-                </button>
-            </ActionTooltip>
+                    <ActionTooltip content="Sticky note" shortcut="N">
+                        <button
+                            draggable={!areCreationToolsDisabled}
+                            onDragStart={(e) => onDragStart(e, 'note')}
+                            onClick={areCreationToolsDisabled ? undefined : onAddNote}
+                            disabled={areCreationToolsDisabled}
+                            className={cn(
+                                'group relative flex items-center justify-center w-10 h-10 rounded-md transition-colors tooltip-trigger',
+                                areCreationToolsDisabled
+                                    ? 'cursor-not-allowed text-shell-muted/60'
+                                    : 'hover:bg-shell-surface cursor-grab active:cursor-grabbing'
+                            )}
+                        >
+                            <StickyNote className="text-shell-node-note" size={20} fill="currentColor" />
+                        </button>
+                    </ActionTooltip>
+                </>
+            ) : null}
 
-            <ActionTooltip content="Comments" shortcut="C">
+            <ActionTooltip content={commentButtonLabel} shortcut="C">
                 <button
                     type="button"
                     onClick={onToggleComments}

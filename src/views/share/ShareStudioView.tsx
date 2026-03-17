@@ -6,6 +6,12 @@ import { Flow } from '@/views/studio/types';
 import { INITIAL_FLOW } from '@/utils/flowStorage';
 import { supabase } from '@/lib/supabase';
 import { PreviewDrawer } from '@/views/studio/PreviewDrawer';
+import { CanvasCommentsDrawer } from '@/views/studio/CanvasCommentsDrawer';
+import { useCanvasCommentsController } from '@/views/studio/useCanvasCommentsController';
+import { ShellButton } from '@/components/shell';
+import { toast } from 'sonner';
+
+type ShareStudioRightPanelMode = 'preview' | 'comments' | null;
 
 export const ShareStudioView = () => {
     const navigate = useNavigate();
@@ -14,9 +20,11 @@ export const ShareStudioView = () => {
     const [flow, setFlow] = useState<Flow | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const [isPremium, setIsPremium] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
+    const [showComments, setShowComments] = useState(true);
+    const [isCommentModeActive, setIsCommentModeActive] = useState(false);
+    const [rightPanelMode, setRightPanelMode] = useState<ShareStudioRightPanelMode>(null);
 
     useEffect(() => {
         const fetchFlow = async () => {
@@ -64,6 +72,101 @@ export const ShareStudioView = () => {
         void fetchFlow();
     }, [id]);
 
+    useEffect(() => {
+        const html = document.documentElement;
+        const body = document.body;
+        const previousHtmlOverscrollX = html.style.overscrollBehaviorX;
+        const previousBodyOverscrollX = body.style.overscrollBehaviorX;
+
+        html.style.overscrollBehaviorX = 'none';
+        body.style.overscrollBehaviorX = 'none';
+
+        return () => {
+            html.style.overscrollBehaviorX = previousHtmlOverscrollX;
+            body.style.overscrollBehaviorX = previousBodyOverscrollX;
+        };
+    }, []);
+
+    const isPreviewOpen = rightPanelMode === 'preview';
+    const isCommentsOpen = rightPanelMode === 'comments';
+    const areCanvasCommentsVisible = !!flow && (showComments || isCommentsOpen || isCommentModeActive);
+    const canvasComments = useCanvasCommentsController({
+        flow: flow ?? INITIAL_FLOW,
+        isVisible: areCanvasCommentsVisible,
+    });
+
+    const handleTogglePreview = () => {
+        setRightPanelMode((currentMode) => (currentMode === 'preview' ? null : 'preview'));
+        setIsCommentModeActive(false);
+        canvasComments.resetClosedState();
+    };
+
+    const handleToggleCommentsWorkspace = () => {
+        if (isCommentsOpen || isCommentModeActive) {
+            setRightPanelMode((currentMode) => (currentMode === 'comments' ? null : currentMode));
+            setIsCommentModeActive(false);
+            canvasComments.resetClosedState();
+            return;
+        }
+
+        setShowComments(true);
+        setRightPanelMode('comments');
+        setIsCommentModeActive(canvasComments.userCanComment);
+    };
+
+    const handleOpenCommentsPanel = () => {
+        setShowComments(true);
+        setRightPanelMode('comments');
+    };
+
+    const handleShowCommentsChange = (checked: boolean) => {
+        setShowComments(checked);
+
+        if (checked) {
+            return;
+        }
+
+        setIsCommentModeActive(false);
+        setRightPanelMode((currentMode) => (currentMode === 'comments' ? null : currentMode));
+        canvasComments.resetClosedState();
+    };
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('comments') !== '1') return;
+
+        setShowComments(true);
+        setRightPanelMode('comments');
+
+        const nextUrl = new URL(window.location.href);
+        nextUrl.searchParams.delete('comments');
+        const nextSearch = nextUrl.search ? nextUrl.search : '';
+        window.history.replaceState({}, '', `${nextUrl.pathname}${nextSearch}${nextUrl.hash}`);
+    }, []);
+
+    const handleCommentSignIn = async () => {
+        try {
+            const redirectUrl = new URL(window.location.href);
+            redirectUrl.searchParams.set('comments', '1');
+
+            const { error: signInError } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    queryParams: {
+                        access_type: 'offline',
+                        prompt: 'consent',
+                    },
+                    redirectTo: redirectUrl.toString(),
+                },
+            });
+
+            if (signInError) throw signInError;
+        } catch (signInError: unknown) {
+            console.error('Error signing in for shared studio comments:', signInError);
+            toast.error('Could not start sign-in. Please try again.');
+        }
+    };
+
     const isEmptyFlow = useMemo(() => {
         if (!flow) return false;
         return (flow.steps?.length || 0) === 0 && (flow.blocks?.length || 0) === 0;
@@ -86,12 +189,11 @@ export const ShareStudioView = () => {
                     </div>
                     <h1 className="text-xl font-semibold text-shell-text mb-2">Access Denied</h1>
                     <p className="text-shell-muted mb-6">{error || 'Unable to load flow.'}</p>
-                    <button
+                    <ShellButton
                         onClick={() => navigate('/')}
-                        className="px-4 py-2 bg-shell-text text-shell-bg rounded-lg font-medium hover:opacity-90 transition-opacity"
                     >
                         Go Home
-                    </button>
+                    </ShellButton>
                 </div>
             </div>
         );
@@ -103,22 +205,41 @@ export const ShareStudioView = () => {
                 flow={flow}
                 onUpdateFlow={setFlow}
                 onBack={() => navigate('/')}
-                onPreview={() => {
-                    setIsPreviewOpen((prev) => !prev);
-                }}
+                onPreview={handleTogglePreview}
                 isPreviewActive={isPreviewOpen}
-                mode="share-readonly"
+                onToggleComments={handleToggleCommentsWorkspace}
+                onOpenCommentsPanel={handleOpenCommentsPanel}
+                isCommentModeActive={isCommentModeActive}
+                isCommentsPanelOpen={isCommentsOpen}
+                comments={areCanvasCommentsVisible ? canvasComments : null}
+                showCommentsToggle={{
+                    checked: showComments,
+                    onCheckedChange: handleShowCommentsChange,
+                }}
+                mode="share-commentable"
+                onCommentSignIn={handleCommentSignIn}
             />
 
             <PreviewDrawer
                 isOpen={isPreviewOpen}
-                onClose={() => setIsPreviewOpen(false)}
+                onClose={() => setRightPanelMode(null)}
                 flow={flow}
                 onUpdateFlow={setFlow}
                 isPremium={isPremium}
                 isMobile={isMobile}
                 onTogglePremium={() => setIsPremium((prev) => !prev)}
                 onToggleMobile={() => setIsMobile((prev) => !prev)}
+            />
+
+            <CanvasCommentsDrawer
+                isOpen={isCommentsOpen}
+                onClose={() => {
+                    setRightPanelMode(null);
+                    setIsCommentModeActive(false);
+                    canvasComments.resetClosedState();
+                }}
+                comments={canvasComments}
+                onRequestSignIn={canvasComments.userCanComment ? undefined : handleCommentSignIn}
             />
 
             {isEmptyFlow ? (

@@ -27,21 +27,23 @@ import { formatCommentDate, formatCommentRelativeTime } from './canvasComments';
 
 type CanvasCommentPopoverProps =
     | {
-          mode: 'new';
-          error?: string | null;
-          isAuthLoading?: boolean;
-          userCanComment: boolean;
-          value: string;
-          isSubmitting: boolean;
-          onValueChange: (value: string) => void;
-          onSubmit: () => void;
-          onClose: () => void;
+      mode: 'new';
+      error?: string | null;
+      isAuthLoading?: boolean;
+      userCanComment: boolean;
+      onSignIn?: () => void;
+      value: string;
+      isSubmitting: boolean;
+      onValueChange: (value: string) => void;
+      onSubmit: () => void;
+      onClose: () => void;
       }
     | {
           mode: 'thread';
           error?: string | null;
           isAuthLoading?: boolean;
           userCanComment: boolean;
+          onSignIn?: () => void;
           thread: FlowCommentThread;
           replyDraft: string;
           onReplyDraftChange: (value: string) => void;
@@ -290,6 +292,19 @@ export function CanvasCommentPopover(props: CanvasCommentPopoverProps) {
                         <p className="text-xs text-shell-dark-muted leading-relaxed">
                             Sign in to leave a comment on this canvas.
                         </p>
+                        {props.onSignIn ? (
+                            <div className="mt-3 flex justify-end">
+                                <ShellButton
+                                    size="compact"
+                                    className="h-8 text-[11px] bg-shell-dark-accent hover:bg-shell-dark-accent-hover text-shell-dark-text"
+                                    onClick={props.onSignIn}
+                                    disabled={props.isAuthLoading}
+                                >
+                                    {props.isAuthLoading ? <Loader2 size={12} className="animate-spin" /> : null}
+                                    Sign in
+                                </ShellButton>
+                            </div>
+                        ) : null}
                     </div>
                 ) : (
                     <div className="w-full md:w-[400px] max-w-[calc(100vw-40px)] rounded-[26px] border border-shell-dark-border bg-shell-dark-panel/95 pl-4 pr-2 py-1.5 shadow-2xl backdrop-blur">
@@ -351,6 +366,7 @@ export function CanvasCommentPopover(props: CanvasCommentPopoverProps) {
         onReplySubmit,
         isReplySubmitting,
         userCanComment,
+        onSignIn,
         canManageComment,
         canResolveThread,
         editingCommentId,
@@ -448,8 +464,19 @@ export function CanvasCommentPopover(props: CanvasCommentPopoverProps) {
                     <div className="text-xs text-shell-dark-muted">Resolved. Reopen to reply.</div>
                 </div>
             ) : !userCanComment ? (
-                <div className="px-4 py-3 border-t border-shell-dark-border text-xs text-shell-dark-muted">
-                    Sign in to reply.
+                <div className="px-4 py-3 border-t border-shell-dark-border flex items-center justify-between gap-3">
+                    <div className="text-xs text-shell-dark-muted">Sign in to reply.</div>
+                    {onSignIn ? (
+                        <ShellButton
+                            size="compact"
+                            className="h-8 text-[11px] bg-shell-dark-accent hover:bg-shell-dark-accent-hover text-shell-dark-text"
+                            onClick={onSignIn}
+                            disabled={props.isAuthLoading}
+                        >
+                            {props.isAuthLoading ? <Loader2 size={12} className="animate-spin" /> : null}
+                            Sign in
+                        </ShellButton>
+                    ) : null}
                 </div>
             ) : (
                 <div className="px-4 py-3 border-t border-shell-dark-border">

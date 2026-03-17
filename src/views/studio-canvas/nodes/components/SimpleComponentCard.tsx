@@ -7,6 +7,7 @@ import {
     getCheckboxGroupPrimaryLabel,
     getCheckboxGroupSecondaryLabel,
 } from '@/components/vca-components/checkbox-group/CheckboxGroup';
+import { MarkdownRenderer } from '@/components/vca-components/markdown-renderer/MarkdownRenderer';
 import {
     CARD_EDGE_OUTPUT_HANDLE_OFFSET_PX,
     SELECTION_ITEM_EDGE_OUTPUT_HANDLE_OFFSET_PX
@@ -20,27 +21,22 @@ interface SimpleComponentCardProps {
     onClick: (event: MouseEvent<HTMLDivElement>) => void;
 }
 
-const stripMarkdown = (text?: string): string => {
-    if (!text) return '';
-    return text
-        // Remove headers
-        .replace(/^#+\s+/gm, '')
-        // Remove bold/italic
-        .replace(/(\*\*|__)(.*?)\1/g, '$2')
-        .replace(/(\*|_)(.*?)\1/g, '$2')
-        // Remove links [text](url) -> text
-        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-        // Remove inline code
-        .replace(/`([^`]+)`/g, '$1')
-        // Remove blockquotes
-        .replace(/^>\s+/gm, '')
-        // Remove list markers
-        .replace(/^[-*+]\s+/gm, '')
-        .replace(/^\d+\.\s+/gm, '')
-        // Remove images
-        .replace(/!\[[^\]]*\]\([^)]+\)/g, '')
-        .trim();
-};
+const CompactRichTextPreview = ({
+    content,
+    maxHeightClassName = 'max-h-[24rem]',
+}: {
+    content: string;
+    maxHeightClassName?: string;
+}) => (
+    <div className={`${maxHeightClassName} overflow-x-hidden overflow-y-auto pr-1`}>
+        <MarkdownRenderer
+            content={content}
+            linkMode="static"
+            spacing="compact"
+            className="pointer-events-none [&_blockquote]:my-2 [&_blockquote]:border-l-2 [&_blockquote]:border-shell-border [&_blockquote]:pl-3 [&_blockquote]:text-shell-muted-strong [&_code]:rounded-sm [&_code]:bg-shell-bg [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[11px]"
+        />
+    </div>
+);
 
 // Simplified Component Card - Display only, no inline editing
 export const SimpleComponentCard = memo(forwardRef<HTMLDivElement, SimpleComponentCardProps>(({
@@ -56,17 +52,29 @@ export const SimpleComponentCard = memo(forwardRef<HTMLDivElement, SimpleCompone
                 const content = component.content as import('../../../studio/types').AIMessageContent;
                 if (!content.text) return null;
                 return (
-                    <div className="px-0.5 py-1 text-sm text-shell-text leading-relaxed">
-                        {stripMarkdown(content.text)}
+                    <div className="px-0.5 py-1">
+                        <CompactRichTextPreview content={content.text} />
                     </div>
                 );
             }
             case 'infoMessage': {
                 const content = component.content as import('../../../studio/types').AIInfoContent;
                 if (!content.body) return null;
+                const sources = (content.sources || []).filter((source) => source.text?.trim() || source.url?.trim());
                 return (
-                    <div className="px-0.5 py-1 text-sm text-shell-text">
-                        <div className="leading-relaxed">{stripMarkdown(content.body)}</div>
+                    <div className="flex flex-col gap-2 px-0.5 py-1 text-sm text-shell-text">
+                        <CompactRichTextPreview
+                            content={content.body}
+                            maxHeightClassName={sources.length > 0 ? 'max-h-[22rem]' : 'max-h-[24rem]'}
+                        />
+
+                        {sources.length > 0 && (
+                            <div className="border-t border-shell-border/70 pt-2">
+                                <span className="font-vca-text text-vca-xsmall-open text-shell-muted-strong">
+                                    {sources.length} {sources.length === 1 ? 'source' : 'sources'}
+                                </span>
+                            </div>
+                        )}
                     </div>
                 );
             }
