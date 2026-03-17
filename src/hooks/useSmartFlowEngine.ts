@@ -591,6 +591,43 @@ export const useSmartFlowEngine = ({
         return next;
     };
 
+    const getOutgoingConnections = (stepId: string) =>
+        (flow.connections || []).filter((connection) => connection.source === stepId);
+
+    const isInteractiveConnection = (connection: Connection) =>
+        connection.sourceHandle?.startsWith('handle-') ?? false;
+
+    const findAutoAdvanceConnection = (stepId: string) => {
+        const step = flow.steps?.find((candidate) => candidate.id === stepId);
+        if (!step) return undefined;
+
+        const outgoingConnections = getOutgoingConnections(stepId);
+
+        if (step.type === 'turn') {
+            // In the live preview, any connected prompt/button path means this turn
+            // should wait for an explicit interaction instead of auto-playing onward.
+            if (!reviewMode && outgoingConnections.some(isInteractiveConnection)) {
+                return undefined;
+            }
+
+            return outgoingConnections.find(
+                (connection) =>
+                    !connection.sourceHandle || connection.sourceHandle === 'main-output'
+            );
+        }
+
+        if (step.type === 'user-turn') {
+            return outgoingConnections.find(
+                (connection) =>
+                    !connection.sourceHandle || connection.sourceHandle === 'user-output'
+            );
+        }
+
+        return outgoingConnections.find(
+            (connection) => !connection.sourceHandle || connection.sourceHandle === 'main-output'
+        );
+    };
+
     const applyConditionSelection = ({
         stepId,
         variableName,
@@ -749,10 +786,11 @@ export const useSmartFlowEngine = ({
                 }
             } else {
                 // Standard Deterministic Traversal
-                connection = flow.connections?.find(c =>
-                    c.source === currentId &&
-                    (currentHandle ? c.sourceHandle === currentHandle : true)
-                );
+                connection = currentHandle
+                    ? flow.connections?.find((c) =>
+                        c.source === currentId && c.sourceHandle === currentHandle
+                    )
+                    : findAutoAdvanceConnection(currentId);
             }
 
             if (!connection) break;
@@ -773,14 +811,13 @@ export const useSmartFlowEngine = ({
 
             // Determine if we should continue traversing
             if (nextNode.type === 'turn') {
-                // Auto-advance unless the next step waits for user input
-                const outgoing = flow.connections?.find(c => c.source === nextNode.id);
-                if (outgoing) {
-                    const nextStep = flow.steps?.find(s => s.id === outgoing.target);
-                    if (nextStep && nextStep.type === 'user-turn' && !reviewMode) {
-                        break;
-                    }
-                } else {
+                const autoAdvanceConnection = findAutoAdvanceConnection(nextNode.id);
+                if (!autoAdvanceConnection) {
+                    break;
+                }
+
+                const nextStep = flow.steps?.find((s) => s.id === autoAdvanceConnection.target);
+                if (nextStep && nextStep.type === 'user-turn' && !reviewMode) {
                     break;
                 }
             } else if (nextNode.type === 'user-turn') {
