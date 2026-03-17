@@ -48,7 +48,7 @@ export const BranchCard = memo(forwardRef<HTMLDivElement, BranchCardProps>(({
         if (hasRuleChips) {
             return (
                 <div className="flex flex-wrap items-center gap-1.5">
-                    <span className={chipClassName}>{variable || 'Field'}</span>
+                    <span className={chipClassName}>{variable || 'Variable'}</span>
                     <span className="text-[12px] font-medium leading-none text-shell-muted-strong">is</span>
                     <span className={chipClassName}>{value || 'Value'}</span>
                 </div>
@@ -61,7 +61,7 @@ export const BranchCard = memo(forwardRef<HTMLDivElement, BranchCardProps>(({
                     className={`text-sm leading-snug break-words ${ruleSummary ? 'text-shell-muted-strong' : 'text-shell-muted'}`}
                     title={ruleSummary || undefined}
                 >
-                    {ruleSummary || 'Choose field + value'}
+                    {ruleSummary || 'Choose variable + value'}
                 </div>
             </div>
         );

@@ -67,6 +67,7 @@ import {
     ShellTextarea,
 } from '@/components/shell';
 import { cn } from '@/utils/cn';
+import { COMMENT_PLACEMENT_CURSOR } from '@/utils/commentPlacementCursor';
 import { ActionTooltip } from '@/views/studio-canvas/components/ActionTooltip';
 import { useAuth } from '@/hooks/useAuth';
 import { type SmartFlowEngineSnapshot } from '@/hooks/useSmartFlowEngine';
@@ -160,20 +161,6 @@ const COMPOSER_GAP_PX = PIN_VISUAL_RADIUS_PX + PIN_TO_POPOVER_GAP_PX;
 const NEW_COMMENT_COMPOSER_GAP_PX = PIN_VISUAL_RADIUS_PX + PIN_TO_POPOVER_GAP_PX;
 const PIN_TIP_TO_CIRCLE_CENTER_OFFSET_PX = SHARE_COMMENT_PIN_TIP_TO_CENTER_OFFSET_PX;
 const COMMENT_PLACE_THRESHOLD_PX = 8;
-const COMMENT_PLACEMENT_CURSOR_SVG = `
-<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none">
-  <path
-    fill="#FFF"
-    stroke="#000"
-    stroke-width="2"
-    stroke-linejoin="round"
-    d="M7.5 5.5h13A4.5 4.5 0 0 1 25 10v5.5A4.5 4.5 0 0 1 20.5 20H15l-4.75 4.5a.75.75 0 0 1-1.27-.54V20H7.5A4.5 4.5 0 0 1 3 15.5V10a4.5 4.5 0 0 1 4.5-4.5Z"
-  />
-</svg>
-`.trim();
-const COMMENT_PLACEMENT_CURSOR = `url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(
-    COMMENT_PLACEMENT_CURSOR_SVG
-)}") 10 24, crosshair`;
 
 const createEmptyReviewState = (): FlowPreviewReviewState => ({
     pathSelections: [],

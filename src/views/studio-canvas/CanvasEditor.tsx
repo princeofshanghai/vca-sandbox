@@ -50,6 +50,7 @@ import {
 import { UserMenu } from '@/components/layout/UserMenu';
 import { VcaIcon } from '@/components/vca-components/icons/VcaIcon';
 import { cn } from '@/utils/cn';
+import { COMMENT_PLACEMENT_CURSOR } from '@/utils/commentPlacementCursor';
 import { CanvasCommentPopover } from '../studio/CanvasCommentPopover';
 import {
     getCanvasCommentAnchor,
@@ -211,20 +212,6 @@ const COMMENT_POPUP_NEW_HEIGHT_PX = 104;
 const COMMENT_POPUP_THREAD_HEIGHT_PX = 380;
 const COMMENT_POPUP_GAP_PX = 8 + 20;
 const COMMENT_DRAG_THRESHOLD_PX = 5;
-const COMMENT_PLACE_CURSOR_SVG = `
-<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none">
-  <path
-    fill="#FFF"
-    stroke="#000"
-    stroke-width="2"
-    stroke-linejoin="round"
-    d="M7.5 5.5h13A4.5 4.5 0 0 1 25 10v5.5A4.5 4.5 0 0 1 20.5 20H15l-4.75 4.5a.75.75 0 0 1-1.27-.54V20H7.5A4.5 4.5 0 0 1 3 15.5V10a4.5 4.5 0 0 1 4.5-4.5Z"
-  />
-</svg>
-`.trim();
-const COMMENT_PLACEMENT_CURSOR = `url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(
-    COMMENT_PLACE_CURSOR_SVG
-)}") 10 24, crosshair`;
 
 const clampValue = (value: number, min: number, max: number) => {
     if (max < min) return min;

@@ -781,7 +781,7 @@ const PreviewContent = ({
                                             {step.selectedLabel}
                                         </p>
                                         <p className="mt-1 text-[11px] text-shell-muted">
-                                            Change this branch from the chips above.
+                                            Change path from the chips above.
                                         </p>
                                     </div>
                                 </div>
@@ -811,7 +811,7 @@ const PreviewContent = ({
                                                 Path choice pending
                                             </p>
                                             <p className="text-xs font-medium text-shell-muted-strong">
-                                                Choose a branch from the chips above.
+                                                Choose path from the chips above.
                                             </p>
                                         </div>
                                     </div>

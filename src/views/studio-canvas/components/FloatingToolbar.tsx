@@ -1,5 +1,5 @@
 import { VcaIcon } from '@/components/vca-components/icons/VcaIcon';
-import { Split, UserRound, StickyNote, MessageSquare } from 'lucide-react';
+import { Split, UserRound, StickyNote, MessageCircle } from 'lucide-react';
 import { ActionTooltip } from './ActionTooltip';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { cn } from '@/utils/cn';
@@ -244,7 +244,7 @@ export function FloatingToolbar({
                             : 'text-shell-muted hover:bg-shell-surface hover:text-shell-text'
                     )}
                 >
-                    <MessageSquare size={18} />
+                    <MessageCircle size={18} />
                 </button>
             </ActionTooltip>
 

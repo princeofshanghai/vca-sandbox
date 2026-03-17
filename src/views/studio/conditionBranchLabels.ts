@@ -42,11 +42,15 @@ export const materializeConditionQuestion = (question?: string, legacyLabel?: st
 };
 
 export const getConditionPathLabel = (
-    branch: Pick<Branch, 'condition' | 'isDefault'>
+    branch: Pick<Branch, 'condition' | 'isDefault' | 'logic'>
 ): string => {
     const trimmedCondition = branch.condition?.trim();
     if (trimmedCondition) return trimmedCondition;
-    return branch.isDefault ? 'Fallback' : 'Untitled branch';
+    if (!branch.isDefault) {
+        const trimmedValue = branch.logic?.value !== undefined ? String(branch.logic.value).trim() : '';
+        if (trimmedValue) return trimmedValue;
+    }
+    return branch.isDefault ? 'Fallback' : 'Untitled path';
 };
 
 export const getConditionRuleSummary = (
