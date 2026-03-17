@@ -1,12 +1,16 @@
-# VCA UI standards: Padding & Alignment
+# VCA UI standards: Flow Preview Fidelity & Layout
 
 This document outlines the design and engineering principles for maintaining a pixel-perfect chat interface within the VCA (Visual Conversational AI) system, particularly regarding the Studio `FlowPreview`.
+
+For the relationship between `Flow Preview`, `Simple Component Card`, and the `Editor`, see [markdown-surface-roles.md](./markdown-surface-roles.md).
 
 ## Core Philosophy: Pixel-Perfect Preview
 The `FlowPreview` (found in `src/views/studio/FlowPreview.tsx`) is designed to be a direct, 1:1 reflection of the final user experience. 
 
 *   **Real Components**: Always use the actual production components (found in `src/components/vca-components/`) rather than mocks.
 *   **Production Layout**: The preview should inherit the exact layout constraints of the production environment to ensure that what a designer see matches what a user sees.
+
+In plain English: if someone needs to know what the user will actually experience, `FlowPreview` is the source of truth.
 
 ## Typography Boundary
 
@@ -16,6 +20,8 @@ The preview shell and the VCA internals have different design systems.
 *   **VCA internals own their own text styling**: message text, markdown, links, lists, bold text, and other in-preview content must keep VCA typography and VCA color tokens.
 *   **Do not fix VCA text bugs in the shell container**: if preview text becomes unreadable in dark mode, fix the VCA component or renderer that owns the text.
 *   **Markdown needs explicit inner classes**: wrapper classes are not enough when shell global element styles exist. Inner `p`, `strong`, `li`, and link elements should explicitly reassert VCA typography/color classes.
+
+This boundary matters because `FlowPreview` is wrapped in shell UI, but the actual conversation area must still look and behave like VCA, not like generic shell content.
 
 ## Padding & Layout Standards
 
@@ -39,3 +45,9 @@ We use the following specific standards for the main chat interface:
 *   **No Fixed Widths on Content**: Avoid `w-[320px]` or similar on message bubbles if possible. Let the parent container's `px-vca-xl` provide the visual boundary.
 *   **Optical vs. Mathematical Symmetry**: When icons (like the "X" or "Send" button) have large circular hitboxes, mathematical symmetry (identical padding) is the baseline. Optical correction (minor offsets to make them *look* centered) should be applied sparingly and explicitly.
 *   **No Shell Typography Leakage**: Test dark-mode shell previews carefully to confirm that VCA content inside white/light VCA surfaces does not inherit shell paragraph or strong-text colors.
+
+## Review Question
+
+Before changing preview styling, ask:
+
+"Am I making the preview more faithful to the real experience, or am I compensating for a bug that actually belongs inside the VCA component or markdown renderer?"

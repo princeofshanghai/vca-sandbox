@@ -320,6 +320,7 @@ export function PreviewDrawer({
                             onReviewStateChange={setReviewState}
                             reviewPathChangeRequest={reviewPathChangeRequest}
                             showInlinePathControls={false}
+                            showEndOfFlowIndicator={true}
                         />
                     </div>
                 </div>

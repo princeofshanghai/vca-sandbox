@@ -9,7 +9,7 @@ import { InfoMessage } from '@/components/vca-components/info-message/InfoMessag
 import { StatusCard } from '@/components/vca-components/status-card/StatusCard';
 import { PromptGroup } from '@/components/vca-components/prompt-group/PromptGroup';
 import { PhoneFrame } from '@/components/component-library/PhoneFrame';
-import { Pencil, Split } from 'lucide-react';
+import { Flag, Pencil, Split } from 'lucide-react';
 import { ShellIconButton } from '@/components/shell';
 
 import { InlineFeedback } from '@/components/vca-components/inline-feedback';
@@ -46,6 +46,7 @@ interface FlowPreviewProps {
     onReviewSnapshotChange?: (snapshot: SmartFlowEngineSnapshot) => void;
     reviewPathChangeRequest?: FlowPreviewReviewPathChangeRequest | null;
     showInlinePathControls?: boolean;
+    showEndOfFlowIndicator?: boolean;
 }
 
 export interface FlowPreviewReviewPathSelection {
@@ -93,6 +94,10 @@ interface InteractionHotspotState {
     confirmationByComponent: Record<string, { confirm: boolean; reject: boolean }>;
     checkboxByComponent: Record<string, { showOptions: boolean; primary: boolean; secondary: boolean }>;
     composer: ComposerGuidanceState;
+}
+
+interface InteractionState extends InteractionHotspotState {
+    hasAnyInteractivePath: boolean;
 }
 
 const EMPTY_COMPOSER_GUIDANCE: ComposerGuidanceState = {
@@ -157,6 +162,7 @@ export const FlowPreview = ({
     onReviewSnapshotChange,
     reviewPathChangeRequest = null,
     showInlinePathControls = true,
+    showEndOfFlowIndicator = false,
 }: FlowPreviewProps) => {
     const hotspotsEnabled = flow.settings?.showHotspots ?? true;
     // Shared composer state
@@ -185,6 +191,8 @@ export const FlowPreview = ({
         stopHandlerRef.current?.();
     }, []);
 
+    const [showEndOfFlowChipVisible, setShowEndOfFlowChipVisible] = useState(false);
+
     const previewContentProps = {
         flow,
         variables,
@@ -201,7 +209,15 @@ export const FlowPreview = ({
         onReviewSnapshotChange,
         reviewPathChangeRequest,
         showInlinePathControls,
+        onEndOfFlowStateChange: setShowEndOfFlowChipVisible,
     };
+
+    const endOfFlowChip = showEndOfFlowIndicator && showEndOfFlowChipVisible && !reviewMode ? (
+        <div className="pointer-events-auto inline-flex animate-fade-in items-center gap-1.5 rounded-full border border-shell-border bg-shell-surface-subtle px-3.5 py-1.5 text-[11px] font-medium text-shell-text shadow-sm">
+            <Flag size={12} className="shrink-0 text-shell-accent" />
+            End of flow
+        </div>
+    ) : null;
 
     return (
         <div className="h-full w-full flex flex-col relative bg-transparent pointer-events-none">
@@ -245,28 +261,31 @@ export const FlowPreview = ({
                         {topControl ? (
                             <div>{topControl}</div>
                         ) : null}
-                        <div className="relative w-[334px] h-[726px] shrink-0 flex items-center justify-center">
-                            <div className="scale-[0.85] origin-center">
-                                <PhoneFrame showStatusBar={true} dimBackground={false}>
-                                    <Container
-                                        headerTitle="Help"
-                                        className="bg-shell-bg h-[772px] w-[393px]"
-                                        viewport="mobile"
-                                        showHeaderPremiumIcon={isPremium}
-                                        showPremiumBorder={isPremium}
-                                        composerValue={composerValue}
-                                        onComposerChange={setComposerValue}
-                                        onComposerSend={handleComposerSend}
-                                        composerStatus={reviewMode ? 'disabled' : composerStatus}
-                                        onStop={handleComposerStop}
-                                        composerHotspotVisible={!reviewMode && hotspotsEnabled && composerGuidance.showHotspot}
-                                        composerHotspotSuggestions={composerGuidance.suggestions}
-                                        onComposerHotspotUse={!reviewMode ? setComposerValue : undefined}
-                                    >
-                                        <PreviewContent {...previewContentProps} />
-                                    </Container>
-                                </PhoneFrame>
+                        <div className="inline-flex flex-col items-center gap-3">
+                            <div className="relative w-[334px] h-[726px] shrink-0 flex items-center justify-center">
+                                <div className="scale-[0.85] origin-center">
+                                    <PhoneFrame showStatusBar={true} dimBackground={false}>
+                                        <Container
+                                            headerTitle="Help"
+                                            className="bg-shell-bg h-[772px] w-[393px]"
+                                            viewport="mobile"
+                                            showHeaderPremiumIcon={isPremium}
+                                            showPremiumBorder={isPremium}
+                                            composerValue={composerValue}
+                                            onComposerChange={setComposerValue}
+                                            onComposerSend={handleComposerSend}
+                                            composerStatus={reviewMode ? 'disabled' : composerStatus}
+                                            onStop={handleComposerStop}
+                                            composerHotspotVisible={!reviewMode && hotspotsEnabled && composerGuidance.showHotspot}
+                                            composerHotspotSuggestions={composerGuidance.suggestions}
+                                            onComposerHotspotUse={!reviewMode ? setComposerValue : undefined}
+                                        >
+                                            <PreviewContent {...previewContentProps} />
+                                        </Container>
+                                    </PhoneFrame>
+                                </div>
                             </div>
+                            {endOfFlowChip}
                         </div>
                     </div>
                 ) : (
@@ -275,23 +294,26 @@ export const FlowPreview = ({
                             <div>{topControl}</div>
                         ) : null}
 
-                        <Container
-                            headerTitle="Help"
-                            className="shadow-xl bg-shell-bg"
-                            viewport="desktop"
-                            showHeaderPremiumIcon={isPremium}
-                            showPremiumBorder={isPremium}
-                            composerValue={composerValue}
-                            onComposerChange={setComposerValue}
-                            onComposerSend={handleComposerSend}
-                            composerStatus={reviewMode ? 'disabled' : composerStatus}
-                            onStop={handleComposerStop}
-                            composerHotspotVisible={!reviewMode && hotspotsEnabled && composerGuidance.showHotspot}
-                            composerHotspotSuggestions={composerGuidance.suggestions}
-                            onComposerHotspotUse={!reviewMode ? setComposerValue : undefined}
-                        >
-                            <PreviewContent {...previewContentProps} />
-                        </Container>
+                        <div className="inline-flex flex-col items-center gap-3">
+                            <Container
+                                headerTitle="Help"
+                                className="shadow-xl bg-shell-bg"
+                                viewport="desktop"
+                                showHeaderPremiumIcon={isPremium}
+                                showPremiumBorder={isPremium}
+                                composerValue={composerValue}
+                                onComposerChange={setComposerValue}
+                                onComposerSend={handleComposerSend}
+                                composerStatus={reviewMode ? 'disabled' : composerStatus}
+                                onStop={handleComposerStop}
+                                composerHotspotVisible={!reviewMode && hotspotsEnabled && composerGuidance.showHotspot}
+                                composerHotspotSuggestions={composerGuidance.suggestions}
+                                onComposerHotspotUse={!reviewMode ? setComposerValue : undefined}
+                            >
+                                <PreviewContent {...previewContentProps} />
+                            </Container>
+                            {endOfFlowChip}
+                        </div>
                     </div>
                 )}
             </div>
@@ -317,6 +339,7 @@ const PreviewContent = ({
     onReviewSnapshotChange,
     reviewPathChangeRequest = null,
     showInlinePathControls = true,
+    onEndOfFlowStateChange,
 }: {
     flow: Flow,
     variables?: Record<string, string>,
@@ -333,6 +356,7 @@ const PreviewContent = ({
     onReviewSnapshotChange?: (snapshot: SmartFlowEngineSnapshot) => void,
     reviewPathChangeRequest?: FlowPreviewReviewPathChangeRequest | null,
     showInlinePathControls?: boolean,
+    onEndOfFlowStateChange?: (isEndOfFlow: boolean) => void,
 }) => {
 
     // USE SMART FLOW ENGINE
@@ -529,8 +553,7 @@ const PreviewContent = ({
         [history]
     );
 
-    const interactionHotspots = useMemo<InteractionHotspotState | null>(() => {
-        if (!showHotspotsEnabled) return null;
+    const interactionState = useMemo<InteractionState | null>(() => {
         if (!activeInteractiveTurn) return null;
 
         const outgoingConnections = (flow.connections || []).filter(
@@ -613,6 +636,13 @@ const PreviewContent = ({
             )
         );
 
+        const hasAnyInteractivePath =
+            promptComponentIds.size > 0 ||
+            Object.keys(selectionItemIdsByComponent).length > 0 ||
+            Object.keys(confirmationByComponent).length > 0 ||
+            Object.keys(checkboxByComponent).length > 0 ||
+            textTargets.length > 0;
+
         return {
             turnId: activeInteractiveTurn.id,
             promptComponentIds,
@@ -622,9 +652,25 @@ const PreviewContent = ({
             composer: {
                 showHotspot: textTargets.length > 0,
                 suggestions
-            }
+            },
+            hasAnyInteractivePath,
         };
-    }, [activeInteractiveTurn, flow.connections, flow.steps, showHotspotsEnabled, visibleComponentIds, streamingComponentId]);
+    }, [activeInteractiveTurn, flow.connections, flow.steps, visibleComponentIds, streamingComponentId]);
+
+    const interactionHotspots = useMemo<InteractionHotspotState | null>(() => {
+        if (!showHotspotsEnabled || !interactionState) return null;
+
+        return {
+            turnId: interactionState.turnId,
+            promptComponentIds: interactionState.promptComponentIds,
+            selectionItemIdsByComponent: interactionState.selectionItemIdsByComponent,
+            confirmationByComponent: interactionState.confirmationByComponent,
+            checkboxByComponent: interactionState.checkboxByComponent,
+            composer: interactionState.composer,
+        };
+    }, [interactionState, showHotspotsEnabled]);
+
+    const hasInteractivePathAvailable = interactionState?.hasAnyInteractivePath ?? false;
 
     useEffect(() => {
         if (reviewMode || !showHotspotsEnabled || shouldShowFullPathPanel) {
@@ -674,6 +720,31 @@ const PreviewContent = ({
 
         setIsPathPanelExpanded(false);
     };
+
+    const hasRenderedFlowContent = history.some(
+        (step) =>
+            step.type === 'turn' ||
+            step.type === 'user-turn' ||
+            step.type === 'condition-selection'
+    );
+    const lastMeaningfulStep = history
+        .slice()
+        .reverse()
+        .find((step) => step.type !== 'feedback') || null;
+    const hasReachedEndOfCurrentPath =
+        !reviewMode &&
+        hasRenderedFlowContent &&
+        !isThinking &&
+        !isProcessingQueue &&
+        !streamingComponentId &&
+        !activeInterceptor &&
+        !hasInteractivePathAvailable &&
+        !!lastMeaningfulStep &&
+        (lastMeaningfulStep.type === 'turn' || lastMeaningfulStep.type === 'condition-selection');
+
+    useEffect(() => {
+        onEndOfFlowStateChange?.(hasReachedEndOfCurrentPath);
+    }, [hasReachedEndOfCurrentPath, onEndOfFlowStateChange]);
 
 
     // Report Status to Parent (Container)

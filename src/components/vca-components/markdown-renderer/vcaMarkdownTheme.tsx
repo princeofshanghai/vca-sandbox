@@ -1,7 +1,12 @@
+import { toast } from 'sonner';
 import type { Components } from 'react-markdown';
 
 export type VCAMarkdownSpacing = 'default' | 'compact';
 export type VCAMarkdownLinkMode = 'interactive' | 'static';
+
+// Internal placeholder used when Studio needs link styling before a real destination exists.
+export const VCA_PENDING_LINK_HREF = 'https://vca-preview-link.invalid/';
+export const isPendingVCALinkHref = (href?: string | null) => href === VCA_PENDING_LINK_HREF;
 
 const baseTextClasses = 'font-vca-text text-vca-small-open text-vca-text';
 const boldTextClasses = 'font-vca-text text-vca-small-bold-open text-vca-text';
@@ -46,11 +51,30 @@ export function createVCAMarkdownComponents({
         spacing === 'compact' ? compactParagraphSpacingClasses : defaultParagraphSpacingClasses;
     const listSpacingClasses =
         spacing === 'compact' ? compactListSpacingClasses : defaultListSpacingClasses;
-    const staticLinkClasses = 'font-vca-text text-vca-small-open text-vca-link underline decoration-solid underline-offset-2';
+    const staticLinkClasses = 'font-vca-text text-vca-small-open font-semibold text-vca-link no-underline';
     const interactiveLinkClasses = 'font-vca-text text-vca-small-open text-vca-link hover:text-vca-link-hover hover:underline';
 
     return {
         a: ({ node: _node, children, ...props }) => {
+            if (isPendingVCALinkHref(props.href)) {
+                if (linkMode === 'static') {
+                    return <span className={staticLinkClasses}>{children}</span>;
+                }
+
+                return (
+                    <a
+                        {...props}
+                        className={`${interactiveLinkClasses} cursor-pointer`}
+                        onClick={(event) => {
+                            event.preventDefault();
+                            toast('Link destination not set yet');
+                        }}
+                    >
+                        {children}
+                    </a>
+                );
+            }
+
             if (linkMode === 'static') {
                 return <span className={staticLinkClasses}>{children}</span>;
             }
@@ -61,7 +85,9 @@ export function createVCAMarkdownComponents({
                     target="_blank"
                     rel="noopener noreferrer"
                     className={interactiveLinkClasses}
-                />
+                >
+                    {children}
+                </a>
             );
         },
         p: ({ node: _node, ...props }) => (

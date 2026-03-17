@@ -1,5 +1,9 @@
 # Tailwind Merge Typography Fix
 
+This is a technical implementation note.
+
+For the plain-English relationship between `Flow Preview`, `Simple Component Card`, and the `Editor`, see [markdown-surface-roles.md](./markdown-surface-roles.md).
+
 ## Problem
 
 The `cn()` utility uses **tailwind-merge**, which automatically removes "conflicting" classes. When using VCA typography tokens with color tokens, tailwind-merge incorrectly treats them as conflicting because both start with `text-`:
@@ -57,6 +61,8 @@ In shell previews, global shell element styles for tags like `p` and `strong` ca
 - also reassert the correct VCA classes on inner rendered elements like `p`, `strong`, `b`, and `li`
 
 Do not rely on the wrapper alone if the content is rendered into real HTML tags.
+
+This same principle also helps keep the compact card and editor recognizable as the same content family, even when their spacing or interactivity differs from preview.
 
 ## Still Best Practice?
 

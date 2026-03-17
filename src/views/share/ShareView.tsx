@@ -2713,6 +2713,7 @@ export const ShareView = () => {
                                 onReviewSnapshotChange={setReviewSnapshot}
                                 reviewPathChangeRequest={reviewPathChangeRequest}
                                 showInlinePathControls={false}
+                                showEndOfFlowIndicator={true}
                             />
                         </div>
 

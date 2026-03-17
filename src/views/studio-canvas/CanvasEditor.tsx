@@ -484,6 +484,11 @@ function CanvasEditorInner({
     const canPlaceComments = mode !== 'share-readonly';
     const isCommentModeActive = canPlaceComments && isCommentModeActiveProp;
     const floatingToolbarVariant = mode === 'share-commentable' ? 'comments-only' : 'full';
+    const [isAltPressed, setIsAltPressed] = useState(false);
+    const usesSelectionBoxInBrowseMode = mode === 'edit' || mode === 'share-commentable';
+    const selectionOnDragEnabled = usesSelectionBoxInBrowseMode && !isCommentModeActive;
+    const panOnDragEnabled =
+        mode === 'share-readonly' || isCommentModeActive || (!isFlowReadOnly && isAltPressed);
     const areCommentsVisible = !!comments;
 
     // Selection state
@@ -2487,8 +2492,6 @@ function CanvasEditorInner({
         // For nodes, we let React Flow handle it via the Delete key -> onNodesDelete
     }, [handleDeleteBranch, handleDeleteComponent]);
 
-    const [isAltPressed, setIsAltPressed] = useState(false);
-
     // Keyboard shortcuts
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -3117,11 +3120,11 @@ function CanvasEditorInner({
                     onPaneClick={handlePaneClick}
                     onSelectionChange={onSelectionChange}
                     panOnScroll
-                    selectionOnDrag={!isFlowReadOnly && !isCommentModeActive}
+                    selectionOnDrag={selectionOnDragEnabled}
                     selectionMode={SelectionMode.Partial}
                     elementsSelectable={!isCommentModeActive}
                     multiSelectionKeyCode={['Shift']}
-                    panOnDrag={isFlowReadOnly ? true : (isCommentModeActive || isAltPressed)}
+                    panOnDrag={panOnDragEnabled}
                     zoomOnScroll={isFlowReadOnly ? true : !isAltPressed}
                     deleteKeyCode={isFlowReadOnly || isCommentModeActive ? null : ['Delete', 'Backspace']}
                     nodesDraggable={!isFlowReadOnly && !isCommentModeActive}

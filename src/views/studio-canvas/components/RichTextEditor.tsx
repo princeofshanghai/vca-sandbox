@@ -5,10 +5,21 @@ import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
 import BubbleMenuExtension from '@tiptap/extension-bubble-menu';
 import { Bold, Italic, List, ListOrdered, Link as LinkIcon } from 'lucide-react';
-import { useCallback, useEffect } from 'react';
-import { ShellIconButton } from '@/components/shell';
+import { useCallback, useEffect, useState } from 'react';
+import { ShellButton, ShellDialogActions, ShellIconButton, ShellInput } from '@/components/shell';
 import { cn } from '@/utils/cn';
-import { vcaRichTextEditorContentClassName } from '@/components/vca-components/markdown-renderer/vcaMarkdownTheme';
+import {
+    isPendingVCALinkHref,
+    VCA_PENDING_LINK_HREF,
+    vcaRichTextEditorContentClassName,
+} from '@/components/vca-components/markdown-renderer/vcaMarkdownTheme';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { toast } from 'sonner';
 
 interface RichTextEditorProps {
     value: string;
@@ -22,6 +33,8 @@ interface RichTextEditorProps {
     resizable?: boolean;
 }
 
+type EditorSelectionRange = { from: number; to: number };
+
 export function RichTextEditor({
     value,
     onChange,
@@ -33,6 +46,10 @@ export function RichTextEditor({
     minHeight = 60,
     resizable = false,
 }: RichTextEditorProps) {
+    const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
+    const [linkDraftUrl, setLinkDraftUrl] = useState('');
+    const [linkSelectionRange, setLinkSelectionRange] = useState<EditorSelectionRange | null>(null);
+    const [linkError, setLinkError] = useState<string | null>(null);
 
     // --- HTML <-> Markdown Conversion (Robust DOM Approach) ---
     const htmlToMarkdown = useCallback((html: string): string => {
@@ -125,6 +142,14 @@ export function RichTextEditor({
         return html;
     }, []);
 
+    const isValidLinkHref = useCallback((value: string) => {
+        try {
+            return Boolean(new URL(value));
+        } catch (_error) {
+            return false;
+        }
+    }, []);
+
     const editor = useEditor({
         extensions: [
             StarterKit.configure({
@@ -133,6 +158,8 @@ export function RichTextEditor({
             }),
             Link.configure({
                 openOnClick: false,
+                autolink: false,
+                linkOnPaste: false,
                 HTMLAttributes: {
                     class: 'text-shell-accent hover:text-shell-accent-hover hover:underline cursor-pointer',
                 },
@@ -174,16 +201,83 @@ export function RichTextEditor({
         return null;
     }
 
-    const setLink = () => {
+    const closeLinkDialog = () => {
+        setIsLinkDialogOpen(false);
+        setLinkError(null);
+        setLinkDraftUrl('');
+        setLinkSelectionRange(null);
+    };
+
+    const openLinkDialog = () => {
         if (readOnly) return;
-        const previousUrl = editor.getAttributes('link').href;
-        const url = window.prompt('URL', previousUrl);
-        if (url === null) return;
-        if (url === '') {
-            editor.chain().focus().extendMarkRange('link').unsetLink().run();
+
+        const hasSelection = !editor.state.selection.empty;
+        const existingHref = editor.getAttributes('link').href;
+        const isEditingExistingLink = Boolean(existingHref);
+
+        if (!hasSelection && !isEditingExistingLink) {
+            toast('Select text to add a link');
             return;
         }
-        editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+
+        const selectionRange = {
+            from: editor.state.selection.from,
+            to: editor.state.selection.to,
+        };
+        setLinkSelectionRange(selectionRange);
+
+        // New links start as preview-only so the styling works immediately.
+        if (!isEditingExistingLink) {
+            editor
+                .chain()
+                .focus()
+                .setTextSelection(selectionRange)
+                .extendMarkRange('link')
+                .setLink({ href: VCA_PENDING_LINK_HREF })
+                .run();
+        }
+
+        setLinkDraftUrl(
+            typeof existingHref === 'string' && !isPendingVCALinkHref(existingHref)
+                ? existingHref
+                : ''
+        );
+        setLinkError(null);
+        setIsLinkDialogOpen(true);
+    };
+
+    const applyLinkSelectionRange = () => {
+        const chain = editor.chain().focus();
+        if (linkSelectionRange) {
+            chain.setTextSelection(linkSelectionRange);
+        }
+        return chain.extendMarkRange('link');
+    };
+
+    const handleApplyLink = () => {
+        if (readOnly) return;
+
+        const trimmedUrl = linkDraftUrl.trim();
+
+        if (!trimmedUrl) {
+            applyLinkSelectionRange().setLink({ href: VCA_PENDING_LINK_HREF }).run();
+            closeLinkDialog();
+            return;
+        }
+
+        if (!isValidLinkHref(trimmedUrl)) {
+            setLinkError('Enter a valid URL');
+            return;
+        }
+
+        applyLinkSelectionRange().setLink({ href: trimmedUrl }).run();
+        closeLinkDialog();
+    };
+
+    const handleRemoveLink = () => {
+        if (readOnly) return;
+        applyLinkSelectionRange().unsetLink().run();
+        closeLinkDialog();
     };
 
     const getToolbarButtonClassName = (isActive: boolean) => cn(
@@ -251,12 +345,85 @@ export function RichTextEditor({
                         size="sm"
                         aria-label="Link"
                         className={getToolbarButtonClassName(editor.isActive('link'))}
-                        onClick={setLink}
+                        onMouseDown={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            openLinkDialog();
+                        }}
                     >
                         <LinkIcon size={14} />
                     </ShellIconButton>
                 </BubbleMenu>
             )}
+
+            <Dialog open={isLinkDialogOpen} onOpenChange={(open) => {
+                if (!open) {
+                    closeLinkDialog();
+                    return;
+                }
+                setIsLinkDialogOpen(true);
+            }}>
+                <DialogContent
+                    className="z-[1102] max-w-[360px] gap-0 overflow-hidden border-shell-border bg-shell-bg p-0 shadow-shell-lg"
+                    hideClose
+                >
+                    <div className="px-shell-5 pt-shell-5">
+                        <DialogHeader className="mb-shell-4">
+                            <DialogTitle className="text-sm font-semibold text-shell-text">
+                                Edit link
+                            </DialogTitle>
+                        </DialogHeader>
+
+                        <div className="space-y-shell-2">
+                            <ShellInput
+                                id="rich-text-link-url"
+                                value={linkDraftUrl}
+                                onChange={(event) => {
+                                    setLinkDraftUrl(event.target.value);
+                                    if (linkError) {
+                                        setLinkError(null);
+                                    }
+                                }}
+                                placeholder="Paste URL (optional)"
+                                autoFocus
+                                onKeyDown={(event) => {
+                                    event.stopPropagation();
+                                    if (event.key === 'Enter') {
+                                        event.preventDefault();
+                                        handleApplyLink();
+                                    }
+                                }}
+                            />
+                            {linkError ? (
+                                <p className={cn(
+                                    'text-[10px] leading-relaxed text-shell-danger'
+                                )}>
+                                    {linkError}
+                                </p>
+                            ) : null}
+                        </div>
+                    </div>
+
+                    <ShellDialogActions className="mt-shell-5 border-shell-border-subtle px-shell-4 py-shell-4">
+                        <ShellButton
+                            type="button"
+                            size="compact"
+                            variant="ghost"
+                            onClick={handleRemoveLink}
+                            className="mr-auto"
+                        >
+                            Remove link
+                        </ShellButton>
+                        <ShellButton
+                            type="button"
+                            size="compact"
+                            onClick={handleApplyLink}
+                        >
+                            Done
+                        </ShellButton>
+                    </ShellDialogActions>
+                </DialogContent>
+            </Dialog>
 
             <div
                 className={cn(
