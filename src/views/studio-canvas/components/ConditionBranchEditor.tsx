@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, Plus, Split, Trash2 } from 'lucide-react';
 import { Branch } from '../../studio/types';
 import { createConditionBranch } from '../../studio/conditionBranches';
@@ -81,6 +81,7 @@ export function ConditionBranchEditor({
     onOpenChange,
     readOnly = false,
 }: ConditionBranchEditorProps) {
+    const [draftQuestion, setDraftQuestion] = useState(question);
     const editorBranches = useMemo(() => normalizeBranchesForEditor(branches), [branches]);
     const fallbackIndex = editorBranches.findIndex((branch) => branch.isDefault);
     const hasFallback = fallbackIndex !== -1;
@@ -96,6 +97,10 @@ export function ConditionBranchEditor({
         [editorBranches]
     );
     const hasMixedFields = distinctFieldNames.length > 1;
+
+    useEffect(() => {
+        setDraftQuestion(question);
+    }, [question]);
 
     const updateBranch = (branchId: string, updater: (branch: Branch) => Branch) => {
         if (readOnly) return;
@@ -148,8 +153,11 @@ export function ConditionBranchEditor({
                 <EditorSection title="Condition question">
                     <EditorField
                         label="Question"
-                        value={question}
-                        onChange={onQuestionChange}
+                        value={draftQuestion}
+                        onChange={(nextQuestion) => {
+                            setDraftQuestion(nextQuestion);
+                            onQuestionChange(nextQuestion);
+                        }}
                         placeholder="Is user an admin?"
                         hint="Describe in human terms what condition you are checking"
                         readOnly={readOnly}
