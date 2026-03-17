@@ -18,6 +18,7 @@ import {
     ShellMenuTrigger,
     ShellNotice,
     ShellTextarea,
+    ShellTextareaAutosize,
 } from '@/components/shell';
 import { cn } from '@/utils/cn';
 import { getInitialsFromName } from '@/utils/userIdentity';
@@ -293,8 +294,9 @@ export function CanvasCommentPopover(props: CanvasCommentPopoverProps) {
                 ) : (
                     <div className="w-full md:w-[400px] max-w-[calc(100vw-40px)] rounded-[26px] border border-shell-dark-border bg-shell-dark-panel/95 pl-4 pr-2 py-1.5 shadow-2xl backdrop-blur">
                         <div className="flex items-center gap-1.5">
-                            <ShellTextarea
-                                rows={1}
+                            <ShellTextareaAutosize
+                                minRows={1}
+                                maxRows={5}
                                 value={props.value}
                                 onChange={(event) => props.onValueChange(event.target.value)}
                                 onKeyDown={(event) => {
@@ -312,7 +314,7 @@ export function CanvasCommentPopover(props: CanvasCommentPopoverProps) {
                                 placeholder="Add a comment"
                                 tone="cinematicDark"
                                 variant="bare"
-                                className="h-[26px] max-h-[120px] resize-none"
+                                className="max-h-[120px] resize-none overflow-y-auto"
                             />
 
                             <ShellIconButton
@@ -453,8 +455,9 @@ export function CanvasCommentPopover(props: CanvasCommentPopoverProps) {
                 <div className="px-4 py-3 border-t border-shell-dark-border">
                     <div className="rounded-full border border-shell-dark-border bg-shell-dark-surface/80 pl-3 pr-1.5 py-1">
                         <div className="flex items-center gap-1.5">
-                            <ShellTextarea
-                                rows={1}
+                            <ShellTextareaAutosize
+                                minRows={1}
+                                maxRows={5}
                                 value={replyDraft}
                                 onChange={(event) => onReplyDraftChange(event.target.value)}
                                 onKeyDown={(event) => {
@@ -472,7 +475,7 @@ export function CanvasCommentPopover(props: CanvasCommentPopoverProps) {
                                 placeholder="Reply"
                                 tone="cinematicDark"
                                 variant="bare"
-                                className="h-[26px] max-h-[120px] resize-none"
+                                className="max-h-[120px] resize-none overflow-y-auto"
                             />
 
                             <ShellIconButton
