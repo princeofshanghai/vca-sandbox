@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Check, ChevronDown, Split } from 'lucide-react';
+import { Check, ChevronDown, Pencil, RotateCcw, Split } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { ShellButton, ShellNotice, ShellSelectableRow } from '@/components/shell';
 import type { Branch } from '../types';
@@ -103,9 +103,11 @@ export function PathsPanel({
         ? (!pendingDecision && chosenDecisions.length > 0) || showPreviousPaths
         : chosenDecisions.length > 0;
     const previousPathsToggleLabel = showPreviousPaths ? 'Hide previous paths' : 'Edit previous paths';
-    const previousPathsToggleClassName = tone === 'cinematicDark'
-        ? 'text-shell-dark-muted hover:text-shell-dark-text hover:bg-shell-dark-surface'
-        : 'text-shell-muted-strong hover:text-shell-text hover:bg-shell-surface';
+    const popoverActionButtonClassName = tone === 'cinematicDark'
+        ? 'flex-1 justify-center gap-1.5 border-shell-dark-border bg-shell-dark-surface text-shell-dark-text hover:bg-shell-dark-surface'
+        : 'flex-1 justify-center gap-1.5';
+    const showPopoverEditAction = isPopover && !!pendingDecision && chosenDecisions.length > 0;
+    const showPopoverActionRow = isPopover && (showPopoverEditAction || !!onResetPaths);
 
     if (isLoading) {
         if (isPopover) {
@@ -161,14 +163,8 @@ export function PathsPanel({
                             </div>
                         ) : null}
                         {isPopover ? (
-                            <div className="space-y-1.5">
-                                <div
-                                    className={cn(
-                                        'flex items-center gap-2',
-                                        popoverDecisionRowClassName,
-                                        'border-shell-accent/20 bg-shell-surface shadow-sm'
-                                    )}
-                                >
+                            <div className="space-y-2">
+                                <div className="flex items-center gap-2 px-1">
                                     <Split
                                         size={13}
                                         className="mt-0.5 shrink-0 text-shell-node-condition/85"
@@ -186,7 +182,7 @@ export function PathsPanel({
                                     </span>
                                 </div>
 
-                                <div className="space-y-1.5 pl-1.5">
+                                <div className="space-y-1.5">
                                     {pendingDecision.branches.map((branch) => {
                                         const label = getConditionPathLabel(branch);
 
@@ -253,17 +249,6 @@ export function PathsPanel({
                             </div>
                         )}
                     </section>
-                ) : null}
-
-                {isPopover && pendingDecision && chosenDecisions.length > 0 ? (
-                    <ShellButton
-                        variant="ghost"
-                        size="compact"
-                        onClick={() => setShowPreviousPaths((current) => !current)}
-                        className={cn('w-full justify-center', previousPathsToggleClassName)}
-                    >
-                        {previousPathsToggleLabel}
-                    </ShellButton>
                 ) : null}
 
                 {shouldShowPreviousPaths ? (
@@ -369,14 +354,42 @@ export function PathsPanel({
                 ) : null}
             </div>
 
-            {onResetPaths ? (
+            {showPopoverActionRow ? (
+                <div className={cn('border-t p-3', tone === 'cinematicDark' ? 'border-shell-dark-border' : 'border-shell-border')}>
+                    <div className="flex items-center gap-2">
+                        {showPopoverEditAction ? (
+                            <ShellButton
+                                variant="outline"
+                                size="compact"
+                                onClick={() => setShowPreviousPaths((current) => !current)}
+                                className={popoverActionButtonClassName}
+                            >
+                                <Pencil size={12} className="shrink-0" />
+                                {previousPathsToggleLabel}
+                            </ShellButton>
+                        ) : null}
+                        {onResetPaths ? (
+                            <ShellButton
+                                variant="outline"
+                                size="compact"
+                                onClick={onResetPaths}
+                                className={cn(popoverActionButtonClassName, resetButtonClassName)}
+                            >
+                                <RotateCcw size={12} className="shrink-0" />
+                                Restart from beginning
+                            </ShellButton>
+                        ) : null}
+                    </div>
+                </div>
+            ) : onResetPaths ? (
                 <div className={cn('border-t p-3', tone === 'cinematicDark' ? 'border-shell-dark-border' : 'border-shell-border')}>
                     <ShellButton
                         variant="outline"
                         size="compact"
                         onClick={onResetPaths}
-                        className={cn('w-full justify-center', resetButtonClassName)}
+                        className={cn('w-full justify-center gap-1.5', resetButtonClassName)}
                     >
+                        <RotateCcw size={12} className="shrink-0" />
                         Restart from beginning
                     </ShellButton>
                 </div>

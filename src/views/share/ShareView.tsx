@@ -441,7 +441,7 @@ export const ShareView = () => {
     const commentPlacementRef = useRef<PointerPlacementState | null>(null);
     const suppressedPlacementPointerIdRef = useRef<number | null>(null);
     const lastAutoPathRequestKeyRef = useRef<string | null>(null);
-    const lastAutoOpenPendingPathStepIdRef = useRef<string | null>(null);
+    const lastAutoOpenPendingPathRequestKeyRef = useRef<string | null>(null);
 
     const commenterName = useMemo(() => getUserDisplayName(user), [user]);
     const commenterAvatarUrl = useMemo(() => getUserAvatarUrl(user), [user]);
@@ -1032,14 +1032,20 @@ export const ShareView = () => {
         const pendingDecision = reviewState.decisions.find((decision) => decision.mode === 'interceptor') || null;
 
         if (!pendingDecision) {
-            lastAutoOpenPendingPathStepIdRef.current = null;
+            lastAutoOpenPendingPathRequestKeyRef.current = null;
             return;
         }
 
-        if (lastAutoOpenPendingPathStepIdRef.current === pendingDecision.stepId) return;
-        lastAutoOpenPendingPathStepIdRef.current = pendingDecision.stepId;
+        const pendingRequestKey = [
+            pendingDecision.stepId,
+            reviewState.pathSignature,
+            reviewState.historyLength,
+        ].join('|');
+
+        if (lastAutoOpenPendingPathRequestKeyRef.current === pendingRequestKey) return;
+        lastAutoOpenPendingPathRequestKeyRef.current = pendingRequestKey;
         setIsPathsPanelOpen(true);
-    }, [reviewState.decisions]);
+    }, [reviewState.decisions, reviewState.historyLength, reviewState.pathSignature]);
 
     useEffect(() => {
         if (!pendingThreadRevealId) return;

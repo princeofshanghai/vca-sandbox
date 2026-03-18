@@ -189,7 +189,7 @@ export const Composer = ({
                   <div
                     className="absolute bottom-full right-0 mb-2 w-[280px] rounded-xl border border-vca-border-faint bg-white/95 p-1.5 shadow-[0_10px_26px_rgba(15,23,42,0.14)] backdrop-blur"
                   >
-                    <p className="px-2 pb-0.5 text-vca-xsmall text-vca-text-meta">Type directly or choose below</p>
+                    <p className="px-2 pb-1 text-vca-xsmall text-vca-text-meta">Choose a shortcut to send now</p>
                     {hasSuggestions ? (
                       <div className="mt-1 max-h-44 space-y-0.5 overflow-y-auto pr-0.5">
                         {uniqueSuggestions.map((suggestion, index) => (

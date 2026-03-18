@@ -58,7 +58,7 @@ export function PreviewDrawer({
     const previewControlTone = isDarkMode ? 'cinematicDark' : 'default';
     const debounceTimerRef = useRef<NodeJS.Timeout | undefined>(undefined);
     const latestFlowModifiedAtRef = useRef(flow.lastModified);
-    const lastAutoOpenPendingStepIdRef = useRef<string | null>(null);
+    const lastAutoOpenPendingRequestKeyRef = useRef<string | null>(null);
 
     useEffect(() => {
         latestFlowModifiedAtRef.current = flow.lastModified;
@@ -106,14 +106,20 @@ export function PreviewDrawer({
 
     useEffect(() => {
         if (!pendingPathDecision) {
-            lastAutoOpenPendingStepIdRef.current = null;
+            lastAutoOpenPendingRequestKeyRef.current = null;
             return;
         }
 
-        if (lastAutoOpenPendingStepIdRef.current === pendingPathDecision.stepId) return;
-        lastAutoOpenPendingStepIdRef.current = pendingPathDecision.stepId;
+        const pendingRequestKey = [
+            pendingPathDecision.stepId,
+            reviewState.pathSignature,
+            reviewState.historyLength,
+        ].join('|');
+
+        if (lastAutoOpenPendingRequestKeyRef.current === pendingRequestKey) return;
+        lastAutoOpenPendingRequestKeyRef.current = pendingRequestKey;
         setIsPathsPanelOpen(true);
-    }, [pendingPathDecision]);
+    }, [pendingPathDecision, reviewState.historyLength, reviewState.pathSignature]);
 
     // Debounced auto-sync: Update preview 1 second after editing stops
     useEffect(() => {

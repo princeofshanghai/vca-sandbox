@@ -36,6 +36,11 @@
     --shell-danger-soft: 254 242 242;
     --shell-danger-soft-alpha: 1;
     --shell-danger-border: 254 202 202;
+    --shell-success: 22 101 52;
+    --shell-success-soft: 240 253 244;
+    --shell-success-soft-alpha: 1;
+    --shell-success-border: 187 247 208;
+    --shell-success-text: 21 128 61;
     --shell-canvas: 245 245 247;
     --shell-canvas-grid: 180 179 168;
     --shell-studio-canvas: 245 245 247;
@@ -112,6 +117,11 @@
     --shell-danger-soft: 126 44 44;
     --shell-danger-soft-alpha: 0.38;
     --shell-danger-border: 175 76 76;
+    --shell-success: 52 211 153;
+    --shell-success-soft: 6 78 59;
+    --shell-success-soft-alpha: 0.42;
+    --shell-success-border: 52 211 153;
+    --shell-success-text: 167 243 208;
     --shell-canvas: 44 44 44;
     --shell-canvas-grid: 94 94 94;
     --shell-studio-canvas: 24 24 24;

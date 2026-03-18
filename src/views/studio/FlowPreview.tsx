@@ -87,6 +87,8 @@ type ComposerGuidanceState = {
     suggestions: string[];
 };
 
+type ComposerSendHandler = (overrideValue?: string) => void;
+
 interface InteractionHotspotState {
     turnId: string;
     promptComponentIds: Set<string>;
@@ -167,14 +169,14 @@ export const FlowPreview = ({
     const hotspotsEnabled = flow.settings?.showHotspots ?? true;
     // Shared composer state
     const [composerValue, setComposerValue] = useState('');
-    const handleSendRef = useRef<(() => void) | undefined>(undefined);
+    const handleSendRef = useRef<ComposerSendHandler | undefined>(undefined);
     const stopHandlerRef = useRef<(() => void) | undefined>(undefined);
     const [composerGuidance, setComposerGuidance] = useState<ComposerGuidanceState>(EMPTY_COMPOSER_GUIDANCE);
 
     // Lifted status state for Composer (only re-render when status changes)
     const [composerStatus, setComposerStatus] = useState<'default' | 'active' | 'stop' | 'disabled'>('default');
 
-    const handleRegisterSend = useCallback((fn: () => void) => {
+    const handleRegisterSend = useCallback((fn: ComposerSendHandler) => {
         handleSendRef.current = fn;
     }, []);
 
@@ -185,6 +187,13 @@ export const FlowPreview = ({
 
     const handleComposerSend = useCallback(() => {
         handleSendRef.current?.();
+    }, []);
+
+    const handleComposerHotspotUse = useCallback((value: string) => {
+        const trimmedValue = value.trim();
+        if (!trimmedValue) return;
+
+        handleSendRef.current?.(trimmedValue);
     }, []);
 
     const handleComposerStop = useCallback(() => {
@@ -213,8 +222,8 @@ export const FlowPreview = ({
     };
 
     const endOfFlowChip = showEndOfFlowIndicator && showEndOfFlowChipVisible && !reviewMode ? (
-        <div className="pointer-events-auto inline-flex animate-fade-in items-center gap-1.5 rounded-full border border-shell-border bg-shell-surface-subtle px-3.5 py-1.5 text-[11px] font-medium text-shell-text shadow-sm">
-            <Flag size={12} className="shrink-0 text-shell-accent" />
+        <div className="pointer-events-auto inline-flex animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-1 duration-300 ease-out items-center gap-1.5 rounded-full border border-shell-success-border bg-shell-success-soft px-3.5 py-1.5 text-[11px] font-medium text-shell-success-text shadow-sm">
+            <Flag size={12} className="shrink-0 text-shell-success-text" />
             End of flow
         </div>
     ) : null;
@@ -278,7 +287,7 @@ export const FlowPreview = ({
                                             onStop={handleComposerStop}
                                             composerHotspotVisible={!reviewMode && hotspotsEnabled && composerGuidance.showHotspot}
                                             composerHotspotSuggestions={composerGuidance.suggestions}
-                                            onComposerHotspotUse={!reviewMode ? setComposerValue : undefined}
+                                            onComposerHotspotUse={!reviewMode ? handleComposerHotspotUse : undefined}
                                         >
                                             <PreviewContent {...previewContentProps} />
                                         </Container>
@@ -308,7 +317,7 @@ export const FlowPreview = ({
                                 onStop={handleComposerStop}
                                 composerHotspotVisible={!reviewMode && hotspotsEnabled && composerGuidance.showHotspot}
                                 composerHotspotSuggestions={composerGuidance.suggestions}
-                                onComposerHotspotUse={!reviewMode ? setComposerValue : undefined}
+                                onComposerHotspotUse={!reviewMode ? handleComposerHotspotUse : undefined}
                             >
                                 <PreviewContent {...previewContentProps} />
                             </Container>
@@ -344,7 +353,7 @@ const PreviewContent = ({
     flow: Flow,
     variables?: Record<string, string>,
     onVariableUpdate?: (key: string, value: string) => void,
-    onRegisterSend: (fn: () => void) => void,
+    onRegisterSend: (fn: ComposerSendHandler) => void,
     onComposerReset: () => void,
     composerValue: string,
     onStatusChange?: (status: 'default' | 'active' | 'stop' | 'disabled', onStop?: () => void) => void,
@@ -771,8 +780,8 @@ const PreviewContent = ({
             return;
         }
 
-        onRegisterSend(() => {
-            const input = composerValue.trim();
+        onRegisterSend((overrideValue) => {
+            const input = (overrideValue ?? composerValue).trim();
             if (!input) return;
 
             onComposerReset();
