@@ -22,6 +22,7 @@ import { ConditionBranchEditor } from '../components/ConditionBranchEditor';
 import { BranchCard } from './components/BranchCard';
 import { Branch } from '../../studio/types';
 import { createDefaultConditionBranches } from '../../studio/conditionBranches';
+import { OUTER_NODE_HANDLE_OFFSET_PX } from './components/handleOffsets';
 import {
     CONDITION_NAME_FALLBACK,
     CONDITION_QUESTION_PLACEHOLDER,
@@ -66,6 +67,7 @@ interface ConditionNodeData {
     onLabelChange?: (nodeId: string, newLabel: string) => void;
     onQuestionChange?: (nodeId: string, question: string) => void;
     onUpdateBranches?: (nodeId: string, branches: Branch[]) => void;
+    onDelete?: (nodeId: string) => void;
 }
 
 interface SortableBranchRowProps {
@@ -202,6 +204,12 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
         }
     };
 
+    const handleDelete = () => {
+        if (typedData.readOnly) return;
+        setIsEditorOpen(false);
+        typedData.onDelete?.(nodeId);
+    };
+
     const handleBranchDragStart = () => {
         setLastDragAt(Date.now());
     };
@@ -258,6 +266,7 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
             branches={branches}
             onQuestionChange={(nextQuestion) => typedData.onQuestionChange?.(nodeId, nextQuestion)}
             onBranchesChange={(nextBranches) => typedData.onUpdateBranches?.(nodeId, nextBranches)}
+            onDelete={handleDelete}
             isOpen={isEditorOpen}
             onOpenChange={setIsEditorOpen}
             readOnly={typedData.readOnly}
@@ -313,7 +322,8 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
                 <Handle
                     type="target"
                     position={Position.Left}
-                    className="!bg-shell-node-condition !w-3.5 !h-3.5 !border-2 !border-shell-bg"
+                    className="!bg-shell-node-condition !w-4 !h-4 !border-2 !border-shell-bg"
+                    style={{ left: -OUTER_NODE_HANDLE_OFFSET_PX }}
                 />
 
                 <div className={`w-full h-full px-7 py-7 ${conditionSurfaceClassName} rounded-lg`}>

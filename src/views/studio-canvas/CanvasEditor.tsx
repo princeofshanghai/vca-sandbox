@@ -41,7 +41,6 @@ import {
 } from '../studio/types';
 import { useCallback, useMemo, useEffect, useState, useRef } from 'react';
 import { SelectionState } from './types';
-import { ContextToolbar } from './components/ContextToolbar';
 import { FloatingToolbar } from './components/FloatingToolbar';
 import { ZoomControls } from './components/ZoomControls';
 import { ActionTooltip } from './components/ActionTooltip';
@@ -465,7 +464,6 @@ const getNextDuplicateNodeLabel = (
 };
 
 type ConnectedUserTurnSource = {
-    inputType: 'button' | 'prompt';
     text: string;
 };
 
@@ -492,7 +490,7 @@ const getConnectedUserTurnSource = (flow: Flow, userTurnId: string): ConnectedUs
 
     if (sourceComponent.type === 'prompt') {
         const promptText = (sourceComponent.content as PromptContent).text?.trim() || '';
-        return { inputType: 'prompt', text: promptText };
+        return { text: promptText };
     }
 
     if (sourceComponent.type === 'selectionList') {
@@ -500,7 +498,7 @@ const getConnectedUserTurnSource = (flow: Flow, userTurnId: string): ConnectedUs
         const itemId = handleId.split(`${sourceComponent.id}-`)[1];
         const item = listContent.items.find((candidate) => candidate.id === itemId);
         const buttonText = item?.title?.trim() || '';
-        return { inputType: 'button', text: buttonText };
+        return { text: buttonText };
     }
 
     if (sourceComponent.type === 'confirmationCard') {
@@ -515,7 +513,7 @@ const getConnectedUserTurnSource = (flow: Flow, userTurnId: string): ConnectedUs
                 ? confirmationContent.rejectLabel || 'Cancel'
                 : confirmationContent.confirmLabel || 'Confirm'
         ).trim();
-        return { inputType: 'button', text: buttonText };
+        return { text: buttonText };
     }
 
     if (sourceComponent.type === 'checkboxGroup') {
@@ -526,7 +524,7 @@ const getConnectedUserTurnSource = (flow: Flow, userTurnId: string): ConnectedUs
                 ? checkboxContent.secondaryLabel || checkboxContent.cancelLabel || 'Cancel'
                 : checkboxContent.primaryLabel || checkboxContent.saveLabel || 'Save'
         ).trim();
-        return { inputType: 'button', text: buttonText };
+        return { text: buttonText };
     }
 
     return null;
@@ -545,8 +543,12 @@ const syncAutoManagedUserTurns = (flow: Flow): Flow => {
         }
 
         const connectedSource = getConnectedUserTurnSource(flow, step.id);
-        const nextInputType = connectedSource?.inputType ?? step.inputType;
-        const nextTriggerValue = connectedSource ? (connectedSource.text || undefined) : step.triggerValue;
+        const nextInputType: UserTurn['inputType'] = connectedSource ? 'button' : 'text';
+        const nextTriggerValue = connectedSource
+            ? (connectedSource.text || undefined)
+            : step.inputType === 'text'
+                ? step.triggerValue
+                : undefined;
         const normalizedLabelMode = step.labelMode ?? 'auto';
         const textTrigger = nextInputType === 'text'
             ? getPrimaryUserTurnTriggerText(nextTriggerValue)
@@ -816,8 +818,6 @@ function CanvasEditorInner({
 
     // Selection state
     const [selection, setSelection] = useState<SelectionState | null>(null);
-    const [selectionAnchorEl, setSelectionAnchorEl] = useState<HTMLElement | null>(null);
-    const [pendingAutoOpenAddComponentNodeId, setPendingAutoOpenAddComponentNodeId] = useState<string | null>(null);
     const [pendingReactFlowSelectedNodeIds, setPendingReactFlowSelectedNodeIds] = useState<string[] | null>(null);
 
     const selectionRef = useRef<SelectionState | null>(selection);
@@ -1075,7 +1075,7 @@ function CanvasEditorInner({
         };
     }, [viewport.x, viewport.y, viewport.zoom]);
 
-    const focusNodeWithToolbar = useCallback((nodeId: string, openAddComponentPopover = false) => {
+    const focusNodeSelection = useCallback((nodeId: string) => {
         let attempts = 0;
         const maxAttempts = 24;
 
@@ -1083,8 +1083,6 @@ function CanvasEditorInner({
             const nodeEl = document.getElementById(`node-${nodeId}`) as HTMLElement | null;
             if (nodeEl || attempts >= maxAttempts) {
                 setCanvasSelection({ type: 'node', nodeId });
-                setSelectionAnchorEl(nodeEl);
-                setPendingAutoOpenAddComponentNodeId(openAddComponentPopover ? nodeId : null);
                 setPendingReactFlowSelectedNodeIds([nodeId]);
                 return;
             }
@@ -1115,7 +1113,7 @@ function CanvasEditorInner({
                 steps: [...currentSteps, newTurn],
                 lastModified: Date.now(),
             });
-            focusNodeWithToolbar(newTurn.id, true);
+            focusNodeSelection(newTurn.id);
             return;
         }
 
@@ -1169,7 +1167,7 @@ function CanvasEditorInner({
             steps: [...currentSteps, newNote],
             lastModified: Date.now(),
         });
-    }, [applyFlowUpdate, focusNodeWithToolbar]);
+    }, [applyFlowUpdate, focusNodeSelection]);
 
     const getFloatingToolbarNodePlacement = useCallback((type: ToolbarPlacementType) => {
         const canvasRect = canvasAreaRef.current?.getBoundingClientRect();
@@ -1340,15 +1338,8 @@ function CanvasEditorInner({
         URL.revokeObjectURL(url);
     };
 
-    const isEmptyAiTurnNode = useCallback((nodeId: string): boolean => {
-        const step = flowRef.current.steps?.find((candidate) => candidate.id === nodeId);
-        return Boolean(step && step.type === 'turn' && step.speaker === 'ai' && step.components.length === 0);
-    }, []);
-
     const handleDeselect = useCallback(() => {
         setCanvasSelection(null);
-        setSelectionAnchorEl(null);
-        setPendingAutoOpenAddComponentNodeId(null);
         setPendingReactFlowSelectedNodeIds([]);
     }, [setCanvasSelection]);
 
@@ -1358,7 +1349,6 @@ function CanvasEditorInner({
         setQuickAddMenu(null);
         setQuickAddConnectionPreview(null);
         setPendingToolbarPlacement(null);
-        setPendingAutoOpenAddComponentNodeId(null);
     }, [handleDeselect, isCommentModeActive]);
 
     const handleSelectComponent = useCallback((
@@ -1398,8 +1388,6 @@ function CanvasEditorInner({
             setCanvasSelection({ type: 'component', nodeId, componentId });
         }
 
-        setSelectionAnchorEl(null);
-        setPendingAutoOpenAddComponentNodeId(null);
         setPendingReactFlowSelectedNodeIds([]);
     }, [setCanvasSelection]);
 
@@ -1413,6 +1401,33 @@ function CanvasEditorInner({
         );
         applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
     }, [applyFlowUpdate]);
+
+    const handleDeleteTurnComponent = useCallback((nodeId: string, componentId: string) => {
+        const currentFlow = flowRef.current;
+        const currentSelection = selectionRef.current;
+
+        if (!currentFlow.steps) return;
+
+        const updatedSteps = currentFlow.steps.map((step) =>
+            step.id === nodeId && step.type === 'turn'
+                ? { ...step, components: step.components.filter((component) => component.id !== componentId) }
+                : step
+        );
+
+        applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
+
+        const shouldClearSelection =
+            (currentSelection?.type === 'component' &&
+                currentSelection.nodeId === nodeId &&
+                currentSelection.componentId === componentId) ||
+            (currentSelection?.type === 'components' &&
+                currentSelection.nodeId === nodeId &&
+                currentSelection.componentIds.includes(componentId));
+
+        if (shouldClearSelection) {
+            handleDeselect();
+        }
+    }, [applyFlowUpdate, handleDeselect]);
 
     const handleTurnComponentUpdate = useCallback((nodeId: string, componentId: string, updates: Partial<Component>) => {
         const currentFlow = flowRef.current;
@@ -1508,6 +1523,36 @@ function CanvasEditorInner({
         applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
     }, [applyFlowUpdate]);
 
+    const deleteNodesFromFlow = useCallback((nodeIds: string[]) => {
+        if (nodeIds.length === 0) {
+            return;
+        }
+
+        const currentFlow = flowRef.current;
+        const deletedIds = new Set(nodeIds);
+
+        const updatedSteps = (currentFlow.steps || []).filter((step) => !deletedIds.has(step.id));
+        const updatedConnections = (currentFlow.connections || []).filter(
+            (connection) => !deletedIds.has(connection.source) && !deletedIds.has(connection.target)
+        );
+
+        applyFlowUpdate({
+            ...currentFlow,
+            steps: updatedSteps,
+            connections: updatedConnections,
+            lastModified: Date.now(),
+        });
+
+        const currentSelection = selectionRef.current;
+        if (getSelectionNodeIds(currentSelection).some((nodeId) => deletedIds.has(nodeId))) {
+            handleDeselect();
+        }
+    }, [applyFlowUpdate, handleDeselect]);
+
+    const handleDeleteFlowNode = useCallback((nodeId: string) => {
+        deleteNodesFromFlow([nodeId]);
+    }, [deleteNodesFromFlow]);
+
     const handleConditionLabelChange = useCallback((nodeId: string, newLabel: string) => {
         const currentFlow = flowRef.current;
         if (!currentFlow.steps) return;
@@ -1591,11 +1636,8 @@ function CanvasEditorInner({
             return 'text';
         }
 
-        if (sourceComponent.type === 'prompt') {
-            return 'prompt';
-        }
-
         if (
+            sourceComponent.type === 'prompt' ||
             sourceComponent.type === 'selectionList' ||
             sourceComponent.type === 'confirmationCard' ||
             sourceComponent.type === 'checkboxGroup'
@@ -1668,9 +1710,9 @@ function CanvasEditorInner({
         });
 
         if (newStep.type === 'turn') {
-            focusNodeWithToolbar(newStep.id, true);
+            focusNodeSelection(newStep.id);
         }
-    }, [applyFlowUpdate, focusNodeWithToolbar, resolveDefaultUserTurnInputType]);
+    }, [applyFlowUpdate, focusNodeSelection, resolveDefaultUserTurnInputType]);
 
     const onConnectStart: OnConnectStart = useCallback((event, params) => {
         if (isFlowReadOnly) return;
@@ -1867,8 +1909,13 @@ function CanvasEditorInner({
         );
 
         applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
-        setPendingAutoOpenAddComponentNodeId(null);
-    }, [applyFlowUpdate]);
+        setCanvasSelection({ type: 'component', nodeId: resolvedNodeId, componentId: newComponent.id });
+        setPendingReactFlowSelectedNodeIds([]);
+    }, [applyFlowUpdate, setCanvasSelection]);
+
+    const handleTurnAddComponent = useCallback((nodeId: string, type: ComponentType) => {
+        handleComponentAdd(type, nodeId);
+    }, [handleComponentAdd]);
 
     const getNodeCommentState = useCallback(() => {
         return {
@@ -1923,8 +1970,10 @@ function CanvasEditorInner({
                         onSelectComponent: handleSelectComponent,
                         onDeselect: handleDeselect,
                         onComponentReorder: handleTurnComponentReorder,
+                        onComponentDelete: handleDeleteTurnComponent,
                         onLabelChange: handleTurnLabelChange,
                         onComponentUpdate: handleTurnComponentUpdate,
+                        onAddComponent: handleTurnAddComponent,
                     },
                 };
             } else if (step.type === 'user-turn') {
@@ -1936,11 +1985,12 @@ function CanvasEditorInner({
                         label: step.label,
                         labelMode: step.labelMode,
                         autoLabel: step.autoLabel,
-                        inputType: step.inputType || 'button', // Default key
+                        inputType: step.inputType || 'text',
                         triggerValue: step.triggerValue,
                         readOnly: isFlowReadOnly,
                         commentState,
                         onUpdate: handleUserTurnUpdate,
+                        onDelete: handleDeleteFlowNode,
                     }
                 };
             } else if (step.type === 'condition') {
@@ -1960,6 +2010,7 @@ function CanvasEditorInner({
                         onLabelChange: handleConditionLabelChange,
                         onQuestionChange: handleConditionQuestionChange,
                         onUpdateBranches: handleConditionUpdateBranches,
+                        onDelete: handleDeleteFlowNode,
                     },
                 };
             } else if (step.type === 'note') {
@@ -2233,9 +2284,7 @@ function CanvasEditorInner({
         // Just update selection state.
         // React Flow handles the visual 'selected' prop automatically.
         setCanvasSelection({ type: 'node', nodeId: node.id });
-        setSelectionAnchorEl(event.currentTarget as HTMLElement);
-        setPendingAutoOpenAddComponentNodeId(isEmptyAiTurnNode(node.id) ? node.id : null);
-    }, [comments, getFreeAnchorFromClient, isCommentModeActive, isEmptyAiTurnNode, placePendingToolbarPlacementAtClient, setCanvasSelection]);
+    }, [comments, getFreeAnchorFromClient, isCommentModeActive, placePendingToolbarPlacementAtClient, setCanvasSelection]);
 
     const onEdgeClick = useCallback((event: React.MouseEvent) => {
         if (!placePendingToolbarPlacementAtClient({ x: event.clientX, y: event.clientY })) {
@@ -2263,16 +2312,11 @@ function CanvasEditorInner({
 
         if (selectedNodeIds.length === 1) {
             const [nodeId] = selectedNodeIds;
-            if (currentSelection?.type !== 'node' || currentSelection.nodeId !== nodeId) {
-                setSelectionAnchorEl(null);
-            }
             setCanvasSelection({ type: 'node', nodeId });
             return;
         }
 
         setCanvasSelection({ type: 'nodes', nodeIds: selectedNodeIds });
-        setSelectionAnchorEl(null);
-        setPendingAutoOpenAddComponentNodeId(null);
     }, [handleDeselect, isCommentModeActive, setCanvasSelection]);
 
     // Sync edges when flow model changes
@@ -2399,8 +2443,6 @@ function CanvasEditorInner({
         });
     }, [selection, setNodes]);
 
-    const selectedNodeId = getSingleSelectedNodeId(selection);
-
     // Save positions when dragging stops
     const onNodeDragStop = useCallback((_: React.MouseEvent, _node: Node, nodes: Node[]) => {
         // Handle both single and multi-selection dragging by updating all dragged nodes
@@ -2442,21 +2484,6 @@ function CanvasEditorInner({
         },
         [flow, applyFlowUpdate]
     );
-
-    const handleChangeUserTurnInputType = (inputType: 'text' | 'prompt' | 'button') => {
-        if (selectedNodeId) {
-            const updatedSteps = flow.steps?.map(s =>
-                s.id === selectedNodeId && s.type === 'user-turn'
-                    ? {
-                        ...s,
-                        inputType,
-                        autoLabel: s.labelMode === 'custom' ? s.autoLabel : undefined,
-                    }
-                    : s
-            );
-            applyFlowUpdate({ ...flow, steps: updatedSteps, lastModified: Date.now() });
-        }
-    };
 
     const handleMoveComponentUp = useCallback(() => {
         const currentSelection = selectionRef.current;
@@ -2521,34 +2548,12 @@ function CanvasEditorInner({
 
     // Native React Flow delete handler (supports multi-selection)
     const onNodesDelete = useCallback((deletedNodes: Node[]) => {
-        const currentFlow = flowRef.current;
-        const deletedIds = new Set(deletedNodes.map(n => n.id));
-
         // Filter out nodes that shouldn't be deleted (e.g. Start node)
         // Note: React Flow might have already removed them from the UI, but we need to keep them in data if locked
         // However, usually we should prevent them from being selectable/deletable in the first place.
         // For now, we just proceed with the deletion from data.
-
-        const updatedSteps = (currentFlow.steps || []).filter(s => !deletedIds.has(s.id));
-
-        // Remove connections attached to these nodes
-        const updatedConnections = (currentFlow.connections || []).filter(
-            conn => !deletedIds.has(conn.source) && !deletedIds.has(conn.target)
-        );
-
-        applyFlowUpdate({
-            ...currentFlow,
-            steps: updatedSteps,
-            connections: updatedConnections,
-            lastModified: Date.now()
-        });
-
-        // If the custom selection was tied to a deleted node, clear it.
-        const currentSelection = selectionRef.current;
-        if (getSelectionNodeIds(currentSelection).some((nodeId) => deletedIds.has(nodeId))) {
-            handleDeselect();
-        }
-    }, [applyFlowUpdate, handleDeselect]); // flowRef used inside
+        deleteNodesFromFlow(deletedNodes.map((node) => node.id));
+    }, [deleteNodesFromFlow]); // flowRef used inside
 
     const onEdgesDelete = useCallback((deletedEdges: Edge[]) => {
         const currentFlow = flowRef.current;
@@ -2781,7 +2786,6 @@ function CanvasEditorInner({
                 lastModified: Date.now(),
             });
             setCanvasSelection({ type: 'node', nodeId: newStep.id });
-            setSelectionAnchorEl(null);
             setPendingReactFlowSelectedNodeIds([newStep.id]);
             return true;
         }
@@ -2800,7 +2804,6 @@ function CanvasEditorInner({
                 lastModified: Date.now(),
             });
             setCanvasSelection({ type: 'nodes', nodeIds: newSteps.map((step) => step.id) });
-            setSelectionAnchorEl(null);
             setPendingReactFlowSelectedNodeIds(newSteps.map((step) => step.id));
             return true;
         }
@@ -2875,7 +2878,6 @@ function CanvasEditorInner({
                     ? { type: 'component', nodeId: targetNodeId, componentId: newComponentIds[0] }
                     : { type: 'components', nodeId: targetNodeId, componentIds: newComponentIds }
             );
-            setSelectionAnchorEl(null);
             setPendingReactFlowSelectedNodeIds([]);
             return true;
         }
@@ -2937,7 +2939,6 @@ function CanvasEditorInner({
             lastModified: Date.now(),
         });
         setCanvasSelection({ type: 'branch', nodeId: targetNodeId, branchId: newBranchId });
-        setSelectionAnchorEl(null);
         setPendingReactFlowSelectedNodeIds([]);
         return true;
     }, [applyFlowUpdate, isFlowReadOnly, setCanvasSelection]);
@@ -3357,11 +3358,6 @@ function CanvasEditorInner({
         <ConnectionLine {...props} />
     ), []);
 
-    // Get current input type for toolbar (User Turn)
-    const currentUserTurnInputType = selectedNodeId
-        ? (flow.steps?.find(s => s.id === selectedNodeId && s.type === 'user-turn') as UserTurn | undefined)?.inputType
-        : undefined;
-
     const renderPreviewOpenMenu = () => (
         <ShellMenu>
             <ActionTooltip content="Play prototype" disabled={isPreviewActive}>
@@ -3619,20 +3615,7 @@ function CanvasEditorInner({
                     connectionLineComponent={connectionLineWithPreview}
                     className={`bg-shell-studio-canvas ${!isFlowReadOnly && isAltPressed ? 'is-alt-pressed' : ''} ${!isFlowReadOnly && pendingToolbarPlacement ? 'is-placement-active' : ''} ${isCommentModeActive ? 'is-comment-mode' : ''}`}
                 >
-
                     <Background color="rgb(var(--shell-studio-canvas-grid) / 1)" gap={20} size={2} />
-                    {!isFlowReadOnly && !isCommentModeActive && selectedNodeId && (
-                        <ContextToolbar
-                            selection={{ type: 'node', nodeId: selectedNodeId }}
-                            anchorEl={selectionAnchorEl}
-                            onAddComponent={(type: ComponentType) => handleComponentAdd(type, selectedNodeId)}
-                            onChangeUserTurnInputType={handleChangeUserTurnInputType}
-                            currentUserTurnInputType={currentUserTurnInputType}
-                            autoOpenAddComponentPopover={pendingAutoOpenAddComponentNodeId === selectedNodeId}
-                            onAutoOpenAddComponentHandled={() => setPendingAutoOpenAddComponentNodeId(null)}
-                            isAiTurn={flow.steps?.some(s => s.id === selectedNodeId && s.type === 'turn')}
-                        />
-                    )}
 
                     {onToggleComments ? (
                         <FloatingToolbar

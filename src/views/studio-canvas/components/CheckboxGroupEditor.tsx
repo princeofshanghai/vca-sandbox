@@ -18,6 +18,7 @@ import { getCheckboxGroupPrimaryLabel, getCheckboxGroupSecondaryLabel } from '@/
 interface CheckboxGroupEditorProps {
     component: Component;
     onChange: (updates: Partial<CheckboxGroupContent>) => void;
+    onDelete?: () => void;
     children: React.ReactNode;
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
@@ -27,6 +28,7 @@ interface CheckboxGroupEditorProps {
 export function CheckboxGroupEditor({
     component,
     onChange,
+    onDelete,
     children,
     isOpen,
     onOpenChange,
@@ -106,6 +108,9 @@ export function CheckboxGroupEditor({
                 icon={CheckSquare}
                 title="Checkbox Group"
                 onClose={() => onOpenChange(false)}
+                onDelete={onDelete}
+                deleteLabel="Remove checkbox group from turn"
+                deleteDisabled={readOnly}
             />
             <EditorContent>
                 <EditorSection title="Checkboxes" action={presetActions}>
@@ -173,7 +178,7 @@ export function CheckboxGroupEditor({
                         ))}
                         {content.options?.length === 0 && (
                             <div className="text-center py-4 text-xs text-shell-muted border border-dashed border-shell-border rounded-lg">
-                                No checkboxes yet. Add checkboxes people can select.
+                                No checkboxes yet.
                             </div>
                         )}
                     </div>

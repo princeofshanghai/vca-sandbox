@@ -25,8 +25,8 @@ export function EditorAddButton({
             onClick={onClick}
             disabled={disabled}
             className={cn(
-                "h-9 w-full justify-center gap-1.5 border-dashed bg-transparent text-xs text-shell-muted shadow-none",
-                "hover:border-shell-accent-border hover:bg-shell-accent-soft hover:text-shell-accent",
+                "h-9 w-full justify-center gap-1.5 bg-transparent text-xs text-shell-accent shadow-none",
+                "hover:border-shell-accent-border hover:bg-shell-accent-soft hover:text-shell-accent-text",
                 className
             )}
         >

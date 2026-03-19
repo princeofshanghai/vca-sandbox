@@ -16,6 +16,7 @@ import { buildDisplayCardAutofillItem } from './editor-ui/editorAutofillPresets'
 interface ConfirmationCardEditorProps {
     component: Component;
     onChange: (updates: Partial<ConfirmationCardContent>) => void;
+    onDelete?: () => void;
     children: React.ReactNode;
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
@@ -34,6 +35,7 @@ const resolveVisualType = (content: ConfirmationCardContent): VisualType => {
 export function ConfirmationCardEditor({
     component,
     onChange,
+    onDelete,
     children,
     isOpen,
     onOpenChange,
@@ -95,6 +97,9 @@ export function ConfirmationCardEditor({
                 icon={IdCard}
                 title="Display Card"
                 onClose={() => onOpenChange(false)}
+                onDelete={onDelete}
+                deleteLabel="Remove display card from turn"
+                deleteDisabled={readOnly}
             />
             <EditorContent>
                 <EditorSection title="Card details" action={cardDetailsAction}>
@@ -142,7 +147,6 @@ export function ConfirmationCardEditor({
 
                 <EditorSection title="Actions">
                     <EditorSegmentedControl
-                        label="Card behavior"
                         value={localActionMode}
                         onChange={(nextValue) => {
                             if (readOnly) return;
@@ -150,7 +154,7 @@ export function ConfirmationCardEditor({
                             onChange({ ...content, showActions: nextValue === 'actions' });
                         }}
                         options={[
-                            { value: 'display', label: 'Display only' },
+                            { value: 'display', label: 'No actions' },
                             { value: 'actions', label: 'With actions' },
                         ]}
                         readOnly={readOnly}

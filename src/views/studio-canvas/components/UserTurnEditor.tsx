@@ -1,4 +1,4 @@
-import { ALargeSmall, MessageCirclePlus, MousePointerClick } from 'lucide-react';
+import { Keyboard, MousePointerClick } from 'lucide-react';
 import { ComponentEditorPopover } from './ComponentEditorPopover';
 import { EditorRoot } from './editor-ui/EditorRoot';
 import { EditorHeader } from './editor-ui/EditorHeader';
@@ -7,8 +7,7 @@ import { EditorField } from './editor-ui/EditorField';
 
 interface UserTurnEditorProps {
     nodeId: string;
-    label: string;
-    inputType: 'text' | 'button' | 'prompt';
+    mode: 'text' | 'click';
     triggerValue: string;
     onChange: (updates: {
         label?: string;
@@ -17,9 +16,10 @@ interface UserTurnEditorProps {
         inputType?: 'text' | 'button' | 'prompt';
         triggerValue?: string;
     }) => void;
-    isLinked?: boolean;
-    promptText?: string;
-    buttonText?: string;
+    clickLabel?: string;
+    clickComponentLabel?: string;
+    clickComponentIcon?: React.ReactNode;
+    onDelete?: () => void;
     children: React.ReactNode;
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
@@ -28,109 +28,69 @@ interface UserTurnEditorProps {
 
 export const UserTurnEditor = ({
     nodeId,
-    inputType,
+    mode,
     triggerValue,
     onChange,
-    isLinked,
-    promptText,
-    buttonText,
+    clickLabel,
+    clickComponentLabel,
+    clickComponentIcon,
+    onDelete,
     children,
     isOpen,
     onOpenChange,
     readOnly = false,
 }: UserTurnEditorProps) => {
-    // We don't need the ref for focus anymore as EditorField handles it via autoFocus or props if needed,
-    // but the original had manual focus logic. 
-    // The new EditorField accepts inputRef so we can keep it if we want custom focus behavior,
-    // or just let the user click.
-    // However, the original had a specific focus + selection range set.
-    // I'll keep the logic but adapt it to the new structure.
-
-    // Actually, EditorField (new) has no internal focus logic on mount.
-    // But it passes inputRef to the underlying input/textarea.
-
-    // I will use a simple autoFocus on the first field which is standard.
-
     const getIcon = () => {
-        switch (inputType) {
-            case 'text': return ALargeSmall;
-            case 'button': return MousePointerClick;
-            case 'prompt': return MessageCirclePlus;
-            default: return ALargeSmall;
-        }
+        return mode === 'click' ? MousePointerClick : Keyboard;
     };
 
     const getTitle = () => {
-        switch (inputType) {
-            case 'text': return 'user message';
-            case 'button': return 'User Button Click';
-            case 'prompt': return 'AI Prompt Trigger';
-            default: return 'User Turn';
-        }
+        return mode === 'click' ? 'User clicks' : "Edit user's message";
     };
 
-    const getButtonHelperText = () => {
-        if (isLinked) {
-            if (buttonText) {
-                return `Triggers when user clicks: ${buttonText}`;
-            }
-
-            return 'This path is linked to a button. Update the source component to add or change its label.';
-        }
-
-        if (triggerValue.trim()) {
-            return `Saved button label: ${triggerValue}. Link a button-based component on the canvas to keep this synced.`;
-        }
-
-        return 'Link a button-based component on the canvas to trigger this path.';
-    };
-
-    const getPromptHelperText = () => {
-        if (isLinked) {
-            return `Triggers when user clicks: ${promptText || 'AI Prompt'}`;
-        }
-
-        if (triggerValue.trim()) {
-            return `Saved prompt label: ${triggerValue}. Link an AI Prompt on the canvas to keep this synced.`;
-        }
-
-        return 'Link an AI Prompt on the canvas to trigger this path.';
-    };
+    const currentClickLabel = clickLabel || triggerValue.trim() || 'No click target yet';
+    const connectedComponentLabel = clickComponentLabel || 'Not connected yet';
 
     const editorContent = (
         <EditorRoot>
             <EditorHeader
                 icon={getIcon()}
                 title={getTitle()}
+                titlePrefix={null}
                 onClose={() => onOpenChange(false)}
+                onDelete={onDelete}
+                deleteLabel="Delete user turn"
+                deleteDisabled={readOnly}
             />
             <EditorContent>
-                {/* Dynamic Fields based on Input Type */}
-                {inputType === 'text' && (
+                {mode === 'text' && (
                     <div className="space-y-1">
                         <EditorField
-                            label="User says"
+                            label="What does the user say?"
                             placeholder={'e.g. "I want to book", "Pricing", "How much?"'}
                             value={triggerValue}
                             onChange={(val) => onChange({ triggerValue: val })}
                             type="textarea"
                             minRows={3}
-                            autoFocus={true}
-                            hint="Enter the keywords or sentences the user might type here."
+                            autoFocus={isOpen && !readOnly}
                             readOnly={readOnly}
                         />
                     </div>
                 )}
 
-                {inputType === 'button' && (
-                    <div className="text-sm leading-relaxed text-shell-text">
-                        {getButtonHelperText()}
-                    </div>
-                )}
-
-                {inputType === 'prompt' && (
-                    <div className="text-sm leading-relaxed text-shell-text">
-                        {getPromptHelperText()}
+                {mode === 'click' && (
+                    <div className="space-y-1.5">
+                        <div className="flex items-center gap-1 text-xs font-medium text-shell-text">
+                            {clickComponentIcon ? (
+                                <span className="text-shell-accent">
+                                    {clickComponentIcon}
+                                </span>
+                            ) : null}
+                            <span>{connectedComponentLabel}</span>
+                        </div>
+                        <p className="text-[13px] leading-5 text-shell-text">
+                            {currentClickLabel}
+                        </p>
                     </div>
                 )}
             </EditorContent>

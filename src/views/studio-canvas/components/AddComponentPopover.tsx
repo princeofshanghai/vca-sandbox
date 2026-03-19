@@ -1,7 +1,6 @@
 import * as HoverCard from '@radix-ui/react-hover-card';
-import * as Popover from '@radix-ui/react-popover';
 import { MessageSquare, MessageCirclePlus, MessageSquareText, Zap, LayoutList, CheckSquare, IdCard } from 'lucide-react';
-import { toast } from 'sonner';
+import { ShellButton, ShellPopoverContent } from '@/components/shell';
 import type { ComponentType } from '../../studio/types';
 import { CheckboxGroup } from '@/components/vca-components/checkbox-group/CheckboxGroup';
 import { DisplayCard } from '@/components/vca-components/confirmation-card/ConfirmationCard';
@@ -27,7 +26,6 @@ interface ComponentSection {
 const HOVER_CARD_WIDTH_PX = 320;
 const HOVER_CARD_PREVIEW_MIN_HEIGHT_PX = 140;
 const HOVER_CARD_PREVIEW_SCALE = 0.85;
-const HOVER_CARD_PREVIEW_BACKGROUND = '#f3f4f6';
 
 const peopleSelectionPreviewItems = [
     {
@@ -207,22 +205,25 @@ const ComponentOptionCard = ({
 }) => (
     <HoverCard.Root openDelay={100} closeDelay={50}>
         <HoverCard.Trigger asChild>
-            <button
+            <ShellButton
                 onClick={onClick}
-                className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-shell-accent focus-visible:bg-shell-accent transition-colors text-left w-full group cursor-pointer"
+                type="button"
+                variant="ghost"
+                size="compact"
+                className="group h-auto w-full justify-start gap-2.5 rounded-lg px-2.5 py-2 text-left text-shell-text transition-colors hover:bg-shell-surface focus-visible:ring-shell-accent/20"
             >
-                <div className="text-shell-dark-muted group-hover:text-white transition-colors">
+                <div className="text-shell-muted transition-colors group-hover:text-shell-text">
                     {option.icon}
                 </div>
-                <span className="text-xs font-medium text-shell-dark-text group-hover:text-white transition-colors">
+                <span className="text-xs font-medium text-shell-text transition-colors">
                     {option.name}
                 </span>
-            </button>
+            </ShellButton>
         </HoverCard.Trigger>
         <HoverCard.Portal>
             <HoverCard.Content
                 data-canvas-shell-zoom-blocker="true"
-                className="max-w-[calc(100vw-2rem)] bg-shell-dark-panel rounded-xl shadow-2xl border border-shell-dark-border p-0 z-[1002] animate-in fade-in zoom-in-95 overflow-hidden"
+                className="max-w-[calc(100vw-2rem)] rounded-xl border border-shell-border bg-shell-bg p-0 text-shell-text shadow-2xl z-[1002] animate-in fade-in zoom-in-95 overflow-hidden"
                 style={{ width: `${HOVER_CARD_WIDTH_PX}px` }}
                 sideOffset={8}
                 side={side}
@@ -231,11 +232,8 @@ const ComponentOptionCard = ({
                     {/* Content Area */}
                     <div className="p-3 space-y-3">
                         <div
-                            className="relative w-full flex justify-center py-3 items-center rounded-lg border border-shell-border shadow-sm"
-                            style={{
-                                minHeight: `${HOVER_CARD_PREVIEW_MIN_HEIGHT_PX}px`,
-                                backgroundColor: HOVER_CARD_PREVIEW_BACKGROUND,
-                            }}
+                            className="relative w-full flex justify-center py-3 items-center rounded-lg border border-shell-border bg-shell-surface-subtle shadow-sm"
+                            style={{ minHeight: `${HOVER_CARD_PREVIEW_MIN_HEIGHT_PX}px` }}
                         >
                             <div
                                 className="origin-center transform-gpu pointer-events-none select-none w-full flex justify-center"
@@ -245,34 +243,46 @@ const ComponentOptionCard = ({
                             </div>
                         </div>
 
-                        <p className="text-xs text-left text-shell-dark-muted leading-relaxed px-2">
+                        <p className="px-2 text-xs text-left text-shell-muted leading-relaxed">
                             {option.description}
                         </p>
                     </div>
                 </div>
-                <HoverCard.Arrow className="fill-shell-dark-panel stroke-shell-dark-border" />
+                <HoverCard.Arrow className="fill-shell-bg stroke-shell-border" />
             </HoverCard.Content>
         </HoverCard.Portal>
     </HoverCard.Root>
 );
 
-export function AddComponentContent({ onAdd }: { onAdd: (type: ComponentType) => void }) {
+interface AddComponentContentProps {
+    onAdd: (type: ComponentType) => void;
+    side?: 'top' | 'right' | 'bottom' | 'left';
+    align?: 'start' | 'center' | 'end';
+    previewSide?: 'left' | 'right';
+}
+
+export function AddComponentContent({
+    onAdd,
+    side = 'bottom',
+    align = 'end',
+    previewSide = 'right',
+}: AddComponentContentProps) {
     return (
-        <Popover.Content
+        <ShellPopoverContent
             data-canvas-shell-zoom-blocker="true"
-            side="top"
+            side={side}
             sideOffset={8}
-            align="center"
+            align={align}
             onOpenAutoFocus={(e: Event) => e.preventDefault()}
-            className="bg-shell-dark-panel border border-shell-dark-border rounded-xl shadow-2xl p-2 w-[220px] z-[1001] animate-in fade-in zoom-in-95 duration-200 ease-out"
+            className="w-[220px] p-2 z-[1001] duration-200 ease-out"
         >
             <div className="flex flex-col">
                 {componentSections.map((section, sectionIndex) => (
                     <div
                         key={section.label}
-                        className={sectionIndex === 0 ? '' : 'mt-3 pt-3 border-t border-shell-dark-border'}
+                        className={sectionIndex === 0 ? '' : 'mt-3 pt-3 border-t border-shell-border'}
                     >
-                        <div className="px-2.5 pb-1.5 text-[11px] font-semibold text-shell-dark-muted">
+                        <div className="px-2.5 pb-1.5 text-[11px] font-semibold text-shell-muted">
                             {section.label}
                         </div>
                         <div className="flex flex-col gap-0.5">
@@ -280,18 +290,14 @@ export function AddComponentContent({ onAdd }: { onAdd: (type: ComponentType) =>
                                 <ComponentOptionCard
                                     key={option.type}
                                     option={option}
-                                    onClick={() => {
-                                        onAdd(option.type);
-                                        toast(`Added ${option.name}`);
-                                    }}
-                                    side="right"
+                                    onClick={() => onAdd(option.type)}
+                                    side={previewSide}
                                 />
                             ))}
                         </div>
                     </div>
                 ))}
             </div>
-            <Popover.Arrow className="fill-shell-dark-panel stroke-shell-dark-border" />
-        </Popover.Content>
+        </ShellPopoverContent>
     );
 }

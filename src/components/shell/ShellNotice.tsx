@@ -5,7 +5,7 @@ export type ShellNoticeTone = 'default' | 'cinematicDark';
 export type ShellNoticeVariant = 'default' | 'error';
 export type ShellNoticeSize = 'default' | 'compact';
 
-export type ShellNoticeProps = React.HTMLAttributes<HTMLDivElement> & {
+export type ShellNoticeProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> & {
   title?: React.ReactNode;
   description?: React.ReactNode;
   icon?: React.ReactNode;

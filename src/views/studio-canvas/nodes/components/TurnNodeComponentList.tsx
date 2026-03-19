@@ -68,6 +68,7 @@ interface TurnNodeComponentListProps {
     onDeselect?: () => void;
     onComponentUpdate?: (nodeId: string, componentId: string, updates: Partial<Component>) => void;
     onComponentReorder?: (nodeId: string, activeComponentId: string, overComponentId: string) => void;
+    onComponentDelete?: (nodeId: string, componentId: string) => void;
 }
 
 interface ComponentRowProps {
@@ -84,6 +85,7 @@ interface ComponentRowProps {
     ) => void;
     onDeselect?: () => void;
     onComponentUpdate?: (nodeId: string, componentId: string, updates: Partial<Component>) => void;
+    onComponentDelete?: (nodeId: string, componentId: string) => void;
     lastDragAt: number;
 }
 
@@ -96,6 +98,7 @@ const ComponentRow = memo(({
     onSelectComponent,
     onDeselect,
     onComponentUpdate,
+    onComponentDelete,
     lastDragAt,
 }: ComponentRowProps) => {
     const display = useMemo(() => getComponentDisplay(component), [component]);
@@ -124,6 +127,11 @@ const ComponentRow = memo(({
         onComponentUpdate?.(nodeId, component.id, { content: { ...component.content, ...updates } });
     }, [component, nodeId, onComponentUpdate, readOnly]);
 
+    const handleDelete = useCallback(() => {
+        if (readOnly) return;
+        onComponentDelete?.(nodeId, component.id);
+    }, [component.id, nodeId, onComponentDelete, readOnly]);
+
     const card = (
         <SimpleComponentCard
             component={component}
@@ -139,6 +147,7 @@ const ComponentRow = memo(({
             <MessageEditor
                 component={component}
                 onChange={handleComponentChange}
+                onDelete={handleDelete}
                 isOpen={isOpen}
                 onOpenChange={handleOpenChange}
                 readOnly={readOnly}
@@ -153,6 +162,7 @@ const ComponentRow = memo(({
             <PromptEditor
                 component={component}
                 onChange={handleComponentChange}
+                onDelete={handleDelete}
                 isOpen={isOpen}
                 onOpenChange={handleOpenChange}
                 readOnly={readOnly}
@@ -167,6 +177,7 @@ const ComponentRow = memo(({
             <InfoMessageEditor
                 component={component}
                 onChange={handleComponentChange}
+                onDelete={handleDelete}
                 isOpen={isOpen}
                 onOpenChange={handleOpenChange}
                 readOnly={readOnly}
@@ -181,6 +192,7 @@ const ComponentRow = memo(({
             <StatusCardEditor
                 component={component}
                 onChange={handleComponentChange}
+                onDelete={handleDelete}
                 isOpen={isOpen}
                 onOpenChange={handleOpenChange}
                 readOnly={readOnly}
@@ -195,6 +207,7 @@ const ComponentRow = memo(({
             <SelectionListEditor
                 component={component}
                 onChange={handleComponentChange}
+                onDelete={handleDelete}
                 isOpen={isOpen}
                 onOpenChange={handleOpenChange}
                 readOnly={readOnly}
@@ -209,6 +222,7 @@ const ComponentRow = memo(({
             <ConfirmationCardEditor
                 component={component}
                 onChange={handleComponentChange}
+                onDelete={handleDelete}
                 isOpen={isOpen}
                 onOpenChange={handleOpenChange}
                 readOnly={readOnly}
@@ -223,6 +237,7 @@ const ComponentRow = memo(({
             <CheckboxGroupEditor
                 component={component}
                 onChange={handleComponentChange}
+                onDelete={handleDelete}
                 isOpen={isOpen}
                 onOpenChange={handleOpenChange}
                 readOnly={readOnly}
@@ -282,6 +297,7 @@ export const TurnNodeComponentList = ({
     onDeselect,
     onComponentUpdate,
     onComponentReorder,
+    onComponentDelete,
 }: TurnNodeComponentListProps) => {
     const [lastDragAt, setLastDragAt] = useState(0);
     const canReorder = !readOnly && components.length > 1;
@@ -376,6 +392,7 @@ export const TurnNodeComponentList = ({
                                     onSelectComponent={onSelectComponent}
                                     onDeselect={onDeselect}
                                     onComponentUpdate={onComponentUpdate}
+                                    onComponentDelete={onComponentDelete}
                                     lastDragAt={lastDragAt}
                                 />
                             </SortableComponentRow>

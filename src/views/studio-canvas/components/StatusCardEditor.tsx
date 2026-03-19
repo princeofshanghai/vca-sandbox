@@ -13,6 +13,7 @@ import { RichTextEditor } from './RichTextEditor';
 interface StatusCardEditorProps {
     component: Component;
     onChange: (updates: Partial<AIStatusContent>) => void;
+    onDelete?: () => void;
     children: React.ReactNode;
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
@@ -22,6 +23,7 @@ interface StatusCardEditorProps {
 export function StatusCardEditor({
     component,
     onChange,
+    onDelete,
     children,
     isOpen,
     onOpenChange,
@@ -68,6 +70,9 @@ export function StatusCardEditor({
                 icon={Zap}
                 title="Status Card"
                 onClose={() => onOpenChange(false)}
+                onDelete={onDelete}
+                deleteLabel="Remove status card from turn"
+                deleteDisabled={readOnly}
             />
 
             <EditorContent>

@@ -21,6 +21,7 @@ import { buildSelectionListAutofillItems } from './editor-ui/editorAutofillPrese
 interface SelectionListEditorProps {
     component: Component;
     onChange: (updates: Partial<SelectionListContent>) => void;
+    onDelete?: () => void;
     children: React.ReactNode;
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
@@ -183,6 +184,7 @@ SelectionListItemRow.displayName = 'SelectionListItemRow';
 export function SelectionListEditor({
     component,
     onChange,
+    onDelete,
     children,
     isOpen,
     onOpenChange,
@@ -273,6 +275,9 @@ export function SelectionListEditor({
                 icon={LayoutList}
                 title="Select Cards"
                 onClose={() => onOpenChange(false)}
+                onDelete={onDelete}
+                deleteLabel="Remove card picker from turn"
+                deleteDisabled={readOnly}
             />
 
             <EditorContent>
@@ -310,7 +315,7 @@ export function SelectionListEditor({
                 >
                     {items.length === 0 ? (
                         <div className="rounded-lg border border-dashed border-shell-border px-3 py-4 text-center text-xs text-shell-muted">
-                            No cards yet. Add cards people can pick from.
+                            No cards yet.
                         </div>
                     ) : (
                         <div className="space-y-3">

@@ -6,7 +6,7 @@ import {
     getDefaultConditionPathLabel,
     getNextConditionPathLabel,
 } from '../../studio/conditionBranches';
-import { getConditionPathLabel, getConditionRuleSummary } from '../../studio/conditionBranchLabels';
+import { getConditionRuleSummary } from '../../studio/conditionBranchLabels';
 import { ShellButton, ShellIconButton, ShellNotice, ShellSwitch } from '@/components/shell';
 import { cn } from '@/utils/cn';
 import { ComponentEditorPopover } from './ComponentEditorPopover';
@@ -22,13 +22,12 @@ interface ConditionBranchEditorProps {
     branches: Branch[];
     onQuestionChange: (question: string) => void;
     onBranchesChange: (branches: Branch[]) => void;
+    onDelete?: () => void;
     children: React.ReactNode;
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
     readOnly?: boolean;
 }
-
-const getBranchHeading = (branch: Branch): string => getConditionPathLabel(branch);
 
 const EMPTY_MATCH_LOGIC: NonNullable<Branch['logic']> = {
     variable: '',
@@ -37,6 +36,15 @@ const EMPTY_MATCH_LOGIC: NonNullable<Branch['logic']> = {
 };
 
 const AUTO_GENERATED_FALLBACK_PATH_LABEL = /^fallback$/i;
+
+const getSanitizedBranchCondition = (branch: Branch): string => {
+    const trimmedCondition = branch.condition?.trim() || '';
+    if (branch.isDefault && AUTO_GENERATED_FALLBACK_PATH_LABEL.test(trimmedCondition)) {
+        return '';
+    }
+
+    return branch.condition ?? '';
+};
 
 const reorderBranches = (branches: Branch[]): Branch[] => {
     const matchingBranches: Branch[] = [];
@@ -54,7 +62,7 @@ const reorderBranches = (branches: Branch[]): Branch[] => {
 };
 
 const getMaterializedPathName = (branch: Branch, index: number): string => {
-    const trimmedCondition = branch.condition?.trim() || '';
+    const trimmedCondition = getSanitizedBranchCondition(branch).trim();
     if (trimmedCondition && !(branch.isDefault && AUTO_GENERATED_FALLBACK_PATH_LABEL.test(trimmedCondition))) {
         return trimmedCondition;
     }
@@ -71,10 +79,10 @@ const normalizeBranchesForEditor = (branches: Branch[]): Branch[] => {
     const matchingBranches: Branch[] = [];
     let fallbackBranch: Branch | null = null;
 
-    branches.forEach((branch, index) => {
+    branches.forEach((branch) => {
         const normalizedBranch: Branch = {
             ...branch,
-            condition: getMaterializedPathName(branch, index),
+            condition: getSanitizedBranchCondition(branch),
             logic: branch.logic ?? { ...EMPTY_MATCH_LOGIC },
         };
 
@@ -105,6 +113,7 @@ export function ConditionBranchEditor({
     branches,
     onQuestionChange,
     onBranchesChange,
+    onDelete,
     children,
     isOpen,
     onOpenChange,
@@ -233,6 +242,9 @@ export function ConditionBranchEditor({
                 icon={Split}
                 title="Condition"
                 onClose={() => onOpenChange(false)}
+                onDelete={onDelete}
+                deleteLabel="Delete condition"
+                deleteDisabled={readOnly}
             />
             <EditorContent>
                 <EditorSection title="General">
@@ -257,6 +269,7 @@ export function ConditionBranchEditor({
                         {editorBranches.map((branch, index) => {
                             const isExpanded = expandedBranchId === branch.id;
                             const summaryText = getConditionRuleSummary(branch, sharedFieldValue);
+                            const branchHeading = getMaterializedPathName(branch, index);
 
                             return (
                                 <div
@@ -281,7 +294,7 @@ export function ConditionBranchEditor({
 
                                         <div className={cn('min-w-0 flex-1', !summaryText && 'py-0.5')}>
                                             <p className="truncate text-xs font-medium text-shell-text">
-                                                {getBranchHeading(branch)}
+                                                {branchHeading}
                                             </p>
                                             {summaryText && (
                                                 <p className="mt-0.5 truncate text-[10px] leading-snug text-shell-muted">
@@ -373,7 +386,7 @@ export function ConditionBranchEditor({
                     )}
 
                     <div className="space-y-3">
-                        {editorBranches.map((branch) => (
+                        {editorBranches.map((branch, index) => (
                             <div
                                 key={`details-${branch.id}`}
                                 className="rounded-lg border border-shell-border bg-shell-bg p-3"
@@ -381,7 +394,7 @@ export function ConditionBranchEditor({
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="min-w-0 flex-1">
                                         <p className="truncate text-xs font-medium text-shell-text">
-                                            {getBranchHeading(branch)}
+                                            {getMaterializedPathName(branch, index)}
                                         </p>
                                         <p className="mt-0.5 text-[10px] leading-snug text-shell-muted">
                                             {branch.isDefault
@@ -426,7 +439,7 @@ export function ConditionBranchEditor({
                                         onCheckedChange={(checked) => handleOtherwiseToggle(branch.id, checked)}
                                         size="compact"
                                         disabled={readOnly}
-                                        aria-label={`Toggle otherwise path for ${getBranchHeading(branch)}`}
+                                        aria-label={`Toggle otherwise path for ${getMaterializedPathName(branch, index)}`}
                                     />
                                 </div>
                             </div>

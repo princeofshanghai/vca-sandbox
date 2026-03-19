@@ -11,6 +11,7 @@ import { RichTextEditor } from './RichTextEditor';
 interface MessageEditorProps {
     component: Component;
     onChange: (updates: Partial<AIMessageContent>) => void;
+    onDelete?: () => void;
     children: React.ReactNode;
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
@@ -20,6 +21,7 @@ interface MessageEditorProps {
 export function MessageEditor({
     component,
     onChange,
+    onDelete,
     children,
     isOpen,
     onOpenChange,
@@ -48,6 +50,9 @@ export function MessageEditor({
                 icon={MessageSquare}
                 title="Message"
                 onClose={() => onOpenChange(false)}
+                onDelete={onDelete}
+                deleteLabel="Remove message from turn"
+                deleteDisabled={readOnly}
             />
             <EditorContent>
                 <EditorField label="Message text" renderInput={false}>
@@ -55,6 +60,7 @@ export function MessageEditor({
                         value={localText}
                         onChange={handleTextChange}
                         placeholder="How can I help?"
+                        autoFocus={isOpen && !readOnly}
                         readOnly={readOnly}
                         surfaceVariant="field"
                     />

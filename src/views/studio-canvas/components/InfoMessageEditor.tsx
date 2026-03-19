@@ -14,6 +14,7 @@ import { RichTextEditor } from './RichTextEditor';
 interface InfoMessageEditorProps {
     component: Component;
     onChange: (updates: Partial<AIInfoContent>) => void;
+    onDelete?: () => void;
     children: React.ReactNode;
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
@@ -43,6 +44,7 @@ const deriveSourceLabel = (value?: string) => {
 export function InfoMessageEditor({
     component,
     onChange,
+    onDelete,
     children,
     isOpen,
     onOpenChange,
@@ -133,6 +135,9 @@ export function InfoMessageEditor({
                 icon={MessageSquareText}
                 title="Info Message"
                 onClose={() => onOpenChange(false)}
+                onDelete={onDelete}
+                deleteLabel="Remove info message from turn"
+                deleteDisabled={readOnly}
             />
 
             <EditorContent>
@@ -142,6 +147,7 @@ export function InfoMessageEditor({
                             value={localBody}
                             onChange={handleBodyChange}
                             placeholder="To add a user in LinkedIn Recruiter, you need to be a Product Settings or Account Center Admin. Here's how you can do it"
+                            autoFocus={isOpen && !readOnly}
                             readOnly={readOnly}
                             surfaceVariant="field"
                             minHeight={160}

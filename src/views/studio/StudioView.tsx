@@ -8,12 +8,14 @@ import { useStudioFlow } from './hooks/useStudioFlow';
 import { useFlowHistory } from './hooks/useFlowHistory';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { useCanvasCommentsController } from './useCanvasCommentsController';
+import { useApp } from '@/contexts/AppContext';
 
 type StudioRightPanelMode = 'preview' | 'comments' | null;
 
 export const StudioView = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const { state } = useApp();
 
     // Custom hook handles loading and persistence
     const { flow, setFlow, isLoading } = useStudioFlow(id);
@@ -63,6 +65,7 @@ export const StudioView = () => {
 
     const isPreviewOpen = rightPanelMode === 'preview';
     const isCommentsOpen = rightPanelMode === 'comments';
+    const commentTone = state.theme === 'dark' ? 'cinematicDark' : 'default';
     const areCanvasCommentsVisible = showComments || isCommentsOpen || isCommentModeActive;
     const canvasComments = useCanvasCommentsController({
         flow,
@@ -127,7 +130,7 @@ export const StudioView = () => {
                     onOpenCommentsPanel={handleOpenCommentsPanel}
                     isCommentModeActive={isCommentModeActive}
                     comments={areCanvasCommentsVisible ? canvasComments : null}
-                    commentSurfaceTone="cinematicDark"
+                    commentSurfaceTone={commentTone}
                     showCommentsToggle={{
                         checked: showComments,
                         onCheckedChange: handleShowCommentsChange,
@@ -157,7 +160,7 @@ export const StudioView = () => {
                 }}
                 comments={canvasComments}
                 desktopPresentation="card"
-                tone="cinematicDark"
+                tone={commentTone}
             />
         </div>
     );

@@ -10,6 +10,7 @@ import { EditorField } from './editor-ui/EditorField';
 interface PromptEditorProps {
     component: Component;
     onChange: (updates: Partial<PromptContent>) => void;
+    onDelete?: () => void;
     children: React.ReactNode;
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
@@ -19,6 +20,7 @@ interface PromptEditorProps {
 export function PromptEditor({
     component,
     onChange,
+    onDelete,
     children,
     isOpen,
     onOpenChange,
@@ -47,6 +49,9 @@ export function PromptEditor({
                 icon={MessageCirclePlus}
                 title="Prompt"
                 onClose={() => onOpenChange(false)}
+                onDelete={onDelete}
+                deleteLabel="Remove prompt from turn"
+                deleteDisabled={readOnly}
             />
             <EditorContent>
                 <EditorField
@@ -57,6 +62,7 @@ export function PromptEditor({
                     type="textarea"
                     minRows={1}
                     textareaVariant="compact"
+                    autoFocus={isOpen && !readOnly}
                     readOnly={readOnly}
                 />
             </EditorContent>

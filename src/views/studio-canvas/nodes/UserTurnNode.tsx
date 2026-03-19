@@ -1,9 +1,12 @@
 import { memo, useState, useRef, useEffect } from 'react';
 import { Handle, Position, NodeProps, useStore, useReactFlow, useHandleConnections, useNodesData } from '@xyflow/react';
-import { MousePointerClick, ALargeSmall, MessageCirclePlus } from 'lucide-react';
+import { MousePointerClick, Keyboard } from 'lucide-react';
 import { UserTurnEditor } from '../components/UserTurnEditor';
 import { CanvasNodeCommentState } from '../types';
 import { getVisibleUserTurnLabel } from '../../studio/userTurnLabels';
+import { getComponentDisplay } from './utils/turnNodeUtils';
+import { OUTER_NODE_HANDLE_OFFSET_PX } from './components/handleOffsets';
+import type { Component } from '../../studio/types';
 
 interface UserTurnNodeData {
     label?: string;
@@ -20,6 +23,7 @@ interface UserTurnNodeData {
         inputType?: 'text' | 'button' | 'prompt';
         triggerValue?: string;
     }) => void;
+    onDelete?: (nodeId: string) => void;
 }
 
 interface LinkedTurnComponent {
@@ -49,7 +53,9 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
         label: typedData.label || '',
         labelMode: typedData.labelMode,
         autoLabel: typedData.autoLabel,
+        inputType: typedData.inputType || 'text',
     });
+    const isClickMode = typedData.inputType === 'button' || typedData.inputType === 'prompt';
 
     // Editor state
     const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -112,16 +118,16 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
         }
     };
 
+    const handleDelete = () => {
+        if (typedData.readOnly) return;
+        setIsEditorOpen(false);
+        typedData.onDelete?.(id);
+    };
+
     const getIcon = () => {
-        switch (typedData.inputType) {
-            case 'button':
-                return <MousePointerClick className="w-4 h-4" />;
-            case 'prompt':
-                return <MessageCirclePlus className="w-4 h-4" />;
-            case 'text':
-            default:
-                return <ALargeSmall className="w-4 h-4" />;
-        }
+        return isClickMode
+            ? <MousePointerClick className="w-4 h-4" />
+            : <Keyboard className="w-4 h-4" />;
     };
 
     const getLinkedSource = () => {
@@ -142,18 +148,15 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
         return { handleId, component };
     };
 
-    const getLinkedPromptText = () => {
-        const linkedSource = getLinkedSource();
-        if (!linkedSource || linkedSource.component.type !== 'prompt') return null;
-
-        return linkedSource.component.content?.text || null;
-    };
-
-    const getLinkedButtonText = () => {
+    const getLinkedClickText = () => {
         const linkedSource = getLinkedSource();
         if (!linkedSource) return null;
 
         const { component, handleId } = linkedSource;
+
+        if (component.type === 'prompt') {
+            return component.content?.text || null;
+        }
 
         if (component.type === 'selectionList') {
             const itemId = handleId.split(`${component.id}-`)[1];
@@ -181,15 +184,22 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
         return null;
     };
 
-    const renderReadonlyContent = () => {
-        const inputType = typedData.inputType || 'text';
-        const val = typedData.triggerValue || '';
+    const getLinkedClickComponent = () => {
+        const linkedSource = getLinkedSource();
+        if (!linkedSource) return null;
 
-        if (inputType === 'text') {
+        return getComponentDisplay(linkedSource.component as Component);
+    };
+
+    const renderReadonlyContent = () => {
+        const val = typedData.triggerValue || '';
+        const clickLabel = getLinkedClickText() || val;
+
+        if (!isClickMode) {
             const hasTriggers = !!val;
             return (
                 <div className="flex items-start gap-3 w-full">
-                    <ALargeSmall className={`w-4 h-4 shrink-0 mt-0.5 ${hasTriggers ? 'text-shell-node-user' : 'text-shell-muted'}`} />
+                    <Keyboard className={`w-4 h-4 shrink-0 mt-0.5 ${hasTriggers ? 'text-shell-node-user' : 'text-shell-muted'}`} />
                     <div className={`text-sm leading-normal break-words ${hasTriggers ? 'text-shell-text' : 'text-shell-muted'}`}>
                         {val || 'What does the user say?'}
                     </div>
@@ -197,34 +207,13 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
             );
         }
 
-        if (inputType === 'button') {
-            const linkedButtonText = getLinkedButtonText();
-            const buttonLabel = linkedButtonText || val;
-            const hasLabel = !!buttonLabel;
-            return (
-                <div className="flex items-center gap-2 text-sm py-1">
-                    <MousePointerClick className={`w-4 h-4 ${hasLabel ? 'text-shell-node-user' : 'text-shell-muted'}`} />
-                    <span className={`truncate ${hasLabel ? 'text-shell-text font-medium' : 'text-shell-muted'}`}>
-                        {buttonLabel ? `User clicks ${buttonLabel}` : 'Which button does the user click?'}
-                    </span>
-                </div>
-            );
-        }
-
-        // Prompt Mode
-        const promptText = getLinkedPromptText();
-        const promptLabel = promptText || val;
-        const hasPromptLabel = !!promptLabel;
+        const hasClickLabel = !!clickLabel;
 
         return (
             <div className="flex items-center gap-2 text-sm py-1">
-                <MessageCirclePlus className={`w-4 h-4 shrink-0 ${hasPromptLabel || isLinked ? 'text-shell-node-user' : 'text-shell-muted'}`} />
-                <span className={`truncate ${hasPromptLabel || isLinked ? 'text-shell-text font-medium' : 'text-shell-muted'}`}>
-                    {promptLabel
-                        ? `User clicks ${promptLabel}`
-                        : isLinked
-                            ? 'User clicks AI Prompt'
-                            : 'Which prompt does the user click?'}
+                <MousePointerClick className={`w-4 h-4 shrink-0 ${hasClickLabel || isLinked ? 'text-shell-node-user' : 'text-shell-muted'}`} />
+                <span className={`truncate ${hasClickLabel || isLinked ? 'text-shell-text font-medium' : 'text-shell-muted'}`}>
+                    {clickLabel ? `User clicks ${clickLabel}` : 'User clicks'}
                 </span>
             </div>
         );
@@ -244,19 +233,19 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
                 ? 'border-shell-node-user/35 hover:border-shell-accent/60 hover:ring-1 hover:ring-shell-accent/18 cursor-pointer'
                 : 'border-shell-node-user/35 hover:border-shell-node-user/60';
 
-    const promptText = getLinkedPromptText();
-    const linkedButtonText = getLinkedButtonText();
+    const clickLabel = getLinkedClickText();
+    const clickComponent = getLinkedClickComponent();
 
     return (
         <UserTurnEditor
             nodeId={id}
-            label={typedData.label || ''}
-            inputType={typedData.inputType || 'text'}
+            mode={isClickMode ? 'click' : 'text'}
             triggerValue={typedData.triggerValue || ''}
             onChange={handleUpdate}
-            isLinked={isLinked}
-            promptText={promptText || undefined}
-            buttonText={linkedButtonText || undefined}
+            clickLabel={clickLabel || undefined}
+            clickComponentLabel={clickComponent?.label}
+            clickComponentIcon={clickComponent?.icon}
+            onDelete={handleDelete}
             isOpen={isEditorOpen}
             onOpenChange={setIsEditorOpen}
             readOnly={typedData.readOnly}
@@ -312,7 +301,8 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
                     type="target"
                     id="user-input"
                     position={Position.Left}
-                    className="!bg-shell-node-user !w-3.5 !h-3.5 !border-2 !border-shell-bg !z-50"
+                    className="!bg-shell-node-user !w-4 !h-4 !border-2 !border-shell-bg !z-50"
+                    style={{ left: -OUTER_NODE_HANDLE_OFFSET_PX }}
                 />
 
                 {/* Wrapper ID for Popover to detect clicks inside */}
@@ -328,7 +318,8 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
                     type="source"
                     id="user-output"
                     position={Position.Right}
-                    className="!bg-shell-node-user !w-3.5 !h-3.5 !border-2 !border-shell-bg !z-50"
+                    className="!bg-shell-node-user !w-4 !h-4 !border-2 !border-shell-bg !z-50"
+                    style={{ right: -OUTER_NODE_HANDLE_OFFSET_PX }}
                 />
             </div >
         </UserTurnEditor>

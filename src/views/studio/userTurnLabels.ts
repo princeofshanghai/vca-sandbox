@@ -1,6 +1,8 @@
 import type { UserTurn } from './types';
 
-const USER_TURN_FALLBACK_LABEL = 'User Turn';
+const getUserTurnFallbackLabel = (
+    userTurn: Pick<UserTurn, 'inputType'>
+): string => (userTurn.inputType === 'text' ? 'User says' : 'User clicks');
 
 export const getAutoUserTurnLabel = (sourceText: string): string => `User clicks ${sourceText.trim()}`;
 export const getAutoUserTurnTextLabel = (sourceText: string): string => `User says ${sourceText.trim()}`;
@@ -26,9 +28,9 @@ export const getUserTurnDisplayText = (userTurn: Pick<UserTurn, 'triggerValue' |
 };
 
 export const getVisibleUserTurnLabel = (
-    userTurn: Pick<UserTurn, 'label' | 'labelMode' | 'autoLabel'>
+    userTurn: Pick<UserTurn, 'label' | 'labelMode' | 'autoLabel' | 'inputType'>
 ): string => {
-    const baseLabel = userTurn.label?.trim() || USER_TURN_FALLBACK_LABEL;
+    const baseLabel = userTurn.label?.trim() || getUserTurnFallbackLabel(userTurn);
 
     if (userTurn.labelMode === 'custom') {
         return baseLabel;

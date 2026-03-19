@@ -10,12 +10,14 @@ import { CanvasCommentsDrawer } from '@/views/studio/CanvasCommentsDrawer';
 import { useCanvasCommentsController } from '@/views/studio/useCanvasCommentsController';
 import { ShellButton } from '@/components/shell';
 import { toast } from 'sonner';
+import { useApp } from '@/contexts/AppContext';
 
 type ShareStudioRightPanelMode = 'preview' | 'comments' | null;
 
 export const ShareStudioView = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
+    const { state } = useApp();
 
     const [flow, setFlow] = useState<Flow | null>(null);
     const [loading, setLoading] = useState(true);
@@ -89,6 +91,7 @@ export const ShareStudioView = () => {
 
     const isPreviewOpen = rightPanelMode === 'preview';
     const isCommentsOpen = rightPanelMode === 'comments';
+    const commentTone = state.theme === 'dark' ? 'cinematicDark' : 'default';
     const areCanvasCommentsVisible = !!flow && (showComments || isCommentsOpen || isCommentModeActive);
     const canvasComments = useCanvasCommentsController({
         flow: flow ?? INITIAL_FLOW,
@@ -213,7 +216,7 @@ export const ShareStudioView = () => {
                 isCommentModeActive={isCommentModeActive}
                 isCommentsPanelOpen={isCommentsOpen}
                 comments={areCanvasCommentsVisible ? canvasComments : null}
-                commentSurfaceTone="cinematicDark"
+                commentSurfaceTone={commentTone}
                 showCommentsToggle={{
                     checked: showComments,
                     onCheckedChange: handleShowCommentsChange,
@@ -243,7 +246,7 @@ export const ShareStudioView = () => {
                 comments={canvasComments}
                 onRequestSignIn={canvasComments.userCanComment ? undefined : handleCommentSignIn}
                 desktopPresentation="card"
-                tone="cinematicDark"
+                tone={commentTone}
             />
 
             {isEmptyFlow ? (

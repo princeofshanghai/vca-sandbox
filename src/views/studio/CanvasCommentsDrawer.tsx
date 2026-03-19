@@ -50,7 +50,7 @@ const renderAvatar = ({
         className={cn(
             'h-7 w-7 shrink-0 overflow-hidden rounded-full border',
             tone === 'cinematicDark'
-                ? 'border-shell-dark-border/70 bg-shell-dark-surface'
+                ? 'border-shell-dark-border bg-shell-dark-surface'
                 : 'border-shell-border/70 bg-shell-bg'
         )}
     >
@@ -74,7 +74,7 @@ const ResolvedBadge = ({ tone = 'default' }: { tone?: CommentSurfaceTone }) => (
         className={cn(
             'rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.08em]',
             tone === 'cinematicDark'
-                ? 'border-shell-dark-border/70 bg-shell-dark-surface text-shell-dark-muted'
+                ? 'border-shell-dark-border bg-shell-dark-surface text-shell-dark-muted'
                 : 'border-shell-border/70 bg-shell-bg text-shell-muted'
         )}
     >
@@ -120,7 +120,7 @@ export function CanvasCommentsDrawer({
         : isDesktopCard
             ? 'bg-shell-surface'
             : 'bg-shell-bg';
-    const borderClass = isDarkTone ? 'border-shell-dark-border/70' : 'border-shell-border/70';
+    const borderClass = isDarkTone ? 'border-shell-dark-border' : 'border-shell-border/70';
     const titleTextClass = isDarkTone ? 'text-shell-dark-text' : 'text-shell-text';
     const mutedTextClass = isDarkTone ? 'text-shell-dark-muted' : 'text-shell-muted';
     const replyAccentClass = isDarkTone ? 'text-shell-dark-accent' : 'text-shell-accent';
@@ -279,7 +279,7 @@ export function CanvasCommentsDrawer({
                             className={cn(
                                 'w-[380px] h-full shadow-2xl flex flex-col border-l',
                                 isDarkTone
-                                    ? 'bg-shell-dark-panel/95 border-shell-dark-border/70'
+                                    ? 'bg-shell-dark-panel/95 border-shell-dark-border'
                                     : 'bg-shell-surface border-shell-border/70'
                             )}
                         >
@@ -312,7 +312,7 @@ export function CanvasCommentsDrawer({
                             className={cn(
                                 'h-full overflow-hidden rounded-2xl border backdrop-blur-sm flex flex-col',
                                 isDarkTone
-                                    ? 'border-shell-dark-border/70 bg-shell-dark-panel/95 shadow-[0_24px_56px_rgba(0,0,0,0.34)]'
+                                    ? 'border-shell-dark-border bg-shell-dark-panel/95 shadow-[0_24px_56px_rgba(0,0,0,0.34)]'
                                     : 'border-shell-border/70 bg-shell-bg/95 shadow-[0_24px_56px_rgba(15,23,42,0.22)]'
                             )}
                         >
