@@ -83,6 +83,7 @@ export function ConnectionQuickAddMenu({
     return createPortal(
         <div
             ref={menuRef}
+            data-canvas-shell-zoom-blocker="true"
             className="fixed z-[1200] w-[280px] rounded-xl border border-shell-dark-border bg-shell-dark-panel p-2 shadow-2xl animate-in fade-in zoom-in-98 duration-100 ease-out"
             style={{
                 left: anchoredPosition.left,

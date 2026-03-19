@@ -179,6 +179,8 @@ export interface UserTurn {
     id: string;
     type: 'user-turn';
     label: string;
+    labelMode?: 'auto' | 'custom';
+    autoLabel?: string;
     inputType: 'text' | 'prompt' | 'button'; // How they interacted
     triggerValue?: string; // Match text (supports single phrase or multiple phrases).
     position?: { x: number; y: number };
@@ -189,6 +191,8 @@ export interface Condition {
     id: string;
     type: 'condition';
     label: string; // Internal canvas name
+    labelMode?: 'auto' | 'custom';
+    autoLabel?: string;
     question?: string; // User-facing question shown in the prototype
     description?: string; // Additional context
     branches: Branch[];

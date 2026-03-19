@@ -1,6 +1,6 @@
 import type { Branch } from './types';
 
-const AUTO_GENERATED_CONDITION_LABEL_PATTERN = /^Condition(?: \d+)?(?: \(Copy\))?$/i;
+const AUTO_GENERATED_CONDITION_LABEL_PATTERN = /^Condition(?: \d+)?(?: \(Copy(?: \d+)?\))?$/i;
 export const CONDITION_NAME_FALLBACK = 'Condition';
 
 export const CONDITION_QUESTION_PLACEHOLDER = 'Add the question this condition asks';

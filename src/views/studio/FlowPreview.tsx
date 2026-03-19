@@ -25,6 +25,7 @@ import {
     type ContextInterceptorResolution,
 } from './components/ContextInterceptorMessage';
 import { getConditionPathLabel, getConditionQuestionLabel } from './conditionBranchLabels';
+import { getUserTurnDisplayText, parseUserTurnTriggerExamples } from './userTurnLabels';
 import {
     type ConditionPathSelection,
     type SmartFlowEngineSnapshot,
@@ -105,22 +106,6 @@ interface InteractionState extends InteractionHotspotState {
 const EMPTY_COMPOSER_GUIDANCE: ComposerGuidanceState = {
     showHotspot: false,
     suggestions: []
-};
-
-const parseTriggerExamples = (triggerValue?: string) =>
-    (triggerValue || '')
-        .split(/\n+|[;|]/g)
-        .map((line) => line.replace(/^\s*[-*]\s*/, '').trim())
-        .filter(Boolean);
-
-const getUserTurnDisplayText = (userTurn: { triggerValue?: string; label: string }) => {
-    const examples = parseTriggerExamples(userTurn.triggerValue);
-    if (examples.length > 0) return examples[0];
-
-    const triggerValue = userTurn.triggerValue?.trim();
-    if (triggerValue) return triggerValue;
-
-    return userTurn.label;
 };
 
 const buildPathSignature = (pathSelections: ConditionPathSelection[]) =>
@@ -637,7 +622,7 @@ const PreviewContent = ({
         const suggestions = Array.from(
             new Set(
                 textTargets.flatMap((step) => {
-                    const examples = parseTriggerExamples(step.triggerValue);
+                    const examples = parseUserTurnTriggerExamples(step.triggerValue);
                     if (examples.length > 0) return examples;
                     const triggerValue = step.triggerValue?.trim();
                     return triggerValue ? [triggerValue] : [];

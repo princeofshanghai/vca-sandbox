@@ -221,6 +221,7 @@ const ComponentOptionCard = ({
         </HoverCard.Trigger>
         <HoverCard.Portal>
             <HoverCard.Content
+                data-canvas-shell-zoom-blocker="true"
                 className="max-w-[calc(100vw-2rem)] bg-shell-dark-panel rounded-xl shadow-2xl border border-shell-dark-border p-0 z-[1002] animate-in fade-in zoom-in-95 overflow-hidden"
                 style={{ width: `${HOVER_CARD_WIDTH_PX}px` }}
                 sideOffset={8}
@@ -258,6 +259,7 @@ const ComponentOptionCard = ({
 export function AddComponentContent({ onAdd }: { onAdd: (type: ComponentType) => void }) {
     return (
         <Popover.Content
+            data-canvas-shell-zoom-blocker="true"
             side="top"
             sideOffset={8}
             align="center"

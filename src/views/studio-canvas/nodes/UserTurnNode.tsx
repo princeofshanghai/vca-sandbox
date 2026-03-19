@@ -3,14 +3,23 @@ import { Handle, Position, NodeProps, useStore, useReactFlow, useHandleConnectio
 import { MousePointerClick, ALargeSmall, MessageCirclePlus } from 'lucide-react';
 import { UserTurnEditor } from '../components/UserTurnEditor';
 import { CanvasNodeCommentState } from '../types';
+import { getVisibleUserTurnLabel } from '../../studio/userTurnLabels';
 
 interface UserTurnNodeData {
     label?: string;
+    labelMode?: 'auto' | 'custom';
+    autoLabel?: string;
     inputType?: 'text' | 'prompt' | 'button';
     triggerValue?: string;
     readOnly?: boolean;
     commentState?: CanvasNodeCommentState;
-    onUpdate?: (nodeId: string, updates: { label?: string; inputType?: 'text' | 'button' | 'prompt'; triggerValue?: string }) => void;
+    onUpdate?: (nodeId: string, updates: {
+        label?: string;
+        labelMode?: 'auto' | 'custom';
+        autoLabel?: string;
+        inputType?: 'text' | 'button' | 'prompt';
+        triggerValue?: string;
+    }) => void;
 }
 
 interface LinkedTurnComponent {
@@ -36,13 +45,18 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
     const connections = useHandleConnections({ type: 'target', nodeId: id });
     const isLinked = connections.length > 0;
     const sourceNode = useNodesData(connections[0]?.source);
+    const displayLabel = getVisibleUserTurnLabel({
+        label: typedData.label || '',
+        labelMode: typedData.labelMode,
+        autoLabel: typedData.autoLabel,
+    });
 
     // Editor state
     const [isEditorOpen, setIsEditorOpen] = useState(false);
 
     // Label editing state
     const [isEditingLabel, setIsEditingLabel] = useState(false);
-    const [editedLabel, setEditedLabel] = useState(typedData.label || '');
+    const [editedLabel, setEditedLabel] = useState(displayLabel);
     const labelInputRef = useRef<HTMLInputElement>(null);
 
     // Focus input when editing starts
@@ -53,7 +67,19 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
         }
     }, [isEditingLabel]);
 
-    const handleUpdate = (updates: { label?: string; inputType?: 'text' | 'button' | 'prompt'; triggerValue?: string }) => {
+    useEffect(() => {
+        if (!isEditingLabel) {
+            setEditedLabel(displayLabel);
+        }
+    }, [displayLabel, isEditingLabel]);
+
+    const handleUpdate = (updates: {
+        label?: string;
+        labelMode?: 'auto' | 'custom';
+        autoLabel?: string;
+        inputType?: 'text' | 'button' | 'prompt';
+        triggerValue?: string;
+    }) => {
         if (typedData.readOnly) return;
 
         // Persist to Flow Model
@@ -66,8 +92,13 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
     };
 
     const handleLabelSave = () => {
-        if (editedLabel.trim() !== (typedData.label || '')) {
-            handleUpdate({ label: editedLabel.trim() });
+        const nextLabel = editedLabel.trim();
+        if (nextLabel !== displayLabel) {
+            handleUpdate({
+                label: nextLabel,
+                labelMode: 'custom',
+                autoLabel: undefined,
+            });
         }
         setIsEditingLabel(false);
     };
@@ -76,7 +107,7 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
         if (e.key === 'Enter') {
             handleLabelSave();
         } else if (e.key === 'Escape') {
-            setEditedLabel(typedData.label || '');
+            setEditedLabel(displayLabel);
             setIsEditingLabel(false);
         }
     };
@@ -182,12 +213,18 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
 
         // Prompt Mode
         const promptText = getLinkedPromptText();
+        const promptLabel = promptText || val;
+        const hasPromptLabel = !!promptLabel;
 
         return (
             <div className="flex items-center gap-2 text-sm py-1">
-                <MessageCirclePlus className={`w-4 h-4 shrink-0 ${isLinked ? 'text-shell-node-user' : 'text-shell-muted'}`} />
-                <span className={`truncate ${isLinked ? 'text-shell-text font-medium' : 'text-shell-muted'}`}>
-                    {isLinked ? `User clicks ${promptText || 'AI Prompt'}` : 'Which prompt does the user click?'}
+                <MessageCirclePlus className={`w-4 h-4 shrink-0 ${hasPromptLabel || isLinked ? 'text-shell-node-user' : 'text-shell-muted'}`} />
+                <span className={`truncate ${hasPromptLabel || isLinked ? 'text-shell-text font-medium' : 'text-shell-muted'}`}>
+                    {promptLabel
+                        ? `User clicks ${promptLabel}`
+                        : isLinked
+                            ? 'User clicks AI Prompt'
+                            : 'Which prompt does the user click?'}
                 </span>
             </div>
         );
@@ -226,7 +263,7 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
         >
             <div
                 id={`node-${id}`}
-                className={`${userSurfaceClassName} rounded-lg border shadow-sm w-[280px] transition-all relative overflow-visible ${borderClassName}`}
+                className={`${userSurfaceClassName} rounded-full border shadow-sm w-[280px] transition-all relative overflow-visible ${borderClassName}`}
                 onClick={() => {
                     // Don't stop propagation so React Flow selects the node
                     if (typedData.commentState?.isPlacementMode) return;
@@ -265,7 +302,7 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
                             }}
                             title={typedData.readOnly ? undefined : 'Click to rename'}
                         >
-                            {typedData.label || 'User Turn'}
+                            {displayLabel}
                         </div>
                     )}
                 </div >
@@ -279,9 +316,9 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
                 />
 
                 {/* Wrapper ID for Popover to detect clicks inside */}
-                <div id={`component-${id}`} className="w-full h-full overflow-hidden rounded-lg">
+                <div id={`component-${id}`} className="w-full h-full overflow-hidden rounded-full">
                     {/* Content Body */}
-                    <div className={`px-4 py-3 ${userSurfaceClassName} rounded-b-lg`}>
+                    <div className={`px-5 py-4 ${userSurfaceClassName} rounded-full`}>
                         {renderReadonlyContent()}
                     </div>
                 </div>

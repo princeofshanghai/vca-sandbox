@@ -21,7 +21,7 @@ export const ShellTextareaAutosize = React.forwardRef<
     <TextareaAutosize
       ref={ref}
       className={cn(
-        'flex w-full border disabled:cursor-not-allowed disabled:opacity-50',
+        'flex w-full border focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
         shellTextareaTextToneClasses[tone],
         shellTextareaVariantClasses[variant],
         variant === 'default' && shellTextareaSurfaceToneClasses[tone],

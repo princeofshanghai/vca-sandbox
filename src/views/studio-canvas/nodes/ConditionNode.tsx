@@ -28,6 +28,7 @@ import {
     getConditionQuestionLabel,
     materializeConditionQuestion,
 } from '../../studio/conditionBranchLabels';
+import { getVisibleConditionLabel } from '../../studio/conditionLabels';
 import { CanvasNodeCommentState } from '../types';
 
 const HANDLE_SYNC_WINDOW_MS = 280;
@@ -56,6 +57,8 @@ class BranchPointerSensor extends DndPointerSensor {
 
 interface ConditionNodeData {
     label: string;
+    labelMode?: 'auto' | 'custom';
+    autoLabel?: string;
     question?: string;
     branches?: Branch[];
     readOnly?: boolean;
@@ -103,7 +106,12 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
     const typedData = data as unknown as ConditionNodeData;
     const [isEditorOpen, setIsEditorOpen] = useState(false);
     const [isEditingLabel, setIsEditingLabel] = useState(false);
-    const [editedLabel, setEditedLabel] = useState(typedData.label || '');
+    const displayLabel = getVisibleConditionLabel({
+        label: typedData.label,
+        labelMode: typedData.labelMode,
+        autoLabel: typedData.autoLabel,
+    });
+    const [editedLabel, setEditedLabel] = useState(displayLabel);
     const [lastDragAt, setLastDragAt] = useState(0);
     const labelInputRef = useRef<HTMLInputElement>(null);
     const branches = useMemo<Branch[]>(
@@ -149,9 +157,9 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
 
     useEffect(() => {
         if (!isEditingLabel) {
-            setEditedLabel(typedData.label || '');
+            setEditedLabel(displayLabel);
         }
-    }, [isEditingLabel, typedData.label]);
+    }, [displayLabel, isEditingLabel]);
 
     useEffect(() => {
         const start = performance.now();
@@ -179,7 +187,7 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
 
     const handleLabelSave = () => {
         const nextLabel = editedLabel.trim();
-        if (!typedData.readOnly && nextLabel !== (typedData.label || '')) {
+        if (!typedData.readOnly && nextLabel !== displayLabel) {
             typedData.onLabelChange?.(nodeId, nextLabel);
         }
         setIsEditingLabel(false);
@@ -189,7 +197,7 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
         if (event.key === 'Enter') {
             handleLabelSave();
         } else if (event.key === 'Escape') {
-            setEditedLabel(typedData.label || '');
+            setEditedLabel(displayLabel);
             setIsEditingLabel(false);
         }
     };
@@ -297,7 +305,7 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
                             }}
                             title={typedData.readOnly ? undefined : 'Click to rename'}
                         >
-                            {typedData.label || CONDITION_NAME_FALLBACK}
+                            {displayLabel || CONDITION_NAME_FALLBACK}
                         </div>
                     )}
                 </div>

@@ -10,7 +10,13 @@ interface UserTurnEditorProps {
     label: string;
     inputType: 'text' | 'button' | 'prompt';
     triggerValue: string;
-    onChange: (updates: { label?: string; inputType?: 'text' | 'button' | 'prompt'; triggerValue?: string }) => void;
+    onChange: (updates: {
+        label?: string;
+        labelMode?: 'auto' | 'custom';
+        autoLabel?: string;
+        inputType?: 'text' | 'button' | 'prompt';
+        triggerValue?: string;
+    }) => void;
     isLinked?: boolean;
     promptText?: string;
     buttonText?: string;
@@ -79,6 +85,18 @@ export const UserTurnEditor = ({
         return 'Link a button-based component on the canvas to trigger this path.';
     };
 
+    const getPromptHelperText = () => {
+        if (isLinked) {
+            return `Triggers when user clicks: ${promptText || 'AI Prompt'}`;
+        }
+
+        if (triggerValue.trim()) {
+            return `Saved prompt label: ${triggerValue}. Link an AI Prompt on the canvas to keep this synced.`;
+        }
+
+        return 'Link an AI Prompt on the canvas to trigger this path.';
+    };
+
     const editorContent = (
         <EditorRoot>
             <EditorHeader
@@ -112,9 +130,7 @@ export const UserTurnEditor = ({
 
                 {inputType === 'prompt' && (
                     <div className="text-sm leading-relaxed text-shell-text">
-                        {isLinked
-                            ? `Triggers when user clicks: ${promptText || 'AI Prompt'}`
-                            : "Link an AI Prompt on the canvas to trigger this path."}
+                        {getPromptHelperText()}
                     </div>
                 )}
             </EditorContent>

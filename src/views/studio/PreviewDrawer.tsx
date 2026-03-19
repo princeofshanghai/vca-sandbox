@@ -16,6 +16,7 @@ import {
     ShellSegmentedControlItem,
 } from '@/components/shell';
 import { useApp } from '@/contexts/AppContext';
+import { usePreventBrowserPinchZoom } from '@/hooks/usePreventBrowserPinchZoom';
 import { PathsPanel } from './components/PathsPanel';
 
 interface PreviewDrawerProps {
@@ -59,6 +60,9 @@ export function PreviewDrawer({
     const debounceTimerRef = useRef<NodeJS.Timeout | undefined>(undefined);
     const latestFlowModifiedAtRef = useRef(flow.lastModified);
     const lastAutoOpenPendingRequestKeyRef = useRef<string | null>(null);
+    const drawerRef = useRef<HTMLDivElement | null>(null);
+
+    usePreventBrowserPinchZoom(drawerRef, shouldRender);
 
     useEffect(() => {
         latestFlowModifiedAtRef.current = flow.lastModified;
@@ -195,7 +199,10 @@ export function PreviewDrawer({
                 "relative h-full transition-transform duration-300 ease-out pointer-events-auto",
                 isOpen ? "translate-x-0" : "translate-x-full"
             )}>
-                <div className="w-[480px] h-full bg-shell-surface shadow-2xl flex flex-col border-l border-shell-border/70">
+                <div
+                    ref={drawerRef}
+                    className="w-[480px] h-full bg-shell-surface shadow-2xl flex flex-col border-l border-shell-border/70"
+                >
                     {/* Compact Header */}
                     <div className="h-14 bg-shell-surface border-b border-shell-border/70 flex items-center justify-between pl-2 pr-4 shrink-0 z-20 sticky top-0">
                         <div className="flex items-center gap-2">

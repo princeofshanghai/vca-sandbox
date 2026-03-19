@@ -1,4 +1,6 @@
 import { Step } from './types';
+import { getVisibleUserTurnLabel } from './userTurnLabels';
+import { getVisibleConditionLabel } from './conditionLabels';
 import {
     CommentFilter,
     FlowComment,
@@ -132,11 +134,11 @@ export const getStepCommentLabel = (step: Step | null | undefined) => {
     }
 
     if (step.type === 'user-turn') {
-        return step.label?.trim() || 'User Turn';
+        return getVisibleUserTurnLabel(step);
     }
 
     if (step.type === 'condition') {
-        return step.label?.trim() || 'Condition';
+        return getVisibleConditionLabel(step);
     }
 
     if (step.type === 'note') {

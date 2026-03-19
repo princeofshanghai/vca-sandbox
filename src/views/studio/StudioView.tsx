@@ -84,6 +84,7 @@ export const StudioView = () => {
         }
 
         setShowComments(true);
+        canvasComments.resetClosedState();
         setRightPanelMode('comments');
         setIsCommentModeActive(true);
     };
@@ -109,7 +110,7 @@ export const StudioView = () => {
 
     return (
         <div
-            className="flex h-screen overflow-hidden flex-col bg-shell-surface"
+            className="relative flex h-screen overflow-hidden flex-col bg-shell-surface"
             style={{ overscrollBehaviorX: 'none' }}
         >
 
@@ -126,6 +127,7 @@ export const StudioView = () => {
                     onOpenCommentsPanel={handleOpenCommentsPanel}
                     isCommentModeActive={isCommentModeActive}
                     comments={areCanvasCommentsVisible ? canvasComments : null}
+                    commentSurfaceTone="default"
                     showCommentsToggle={{
                         checked: showComments,
                         onCheckedChange: handleShowCommentsChange,
@@ -154,6 +156,7 @@ export const StudioView = () => {
                     canvasComments.resetClosedState();
                 }}
                 comments={canvasComments}
+                desktopPresentation="card"
             />
         </div>
     );

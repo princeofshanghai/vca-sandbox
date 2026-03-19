@@ -23,7 +23,22 @@ import { UserTurnNode } from './nodes/UserTurnNode';
 import { ConditionNode } from './nodes/ConditionNode';
 import { StartNode } from './nodes/StartNode';
 import { NoteNode } from './nodes/NoteNode';
-import { Flow, Component, ComponentType, Turn, ComponentContent, UserTurn, Condition, Branch, Note } from '../studio/types';
+import {
+    Flow,
+    Component,
+    ComponentType,
+    Turn,
+    ComponentContent,
+    UserTurn,
+    Condition,
+    Branch,
+    Note,
+    Step,
+    PromptContent,
+    SelectionListContent,
+    ConfirmationCardContent,
+    CheckboxGroupContent,
+} from '../studio/types';
 import { useCallback, useMemo, useEffect, useState, useRef } from 'react';
 import { SelectionState } from './types';
 import { ContextToolbar } from './components/ContextToolbar';
@@ -49,12 +64,23 @@ import {
 } from '@/components/shell';
 import { UserMenu } from '@/components/layout/UserMenu';
 import { VcaIcon } from '@/components/vca-components/icons/VcaIcon';
+import type { CommentSurfaceTone } from '@/components/comments/CommentPrimitives';
+import {
+    CommentThreadHoverPreview,
+    COMMENT_THREAD_HOVER_PREVIEW_GAP_PX,
+} from '@/components/comments/CommentThreadHoverPreview';
 import { cn } from '@/utils/cn';
-import { COMMENT_PLACEMENT_CURSOR } from '@/utils/commentPlacementCursor';
+import { CANVAS_DEFAULT_CURSOR, COMMENT_PLACEMENT_CURSOR } from '@/utils/commentPlacementCursor';
 import { CanvasCommentPopover } from '../studio/CanvasCommentPopover';
 import {
+    formatCommentDate,
+    formatCommentRelativeTime,
     getCanvasCommentAnchor,
+    getCanvasCommentStepId,
+    getCommentExcerpt,
+    getStepCommentLabel,
 } from '../studio/canvasComments';
+import { DESKTOP_CANVAS_COMMENTS_RESERVED_WIDTH_PX } from '../studio/canvasCommentsLayout';
 import { createDefaultConditionBranches } from '../studio/conditionBranches';
 import { materializeConditionQuestion } from '../studio/conditionBranchLabels';
 import type { CanvasCommentsController } from '../studio/useCanvasCommentsController';
@@ -65,9 +91,21 @@ import {
 } from '../share/shareComments';
 import {
     ShareCommentPin,
+    SHARE_COMMENT_PIN_HEAD_CENTER_OFFSET_PX,
+    SHARE_COMMENT_PIN_TIP_TO_LEFT_EDGE_OFFSET_PX,
+    SHARE_COMMENT_PIN_TIP_TO_RIGHT_EDGE_OFFSET_PX,
+    SHARE_COMMENT_PIN_TIP_X_OFFSET_PX,
     SHARE_COMMENT_PIN_TIP_OFFSET_PX,
     SHARE_COMMENT_PIN_TIP_TO_CENTER_OFFSET_PX,
+    SHARE_COMMENT_PIN_WIDTH_PX,
 } from '../share/components/ShareCommentPin';
+import {
+    getAutoUserTurnLabel,
+    getAutoUserTurnTextLabel,
+    getPrimaryUserTurnTriggerText,
+    getVisibleUserTurnLabel,
+} from '../studio/userTurnLabels';
+import { getAutoConditionLabel, getVisibleConditionLabel } from '../studio/conditionLabels';
 
 
 // Register custom node types
@@ -138,6 +176,7 @@ interface CanvasEditorProps {
     header?: React.ReactNode;
     mode?: 'edit' | 'share-readonly' | 'share-commentable';
     onCommentSignIn?: () => void;
+    commentSurfaceTone?: CommentSurfaceTone;
 }
 
 const QUICK_CONNECT_CLICK_DISTANCE_PX = 6;
@@ -206,12 +245,20 @@ type CommentDragState = {
     draftAnchor: FlowCommentCanvasAnchor;
 };
 
+type SafariGestureEventLike = Event & {
+    clientX?: number;
+    clientY?: number;
+    scale?: number;
+};
+
 const COMMENT_POPUP_EDGE_PADDING_PX = 12;
-const COMMENT_POPUP_WIDTH_PX = 400;
-const COMMENT_POPUP_NEW_HEIGHT_PX = 104;
+const COMMENT_POPUP_NEW_WIDTH_PX = 320;
+const COMMENT_POPUP_THREAD_WIDTH_PX = 360;
+const COMMENT_POPUP_NEW_HEIGHT_PX = 72;
 const COMMENT_POPUP_THREAD_HEIGHT_PX = 380;
-const COMMENT_POPUP_GAP_PX = 8 + 20;
+const COMMENT_POPUP_GAP_PX = 8;
 const COMMENT_DRAG_THRESHOLD_PX = 5;
+const CANVAS_SHELL_ZOOM_BLOCKER_SELECTOR = '[data-canvas-shell-zoom-blocker="true"]';
 
 const clampValue = (value: number, min: number, max: number) => {
     if (max < min) return min;
@@ -225,6 +272,8 @@ const getAnchoredPopoverPosition = ({
     popoverHeight,
     gapPx = COMMENT_POPUP_GAP_PX,
     anchorOffsetYPx = 0,
+    anchorClearanceLeftPx = 0,
+    anchorClearanceRightPx = 0,
 }: {
     surfaceRect: DOMRect;
     anchor: CanvasPinPoint;
@@ -232,16 +281,29 @@ const getAnchoredPopoverPosition = ({
     popoverHeight: number;
     gapPx?: number;
     anchorOffsetYPx?: number;
+    anchorClearanceLeftPx?: number;
+    anchorClearanceRightPx?: number;
 }): ComposerPlacement => {
     const availableRight = surfaceRect.width - anchor.x;
     const availableLeft = anchor.x;
     const side: ComposerSide =
-        availableRight >= popoverWidth + gapPx || availableRight >= availableLeft ? 'right' : 'left';
+        availableRight >= popoverWidth + gapPx + anchorClearanceRightPx ||
+        availableRight >= availableLeft
+            ? 'right'
+            : 'left';
 
     const left =
         side === 'right'
-            ? clampValue(anchor.x + gapPx, COMMENT_POPUP_EDGE_PADDING_PX, surfaceRect.width - popoverWidth - COMMENT_POPUP_EDGE_PADDING_PX)
-            : clampValue(anchor.x - gapPx - popoverWidth, COMMENT_POPUP_EDGE_PADDING_PX, surfaceRect.width - popoverWidth - COMMENT_POPUP_EDGE_PADDING_PX);
+            ? clampValue(
+                anchor.x + anchorClearanceRightPx + gapPx,
+                COMMENT_POPUP_EDGE_PADDING_PX,
+                surfaceRect.width - popoverWidth - COMMENT_POPUP_EDGE_PADDING_PX
+            )
+            : clampValue(
+                anchor.x - anchorClearanceLeftPx - gapPx - popoverWidth,
+                COMMENT_POPUP_EDGE_PADDING_PX,
+                surfaceRect.width - popoverWidth - COMMENT_POPUP_EDGE_PADDING_PX
+            );
 
     const top = clampValue(
         anchor.y + anchorOffsetYPx - popoverHeight / 2,
@@ -319,12 +381,244 @@ type CanvasClipboardPayload =
 
 const cloneValue = <T,>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
-const withCopySuffix = (label: string | undefined, fallback: string): string => {
-    const baseLabel = label?.trim() ? label.trim() : fallback;
-    if (baseLabel.endsWith(' (Copy)')) {
-        return baseLabel;
+type LabelableNodeType = ClipboardNodeStep['type'];
+
+const COPY_SUFFIX_PATTERN = /^(.*) \(Copy(?: (\d+))?\)$/i;
+const DEFAULT_NODE_LABELS: Record<LabelableNodeType, string> = {
+    turn: 'AI Turn',
+    'user-turn': 'User Turn',
+    condition: 'Condition',
+    note: 'Sticky note',
+};
+
+const normalizeNodeLabel = (label: string): string => label.trim().toLowerCase();
+
+const getDefaultNodeLabel = (type: LabelableNodeType): string => DEFAULT_NODE_LABELS[type];
+
+const getNodeLabelsForType = (steps: Step[], type: LabelableNodeType): string[] =>
+    steps.reduce<string[]>((labels, step) => {
+        if (step.type !== type) {
+            return labels;
+        }
+
+        const label = 'label' in step ? step.label?.trim() || '' : '';
+        if (label) {
+            labels.push(label);
+        }
+
+        return labels;
+    }, []);
+
+const getNextFreshNodeLabel = (type: LabelableNodeType, steps: Step[]): string => {
+    const baseLabel = getDefaultNodeLabel(type);
+    const existingLabels = new Set(getNodeLabelsForType(steps, type).map(normalizeNodeLabel));
+    let labelIndex = 1;
+
+    while (existingLabels.has(normalizeNodeLabel(`${baseLabel} ${labelIndex}`))) {
+        labelIndex += 1;
     }
-    return `${baseLabel} (Copy)`;
+
+    return `${baseLabel} ${labelIndex}`;
+};
+
+const getDuplicateBaseLabel = (label: string): string => {
+    const trimmedLabel = label.trim();
+    const copyPatternMatch = trimmedLabel.match(COPY_SUFFIX_PATTERN);
+    if (!copyPatternMatch?.[1]) {
+        return trimmedLabel;
+    }
+
+    return copyPatternMatch[1].trim() || trimmedLabel;
+};
+
+const getNextDuplicateNodeLabel = (
+    type: LabelableNodeType,
+    label: string | undefined,
+    steps: Step[]
+): string => {
+    const baseLabel = getDuplicateBaseLabel(label?.trim() ? label.trim() : getDefaultNodeLabel(type));
+    const existingLabels = new Set(getNodeLabelsForType(steps, type).map(normalizeNodeLabel));
+    const firstDuplicateLabel = `${baseLabel} (Copy)`;
+
+    if (!existingLabels.has(normalizeNodeLabel(firstDuplicateLabel))) {
+        return firstDuplicateLabel;
+    }
+
+    let copyIndex = 2;
+    while (existingLabels.has(normalizeNodeLabel(`${baseLabel} (Copy ${copyIndex})`))) {
+        copyIndex += 1;
+    }
+
+    return `${baseLabel} (Copy ${copyIndex})`;
+};
+
+type ConnectedUserTurnSource = {
+    inputType: 'button' | 'prompt';
+    text: string;
+};
+
+const getConnectedUserTurnSource = (flow: Flow, userTurnId: string): ConnectedUserTurnSource | null => {
+    const connection = (flow.connections || []).find((candidate) =>
+        candidate.target === userTurnId && Boolean(candidate.sourceHandle?.startsWith('handle-'))
+    );
+    if (!connection?.sourceHandle) {
+        return null;
+    }
+
+    const sourceStep = flow.steps?.find((step): step is Turn =>
+        step.id === connection.source && step.type === 'turn'
+    );
+    if (!sourceStep) {
+        return null;
+    }
+
+    const handleId = connection.sourceHandle;
+    const sourceComponent = sourceStep.components.find((component) => handleId.includes(component.id));
+    if (!sourceComponent) {
+        return null;
+    }
+
+    if (sourceComponent.type === 'prompt') {
+        const promptText = (sourceComponent.content as PromptContent).text?.trim() || '';
+        return { inputType: 'prompt', text: promptText };
+    }
+
+    if (sourceComponent.type === 'selectionList') {
+        const listContent = sourceComponent.content as SelectionListContent;
+        const itemId = handleId.split(`${sourceComponent.id}-`)[1];
+        const item = listContent.items.find((candidate) => candidate.id === itemId);
+        const buttonText = item?.title?.trim() || '';
+        return { inputType: 'button', text: buttonText };
+    }
+
+    if (sourceComponent.type === 'confirmationCard') {
+        const confirmationContent = sourceComponent.content as ConfirmationCardContent;
+        if (confirmationContent.showActions === false) {
+            return null;
+        }
+
+        const actionId = handleId.split(`${sourceComponent.id}-`)[1];
+        const buttonText = (
+            actionId === 'reject'
+                ? confirmationContent.rejectLabel || 'Cancel'
+                : confirmationContent.confirmLabel || 'Confirm'
+        ).trim();
+        return { inputType: 'button', text: buttonText };
+    }
+
+    if (sourceComponent.type === 'checkboxGroup') {
+        const checkboxContent = sourceComponent.content as CheckboxGroupContent;
+        const isSecondaryAction = handleId.endsWith('-secondary');
+        const buttonText = (
+            isSecondaryAction
+                ? checkboxContent.secondaryLabel || checkboxContent.cancelLabel || 'Cancel'
+                : checkboxContent.primaryLabel || checkboxContent.saveLabel || 'Save'
+        ).trim();
+        return { inputType: 'button', text: buttonText };
+    }
+
+    return null;
+};
+
+const syncAutoManagedUserTurns = (flow: Flow): Flow => {
+    const currentSteps = flow.steps || [];
+    if (currentSteps.length === 0) {
+        return flow;
+    }
+
+    let didChange = false;
+    const nextSteps = currentSteps.map((step) => {
+        if (step.type !== 'user-turn') {
+            return step;
+        }
+
+        const connectedSource = getConnectedUserTurnSource(flow, step.id);
+        const nextInputType = connectedSource?.inputType ?? step.inputType;
+        const nextTriggerValue = connectedSource ? (connectedSource.text || undefined) : step.triggerValue;
+        const normalizedLabelMode = step.labelMode ?? 'auto';
+        const textTrigger = nextInputType === 'text'
+            ? getPrimaryUserTurnTriggerText(nextTriggerValue)
+            : '';
+        const nextAutoLabel = normalizedLabelMode === 'custom'
+            ? step.autoLabel
+            : connectedSource
+                ? connectedSource.text
+                    ? getAutoUserTurnLabel(connectedSource.text)
+                    : undefined
+                : nextInputType === 'text'
+                    ? (textTrigger ? getAutoUserTurnTextLabel(textTrigger) : undefined)
+                    : step.autoLabel;
+
+        if (
+            step.inputType === nextInputType &&
+            step.triggerValue === nextTriggerValue &&
+            step.labelMode === normalizedLabelMode &&
+            step.autoLabel === nextAutoLabel
+        ) {
+            return step;
+        }
+
+        didChange = true;
+        return {
+            ...step,
+            inputType: nextInputType,
+            triggerValue: nextTriggerValue,
+            labelMode: normalizedLabelMode,
+            autoLabel: nextAutoLabel,
+        };
+    });
+
+    if (!didChange) {
+        return flow;
+    }
+
+    return {
+        ...flow,
+        steps: nextSteps,
+    };
+};
+
+const syncAutoManagedConditions = (flow: Flow): Flow => {
+    const currentSteps = flow.steps || [];
+    if (currentSteps.length === 0) {
+        return flow;
+    }
+
+    let didChange = false;
+    const nextSteps = currentSteps.map((step) => {
+        if (step.type !== 'condition') {
+            return step;
+        }
+
+        const normalizedLabelMode = step.labelMode ?? 'auto';
+        const questionText = step.question?.trim() || '';
+        const nextAutoLabel = normalizedLabelMode === 'custom'
+            ? step.autoLabel
+            : (questionText ? getAutoConditionLabel(questionText) : undefined);
+
+        if (
+            step.labelMode === normalizedLabelMode &&
+            step.autoLabel === nextAutoLabel
+        ) {
+            return step;
+        }
+
+        didChange = true;
+        return {
+            ...step,
+            labelMode: normalizedLabelMode,
+            autoLabel: nextAutoLabel,
+        };
+    });
+
+    if (!didChange) {
+        return flow;
+    }
+
+    return {
+        ...flow,
+        steps: nextSteps,
+    };
 };
 
 const cloneComponentForPaste = (component: Component): Component => ({
@@ -337,7 +631,11 @@ const cloneBranchForPaste = (branch: Branch): Branch => ({
     id: `branch-${crypto.randomUUID()}`,
 });
 
-const cloneNodeStepForPaste = (step: ClipboardNodeStep, pasteCount: number): ClipboardNodeStep => {
+const cloneNodeStepForPaste = (
+    step: ClipboardNodeStep,
+    pasteCount: number,
+    existingSteps: Step[]
+): ClipboardNodeStep => {
     const offset = NODE_PASTE_OFFSET_PX * Math.max(1, pasteCount);
 
     if (step.type === 'turn') {
@@ -345,7 +643,7 @@ const cloneNodeStepForPaste = (step: ClipboardNodeStep, pasteCount: number): Cli
         return {
             ...clonedStep,
             id: crypto.randomUUID(),
-            label: withCopySuffix(clonedStep.label, 'AI Turn'),
+            label: getNextDuplicateNodeLabel('turn', clonedStep.label, existingSteps),
             position: {
                 x: (clonedStep.position?.x ?? 250) + offset,
                 y: (clonedStep.position?.y ?? 0) + offset,
@@ -362,7 +660,9 @@ const cloneNodeStepForPaste = (step: ClipboardNodeStep, pasteCount: number): Cli
         return {
             ...clonedStep,
             id: crypto.randomUUID(),
-            label: withCopySuffix(clonedStep.label, 'Condition'),
+            label: getNextDuplicateNodeLabel('condition', getVisibleConditionLabel(clonedStep), existingSteps),
+            autoLabel: undefined,
+            labelMode: clonedStep.labelMode ?? 'auto',
             question: materializeConditionQuestion(clonedStep.question, clonedStep.label),
             position: {
                 x: (clonedStep.position?.x ?? 250) + offset,
@@ -380,7 +680,9 @@ const cloneNodeStepForPaste = (step: ClipboardNodeStep, pasteCount: number): Cli
         return {
             ...clonedStep,
             id: crypto.randomUUID(),
-            label: withCopySuffix(clonedStep.label, 'User Turn'),
+            label: getNextDuplicateNodeLabel('user-turn', getVisibleUserTurnLabel(clonedStep), existingSteps),
+            autoLabel: undefined,
+            labelMode: clonedStep.labelMode ?? 'auto',
             position: {
                 x: (clonedStep.position?.x ?? 250) + offset,
                 y: (clonedStep.position?.y ?? 0) + offset,
@@ -392,7 +694,7 @@ const cloneNodeStepForPaste = (step: ClipboardNodeStep, pasteCount: number): Cli
     return {
         ...clonedStep,
         id: crypto.randomUUID(),
-        label: withCopySuffix(clonedStep.label, 'Sticky note'),
+        label: getNextDuplicateNodeLabel('note', clonedStep.label, existingSteps),
         position: {
             x: (clonedStep.position?.x ?? 250) + offset,
             y: (clonedStep.position?.y ?? 0) + offset,
@@ -400,8 +702,16 @@ const cloneNodeStepForPaste = (step: ClipboardNodeStep, pasteCount: number): Cli
     };
 };
 
-const cloneNodeStepsForPaste = (steps: ClipboardNodeStep[], pasteCount: number): ClipboardNodeStep[] =>
-    steps.map((step) => cloneNodeStepForPaste(step, pasteCount));
+const cloneNodeStepsForPaste = (
+    steps: ClipboardNodeStep[],
+    pasteCount: number,
+    existingSteps: Step[]
+): ClipboardNodeStep[] =>
+    steps.reduce<ClipboardNodeStep[]>((nextSteps, step) => {
+        const clonedStep = cloneNodeStepForPaste(step, pasteCount, [...existingSteps, ...nextSteps]);
+        nextSteps.push(clonedStep);
+        return nextSteps;
+    }, []);
 
 const getDisplayCardActionHandleIds = (componentId: string): string[] => [
     `handle-${componentId}-confirm`,
@@ -472,8 +782,9 @@ function CanvasEditorInner({
     showCommentsToggle,
     mode = 'edit',
     onCommentSignIn,
+    commentSurfaceTone = 'default',
 }: CanvasEditorProps) {
-    const { screenToFlowPosition, setCenter } = useReactFlow();
+    const { screenToFlowPosition, setCenter, getViewport, setViewport } = useReactFlow();
     const viewport = useViewport();
     const canvasAreaRef = useRef<HTMLDivElement | null>(null);
     const commentPopoverRef = useRef<HTMLDivElement | null>(null);
@@ -510,10 +821,159 @@ function CanvasEditorInner({
     const [commentComposerPlacement, setCommentComposerPlacement] = useState<ComposerPlacement | null>(null);
     const [renderedCommentPins, setRenderedCommentPins] = useState<RenderedCanvasCommentPin[]>([]);
     const [pendingCommentPoint, setPendingCommentPoint] = useState<CanvasPinPoint | null>(null);
+    const pinchGestureStateRef = useRef<{
+        startZoom: number;
+        anchorFlowPoint: { x: number; y: number };
+        clientX: number;
+        clientY: number;
+    } | null>(null);
+
+    const applyCanvasPinchZoom = useCallback((
+        anchorFlowPoint: { x: number; y: number },
+        clientX: number,
+        clientY: number,
+        rawZoom: number
+    ) => {
+        const reactFlowRect =
+            canvasAreaRef.current?.querySelector<HTMLElement>('.react-flow')?.getBoundingClientRect()
+            ?? canvasAreaRef.current?.getBoundingClientRect();
+
+        if (!reactFlowRect) return;
+
+        const nextZoom = Math.min(2, Math.max(0.1, rawZoom));
+        const pointerX = clientX - reactFlowRect.left;
+        const pointerY = clientY - reactFlowRect.top;
+
+        void setViewport({
+            x: pointerX - anchorFlowPoint.x * nextZoom,
+            y: pointerY - anchorFlowPoint.y * nextZoom,
+            zoom: nextZoom,
+        });
+    }, [setViewport]);
+
+    useEffect(() => {
+        const handleWheel = (event: WheelEvent) => {
+            if (!event.ctrlKey) return;
+
+            const target = event.target as HTMLElement | null;
+            if (target?.closest(CANVAS_SHELL_ZOOM_BLOCKER_SELECTOR)) {
+                event.preventDefault();
+                event.stopPropagation();
+                return;
+            }
+
+            if (!target || !canvasAreaRef.current?.contains(target)) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            const currentViewport = getViewport();
+            const anchorFlowPoint = screenToFlowPosition({
+                x: event.clientX,
+                y: event.clientY,
+            });
+
+            // Match React Flow's underlying d3 zoom feel so pinching on overlays
+            // behaves the same way as pinching directly on the canvas.
+            const wheelDelta =
+                -event.deltaY * (event.deltaMode === 1 ? 0.05 : event.deltaMode ? 1 : 0.002) * 10;
+            const nextZoom = currentViewport.zoom * Math.pow(2, wheelDelta);
+
+            if (Math.abs(nextZoom - currentViewport.zoom) < 0.0001) return;
+
+            applyCanvasPinchZoom(anchorFlowPoint, event.clientX, event.clientY, nextZoom);
+        };
+
+        const handleGestureStart = (event: Event) => {
+            const target = event.target as HTMLElement | null;
+            if (target?.closest(CANVAS_SHELL_ZOOM_BLOCKER_SELECTOR)) {
+                event.preventDefault();
+                event.stopPropagation();
+                pinchGestureStateRef.current = null;
+                return;
+            }
+
+            if (!target || !canvasAreaRef.current?.contains(target)) {
+                return;
+            }
+
+            const gestureEvent = event as SafariGestureEventLike;
+            const clientX = gestureEvent.clientX ?? 0;
+            const clientY = gestureEvent.clientY ?? 0;
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            pinchGestureStateRef.current = {
+                startZoom: getViewport().zoom,
+                anchorFlowPoint: screenToFlowPosition({ x: clientX, y: clientY }),
+                clientX,
+                clientY,
+            };
+        };
+
+        const handleGestureChange = (event: Event) => {
+            const target = event.target as HTMLElement | null;
+            if (target?.closest(CANVAS_SHELL_ZOOM_BLOCKER_SELECTOR)) {
+                event.preventDefault();
+                event.stopPropagation();
+                return;
+            }
+
+            if (!target || !canvasAreaRef.current?.contains(target)) {
+                return;
+            }
+
+            const gestureState = pinchGestureStateRef.current;
+            if (!gestureState) return;
+
+            const gestureEvent = event as SafariGestureEventLike;
+            const clientX = gestureEvent.clientX ?? gestureState.clientX;
+            const clientY = gestureEvent.clientY ?? gestureState.clientY;
+            const scale = typeof gestureEvent.scale === 'number' ? gestureEvent.scale : 1;
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            applyCanvasPinchZoom(
+                gestureState.anchorFlowPoint,
+                clientX,
+                clientY,
+                gestureState.startZoom * scale
+            );
+        };
+
+        const handleGestureEnd = (event: Event) => {
+            const target = event.target as HTMLElement | null;
+            if (
+                target?.closest(CANVAS_SHELL_ZOOM_BLOCKER_SELECTOR) ||
+                (target && canvasAreaRef.current?.contains(target))
+            ) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+
+            pinchGestureStateRef.current = null;
+        };
+
+        document.addEventListener('wheel', handleWheel, { capture: true, passive: false });
+        document.addEventListener('gesturestart', handleGestureStart, { capture: true, passive: false });
+        document.addEventListener('gesturechange', handleGestureChange, { capture: true, passive: false });
+        document.addEventListener('gestureend', handleGestureEnd, { capture: true, passive: false });
+
+        return () => {
+            document.removeEventListener('wheel', handleWheel, true);
+            document.removeEventListener('gesturestart', handleGestureStart, true);
+            document.removeEventListener('gesturechange', handleGestureChange, true);
+            document.removeEventListener('gestureend', handleGestureEnd, true);
+        };
+    }, [applyCanvasPinchZoom, getViewport, screenToFlowPosition]);
 
     const applyFlowUpdate = useCallback((nextFlow: Flow) => {
         if (isFlowReadOnly) return;
-        onUpdateFlow(nextFlow);
+        onUpdateFlow(syncAutoManagedConditions(syncAutoManagedUserTurns(nextFlow)));
     }, [isFlowReadOnly, onUpdateFlow]);
 
     useEffect(() => {
@@ -629,12 +1089,11 @@ function CanvasEditorInner({
         const currentSteps = currentFlow.steps || [];
 
         if (type === 'turn') {
-            const aiTurnCount = currentSteps.filter((step) => step.type === 'turn').length + 1;
             const newTurn: Turn = {
                 id: crypto.randomUUID(),
                 type: 'turn',
                 speaker: 'ai',
-                label: `AI Turn ${aiTurnCount}`,
+                label: getNextFreshNodeLabel('turn', currentSteps),
                 components: [],
                 position,
             };
@@ -649,11 +1108,11 @@ function CanvasEditorInner({
         }
 
         if (type === 'user-turn') {
-            const userTurnCount = currentSteps.filter((step) => step.type === 'user-turn').length + 1;
             const newUserTurn: UserTurn = {
                 id: crypto.randomUUID(),
                 type: 'user-turn',
-                label: `User Turn ${userTurnCount}`,
+                label: getNextFreshNodeLabel('user-turn', currentSteps),
+                labelMode: 'auto',
                 inputType: 'text',
                 position,
             };
@@ -667,11 +1126,11 @@ function CanvasEditorInner({
         }
 
         if (type === 'condition') {
-            const conditionCount = currentSteps.filter((step) => step.type === 'condition').length + 1;
             const newCondition: Condition = {
                 id: crypto.randomUUID(),
                 type: 'condition',
-                label: `Condition ${conditionCount}`,
+                label: getNextFreshNodeLabel('condition', currentSteps),
+                labelMode: 'auto',
                 question: '',
                 branches: createDefaultConditionBranches(),
                 position,
@@ -685,11 +1144,10 @@ function CanvasEditorInner({
             return;
         }
 
-        const noteCount = currentSteps.filter((step) => step.type === 'note').length + 1;
         const newNote: Note = {
             id: crypto.randomUUID(),
             type: 'note',
-            label: `Sticky note ${noteCount}`,
+            label: getNextFreshNodeLabel('note', currentSteps),
             content: '',
             position,
         };
@@ -1006,6 +1464,8 @@ function CanvasEditorInner({
                 ? {
                     ...s,
                     label: newLabel,
+                    labelMode: 'custom' as const,
+                    autoLabel: undefined,
                     question: materializeConditionQuestion(s.question, s.label),
                 }
                 : s
@@ -1112,31 +1572,30 @@ function CanvasEditorInner({
         let newStep: Turn | UserTurn | Condition;
 
         if (targetType === 'turn') {
-            const aiTurnCount = existingSteps.filter(step => step.type === 'turn').length + 1;
             newStep = {
                 id: crypto.randomUUID(),
                 type: 'turn',
                 speaker: 'ai',
-                label: `AI Turn ${aiTurnCount}`,
+                label: getNextFreshNodeLabel('turn', existingSteps),
                 components: [],
                 position,
             };
         } else if (targetType === 'condition') {
-            const conditionCount = existingSteps.filter(step => step.type === 'condition').length + 1;
             newStep = {
                 id: crypto.randomUUID(),
                 type: 'condition',
-                label: `Condition ${conditionCount}`,
+                label: getNextFreshNodeLabel('condition', existingSteps),
+                labelMode: 'auto',
                 question: '',
                 branches: createDefaultConditionBranches(),
                 position,
             };
         } else {
-            const userTurnCount = existingSteps.filter(step => step.type === 'user-turn').length + 1;
             newStep = {
                 id: crypto.randomUUID(),
                 type: 'user-turn',
-                label: `User Turn ${userTurnCount}`,
+                label: getNextFreshNodeLabel('user-turn', existingSteps),
+                labelMode: 'auto',
                 inputType: resolveDefaultUserTurnInputType(sourceNodeId, sourceHandleId),
                 position,
             };
@@ -1423,6 +1882,8 @@ function CanvasEditorInner({
                     position: step.position || { x: 250, y: 0 },
                     data: {
                         label: step.label,
+                        labelMode: step.labelMode,
+                        autoLabel: step.autoLabel,
                         inputType: step.inputType || 'button', // Default key
                         triggerValue: step.triggerValue,
                         readOnly: isFlowReadOnly,
@@ -1438,6 +1899,8 @@ function CanvasEditorInner({
                     position: step.position || { x: 250, y: 0 },
                     data: {
                         label: step.label,
+                        labelMode: step.labelMode,
+                        autoLabel: step.autoLabel,
                         question: step.question,
                         branches: step.branches,
                         readOnly: isFlowReadOnly,
@@ -1594,20 +2057,36 @@ function CanvasEditorInner({
         const updatePlacement = () => {
             const canvasRect = canvasAreaRef.current?.getBoundingClientRect();
             if (!canvasRect) return;
+            const shouldReserveCommentsPanelSpace =
+                isCommentsPanelOpen &&
+                typeof window !== 'undefined' &&
+                window.innerWidth >= 768;
+            const placementSurfaceRect = shouldReserveCommentsPanelSpace
+                ? new DOMRect(
+                    canvasRect.x,
+                    canvasRect.y,
+                    Math.max(canvasRect.width - DESKTOP_CANVAS_COMMENTS_RESERVED_WIDTH_PX, 0),
+                    canvasRect.height
+                )
+                : canvasRect;
 
             const popoverRect = commentPopoverRef.current?.getBoundingClientRect();
-            const popoverWidth = popoverRect?.width || COMMENT_POPUP_WIDTH_PX;
+            const popoverWidth =
+                popoverRect?.width ||
+                (comments?.pendingComment ? COMMENT_POPUP_NEW_WIDTH_PX : COMMENT_POPUP_THREAD_WIDTH_PX);
             const popoverHeight =
                 popoverRect?.height ||
                 (comments?.pendingComment ? COMMENT_POPUP_NEW_HEIGHT_PX : COMMENT_POPUP_THREAD_HEIGHT_PX);
 
             setCommentComposerPlacement(
                 getAnchoredPopoverPosition({
-                    surfaceRect: canvasRect,
+                    surfaceRect: placementSurfaceRect,
                     anchor: commentComposerAnchor,
                     popoverWidth,
                     popoverHeight,
                     anchorOffsetYPx: -SHARE_COMMENT_PIN_TIP_TO_CENTER_OFFSET_PX,
+                    anchorClearanceLeftPx: SHARE_COMMENT_PIN_TIP_TO_LEFT_EDGE_OFFSET_PX,
+                    anchorClearanceRightPx: SHARE_COMMENT_PIN_TIP_TO_RIGHT_EDGE_OFFSET_PX,
                 })
             );
         };
@@ -1628,7 +2107,7 @@ function CanvasEditorInner({
             window.removeEventListener('resize', updatePlacement);
             resizeObserver?.disconnect();
         };
-    }, [commentComposerAnchor, comments?.pendingComment]);
+    }, [commentComposerAnchor, comments?.pendingComment, isCommentsPanelOpen]);
 
     useEffect(() => {
         if (!comments?.pendingRevealThreadId) return;
@@ -1683,6 +2162,7 @@ function CanvasEditorInner({
             const placement = getFreeAnchorFromClient(event.clientX, event.clientY);
             if (!placement) return;
 
+            setCommentComposerPlacement(null);
             comments?.startPendingComment(placement.anchor);
 
             return;
@@ -1900,84 +2380,11 @@ function CanvasEditorInner({
             };
 
             const updatedConnections = [...(flow.connections || []), newConnection];
-            let updatedSteps = flow.steps;
-
-            // SMART LINKING LOGIC:
-            // If connecting from a specific prompt handle (starts with 'handle-') to a User Turn,
-            // auto-fill the User Turn with that prompt's text.
-            // auto-fill the User Turn with that prompt's text or selection item's title.
-            if (connection.sourceHandle && connection.sourceHandle.startsWith('handle-')) {
-                const sourceNodeId = connection.source;
-                const targetNodeId = connection.target;
-                const handleId = connection.sourceHandle;
-
-                // Parse component ID from handle
-                // Format: handle-{componentId} OR handle-{componentId}-{itemId}
-                // We know componentId usually starts with 'component-'
-
-                const sourceStep = flow.steps?.find(s => s.id === sourceNodeId);
-                const targetStep = flow.steps?.find(s => s.id === targetNodeId);
-
-                if (sourceStep && sourceStep.type === 'turn' && targetStep && targetStep.type === 'user-turn') {
-                    // Try to find matching component
-                    const component = sourceStep.components.find(c => handleId.includes(c.id));
-
-                    if (component) {
-                        let textToFill = '';
-
-                        if (component.type === 'prompt') {
-                            textToFill = (component.content as import('../studio/types').PromptContent).text;
-                        } else if (component.type === 'selectionList') {
-                            const listContent = component.content as import('../studio/types').SelectionListContent;
-                            // Extract item ID from handle: handle-{componentId}-{itemId}
-                            // The itemId is the suffix after componentId-
-                            const itemId = handleId.split(`${component.id}-`)[1];
-                            const item = listContent.items.find(i => i.id === itemId);
-                            if (item) {
-                                textToFill = item.title;
-                            }
-                        } else if (component.type === 'confirmationCard') {
-                            const confirmationContent = component.content as import('../studio/types').ConfirmationCardContent;
-                            if (confirmationContent.showActions === false) {
-                                textToFill = '';
-                            } else {
-                                const actionId = handleId.split(`${component.id}-`)[1];
-                                textToFill = actionId === 'reject'
-                                    ? (confirmationContent.rejectLabel || 'Cancel')
-                                    : (confirmationContent.confirmLabel || 'Confirm');
-                            }
-                        } else if (component.type === 'checkboxGroup') {
-                            const checkboxContent = component.content as import('../studio/types').CheckboxGroupContent;
-                            const isSecondaryAction = handleId.endsWith('-secondary');
-                            textToFill = isSecondaryAction
-                                ? (checkboxContent.secondaryLabel || checkboxContent.cancelLabel || 'Cancel')
-                                : (checkboxContent.primaryLabel || checkboxContent.saveLabel || 'Save');
-                        }
-
-                        if (textToFill) {
-                            // Valid link! Update the User Turn mode and auto-fill readable text.
-                            updatedSteps = flow.steps?.map(s => {
-                                if (s.id !== targetNodeId || s.type !== 'user-turn') {
-                                    return s;
-                                }
-
-                                const nextInputType: UserTurn['inputType'] = component.type === 'prompt' ? 'prompt' : 'button';
-                                return {
-                                    ...s,
-                                    label: textToFill,
-                                    inputType: nextInputType,
-                                    triggerValue: nextInputType === 'button' ? textToFill : s.triggerValue,
-                                };
-                            });
-                        }
-                    }
-                }
-            }
 
             applyFlowUpdate({
                 ...flow,
                 connections: updatedConnections,
-                steps: updatedSteps,
+                steps: flow.steps,
                 lastModified: Date.now()
             });
         },
@@ -1988,7 +2395,11 @@ function CanvasEditorInner({
         if (selectedNodeId) {
             const updatedSteps = flow.steps?.map(s =>
                 s.id === selectedNodeId && s.type === 'user-turn'
-                    ? { ...s, inputType }
+                    ? {
+                        ...s,
+                        inputType,
+                        autoLabel: s.labelMode === 'custom' ? s.autoLabel : undefined,
+                    }
                     : s
             );
             applyFlowUpdate({ ...flow, steps: updatedSteps, lastModified: Date.now() });
@@ -2306,7 +2717,7 @@ function CanvasEditorInner({
 
         if (clipboard.type === 'node') {
             const nextPasteCount = clipboard.pasteCount + 1;
-            const newStep = cloneNodeStepForPaste(clipboard.step, nextPasteCount);
+            const newStep = cloneNodeStepForPaste(clipboard.step, nextPasteCount, currentSteps);
             clipboardRef.current = {
                 ...clipboard,
                 pasteCount: nextPasteCount,
@@ -2325,7 +2736,7 @@ function CanvasEditorInner({
 
         if (clipboard.type === 'nodes') {
             const nextPasteCount = clipboard.pasteCount + 1;
-            const newSteps = cloneNodeStepsForPaste(clipboard.steps, nextPasteCount);
+            const newSteps = cloneNodeStepsForPaste(clipboard.steps, nextPasteCount, currentSteps);
             clipboardRef.current = {
                 ...clipboard,
                 pasteCount: nextPasteCount,
@@ -2697,18 +3108,22 @@ function CanvasEditorInner({
                 if (nodeToUpdate.type === 'condition') {
                     updatedSteps[draggedNodeIndex] = {
                         ...nodeToUpdate,
-                        label: withCopySuffix(nodeToUpdate.label, 'Condition'),
+                        label: getNextDuplicateNodeLabel('condition', getVisibleConditionLabel(nodeToUpdate), flow.steps || []),
+                        autoLabel: undefined,
+                        labelMode: nodeToUpdate.labelMode ?? 'auto',
                         question: materializeConditionQuestion(nodeToUpdate.question, nodeToUpdate.label),
                     };
-                } else if (nodeToUpdate.type !== 'start' && 'label' in nodeToUpdate) {
-                    const fallbackLabel = nodeToUpdate.type === 'turn'
-                        ? 'AI Turn'
-                        : nodeToUpdate.type === 'user-turn'
-                            ? 'User Turn'
-                            : 'Sticky note';
+                } else if (nodeToUpdate.type === 'user-turn') {
                     updatedSteps[draggedNodeIndex] = {
                         ...nodeToUpdate,
-                        label: withCopySuffix(nodeToUpdate.label, fallbackLabel),
+                        label: getNextDuplicateNodeLabel('user-turn', getVisibleUserTurnLabel(nodeToUpdate), flow.steps || []),
+                        autoLabel: undefined,
+                        labelMode: nodeToUpdate.labelMode ?? 'auto',
+                    };
+                } else if (nodeToUpdate.type !== 'start' && 'label' in nodeToUpdate) {
+                    updatedSteps[draggedNodeIndex] = {
+                        ...nodeToUpdate,
+                        label: getNextDuplicateNodeLabel(nodeToUpdate.type, nodeToUpdate.label, flow.steps || []),
                     };
                 }
             }
@@ -2761,6 +3176,7 @@ function CanvasEditorInner({
 
             const placement = getFreeAnchorFromClient(event.clientX, event.clientY);
             if (!placement) return;
+            setCommentComposerPlacement(null);
             comments?.startPendingComment(placement.anchor);
             return;
         }
@@ -2784,11 +3200,14 @@ function CanvasEditorInner({
         if (commentPopoverRef.current?.contains(target)) return;
         if (target.closest('[data-comment-pin-id]')) return;
 
-        suppressNextCommentPlacementRef.current = true;
         comments.dismissComposer();
+        // Consume this outside click so dismissing a composer never drops a new pin
+        // in the same interaction.
+        suppressNextCommentPlacementRef.current = true;
     }, [comments]);
 
     const openCommentThread = useCallback((threadId: string, options?: { reveal?: boolean }) => {
+        setCommentComposerPlacement(null);
         onOpenCommentsPanel?.();
         comments?.selectThread(threadId, options);
     }, [comments, onOpenCommentsPanel]);
@@ -2906,7 +3325,12 @@ function CanvasEditorInner({
                     </ShellIconButton>
                 </ShellMenuTrigger>
             </ActionTooltip>
-            <ShellMenuContent align="end" sideOffset={8} className="w-[196px] rounded-xl p-1.5 shadow-[0_20px_48px_rgb(15_23_42/0.18)]">
+            <ShellMenuContent
+                align="end"
+                sideOffset={8}
+                className="w-[196px] rounded-xl p-1.5 shadow-[0_20px_48px_rgb(15_23_42/0.18)]"
+                data-canvas-shell-zoom-blocker="true"
+            >
                 <ShellMenuItem
                     size="compact"
                     className="gap-2.5 rounded-lg px-2.5 text-[12px]"
@@ -2932,7 +3356,10 @@ function CanvasEditorInner({
         <div className="w-full h-full flex flex-col relative bg-shell-canvas">
             {/* Header */}
             {/* Top Left Pill: Back & Title */}
-            <div className="absolute top-4 left-4 z-50 flex items-center h-11 gap-1.5 bg-shell-bg dark:bg-shell-surface-subtle px-2 rounded-xl shadow-sm dark:shadow-[0_14px_32px_rgb(0_0_0/0.26)] border border-shell-border/70 dark:border-shell-border/55 backdrop-blur-sm">
+            <div
+                data-canvas-shell-zoom-blocker="true"
+                className="absolute top-4 left-4 z-50 flex items-center h-11 gap-1.5 bg-shell-bg dark:bg-shell-surface-subtle px-2 rounded-xl shadow-sm dark:shadow-[0_14px_32px_rgb(0_0_0/0.26)] border border-shell-border/70 dark:border-shell-border/55 backdrop-blur-sm"
+            >
                 {usesStudioMenuTrigger ? (
                     <UserMenu
                         backItem={{ label: isFlowReadOnly ? 'Go home' : 'Back to dashboard', onSelect: onBack }}
@@ -2996,7 +3423,10 @@ function CanvasEditorInner({
             </div>
 
             {/* Top Right Pill: File, Run & Share */}
-            <div className="absolute top-4 right-4 z-50 flex items-center h-11 gap-2 bg-shell-bg dark:bg-shell-surface-subtle px-1.5 rounded-xl shadow-sm dark:shadow-[0_14px_32px_rgb(0_0_0/0.26)] border border-shell-border/70 dark:border-shell-border/55 backdrop-blur-sm">
+            <div
+                data-canvas-shell-zoom-blocker="true"
+                className="absolute top-4 right-4 z-50 flex items-center h-11 gap-2 bg-shell-bg dark:bg-shell-surface-subtle px-1.5 rounded-xl shadow-sm dark:shadow-[0_14px_32px_rgb(0_0_0/0.26)] border border-shell-border/70 dark:border-shell-border/55 backdrop-blur-sm"
+            >
                 {isFlowReadOnly ? (
                     <>
                         {renderPreviewOpenMenu()}
@@ -3155,69 +3585,10 @@ function CanvasEditorInner({
                     {onToggleComments ? (
                         <FloatingToolbar
                             showCreationTools={floatingToolbarVariant === 'full'}
-                            onAddAiTurn={() => {
-                                const aiTurnCount = (flow.steps?.filter(s => s.type === 'turn').length || 0) + 1;
-                                const newTurn: Turn = {
-                                    id: crypto.randomUUID(),
-                                    type: 'turn',
-                                    speaker: 'ai',
-                                    label: `AI Turn ${aiTurnCount}`,
-                                    components: [],
-                                    position: { x: 100, y: 100 + (flow.steps?.length || 0) * 50 }
-                                };
-                                applyFlowUpdate({
-                                    ...flow,
-                                    steps: [...(flow.steps || []), newTurn],
-                                    lastModified: Date.now()
-                                });
-                                focusNodeWithToolbar(newTurn.id, true);
-                            }}
-                            onAddUserTurn={() => {
-                                const userTurnCount = (flow.steps?.filter(s => s.type === 'user-turn').length || 0) + 1;
-                                const newUserTurn: UserTurn = {
-                                    id: crypto.randomUUID(),
-                                    type: 'user-turn',
-                                    label: `User Turn ${userTurnCount}`,
-                                    inputType: 'text',
-                                    position: { x: 100, y: 100 + (flow.steps?.length || 0) * 50 }
-                                };
-                                applyFlowUpdate({
-                                    ...flow,
-                                    steps: [...(flow.steps || []), newUserTurn],
-                                    lastModified: Date.now()
-                                });
-                            }}
-                            onAddCondition={() => {
-                                const conditionCount = (flow.steps?.filter(s => s.type === 'condition').length || 0) + 1;
-                                const newCondition: Condition = {
-                                    id: crypto.randomUUID(),
-                                    type: 'condition',
-                                    label: `Condition ${conditionCount}`,
-                                    question: '',
-                                    branches: createDefaultConditionBranches(),
-                                    position: { x: 100, y: 100 + (flow.steps?.length || 0) * 50 }
-                                };
-                                applyFlowUpdate({
-                                    ...flow,
-                                    steps: [...(flow.steps || []), newCondition],
-                                    lastModified: Date.now()
-                                });
-                            }}
-                            onAddNote={() => {
-                                const noteCount = (flow.steps?.filter(s => s.type === 'note').length || 0) + 1;
-                                const newNote: Note = {
-                                    id: crypto.randomUUID(),
-                                    type: 'note',
-                                    label: `Sticky note ${noteCount}`,
-                                    content: '',
-                                    position: { x: 100, y: 100 + (flow.steps?.length || 0) * 50 }
-                                };
-                                applyFlowUpdate({
-                                    ...flow,
-                                    steps: [...(flow.steps || []), newNote],
-                                    lastModified: Date.now()
-                                });
-                            }}
+                            onAddAiTurn={() => createToolbarNodeAtPosition('turn', { x: 100, y: 100 + (flow.steps?.length || 0) * 50 })}
+                            onAddUserTurn={() => createToolbarNodeAtPosition('user-turn', { x: 100, y: 100 + (flow.steps?.length || 0) * 50 })}
+                            onAddCondition={() => createToolbarNodeAtPosition('condition', { x: 100, y: 100 + (flow.steps?.length || 0) * 50 })}
+                            onAddNote={() => createToolbarNodeAtPosition('note', { x: 100, y: 100 + (flow.steps?.length || 0) * 50 })}
                             onToggleComments={() => onToggleComments?.()}
                             isCommentsActive={isCommentModeActive || isCommentsPanelOpen}
                         />
@@ -3232,35 +3603,53 @@ function CanvasEditorInner({
                                 const isSelected = comments?.activeThreadId === renderedPin.thread.id;
                                 const isHovered = comments?.hoveredThreadId === renderedPin.thread.id;
                                 const isDragging = commentDragState?.threadId === renderedPin.thread.id;
-                                const canDrag =
-                                    !!comments?.userCanComment &&
-                                    comments.canManageComment(root) &&
-                                    root.status === 'open';
+                                const canShowHoverPreview =
+                                    isHovered &&
+                                    !isSelected &&
+                                    !isDragging &&
+                                    !pendingCommentPoint &&
+                                    !comments?.pendingComment;
                                 const tone = isSelected
                                     ? 'selected'
                                     : root.status === 'resolved'
                                         ? 'resolved'
                                         : 'default';
+                                const threadStepId = getCanvasCommentStepId(root);
+                                const threadStep = threadStepId
+                                    ? flow.steps?.find((step) => step.id === threadStepId) || null
+                                    : null;
+                                const hoverDetail = threadStepId
+                                    ? getStepCommentLabel(threadStep)
+                                    : null;
 
                                 return (
                                     <div
                                         key={renderedPin.thread.id}
                                         className={cn(
-                                            'absolute -translate-x-1/2 pointer-events-none',
-                                            isDragging ? 'z-[118]' : isSelected ? 'z-[114]' : 'z-[110]'
+                                            'absolute pointer-events-none',
+                                            isDragging
+                                                ? 'z-[118]'
+                                                : canShowHoverPreview
+                                                    ? 'z-[117]'
+                                                    : isSelected
+                                                        ? 'z-[114]'
+                                                        : isHovered
+                                                            ? 'z-[112]'
+                                                            : 'z-[110]'
                                         )}
                                         style={{
                                             left: `${renderedPin.point.x}px`,
                                             top: `${renderedPin.point.y - SHARE_COMMENT_PIN_TIP_OFFSET_PX}px`,
+                                            transform: `translateX(-${SHARE_COMMENT_PIN_TIP_X_OFFSET_PX}px)`,
                                         }}
                                     >
                                         <button
                                             type="button"
                                             className={cn(
                                                 'pointer-events-auto bg-transparent border-0 p-0 transition-transform duration-150 ease-out',
-                                                canDrag ? 'cursor-grab' : 'cursor-pointer',
-                                                isDragging ? 'cursor-grabbing scale-110' : isSelected || isHovered ? 'scale-105' : 'scale-100'
+                                                isDragging ? 'scale-110' : isSelected || isHovered ? 'scale-105' : 'scale-100'
                                             )}
+                                            style={{ cursor: CANVAS_DEFAULT_CURSOR }}
                                             data-comment-pin-id={renderedPin.thread.id}
                                             onPointerDown={(event) => handleCommentPinPointerDown(event, renderedPin)}
                                             onPointerMove={(event) => handleCommentPinPointerMove(event, renderedPin)}
@@ -3289,26 +3678,66 @@ function CanvasEditorInner({
                                             onFocus={() => comments?.setHoveredThreadId(renderedPin.thread.id)}
                                             onBlur={() => comments?.setHoveredThreadId(null)}
                                             aria-label={`Open comment by ${root.author_name}`}
-                                        >
-                                            <ShareCommentPin
-                                                name={root.author_name}
-                                                avatarUrl={root.author_avatar_url}
-                                                tone={tone}
+                                            >
+                                                <ShareCommentPin
+                                                    name={root.author_name}
+                                                    avatarUrl={root.author_avatar_url}
+                                                    tone={tone}
+                                                    surfaceTone={commentSurfaceTone}
+                                                />
+                                            </button>
+
+                                            <CommentThreadHoverPreview
+                                                visible={canShowHoverPreview}
+                                                ariaLabel={`Preview thread by ${root.author_name}`}
+                                                authorName={root.author_name}
+                                                authorAvatarUrl={root.author_avatar_url}
+                                                isResolved={root.status === 'resolved'}
+                                                relativeTimeLabel={formatCommentRelativeTime(renderedPin.thread.latestActivityAt)}
+                                                timeTitle={formatCommentDate(renderedPin.thread.latestActivityAt)}
+                                                previewText={getCommentExcerpt(root.message, 80)}
+                                                detail={hoverDetail}
+                                                replyCount={renderedPin.thread.replies.length}
+                                                tone={commentSurfaceTone}
+                                                style={{
+                                                    left:
+                                                        SHARE_COMMENT_PIN_WIDTH_PX -
+                                                        SHARE_COMMENT_PIN_TIP_X_OFFSET_PX +
+                                                        COMMENT_THREAD_HOVER_PREVIEW_GAP_PX,
+                                                    top: SHARE_COMMENT_PIN_HEAD_CENTER_OFFSET_PX,
+                                                }}
+                                                onClick={(event) => {
+                                                    event.preventDefault();
+                                                    event.stopPropagation();
+                                                    openCommentThread(renderedPin.thread.id, { reveal: true });
+                                                }}
+                                                onMouseEnter={() => comments?.setHoveredThreadId(renderedPin.thread.id)}
+                                                onMouseLeave={() => comments?.setHoveredThreadId(null)}
+                                                onFocus={() => comments?.setHoveredThreadId(renderedPin.thread.id)}
+                                                onBlur={() => comments?.setHoveredThreadId(null)}
                                             />
-                                        </button>
-                                    </div>
+                                        </div>
                                 );
                             })}
 
                             {pendingCommentPoint ? (
                                 <div
-                                    className="absolute -translate-x-1/2 z-[116]"
+                                    className="absolute z-[116]"
+                                    data-pending-comment-pin="true"
                                     style={{
                                         left: `${pendingCommentPoint.x}px`,
                                         top: `${pendingCommentPoint.y - SHARE_COMMENT_PIN_TIP_OFFSET_PX}px`,
+                                        transform: `translateX(-${SHARE_COMMENT_PIN_TIP_X_OFFSET_PX}px)`,
                                     }}
                                 >
-                                    <ShareCommentPin name="New comment" tone="pending" pending={true} />
+                                    <div className="comment-drop-pin-enter">
+                                        <ShareCommentPin
+                                            name="New comment"
+                                            tone="pending"
+                                            pending={true}
+                                            surfaceTone={commentSurfaceTone}
+                                        />
+                                    </div>
                                 </div>
                             ) : null}
                         </div>
@@ -3317,15 +3746,22 @@ function CanvasEditorInner({
                             <div
                                 className="absolute z-[120] pointer-events-auto"
                                 style={{
-                                    left: `${commentComposerPlacement?.left ?? COMMENT_POPUP_EDGE_PADDING_PX}px`,
-                                    top: `${commentComposerPlacement?.top ?? COMMENT_POPUP_EDGE_PADDING_PX}px`,
+                                    left: `${commentComposerPlacement?.left ?? -9999}px`,
+                                    top: `${commentComposerPlacement?.top ?? -9999}px`,
+                                    visibility: commentComposerPlacement ? 'visible' : 'hidden',
+                                    pointerEvents: commentComposerPlacement ? 'auto' : 'none',
                                 }}
                             >
                                 <div
                                     ref={commentPopoverRef}
                                     className={cn(
                                         'transition-all duration-150 ease-out',
-                                        commentComposerPlacement?.side === 'left' ? 'origin-right' : 'origin-left'
+                                        comments?.pendingComment && commentComposerPlacement
+                                            ? 'comment-drop-composer-enter'
+                                            : null,
+                                        commentComposerPlacement?.side === 'left'
+                                            ? 'origin-right'
+                                            : 'origin-left'
                                     )}
                                 >
                                     {comments?.pendingComment ? (
@@ -3340,6 +3776,7 @@ function CanvasEditorInner({
                                             onSubmit={() => void comments.submitPendingComment()}
                                             onClose={comments.dismissPendingComment}
                                             onSignIn={onCommentSignIn}
+                                            surfaceTone={commentSurfaceTone}
                                         />
                                     ) : comments?.activeThread ? (
                                         <CanvasCommentPopover
@@ -3374,6 +3811,7 @@ function CanvasEditorInner({
                                             }
                                             onClose={comments.dismissComposer}
                                             onSignIn={onCommentSignIn}
+                                            surfaceTone={commentSurfaceTone}
                                         />
                                     ) : null}
                                 </div>

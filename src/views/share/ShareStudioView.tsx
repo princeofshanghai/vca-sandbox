@@ -110,6 +110,7 @@ export const ShareStudioView = () => {
         }
 
         setShowComments(true);
+        canvasComments.resetClosedState();
         setRightPanelMode('comments');
         setIsCommentModeActive(canvasComments.userCanComment);
     };
@@ -212,6 +213,7 @@ export const ShareStudioView = () => {
                 isCommentModeActive={isCommentModeActive}
                 isCommentsPanelOpen={isCommentsOpen}
                 comments={areCanvasCommentsVisible ? canvasComments : null}
+                commentSurfaceTone="default"
                 showCommentsToggle={{
                     checked: showComments,
                     onCheckedChange: handleShowCommentsChange,
@@ -240,6 +242,7 @@ export const ShareStudioView = () => {
                 }}
                 comments={canvasComments}
                 onRequestSignIn={canvasComments.userCanComment ? undefined : handleCommentSignIn}
+                desktopPresentation="card"
             />
 
             {isEmptyFlow ? (

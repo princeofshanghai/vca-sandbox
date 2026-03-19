@@ -23,12 +23,10 @@ interface SimpleComponentCardProps {
 
 const CompactRichTextPreview = ({
     content,
-    maxHeightClassName = 'max-h-[24rem]',
 }: {
     content: string;
-    maxHeightClassName?: string;
 }) => (
-    <div className={`${maxHeightClassName} overflow-x-hidden overflow-y-auto pr-1`}>
+    <div className="overflow-x-hidden pr-1">
         <MarkdownRenderer
             content={content}
             linkMode="static"
@@ -65,7 +63,6 @@ export const SimpleComponentCard = memo(forwardRef<HTMLDivElement, SimpleCompone
                     <div className="flex flex-col gap-2 px-0.5 py-1 text-sm text-shell-text">
                         <CompactRichTextPreview
                             content={content.body}
-                            maxHeightClassName={sources.length > 0 ? 'max-h-[22rem]' : 'max-h-[24rem]'}
                         />
 
                         {sources.length > 0 && (

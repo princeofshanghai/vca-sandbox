@@ -71,7 +71,12 @@ export function ContextToolbar({
     }
 
     return createPortal(
-        <div id="context-toolbar" data-editor-keep-open style={getToolbarStyle()}>
+        <div
+            id="context-toolbar"
+            data-editor-keep-open
+            data-canvas-shell-zoom-blocker="true"
+            style={getToolbarStyle()}
+        >
             <div className="animate-in fade-in zoom-in-98 duration-100 ease-out">
                 <div className="bg-shell-dark-panel rounded-xl shadow-2xl px-2 py-1.5 flex items-center gap-1 border border-shell-dark-border">
                     {/* Add Component Popover (Only for AI Turns) */}
@@ -121,6 +126,7 @@ export function ContextToolbar({
                             </ActionTooltip>
                             <Popover.Portal>
                                 <Popover.Content
+                                    data-canvas-shell-zoom-blocker="true"
                                     side="top"
                                     sideOffset={8}
                                     align="center"

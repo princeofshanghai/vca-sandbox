@@ -12,18 +12,15 @@ import { PreviewSettingsMenu } from '@/views/studio/PreviewSettingsMenu';
 import { PathsPanel } from '@/views/studio/components/PathsPanel';
 import {
     AlertCircle,
-    ArrowUp,
     CheckCircle2,
     Home,
     Loader2,
     MessageSquare,
     Monitor,
-    MoreHorizontal,
     Pencil,
     RotateCcw,
     Split,
     Smartphone,
-    Trash2,
     X,
 } from 'lucide-react';
 import { INITIAL_FLOW } from '@/utils/flowStorage';
@@ -33,9 +30,11 @@ import {
     ShareCommentPin,
     SHARE_COMMENT_PIN_HEIGHT_PX,
     SHARE_COMMENT_PIN_HEAD_CENTER_OFFSET_PX,
+    SHARE_COMMENT_PIN_TIP_TO_LEFT_EDGE_OFFSET_PX,
+    SHARE_COMMENT_PIN_TIP_TO_RIGHT_EDGE_OFFSET_PX,
+    SHARE_COMMENT_PIN_TIP_X_OFFSET_PX,
     SHARE_COMMENT_PIN_TIP_OFFSET_PX,
     SHARE_COMMENT_PIN_TIP_TO_CENTER_OFFSET_PX,
-    SHARE_COMMENT_PIN_VISUAL_RADIUS_PX,
     SHARE_COMMENT_PIN_WIDTH_PX,
 } from './components/ShareCommentPin';
 import {
@@ -55,10 +54,10 @@ import {
     ShellMenuContent,
     ShellMenuItem,
     ShellMenuSeparator,
+    ShellMenuTrigger,
     ShellNotice,
     ShellSegmentedControl,
     ShellSegmentedControlItem,
-    ShellMenuTrigger,
     ShellSelectableRow,
     ShellSelect,
     ShellSelectContent,
@@ -67,16 +66,22 @@ import {
     ShellSelectValue,
     ShellTextarea,
 } from '@/components/shell';
+import {
+    CommentActionsMenu,
+    CommentAvatar,
+    CommentComposerInputRow,
+    CommentResolvedBadge,
+} from '@/components/comments/CommentPrimitives';
+import {
+    CommentThreadHoverPreview,
+    COMMENT_THREAD_HOVER_PREVIEW_GAP_PX,
+} from '@/components/comments/CommentThreadHoverPreview';
 import { cn } from '@/utils/cn';
-import { COMMENT_PLACEMENT_CURSOR } from '@/utils/commentPlacementCursor';
+import { CANVAS_DEFAULT_CURSOR, COMMENT_PLACEMENT_CURSOR } from '@/utils/commentPlacementCursor';
 import { ActionTooltip } from '@/views/studio-canvas/components/ActionTooltip';
 import { useAuth } from '@/hooks/useAuth';
 import { type SmartFlowEngineSnapshot } from '@/hooks/useSmartFlowEngine';
-import {
-    getInitialsFromName,
-    getUserAvatarUrl,
-    getUserDisplayName,
-} from '@/utils/userIdentity';
+import { getUserAvatarUrl, getUserDisplayName } from '@/utils/userIdentity';
 import {
     type CommentFilter,
     type FlowCommentReviewAnchor,
@@ -153,15 +158,15 @@ type PendingThreadPathNavigation = {
 
 const PIN_TO_POPOVER_GAP_PX = 8;
 const COMPOSER_EDGE_PADDING_PX = 12;
-const DEFAULT_COMPOSER_WIDTH_PX = 400;
-const DEFAULT_NEW_COMMENT_HEIGHT_PX = 88;
+const DEFAULT_NEW_COMMENT_WIDTH_PX = 320;
+const DEFAULT_THREAD_COMPOSER_WIDTH_PX = 360;
+const DEFAULT_NEW_COMMENT_HEIGHT_PX = 72;
 const DEFAULT_THREAD_HEIGHT_PX = 320;
+const COMMENT_POPOVER_SIGN_IN_WIDTH_PX = 380;
 const DRAG_THRESHOLD_PX = 5;
-const PIN_VISUAL_RADIUS_PX = SHARE_COMMENT_PIN_VISUAL_RADIUS_PX;
-const COMPOSER_GAP_PX = PIN_VISUAL_RADIUS_PX + PIN_TO_POPOVER_GAP_PX;
-const NEW_COMMENT_COMPOSER_GAP_PX = PIN_VISUAL_RADIUS_PX + PIN_TO_POPOVER_GAP_PX;
 const PIN_TIP_TO_CIRCLE_CENTER_OFFSET_PX = SHARE_COMMENT_PIN_TIP_TO_CENTER_OFFSET_PX;
 const COMMENT_PLACE_THRESHOLD_PX = 8;
+const COMMENT_SURFACE_TONE = 'cinematicDark' as const;
 
 const createEmptyReviewState = (): FlowPreviewReviewState => ({
     pathSelections: [],
@@ -239,8 +244,10 @@ const getAnchoredPopoverPosition = ({
     anchor,
     popoverWidth,
     popoverHeight,
-    gapPx = COMPOSER_GAP_PX,
+    gapPx = PIN_TO_POPOVER_GAP_PX,
     anchorOffsetYPx = 0,
+    anchorClearanceLeftPx = 0,
+    anchorClearanceRightPx = 0,
 }: {
     surfaceRect: DOMRect;
     anchor: PinPoint;
@@ -248,17 +255,24 @@ const getAnchoredPopoverPosition = ({
     popoverHeight: number;
     gapPx?: number;
     anchorOffsetYPx?: number;
+    anchorClearanceLeftPx?: number;
+    anchorClearanceRightPx?: number;
 }): ComposerPlacement => {
     const anchorX = (anchor.x / 100) * surfaceRect.width;
     const anchorY = (anchor.y / 100) * surfaceRect.height + anchorOffsetYPx;
 
     const canPlaceRight =
-        anchorX + gapPx + popoverWidth + COMPOSER_EDGE_PADDING_PX <= surfaceRect.width;
+        anchorX +
+            anchorClearanceRightPx +
+            gapPx +
+            popoverWidth +
+            COMPOSER_EDGE_PADDING_PX <=
+        surfaceRect.width;
     const side: ComposerSide = canPlaceRight ? 'right' : 'left';
 
     const rawLeft = canPlaceRight
-        ? anchorX + gapPx
-        : anchorX - gapPx - popoverWidth;
+        ? anchorX + anchorClearanceRightPx + gapPx
+        : anchorX - anchorClearanceLeftPx - gapPx - popoverWidth;
     const maxLeft = Math.max(
         COMPOSER_EDGE_PADDING_PX,
         surfaceRect.width - popoverWidth - COMPOSER_EDGE_PADDING_PX
@@ -433,8 +447,6 @@ export const ShareView = () => {
 
     const commentSurfaceRef = useRef<HTMLDivElement | null>(null);
     const composerCardRef = useRef<HTMLDivElement | null>(null);
-    const newCommentTextareaRef = useRef<HTMLTextAreaElement | null>(null);
-    const replyTextareaRef = useRef<HTMLTextAreaElement | null>(null);
     const editTextareaRef = useRef<HTMLTextAreaElement | null>(null);
     const commentsRequestSeqRef = useRef(0);
     const hasHandledInitialPanelVisibilityRef = useRef(false);
@@ -1145,11 +1157,15 @@ export const ShareView = () => {
             if (surfaceRect.width <= 0 || surfaceRect.height <= 0) return;
 
             const popoverRect = composerCardRef.current?.getBoundingClientRect();
-            const popoverWidth = popoverRect?.width || DEFAULT_COMPOSER_WIDTH_PX;
+            const popoverWidth =
+                popoverRect?.width ||
+                (isComposerForNewComment
+                    ? DEFAULT_NEW_COMMENT_WIDTH_PX
+                    : DEFAULT_THREAD_COMPOSER_WIDTH_PX);
             const popoverHeight =
                 popoverRect?.height ||
                 (isComposerForNewComment ? DEFAULT_NEW_COMMENT_HEIGHT_PX : DEFAULT_THREAD_HEIGHT_PX);
-            const gapPx = isComposerForNewComment ? NEW_COMMENT_COMPOSER_GAP_PX : COMPOSER_GAP_PX;
+            const gapPx = PIN_TO_POPOVER_GAP_PX;
             const anchorOffsetYPx = -PIN_TIP_TO_CIRCLE_CENTER_OFFSET_PX;
 
             setDesktopComposerPlacement(
@@ -1160,6 +1176,8 @@ export const ShareView = () => {
                     popoverHeight,
                     gapPx,
                     anchorOffsetYPx,
+                    anchorClearanceLeftPx: SHARE_COMMENT_PIN_TIP_TO_LEFT_EDGE_OFFSET_PX,
+                    anchorClearanceRightPx: SHARE_COMMENT_PIN_TIP_TO_RIGHT_EDGE_OFFSET_PX,
                 })
             );
         };
@@ -1836,7 +1854,6 @@ export const ShareView = () => {
 
             setReplyDrafts((prev) => ({ ...prev, [threadId]: '' }));
             setActiveThreadId(threadId);
-            window.requestAnimationFrame(() => autoResizeTextarea(replyTextareaRef.current));
             await loadComments(id);
         } catch (replyError: unknown) {
             console.error('Error replying to comment:', replyError);
@@ -1845,34 +1862,6 @@ export const ShareView = () => {
             setActiveReplyThreadId(null);
         }
     };
-
-    const renderAvatar = ({
-        name,
-        avatarUrl,
-        size,
-        textSize,
-    }: {
-        name: string;
-        avatarUrl?: string | null;
-        size: string;
-        textSize: string;
-    }) => (
-        <span className={cn('rounded-full overflow-hidden border border-shell-dark-border bg-shell-dark-surface block', size)}>
-            {avatarUrl ? (
-                <img src={avatarUrl} alt={`${name} avatar`} className="w-full h-full object-cover" />
-            ) : (
-                <span className={cn('w-full h-full flex items-center justify-center text-shell-dark-muted font-semibold', textSize)}>
-                    {getInitialsFromName(name)}
-                </span>
-            )}
-        </span>
-    );
-
-    const renderResolvedBadge = () => (
-        <span className="rounded-full border border-shell-dark-border bg-shell-dark-surface px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.08em] text-shell-dark-muted">
-            Resolved
-        </span>
-    );
 
     const renderCommentMenu = ({
         thread,
@@ -1886,36 +1875,14 @@ export const ShareView = () => {
         if (!canManageComment(comment) || thread.root.status === 'resolved') return null;
 
         return (
-            <ShellMenu>
-                <ShellMenuTrigger asChild>
-                    <ShellIconButton
-                        size="sm"
-                        tone="cinematicDark"
-                        shape="circle"
-                        aria-label={isThreadMenu ? 'Thread actions' : 'Comment actions'}
-                    >
-                        <MoreHorizontal size={14} />
-                    </ShellIconButton>
-                </ShellMenuTrigger>
-                <ShellMenuContent align="end" tone="cinematicDark" className="w-40">
-                    <ShellMenuItem
-                        tone="cinematicDark"
-                        onSelect={() => handleStartEditComment(comment)}
-                    >
-                        <Pencil size={14} />
-                        <span>{isThreadMenu ? 'Edit comment' : 'Edit'}</span>
-                    </ShellMenuItem>
-                    <ShellMenuSeparator tone="cinematicDark" />
-                    <ShellMenuItem
-                        tone="cinematicDark"
-                        variant="destructive"
-                        onSelect={() => openDeleteDialog(thread, comment)}
-                    >
-                        <Trash2 size={14} />
-                        <span>{comment.id === thread.root.id ? 'Delete thread' : 'Delete reply'}</span>
-                    </ShellMenuItem>
-                </ShellMenuContent>
-            </ShellMenu>
+            <CommentActionsMenu
+                ariaLabel={isThreadMenu ? 'Thread actions' : 'Comment actions'}
+                editLabel={isThreadMenu ? 'Edit comment' : 'Edit'}
+                deleteLabel={comment.id === thread.root.id ? 'Delete thread' : 'Delete reply'}
+                onEdit={() => handleStartEditComment(comment)}
+                onDelete={() => openDeleteDialog(thread, comment)}
+                tone={COMMENT_SURFACE_TONE}
+            />
         );
     };
 
@@ -1935,12 +1902,13 @@ export const ShareView = () => {
         return (
             <div key={comment.id} className={cn(isRoot ? 'px-4 py-4' : 'px-4 py-3.5')}>
                 <div className="flex items-start gap-2.5">
-                    {renderAvatar({
-                        name: comment.author_name,
-                        avatarUrl: comment.author_avatar_url,
-                        size: 'w-7 h-7',
-                        textSize: 'text-[9px]',
-                    })}
+                    <CommentAvatar
+                        name={comment.author_name}
+                        avatarUrl={comment.author_avatar_url}
+                        size="w-7 h-7"
+                        textSize="text-[9px]"
+                        tone={COMMENT_SURFACE_TONE}
+                    />
                     <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0 flex-1">
@@ -2033,19 +2001,20 @@ export const ShareView = () => {
                 selected={isSelected}
                 onClick={() => handleSelectThreadFromRail(entry)}
             >
-                {renderAvatar({
-                    name: thread.root.author_name,
-                    avatarUrl: thread.root.author_avatar_url,
-                    size: compact ? 'w-6 h-6' : 'w-7 h-7',
-                    textSize: compact ? 'text-[9px]' : 'text-[10px]',
-                })}
+                <CommentAvatar
+                    name={thread.root.author_name}
+                    avatarUrl={thread.root.author_avatar_url}
+                    size={compact ? 'w-6 h-6' : 'w-7 h-7'}
+                    textSize={compact ? 'text-[9px]' : 'text-[10px]'}
+                    tone={COMMENT_SURFACE_TONE}
+                />
                 <div className="min-w-0 flex-1">
                     <div className={cn('flex items-start justify-between gap-2', compact ? 'mb-0.5' : 'mb-1')}>
                         <span className={cn(compact ? 'text-[11px]' : 'text-xs', 'font-medium text-shell-dark-text truncate')}>
                             {thread.root.author_name}
                         </span>
                         <div className="flex items-center justify-end gap-2 shrink-0">
-                            {thread.root.status === 'resolved' ? renderResolvedBadge() : null}
+                            {thread.root.status === 'resolved' ? <CommentResolvedBadge tone={COMMENT_SURFACE_TONE} /> : null}
                             {entry.status === 'other-path' ? (
                                 <span className="rounded-full border border-shell-node-condition/35 bg-[rgb(var(--shell-node-condition-surface)/1)] px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.08em] text-shell-muted">
                                     Another path
@@ -2087,11 +2056,13 @@ export const ShareView = () => {
             if (!composerAnchor) return null;
             const canSubmitComment = newCommentText.trim().length > 0;
             const isCreateDisabled = isPostingComment || !canSubmitComment;
-            const isCreateButtonActiveVisual = isPostingComment || canSubmitComment;
 
             if (!user) {
                 return (
-                    <div className="w-[420px] max-w-[calc(100vw-40px)] rounded-2xl border border-shell-dark-border bg-shell-dark-panel/95 px-4 py-3 shadow-2xl backdrop-blur">
+                    <div
+                        className="max-w-[calc(100vw-40px)] rounded-2xl border border-shell-dark-border bg-shell-dark-panel/95 px-4 py-3 shadow-2xl backdrop-blur"
+                        style={{ width: COMMENT_POPOVER_SIGN_IN_WIDTH_PX }}
+                    >
                         <p className="text-xs text-shell-dark-muted leading-relaxed">
                             Sign in to leave a comment on this prototype.
                         </p>
@@ -2111,61 +2082,22 @@ export const ShareView = () => {
             }
 
             return (
-                <div className="w-full md:w-[400px] max-w-[calc(100vw-40px)] rounded-[26px] border border-shell-dark-border bg-shell-dark-panel/95 pl-4 pr-2 py-1.5 shadow-2xl backdrop-blur">
-                    <div className="flex items-center gap-1.5">
-                        <ShellTextarea
-                            ref={(textarea) => {
-                                newCommentTextareaRef.current = textarea;
-                                autoResizeTextarea(textarea);
-                            }}
-                            rows={1}
-                            value={newCommentText}
-                            onChange={(event) => {
-                                setNewCommentText(event.target.value);
-                                autoResizeTextarea(event.currentTarget);
-                            }}
-                            onFocus={(event) => autoResizeTextarea(event.currentTarget)}
-                            onBlur={(event) => {
-                                if (!event.currentTarget.value.trim()) {
-                                    autoResizeTextarea(event.currentTarget);
-                                }
-                            }}
-                            onKeyDown={(event) => {
-                                if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing) {
-                                    return;
-                                }
-                                event.preventDefault();
-                                if (isCreateDisabled) return;
-                                void handleCreateComment();
-                            }}
-                            placeholder="Add a comment"
-                            tone="cinematicDark"
-                            variant="bare"
-                            className="h-[26px] max-h-[120px] resize-none"
-                        />
-                        <div className="shrink-0">
-                            <ShellIconButton
-                                size="sm"
-                                tone="cinematicDark"
-                                shape="circle"
-                                className={cn(
-                                    'h-[30px] w-[30px] rounded-full transition-colors',
-                                    isCreateButtonActiveVisual
-                                        ? 'bg-shell-dark-accent text-white hover:bg-shell-dark-accent-hover'
-                                        : 'bg-shell-dark-surface text-shell-dark-muted hover:bg-shell-dark-surface hover:text-shell-dark-muted'
-                                )}
-                                onClick={handleCreateComment}
-                                disabled={isCreateDisabled}
-                                aria-label="Post comment"
-                            >
-                                {isPostingComment ? (
-                                    <Loader2 size={13} className="animate-spin" />
-                                ) : (
-                                    <ArrowUp size={13} />
-                                )}
-                            </ShellIconButton>
-                        </div>
-                    </div>
+                <div
+                    className="w-full max-w-[calc(100vw-40px)]"
+                    style={{ width: DEFAULT_NEW_COMMENT_WIDTH_PX }}
+                >
+                    <CommentComposerInputRow
+                        value={newCommentText}
+                        onValueChange={setNewCommentText}
+                        onSubmit={() => void handleCreateComment()}
+                        placeholder="Add a comment"
+                        submitAriaLabel="Post comment"
+                        disabled={isCreateDisabled}
+                        isSubmitting={isPostingComment}
+                        autoFocus
+                        className="max-w-none"
+                        tone={COMMENT_SURFACE_TONE}
+                    />
                 </div>
             );
         }
@@ -2176,18 +2108,20 @@ export const ShareView = () => {
         const canSubmitReply = replyText.trim().length > 0;
         const isReplyPosting = activeReplyThreadId === activeThread.id;
         const isReplyDisabled = isReplyPosting || !canSubmitReply;
-        const isReplyButtonActiveVisual = isReplyPosting || canSubmitReply;
         const canToggleThreadStatus = canResolveThread(activeThread);
         const isStatusPending = threadStatusPendingId === activeThread.id;
         const isResolved = activeThread.root.status === 'resolved';
         const threadDetail = activeThreadEntry?.detail || null;
 
         return (
-            <div className="w-full md:w-[400px] max-w-[calc(100vw-40px)] rounded-3xl border border-shell-dark-border bg-shell-dark-panel/95 shadow-2xl backdrop-blur overflow-hidden">
+            <div
+                className="w-full max-w-[calc(100vw-40px)] rounded-3xl border border-shell-dark-border bg-shell-dark-panel/95 shadow-2xl backdrop-blur overflow-hidden"
+                style={{ width: DEFAULT_THREAD_COMPOSER_WIDTH_PX }}
+            >
                 <div className="px-4 py-3 border-b border-shell-dark-border flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2 min-w-0">
                         <h3 className="text-sm font-semibold text-shell-dark-text">Comment</h3>
-                        {isResolved ? renderResolvedBadge() : null}
+                        {isResolved ? <CommentResolvedBadge tone={COMMENT_SURFACE_TONE} /> : null}
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
                         {!isResolved ? renderCommentMenu({
@@ -2272,62 +2206,16 @@ export const ShareView = () => {
                     </div>
                 ) : (
                     <div className="px-4 py-3 border-t border-shell-dark-border">
-                        <div className="rounded-full border border-shell-dark-border bg-shell-dark-surface/80 pl-3 pr-1.5 py-1">
-                            <div className="flex items-center gap-1.5">
-                                <ShellTextarea
-                                    ref={(textarea) => {
-                                        replyTextareaRef.current = textarea;
-                                        autoResizeTextarea(textarea);
-                                    }}
-                                    rows={1}
-                                    value={replyText}
-                                    onChange={(event) => {
-                                        handleReplyChange(activeThread.id, event.target.value);
-                                        autoResizeTextarea(event.currentTarget);
-                                    }}
-                                    onFocus={(event) => autoResizeTextarea(event.currentTarget)}
-                                    onBlur={(event) => {
-                                        if (!event.currentTarget.value.trim()) {
-                                            autoResizeTextarea(event.currentTarget);
-                                        }
-                                    }}
-                                    onKeyDown={(event) => {
-                                        if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing) {
-                                            return;
-                                        }
-                                        event.preventDefault();
-                                        if (isReplyDisabled) return;
-                                        void handleReplySubmit(activeThread.id);
-                                    }}
-                                    placeholder="Reply"
-                                    tone="cinematicDark"
-                                    variant="bare"
-                                    className="h-[26px] max-h-[120px] resize-none"
-                                />
-                                <div className="shrink-0">
-                                    <ShellIconButton
-                                        size="sm"
-                                        tone="cinematicDark"
-                                        shape="circle"
-                                        className={cn(
-                                            'h-[30px] w-[30px] rounded-full transition-colors',
-                                            isReplyButtonActiveVisual
-                                                ? 'bg-shell-dark-accent text-white hover:bg-shell-dark-accent-hover'
-                                                : 'bg-shell-dark-surface text-shell-dark-muted hover:bg-shell-dark-surface hover:text-shell-dark-muted'
-                                        )}
-                                        onClick={() => handleReplySubmit(activeThread.id)}
-                                        disabled={isReplyDisabled}
-                                        aria-label="Post reply"
-                                    >
-                                        {isReplyPosting ? (
-                                            <Loader2 size={13} className="animate-spin" />
-                                        ) : (
-                                            <ArrowUp size={13} />
-                                        )}
-                                    </ShellIconButton>
-                                </div>
-                            </div>
-                        </div>
+                        <CommentComposerInputRow
+                            value={replyText}
+                            onValueChange={(value) => handleReplyChange(activeThread.id, value)}
+                            onSubmit={() => handleReplySubmit(activeThread.id)}
+                            placeholder="Reply"
+                            submitAriaLabel="Post reply"
+                            disabled={isReplyDisabled}
+                            isSubmitting={isReplyPosting}
+                            tone={COMMENT_SURFACE_TONE}
+                        />
                     </div>
                 )}
             </div>
@@ -2352,7 +2240,10 @@ export const ShareView = () => {
                         ref={composerCardRef}
                         id="share-comment-popover"
                         aria-expanded={isComposerOpen}
-                        className="max-h-[72vh] overflow-y-auto thin-scrollbar"
+                        className={cn(
+                            'max-h-[72vh] overflow-y-auto thin-scrollbar',
+                            isComposerForNewComment ? 'comment-drop-composer-enter' : null
+                        )}
                     >
                         {content}
                     </div>
@@ -2391,6 +2282,7 @@ export const ShareView = () => {
                     data-side={placement?.side ?? 'right'}
                     className={cn(
                         'transition-all duration-150 ease-out',
+                        isComposerForNewComment ? 'comment-drop-composer-enter' : null,
                         placement?.side === 'left' ? 'origin-right' : 'origin-left'
                     )}
                 >
@@ -2755,7 +2647,7 @@ export const ShareView = () => {
                                         <div
                                             key={thread.id}
                                             className={cn(
-                                                'absolute -translate-x-1/2 pointer-events-none',
+                                                'absolute pointer-events-none',
                                                 isDraggingThisPin
                                                     ? 'z-[96]'
                                                     : canShowHoverPreview
@@ -2769,6 +2661,7 @@ export const ShareView = () => {
                                             style={{
                                                 left: `${effectivePin.x}%`,
                                                 top: `calc(${effectivePin.y}% - ${SHARE_COMMENT_PIN_TIP_OFFSET_PX}px)`,
+                                                transform: `translateX(-${SHARE_COMMENT_PIN_TIP_X_OFFSET_PX}px)`,
                                             }}
                                         >
                                             <ShellButton
@@ -2777,13 +2670,13 @@ export const ShareView = () => {
                                                 className={cn(
                                                     'relative rounded-none border-0 bg-transparent shadow-none transition-all duration-150 ease-out pointer-events-auto p-0 hover:bg-transparent focus-visible:ring-0 focus-visible:outline-none',
                                                     isSelected || isHovered ? 'scale-105' : 'scale-100',
-                                                    canDragPin ? 'cursor-grab' : 'cursor-pointer',
-                                                    isDraggingThisPin ? 'cursor-grabbing scale-110 drop-shadow-2xl' : '',
+                                                    isDraggingThisPin ? 'scale-110 drop-shadow-2xl' : '',
                                                     isResolvedThread && !isSelected ? 'opacity-90' : ''
                                                 )}
                                                 style={{
                                                     width: SHARE_COMMENT_PIN_WIDTH_PX,
                                                     height: SHARE_COMMENT_PIN_HEIGHT_PX,
+                                                    cursor: CANVAS_DEFAULT_CURSOR,
                                                 }}
                                                 data-comment-pin-id={thread.id}
                                                 onPointerDown={(event) =>
@@ -2836,18 +2729,29 @@ export const ShareView = () => {
                                                     name={root.author_name}
                                                     avatarUrl={root.author_avatar_url}
                                                     tone={pinTone}
+                                                    surfaceTone={COMMENT_SURFACE_TONE}
                                                 />
                                             </ShellButton>
 
-                                            <ShellButton
-                                                variant="ghost"
-                                                className={cn(
-                                                    'absolute left-[44px] top-1/2 -translate-y-1/2 h-auto min-w-[220px] max-w-[286px] rounded-[24px] border border-shell-dark-border/18 bg-shell-dark-panel text-shell-dark-text hover:text-shell-dark-text hover:bg-shell-dark-panel px-3.5 py-3 text-left shadow-[0_20px_48px_rgb(0_0_0/0.38)] justify-start pointer-events-auto transition-all duration-150 ease-out origin-left focus-visible:ring-0 focus-visible:outline-none z-10',
-                                                    canShowHoverPreview
-                                                        ? 'opacity-100 translate-x-0 scale-100'
-                                                        : 'opacity-0 -translate-x-2 scale-95 pointer-events-none'
-                                                )}
-                                                style={{ top: SHARE_COMMENT_PIN_HEAD_CENTER_OFFSET_PX }}
+                                            <CommentThreadHoverPreview
+                                                visible={canShowHoverPreview}
+                                                ariaLabel={`Preview thread by ${root.author_name}`}
+                                                authorName={root.author_name}
+                                                authorAvatarUrl={root.author_avatar_url}
+                                                isResolved={isResolvedThread}
+                                                relativeTimeLabel={formatCommentRelativeTime(thread.latestActivityAt)}
+                                                timeTitle={formatCommentDate(thread.latestActivityAt)}
+                                                previewText={getPreviewText(root.message)}
+                                                detail={entry.detail}
+                                                replyCount={thread.replies.length}
+                                                tone={COMMENT_SURFACE_TONE}
+                                                style={{
+                                                    left:
+                                                        SHARE_COMMENT_PIN_WIDTH_PX -
+                                                        SHARE_COMMENT_PIN_TIP_X_OFFSET_PX +
+                                                        COMMENT_THREAD_HOVER_PREVIEW_GAP_PX,
+                                                    top: SHARE_COMMENT_PIN_HEAD_CENTER_OFFSET_PX,
+                                                }}
                                                 onClick={(event) => {
                                                     event.stopPropagation();
                                                     handleSelectThread(thread.id);
@@ -2871,64 +2775,28 @@ export const ShareView = () => {
                                                         prev === thread.id ? null : prev
                                                     );
                                                 }}
-                                                aria-label={`Preview thread by ${root.author_name}`}
-                                                tabIndex={canShowHoverPreview ? 0 : -1}
-                                                aria-hidden={!canShowHoverPreview}
-                                            >
-                                                <div className="flex items-start gap-2.5 w-full">
-                                                    {renderAvatar({
-                                                        name: root.author_name,
-                                                        avatarUrl: root.author_avatar_url,
-                                                        size: 'w-7 h-7',
-                                                        textSize: 'text-[9px]',
-                                                    })}
-                                                    <div className="min-w-0">
-                                                        <div className="flex items-center gap-1.5">
-                                                            <span className="text-xs font-semibold text-shell-dark-text truncate">
-                                                                {root.author_name}
-                                                            </span>
-                                                            {isResolvedThread ? renderResolvedBadge() : null}
-                                                            <span
-                                                                className="text-[11px] text-shell-dark-muted shrink-0"
-                                                        title={formatCommentDate(thread.latestActivityAt)}
-                                                            >
-                                                                {formatCommentRelativeTime(thread.latestActivityAt)}
-                                                            </span>
-                                                        </div>
-                                                        <p className="mt-0.5 text-xs text-shell-dark-text/90 truncate max-w-[200px]">
-                                                            {getPreviewText(root.message)}
-                                                        </p>
-                                                        {entry.detail ? (
-                                                            <p className="mt-0.5 text-[10px] text-shell-dark-muted max-w-[200px] truncate">
-                                                                {entry.detail}
-                                                            </p>
-                                                        ) : null}
-                                                        {thread.replies.length > 0 ? (
-                                                            <p className="mt-0.5 text-[10px] text-shell-dark-accent">
-                                                                {thread.replies.length}{' '}
-                                                                {thread.replies.length === 1 ? 'reply' : 'replies'}
-                                                            </p>
-                                                        ) : null}
-                                                    </div>
-                                                </div>
-                                            </ShellButton>
+                                            />
                                         </div>
                                     );
                                 })}
 
                                 {pendingPin ? (
                                     <div
-                                        className="absolute -translate-x-1/2 z-50"
+                                        className="absolute z-50"
                                         style={{
                                             left: `${pendingPin.x}%`,
                                             top: `calc(${pendingPin.y}% - ${SHARE_COMMENT_PIN_TIP_OFFSET_PX}px)`,
+                                            transform: `translateX(-${SHARE_COMMENT_PIN_TIP_X_OFFSET_PX}px)`,
                                         }}
                                     >
-                                        <ShareCommentPin
-                                            name="New comment"
-                                            tone="pending"
-                                            pending={true}
-                                        />
+                                        <div className="comment-drop-pin-enter">
+                                            <ShareCommentPin
+                                                name="New comment"
+                                                tone="pending"
+                                                pending={true}
+                                                surfaceTone={COMMENT_SURFACE_TONE}
+                                            />
+                                        </div>
                                     </div>
                                 ) : null}
                             </div>
