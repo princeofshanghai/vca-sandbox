@@ -26,6 +26,7 @@ import {
 } from './canvasCommentsLayout';
 import { usePreventBrowserPinchZoom } from '@/hooks/usePreventBrowserPinchZoom';
 import type { CanvasCommentsController } from './useCanvasCommentsController';
+import type { CommentSurfaceTone } from '@/components/comments/CommentPrimitives';
 
 interface CanvasCommentsDrawerProps {
     isOpen: boolean;
@@ -33,28 +34,50 @@ interface CanvasCommentsDrawerProps {
     comments: CanvasCommentsController;
     onRequestSignIn?: () => void;
     desktopPresentation?: 'drawer' | 'card';
+    tone?: CommentSurfaceTone;
 }
 
 const renderAvatar = ({
     name,
     avatarUrl,
+    tone = 'default',
 }: {
     name: string;
     avatarUrl?: string | null;
+    tone?: CommentSurfaceTone;
 }) => (
-    <span className="h-7 w-7 shrink-0 overflow-hidden rounded-full border border-shell-border/70 bg-shell-bg">
+    <span
+        className={cn(
+            'h-7 w-7 shrink-0 overflow-hidden rounded-full border',
+            tone === 'cinematicDark'
+                ? 'border-shell-dark-border/70 bg-shell-dark-surface'
+                : 'border-shell-border/70 bg-shell-bg'
+        )}
+    >
         {avatarUrl ? (
             <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
         ) : (
-            <span className="flex h-full w-full items-center justify-center text-[10px] font-semibold text-shell-muted">
+            <span
+                className={cn(
+                    'flex h-full w-full items-center justify-center text-[10px] font-semibold',
+                    tone === 'cinematicDark' ? 'text-shell-dark-muted' : 'text-shell-muted'
+                )}
+            >
                 {getInitialsFromName(name)}
             </span>
         )}
     </span>
 );
 
-const ResolvedBadge = () => (
-    <span className="rounded-full border border-shell-border/70 bg-shell-bg px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.08em] text-shell-muted">
+const ResolvedBadge = ({ tone = 'default' }: { tone?: CommentSurfaceTone }) => (
+    <span
+        className={cn(
+            'rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.08em]',
+            tone === 'cinematicDark'
+                ? 'border-shell-dark-border/70 bg-shell-dark-surface text-shell-dark-muted'
+                : 'border-shell-border/70 bg-shell-bg text-shell-muted'
+        )}
+    >
         Resolved
     </span>
 );
@@ -65,6 +88,7 @@ export function CanvasCommentsDrawer({
     comments,
     onRequestSignIn,
     desktopPresentation = 'drawer',
+    tone = 'default',
 }: CanvasCommentsDrawerProps) {
     const [shouldRender, setShouldRender] = useState(isOpen);
     const drawerRef = useRef<HTMLDivElement | null>(null);
@@ -85,35 +109,49 @@ export function CanvasCommentsDrawer({
 
     const emptyState = getCanvasCommentsEmptyState(comments.filter);
     const isDesktopCard = desktopPresentation === 'card';
-    const panelSurfaceClass = isDesktopCard ? 'bg-shell-bg/95' : 'bg-shell-surface';
-    const emptyStateSurfaceClass = isDesktopCard ? 'bg-shell-surface' : 'bg-shell-bg';
+    const isDarkTone = tone === 'cinematicDark';
+    const panelSurfaceClass = isDarkTone
+        ? 'bg-shell-dark-panel/95'
+        : isDesktopCard
+            ? 'bg-shell-bg/95'
+            : 'bg-shell-surface';
+    const emptyStateSurfaceClass = isDarkTone
+        ? 'bg-shell-dark-surface/35'
+        : isDesktopCard
+            ? 'bg-shell-surface'
+            : 'bg-shell-bg';
+    const borderClass = isDarkTone ? 'border-shell-dark-border/70' : 'border-shell-border/70';
+    const titleTextClass = isDarkTone ? 'text-shell-dark-text' : 'text-shell-text';
+    const mutedTextClass = isDarkTone ? 'text-shell-dark-muted' : 'text-shell-muted';
+    const replyAccentClass = isDarkTone ? 'text-shell-dark-accent' : 'text-shell-accent';
 
     if (!shouldRender) return null;
 
     const panelContent = (
         <>
             <div className={cn(
-                'h-14 border-b border-shell-border/70 flex items-center justify-between pl-2 pr-4 shrink-0 z-20 sticky top-0 backdrop-blur-sm',
+                'h-14 border-b flex items-center justify-between pl-2 pr-4 shrink-0 z-20 sticky top-0 backdrop-blur-sm',
+                borderClass,
                 panelSurfaceClass
             )}>
                 <div className="flex items-center gap-2">
-                    <ShellIconButton onClick={onClose} aria-label="Close comments panel">
+                    <ShellIconButton onClick={onClose} aria-label="Close comments panel" tone={tone}>
                         <X size={20} />
                     </ShellIconButton>
-                    <span className="text-sm font-medium text-shell-text">Comments</span>
+                    <span className={cn('text-sm font-medium', titleTextClass)}>Comments</span>
                 </div>
 
                 <ShellSelect
                     value={comments.filter}
                     onValueChange={(value) => comments.setFilter(value as typeof comments.filter)}
                 >
-                    <ShellSelectTrigger size="compact" className="w-[96px]">
+                    <ShellSelectTrigger size="compact" tone={tone} className="w-[96px]">
                         <ShellSelectValue />
                     </ShellSelectTrigger>
-                    <ShellSelectContent className="min-w-[96px]">
-                        <ShellSelectItem size="compact" value="open">Open</ShellSelectItem>
-                        <ShellSelectItem size="compact" value="all">All</ShellSelectItem>
-                        <ShellSelectItem size="compact" value="resolved">Resolved</ShellSelectItem>
+                    <ShellSelectContent tone={tone} className="min-w-[96px]">
+                        <ShellSelectItem size="compact" tone={tone} value="open">Open</ShellSelectItem>
+                        <ShellSelectItem size="compact" tone={tone} value="all">All</ShellSelectItem>
+                        <ShellSelectItem size="compact" tone={tone} value="resolved">Resolved</ShellSelectItem>
                     </ShellSelectContent>
                 </ShellSelect>
             </div>
@@ -125,10 +163,16 @@ export function CanvasCommentsDrawer({
                             icon={<AlertCircle size={14} />}
                             title="Sign in required to write comments"
                             description="You can browse existing feedback here, but posting new comments requires a signed-in editor session."
+                            tone={tone}
                             action={onRequestSignIn ? (
                                 <ShellButton
                                     size="compact"
-                                    className="h-8 text-[11px]"
+                                    className={cn(
+                                        'h-8 text-[11px]',
+                                        isDarkTone
+                                            ? 'bg-shell-dark-accent text-shell-dark-text hover:bg-shell-dark-accent-hover'
+                                            : undefined
+                                    )}
                                     onClick={onRequestSignIn}
                                 >
                                     Sign in
@@ -143,21 +187,23 @@ export function CanvasCommentsDrawer({
                             variant="error"
                             title="Comments unavailable"
                             description={comments.error}
+                            tone={tone}
                         />
                     ) : null}
 
                     {comments.isLoading ? (
-                        <div className="flex h-48 items-center justify-center gap-2 text-xs text-shell-muted">
+                        <div className={cn('flex h-48 items-center justify-center gap-2 text-xs', mutedTextClass)}>
                             <Loader2 size={14} className="animate-spin" />
                             Loading comments...
                         </div>
                     ) : comments.visibleThreads.length === 0 ? (
                         <div className={cn(
-                            'rounded-xl border border-dashed border-shell-border/70 px-4 py-10 text-center',
+                            'rounded-xl border border-dashed px-4 py-10 text-center',
+                            borderClass,
                             emptyStateSurfaceClass
                         )}>
-                            <div className="text-sm font-medium text-shell-text">{emptyState.title}</div>
-                            <p className="mt-1 text-xs leading-relaxed text-shell-muted">
+                            <div className={cn('text-sm font-medium', titleTextClass)}>{emptyState.title}</div>
+                            <p className={cn('mt-1 text-xs leading-relaxed', mutedTextClass)}>
                                 {emptyState.description}
                             </p>
                         </div>
@@ -170,32 +216,34 @@ export function CanvasCommentsDrawer({
                                     <ShellSelectableRow
                                         key={thread.id}
                                         selected={isSelected}
+                                        tone={tone}
                                         onClick={() => comments.selectThread(thread.id, { reveal: true })}
                                     >
                                         {renderAvatar({
                                             name: thread.root.author_name,
                                             avatarUrl: thread.root.author_avatar_url,
+                                            tone,
                                         })}
 
                                         <div className="min-w-0 flex-1">
                                             <div className="mb-1 flex items-start justify-between gap-2">
-                                                <span className="truncate text-xs font-medium text-shell-text">
+                                                <span className={cn('truncate text-xs font-medium', titleTextClass)}>
                                                     {thread.root.author_name}
                                                 </span>
                                                 <div className="flex items-center gap-2 shrink-0">
-                                                    {thread.root.status === 'resolved' ? <ResolvedBadge /> : null}
-                                                    <span className="text-[10px] text-shell-muted">
+                                                    {thread.root.status === 'resolved' ? <ResolvedBadge tone={tone} /> : null}
+                                                    <span className={cn('text-[10px]', mutedTextClass)}>
                                                         {formatCommentRelativeTime(thread.latestActivityAt)}
                                                     </span>
                                                 </div>
                                             </div>
 
-                                            <p className="text-xs leading-relaxed text-shell-text/90 truncate">
+                                            <p className={cn('text-xs leading-relaxed truncate', isDarkTone ? 'text-shell-dark-text/90' : 'text-shell-text/90')}>
                                                 {getCommentExcerpt(thread.root.message)}
                                             </p>
 
                                             {thread.replies.length > 0 ? (
-                                                <p className="mt-1.5 text-[10px] text-shell-accent">
+                                                <p className={cn('mt-1.5 text-[10px]', replyAccentClass)}>
                                                     {thread.replies.length}{' '}
                                                     {thread.replies.length === 1 ? 'reply' : 'replies'}
                                                 </p>
@@ -228,7 +276,12 @@ export function CanvasCommentsDrawer({
                     >
                         <div
                             ref={drawerRef}
-                            className="w-[380px] h-full bg-shell-surface shadow-2xl flex flex-col border-l border-shell-border/70"
+                            className={cn(
+                                'w-[380px] h-full shadow-2xl flex flex-col border-l',
+                                isDarkTone
+                                    ? 'bg-shell-dark-panel/95 border-shell-dark-border/70'
+                                    : 'bg-shell-surface border-shell-border/70'
+                            )}
                         >
                             {panelContent}
                         </div>
@@ -256,7 +309,12 @@ export function CanvasCommentsDrawer({
                     >
                         <div
                             ref={desktopCardRef}
-                            className="h-full overflow-hidden rounded-2xl border border-shell-border/70 bg-shell-bg/95 shadow-[0_24px_56px_rgba(15,23,42,0.22)] backdrop-blur-sm flex flex-col"
+                            className={cn(
+                                'h-full overflow-hidden rounded-2xl border backdrop-blur-sm flex flex-col',
+                                isDarkTone
+                                    ? 'border-shell-dark-border/70 bg-shell-dark-panel/95 shadow-[0_24px_56px_rgba(0,0,0,0.34)]'
+                                    : 'border-shell-border/70 bg-shell-bg/95 shadow-[0_24px_56px_rgba(15,23,42,0.22)]'
+                            )}
                         >
                             {panelContent}
                         </div>

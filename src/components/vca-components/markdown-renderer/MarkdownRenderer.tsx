@@ -4,6 +4,7 @@ import {
     getVCAMarkdownWrapperClassName,
     type VCAMarkdownLinkMode,
     type VCAMarkdownSpacing,
+    type VCAMarkdownTextTone,
 } from './vcaMarkdownTheme';
 
 interface MarkdownRendererProps {
@@ -11,6 +12,7 @@ interface MarkdownRendererProps {
     className?: string;
     linkMode?: VCAMarkdownLinkMode;
     spacing?: VCAMarkdownSpacing;
+    textTone?: VCAMarkdownTextTone;
 }
 
 export function MarkdownRenderer({
@@ -18,6 +20,7 @@ export function MarkdownRenderer({
     className,
     linkMode = 'interactive',
     spacing = 'default',
+    textTone = 'default',
 }: MarkdownRendererProps) {
     if (!content) return null;
 
@@ -31,11 +34,11 @@ export function MarkdownRenderer({
         }
     );
 
-    const combinedClassName = getVCAMarkdownWrapperClassName(className);
+    const combinedClassName = getVCAMarkdownWrapperClassName(className, textTone);
 
     return (
         <div className={combinedClassName}>
-            <ReactMarkdown components={createVCAMarkdownComponents({ linkMode, spacing })}>
+            <ReactMarkdown components={createVCAMarkdownComponents({ linkMode, spacing, textTone })}>
                 {normalizedContent}
             </ReactMarkdown>
         </div>

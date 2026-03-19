@@ -3,24 +3,38 @@ import type { Components } from 'react-markdown';
 
 export type VCAMarkdownSpacing = 'default' | 'compact';
 export type VCAMarkdownLinkMode = 'interactive' | 'static';
+export type VCAMarkdownTextTone = 'default' | 'inherit';
 
 // Internal placeholder used when Studio needs link styling before a real destination exists.
 export const VCA_PENDING_LINK_HREF = 'https://vca-preview-link.invalid/';
 export const isPendingVCALinkHref = (href?: string | null) => href === VCA_PENDING_LINK_HREF;
 
-const baseTextClasses = 'font-vca-text text-vca-small-open text-vca-text';
-const boldTextClasses = 'font-vca-text text-vca-small-bold-open text-vca-text';
 const defaultParagraphSpacingClasses = 'mb-2 last:mb-0';
 const compactParagraphSpacingClasses = 'mb-1.5 last:mb-0';
 const defaultListSpacingClasses = 'my-2 space-y-1.5';
 const compactListSpacingClasses = 'my-1.5 space-y-1';
 
-export const getVCAMarkdownWrapperClassName = (className?: string) =>
-    className ? `${baseTextClasses} ${className}` : baseTextClasses;
+const baseTextClassesByTone: Record<VCAMarkdownTextTone, string> = {
+    default: 'font-vca-text text-vca-small-open text-vca-text',
+    inherit: 'font-vca-text text-vca-small-open text-current',
+};
+
+const boldTextClassesByTone: Record<VCAMarkdownTextTone, string> = {
+    default: 'font-vca-text text-vca-small-bold-open text-vca-text',
+    inherit: 'font-vca-text text-vca-small-bold-open text-current',
+};
+
+export const getVCAMarkdownWrapperClassName = (
+    className?: string,
+    textTone: VCAMarkdownTextTone = 'default'
+) => {
+    const baseTextClasses = baseTextClassesByTone[textTone];
+    return className ? `${baseTextClasses} ${className}` : baseTextClasses;
+};
 
 export const vcaRichTextEditorContentClassName = [
     'max-w-none outline-none min-h-full p-2.5',
-    baseTextClasses,
+    baseTextClassesByTone.default,
     '[&_.is-editor-empty:first-child::before]:pointer-events-none',
     '[&_.is-editor-empty:first-child::before]:float-left',
     '[&_.is-editor-empty:first-child::before]:h-0',
@@ -43,16 +57,31 @@ export const vcaRichTextEditorContentClassName = [
 export function createVCAMarkdownComponents({
     linkMode = 'interactive',
     spacing = 'default',
+    textTone = 'default',
 }: {
     linkMode?: VCAMarkdownLinkMode;
     spacing?: VCAMarkdownSpacing;
+    textTone?: VCAMarkdownTextTone;
 } = {}): Components {
     const paragraphSpacingClasses =
         spacing === 'compact' ? compactParagraphSpacingClasses : defaultParagraphSpacingClasses;
     const listSpacingClasses =
         spacing === 'compact' ? compactListSpacingClasses : defaultListSpacingClasses;
-    const staticLinkClasses = 'font-vca-text text-vca-small-open font-semibold text-vca-link no-underline';
-    const interactiveLinkClasses = 'font-vca-text text-vca-small-open text-vca-link hover:text-vca-link-hover hover:underline';
+    const baseTextClasses = baseTextClassesByTone[textTone];
+    const boldTextClasses = boldTextClassesByTone[textTone];
+    const orderedListMarkerClasses =
+        textTone === 'inherit'
+            ? '[&>li::marker]:font-vca-text [&>li::marker]:text-vca-small-open [&>li::marker]:text-current [&>li::marker]:font-normal'
+            : '[&>li::marker]:font-vca-text [&>li::marker]:text-vca-small-open [&>li::marker]:text-vca-text [&>li::marker]:font-normal';
+    const unorderedListMarkerClass = textTone === 'inherit' ? '[&>li::marker]:text-current' : '[&>li::marker]:text-vca-text';
+    const staticLinkClasses =
+        textTone === 'inherit'
+            ? 'font-vca-text text-vca-small-open font-semibold text-current no-underline'
+            : 'font-vca-text text-vca-small-open font-semibold text-vca-link no-underline';
+    const interactiveLinkClasses =
+        textTone === 'inherit'
+            ? 'font-vca-text text-vca-small-open text-current hover:underline'
+            : 'font-vca-text text-vca-small-open text-vca-link hover:text-vca-link-hover hover:underline';
 
     return {
         a: ({ node: _node, children, ...props }) => {
@@ -102,12 +131,12 @@ export function createVCAMarkdownComponents({
         em: ({ node: _node, ...props }) => <em {...props} className="italic" />,
         i: ({ node: _node, ...props }) => <em {...props} className="italic" />,
         ul: ({ node: _node, ...props }) => (
-            <ul {...props} className={`${baseTextClasses} list-disc pl-4 ${listSpacingClasses}`} />
+            <ul {...props} className={`${baseTextClasses} list-disc pl-4 ${listSpacingClasses} ${unorderedListMarkerClass}`} />
         ),
         ol: ({ node: _node, ...props }) => (
             <ol
                 {...props}
-                className={`${baseTextClasses} list-decimal pl-5 ${listSpacingClasses} [&>li::marker]:font-vca-text [&>li::marker]:text-vca-small-open [&>li::marker]:text-vca-text [&>li::marker]:font-normal`}
+                className={`${baseTextClasses} list-decimal pl-5 ${listSpacingClasses} ${orderedListMarkerClasses}`}
             />
         ),
         li: ({ node: _node, ...props }) => (

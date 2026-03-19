@@ -31,7 +31,8 @@ const CompactRichTextPreview = ({
             content={content}
             linkMode="static"
             spacing="compact"
-            className="pointer-events-none [&_blockquote]:my-2 [&_blockquote]:border-l-2 [&_blockquote]:border-shell-border [&_blockquote]:pl-3 [&_blockquote]:text-shell-muted-strong [&_code]:rounded-sm [&_code]:bg-shell-bg [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[11px]"
+            textTone="inherit"
+            className="pointer-events-none text-shell-text [&_a]:!text-shell-accent [&_blockquote]:my-2 [&_blockquote]:border-l-2 [&_blockquote]:border-shell-node-card-divider [&_blockquote]:pl-3 [&_blockquote]:text-shell-muted-strong [&_code]:rounded-sm [&_code]:bg-shell-bg/80 [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[11px]"
         />
     </div>
 );

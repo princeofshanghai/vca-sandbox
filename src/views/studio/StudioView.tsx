@@ -127,7 +127,7 @@ export const StudioView = () => {
                     onOpenCommentsPanel={handleOpenCommentsPanel}
                     isCommentModeActive={isCommentModeActive}
                     comments={areCanvasCommentsVisible ? canvasComments : null}
-                    commentSurfaceTone="default"
+                    commentSurfaceTone="cinematicDark"
                     showCommentsToggle={{
                         checked: showComments,
                         onCheckedChange: handleShowCommentsChange,
@@ -157,6 +157,7 @@ export const StudioView = () => {
                 }}
                 comments={canvasComments}
                 desktopPresentation="card"
+                tone="cinematicDark"
             />
         </div>
     );

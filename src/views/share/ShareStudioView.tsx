@@ -213,7 +213,7 @@ export const ShareStudioView = () => {
                 isCommentModeActive={isCommentModeActive}
                 isCommentsPanelOpen={isCommentsOpen}
                 comments={areCanvasCommentsVisible ? canvasComments : null}
-                commentSurfaceTone="default"
+                commentSurfaceTone="cinematicDark"
                 showCommentsToggle={{
                     checked: showComments,
                     onCheckedChange: handleShowCommentsChange,
@@ -243,6 +243,7 @@ export const ShareStudioView = () => {
                 comments={canvasComments}
                 onRequestSignIn={canvasComments.userCanComment ? undefined : handleCommentSignIn}
                 desktopPresentation="card"
+                tone="cinematicDark"
             />
 
             {isEmptyFlow ? (
