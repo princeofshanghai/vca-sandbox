@@ -5,11 +5,9 @@ import { FlowPreview, type FlowPreviewReviewPathChangeRequest, type FlowPreviewR
 import { Flow } from './types';
 import { PreviewSettingsMenu } from './PreviewSettingsMenu';
 import { PreviewHeaderActionButton } from './components/PreviewHeaderActionButton';
-import { ShareDialog } from './components/ShareDialog';
 import { RotateCcw, Split, X, Monitor, Smartphone } from 'lucide-react';
 import { ActionTooltip } from '../studio-canvas/components/ActionTooltip';
 import {
-    ShellButton,
     ShellIconButton,
     ShellPopoverContent,
     ShellSegmentedControl,
@@ -307,17 +305,6 @@ export function PreviewDrawer({
                                     )}
                                 </div>
                             </ActionTooltip>
-
-                            {/* Share Button */}
-                            <ShareDialog
-                                flow={activeFlow}
-                                enabledLinkTypes={['studio', 'prototype']}
-                                linkLabelOverrides={{ studio: 'Copy link' }}
-                            >
-                                <ShellButton size="compact" className="h-7 px-3 text-xs">
-                                    Share
-                                </ShellButton>
-                            </ShareDialog>
                         </div>
                     </div>
 

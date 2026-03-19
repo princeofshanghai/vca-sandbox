@@ -3,7 +3,7 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
 interface EditorSectionProps {
-    title?: string;
+    title?: ReactNode;
     children: ReactNode;
     defaultOpen?: boolean;
     className?: string;

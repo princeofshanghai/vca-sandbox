@@ -1,13 +1,10 @@
-import { useState } from 'react';
 import { Branch } from '@/views/studio/types';
 import { Split } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { ShellButton, ShellInput } from '@/components/shell';
+import { ShellButton } from '@/components/shell';
 import { getConditionPathLabel, getConditionQuestionLabel, getConditionRuleSummary } from '../conditionBranchLabels';
 
-export type ContextInterceptorResolution =
-    | { type: 'branch'; branchId: string }
-    | { type: 'value'; value: string };
+export type ContextInterceptorResolution = { type: 'branch'; branchId: string };
 
 interface ContextInterceptorMessageProps {
     question?: string;
@@ -26,16 +23,10 @@ export function ContextInterceptorMessage({
     className,
     showRuleSummary = false,
 }: ContextInterceptorMessageProps) {
-    const [customValue, setCustomValue] = useState('');
     const resolvedQuestionLabel = getConditionQuestionLabel(question);
     const questionLabel = resolvedQuestionLabel || 'Condition';
 
-    const relevantBranches = branches.filter((branch) => (
-        branch.isDefault ||
-        (branch.logic?.value !== undefined && String(branch.logic.value).trim() !== '')
-    ));
-
-    const pathChoices = relevantBranches.map((branch) => {
+    const pathChoices = branches.map((branch) => {
         const isDefault = !!branch.isDefault;
         const pathLabel = getConditionPathLabel(branch);
         const ruleSummary = getConditionRuleSummary(branch, variableName);
@@ -47,8 +38,6 @@ export function ContextInterceptorMessage({
             ruleSummary
         };
     });
-
-    const shouldShowInputFirst = pathChoices.length === 0;
 
     return (
         <div className={cn('animate-in fade-in slide-in-from-bottom-2 duration-300', className)}>
@@ -63,62 +52,28 @@ export function ContextInterceptorMessage({
                 </div>
 
                 <div className="space-y-2">
-                    {pathChoices.length > 0 && (
-                        <div className="max-h-[220px] space-y-2 overflow-y-auto pr-1 thin-scrollbar">
-                            {pathChoices.map(({ id, pathLabel, ruleSummary, isDefault }) => (
-                                <ShellButton
-                                    key={id}
-                                    variant="outline"
-                                    onClick={() => onResolve({ type: 'branch', branchId: id })}
-                                    className={cn(
-                                        'h-auto w-full items-start justify-start border-shell-border bg-shell-bg px-3 py-2.5 text-left shadow-sm hover:border-shell-node-condition/60 hover:bg-shell-surface',
-                                        isDefault ? 'text-shell-muted-strong' : 'text-shell-text'
-                                    )}
-                                >
-                                    <span className="w-full min-w-0">
-                                        <span className="block text-[13px] font-semibold leading-snug break-words">{pathLabel}</span>
-                                        {showRuleSummary && (
-                                            isDefault ? (
-                                                <span className="mt-0.5 block text-[12px] text-shell-muted-strong leading-snug break-words">
-                                                    {ruleSummary}
-                                                </span>
-                                            ) : (
-                                                <span className="mt-0.5 block text-[12px] leading-snug break-words text-shell-muted-strong">
-                                                    {ruleSummary || `${variableName} is value`}
-                                                </span>
-                                            )
-                                        )}
-                                    </span>
-                                </ShellButton>
-                            ))}
-                        </div>
-                    )}
-
-                    {shouldShowInputFirst && (
-                        <div className="flex gap-2 animate-in fade-in zoom-in-95">
-                            <ShellInput
-                                autoFocus
-                                size="compact"
-                                value={customValue}
-                                onChange={(e) => setCustomValue(e.target.value)}
-                                placeholder={resolvedQuestionLabel ? 'Enter a value to continue' : 'Enter a value'}
-                                className="text-xs focus-visible:border-shell-node-condition focus-visible:ring-shell-node-condition/20"
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && customValue.trim()) {
-                                        onResolve({ type: 'value', value: customValue.trim() });
-                                    }
-                                }}
-                            />
+                    <div className="max-h-[220px] space-y-2 overflow-y-auto pr-1 thin-scrollbar">
+                        {pathChoices.map(({ id, pathLabel, ruleSummary, isDefault }) => (
                             <ShellButton
-                                size="compact"
+                                key={id}
                                 variant="outline"
-                                onClick={() => customValue.trim() && onResolve({ type: 'value', value: customValue.trim() })}
-                                className="border-shell-node-condition/50 bg-shell-bg px-3 text-xs text-shell-text hover:bg-shell-surface"
+                                onClick={() => onResolve({ type: 'branch', branchId: id })}
+                                className={cn(
+                                    'h-auto w-full items-start justify-start border-shell-border bg-shell-bg px-3 py-2.5 text-left shadow-sm hover:border-shell-node-condition/60 hover:bg-shell-surface',
+                                    isDefault ? 'text-shell-muted-strong' : 'text-shell-text'
+                                )}
                             >
-                                Continue
+                                <span className="w-full min-w-0">
+                                    <span className="block text-[13px] font-semibold leading-snug break-words">{pathLabel}</span>
+                                    {showRuleSummary && ruleSummary && (
+                                        <span className="mt-0.5 block text-[12px] leading-snug break-words text-shell-muted-strong">
+                                            {ruleSummary}
+                                        </span>
+                                    )}
+                                </span>
                             </ShellButton>
-                        </div>
-                    )}
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>

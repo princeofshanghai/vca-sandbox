@@ -153,6 +153,7 @@ export function FloatingToolbar({
 
     return (
         <div
+            data-floating-toolbar="true"
             data-canvas-shell-zoom-blocker="true"
             className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 p-1.5 bg-shell-bg dark:bg-shell-surface-subtle rounded-xl shadow-xl dark:shadow-[0_14px_32px_rgb(0_0_0/0.26)] border border-shell-border/70 dark:border-shell-border/55 backdrop-blur-sm"
         >

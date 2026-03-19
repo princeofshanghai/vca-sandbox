@@ -318,7 +318,13 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
 
                 <div className={`w-full h-full px-7 py-7 ${conditionSurfaceClassName} rounded-lg`}>
                     <div className="mb-5 px-1">
-                        <p className={`text-[15px] font-semibold leading-snug ${questionLabel ? 'text-shell-text' : 'text-shell-muted'}`}>
+                        <p
+                            className={
+                                questionLabel
+                                    ? 'text-[15px] font-semibold leading-snug text-shell-text'
+                                    : 'text-sm font-medium leading-snug text-shell-muted'
+                            }
+                        >
                             {questionLabel || CONDITION_QUESTION_PLACEHOLDER}
                         </p>
                     </div>

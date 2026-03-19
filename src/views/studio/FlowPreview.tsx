@@ -367,9 +367,7 @@ const PreviewContent = ({
         handleSelectionItemClick,
         handleConfirmationAction,
         handleCheckboxAction,
-        resolveInterceptor,
         resolveInterceptorBranch,
-        switchConditionPath,
         switchConditionPathBranch,
         lastConditionSelection,
         pathSelections,
@@ -678,38 +676,19 @@ const PreviewContent = ({
     const handleOverlayResolve = (resolution: ContextInterceptorResolution) => {
         if (!overlaySelection) return;
 
-        if (resolution.type === 'branch') {
-            if (overlaySelection.mode === 'interceptor') {
-                resolveInterceptorBranch(
-                    overlaySelection.stepId,
-                    resolution.branchId,
-                    overlaySelection.branches,
-                    overlaySelection.interceptorId
-                );
-            } else {
-                switchConditionPathBranch(
-                    overlaySelection.stepId,
-                    resolution.branchId,
-                    overlaySelection.branches
-                );
-            }
+        if (overlaySelection.mode === 'interceptor') {
+            resolveInterceptorBranch(
+                overlaySelection.stepId,
+                resolution.branchId,
+                overlaySelection.branches,
+                overlaySelection.interceptorId
+            );
         } else {
-            if (overlaySelection.mode === 'interceptor') {
-                resolveInterceptor(
-                    overlaySelection.stepId,
-                    overlaySelection.variableName,
-                    resolution.value,
-                    overlaySelection.branches,
-                    overlaySelection.interceptorId
-                );
-            } else {
-                switchConditionPath(
-                    overlaySelection.stepId,
-                    overlaySelection.variableName,
-                    resolution.value,
-                    overlaySelection.branches
-                );
-            }
+            switchConditionPathBranch(
+                overlaySelection.stepId,
+                resolution.branchId,
+                overlaySelection.branches
+            );
         }
 
         setIsPathPanelExpanded(false);

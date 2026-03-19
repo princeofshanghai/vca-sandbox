@@ -475,27 +475,6 @@ export const useSmartFlowEngine = ({
         return selectedBranchId;
     };
 
-    const getPreferredReviewBranchId = (branches: Branch[]) =>
-        branches.find((branch) => !branch.isDefault)?.id ||
-        branches.find((branch) => branch.isDefault)?.id ||
-        branches[0]?.id ||
-        '';
-
-    const getMergedSelectionVariables = (
-        selections: ConditionPathSelection[],
-        extraSelection?: ConditionPathSelection
-    ) => {
-        const merged = { ...(variables || {}) };
-        const selectionsToApply = extraSelection ? mergePathSelections(selections, extraSelection) : selections;
-
-        selectionsToApply.forEach((selection) => {
-            if (selection.selectedValue === '__USE_DEFAULT__') return;
-            merged[selection.variableName] = selection.selectedValue;
-        });
-
-        return merged;
-    };
-
     const getConditionSelectionMeta = (
         stepId: string,
         variableName: string,
@@ -823,75 +802,16 @@ export const useSmartFlowEngine = ({
             } else if (nextNode.type === 'user-turn') {
                 continue;
             } else if (nextNode.type === 'condition') {
-                // Evaluate Condition
                 const branches = (nextNode as Condition).branches || [];
-                const effectiveVariables = getMergedSelectionVariables(pathSelectionsRef.current);
-
-                // CHECK: Do any branches reference a variable that's undefined?
-                const undefinedVariable = branches.find(b => {
-                    if (b.isDefault) return false;
-                    if (b.logic?.variable && effectiveVariables[b.logic.variable] === undefined) {
-                        return true;
-                    }
-                    return false;
-                });
-
-                if (undefinedVariable?.logic?.variable) {
-                    if (reviewMode) {
-                        const selectedBranchId = getPreferredReviewBranchId(branches);
-                        const selectedValue =
-                            branches.find((branch) => branch.id === selectedBranchId)?.logic?.value ??
-                            '__USE_DEFAULT__';
-                        const selectionMeta = getConditionSelectionMetaForBranch({
-                            stepId: nextNode.id,
-                            branches,
-                            selectedBranchId,
-                            selectedValue,
-                            variableName: getConditionVariableName(branches, nextNode.id),
-                        });
-                        const nextSelections = mergePathSelections(pathSelectionsRef.current, selectionMeta);
-
-                        setLastConditionSelection(selectionMeta);
-                        pathSelectionsRef.current = nextSelections;
-                        setPathSelections(nextSelections);
-                        nodesToAdd.push(buildConditionSelectionStep(selectionMeta));
-                        currentHandle = selectedBranchId || undefined;
-                        continue;
-                    }
-
-                    // PAUSE: Trigger Interceptor
-                    const interceptorStep: HistoryStep = {
-                        id: `interceptor-${nextNode.id}`,
-                        type: 'interceptor',
-                        variableName: undefinedVariable.logic.variable,
-                        branches: branches,
-                        stepId: nextNode.id,
-                    };
-                    nodesToAdd.push(interceptorStep);
-                    break;
-                }
-
-                // No undefined variables, proceed normally
-                const selectedBranchId = reviewMode
-                    ? getConditionBranch(branches, effectiveVariables, inputForBinding) || getPreferredReviewBranchId(branches)
-                    : getConditionBranch(branches, effectiveVariables, inputForBinding);
-                const selectedValue =
-                    branches.find((branch) => branch.id === selectedBranchId)?.logic?.value ??
-                    '__USE_DEFAULT__';
-                const selectionMeta = getConditionSelectionMetaForBranch({
-                    stepId: nextNode.id,
+                const interceptorStep: HistoryStep = {
+                    id: `interceptor-${nextNode.id}`,
+                    type: 'interceptor',
+                    variableName: getConditionVariableName(branches, nextNode.id),
                     branches,
-                    selectedBranchId: selectedBranchId || '',
-                    selectedValue,
-                });
-
-                setLastConditionSelection(selectionMeta);
-                const nextSelections = mergePathSelections(pathSelectionsRef.current, selectionMeta);
-                pathSelectionsRef.current = nextSelections;
-                setPathSelections(nextSelections);
-                nodesToAdd.push(buildConditionSelectionStep(selectionMeta));
-
-                currentHandle = selectedBranchId || undefined;
+                    stepId: nextNode.id,
+                };
+                nodesToAdd.push(interceptorStep);
+                break;
             }
         }
 

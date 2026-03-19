@@ -35,6 +35,8 @@ interface StudioCardProps {
     outputHandleOnClick?: (event: React.MouseEvent) => void;
     /** Whether to allow content to overflow (e.g. for inner handles) */
     overflowVisible?: boolean;
+    /** When true, collapse the body chrome if there is no body content */
+    compactWhenBodyEmpty?: boolean;
     /** Additional classes for the root element */
     className?: string;
 }
@@ -56,7 +58,8 @@ export const StudioCard = memo(({
     outputHandleOnClick,
     className,
     isPlaceholder = false,
-    overflowVisible = false
+    overflowVisible = false,
+    compactWhenBodyEmpty = false,
 }: StudioCardProps) => {
     // Theme configurations
     const themes = {
@@ -90,6 +93,8 @@ export const StudioCard = memo(({
     };
 
     const activeTheme = themes[theme];
+    const hasBodyContent = children !== null && children !== undefined && children !== false;
+    const shouldUseCompactLayout = compactWhenBodyEmpty && !isPlaceholder && !hasBodyContent;
 
     return (
         <div
@@ -125,7 +130,14 @@ export const StudioCard = memo(({
             <div className={cn("flex flex-col w-full h-full rounded-[inherit]", overflowVisible ? "overflow-visible" : "overflow-hidden")}>
                 {/* Header - Only show if NOT a placeholder */}
                 {!isPlaceholder && (
-                    <div className="flex items-center gap-2 p-3 pb-2 border-b border-shell-node-card-divider bg-shell-node-card-surface rounded-t-[inherit]">
+                    <div
+                        className={cn(
+                            "flex items-center gap-2 bg-shell-node-card-surface",
+                            shouldUseCompactLayout
+                                ? "rounded-[inherit] p-3"
+                                : "rounded-t-[inherit] border-b border-shell-node-card-divider p-3 pb-2"
+                        )}
+                    >
                         {icon && (
                             <span className={cn("flex-shrink-0", selected ? activeTheme.selectedIconColor : activeTheme.iconColor)}>
                                 {icon}
@@ -138,27 +150,29 @@ export const StudioCard = memo(({
                 )}
 
                 {/* Body */}
-                <div
-                    className={cn(
-                        "w-full bg-shell-node-card-surface p-3",
-                        isPlaceholder ? "rounded-[inherit]" : "rounded-b-[inherit] pt-2"
-                    )}
-                >
-                    {isPlaceholder ? (
-                        <div className="flex items-center gap-2">
-                            {icon && (
-                                <span className="flex-shrink-0 text-shell-muted">
-                                    {icon}
+                {!shouldUseCompactLayout && (
+                    <div
+                        className={cn(
+                            "w-full bg-shell-node-card-surface p-3",
+                            isPlaceholder ? "rounded-[inherit]" : "rounded-b-[inherit] pt-2"
+                        )}
+                    >
+                        {isPlaceholder ? (
+                            <div className="flex items-center gap-2">
+                                {icon && (
+                                    <span className="flex-shrink-0 text-shell-muted">
+                                        {icon}
+                                    </span>
+                                )}
+                                <span className="text-sm font-medium text-shell-muted">
+                                    {title}
                                 </span>
-                            )}
-                            <span className="text-sm font-medium text-shell-muted">
-                                {title}
-                            </span>
-                        </div>
-                    ) : (
-                        children
-                    )}
-                </div>
+                            </div>
+                        ) : (
+                            children
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Output Handle */}

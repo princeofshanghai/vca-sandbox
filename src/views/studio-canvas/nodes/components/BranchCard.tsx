@@ -39,7 +39,7 @@ export const BranchCard = memo(forwardRef<HTMLDivElement, BranchCardProps>(({
                         className="text-sm leading-snug break-words text-shell-muted-strong"
                         title={ruleSummary || undefined}
                     >
-                        {ruleSummary || 'Used if nothing else matches'}
+                        {ruleSummary || 'Use when none of the others match'}
                     </div>
                 </div>
             );
@@ -55,13 +55,17 @@ export const BranchCard = memo(forwardRef<HTMLDivElement, BranchCardProps>(({
             );
         }
 
+        if (!ruleSummary) {
+            return null;
+        }
+
         return (
             <div className="flex flex-col gap-1">
                 <div
-                    className={`text-sm leading-snug break-words ${ruleSummary ? 'text-shell-muted-strong' : 'text-shell-muted'}`}
-                    title={ruleSummary || undefined}
+                    className="text-sm leading-snug break-words text-shell-muted-strong"
+                    title={ruleSummary}
                 >
-                    {ruleSummary || 'Choose variable + value'}
+                    {ruleSummary}
                 </div>
             </div>
         );
@@ -84,6 +88,7 @@ export const BranchCard = memo(forwardRef<HTMLDivElement, BranchCardProps>(({
                 showOutputHandle={true}
                 outputHandleId={branch.id}
                 outputHandleOffsetPx={CARD_EDGE_OUTPUT_HANDLE_OFFSET_PX}
+                compactWhenBodyEmpty={true}
             >
                 {renderContent()}
             </StudioCard>

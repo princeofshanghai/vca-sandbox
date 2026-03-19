@@ -251,6 +251,18 @@ type SafariGestureEventLike = Event & {
     scale?: number;
 };
 
+const FLOATING_TOOLBAR_SELECTOR = '[data-floating-toolbar="true"]';
+const FLOATING_TOOLBAR_GAP_PX = 24;
+const FLOATING_TOOLBAR_FALLBACK_BOTTOM_OFFSET_PX = 24;
+const FLOATING_TOOLBAR_FALLBACK_HEIGHT_PX = 56;
+const TOOLBAR_NODE_PLACEMENT_PADDING_PX = 16;
+const TOOLBAR_NODE_ESTIMATED_DIMENSIONS: Record<ToolbarPlacementType, { width: number; height: number }> = {
+    turn: { width: 360, height: 48 },
+    'user-turn': { width: 280, height: 64 },
+    condition: { width: 280, height: 220 },
+    note: { width: 300, height: 112 },
+};
+
 const COMMENT_POPUP_EDGE_PADDING_PX = 12;
 const COMMENT_POPUP_NEW_WIDTH_PX = 320;
 const COMMENT_POPUP_THREAD_WIDTH_PX = 360;
@@ -1158,6 +1170,46 @@ function CanvasEditorInner({
             lastModified: Date.now(),
         });
     }, [applyFlowUpdate, focusNodeWithToolbar]);
+
+    const getFloatingToolbarNodePlacement = useCallback((type: ToolbarPlacementType) => {
+        const canvasRect = canvasAreaRef.current?.getBoundingClientRect();
+        if (!canvasRect) {
+            const fallbackSteps = flowRef.current.steps?.length || 0;
+            return { x: 100, y: 100 + fallbackSteps * 50 };
+        }
+
+        const toolbarRect = canvasAreaRef.current
+            ?.querySelector<HTMLElement>(FLOATING_TOOLBAR_SELECTOR)
+            ?.getBoundingClientRect();
+        const estimatedNodeSize = TOOLBAR_NODE_ESTIMATED_DIMENSIONS[type];
+        const toolbarTop = toolbarRect?.top
+            ?? (canvasRect.bottom - FLOATING_TOOLBAR_FALLBACK_BOTTOM_OFFSET_PX - FLOATING_TOOLBAR_FALLBACK_HEIGHT_PX);
+        const maxLeft = Math.max(
+            canvasRect.left + TOOLBAR_NODE_PLACEMENT_PADDING_PX,
+            canvasRect.right - estimatedNodeSize.width - TOOLBAR_NODE_PLACEMENT_PADDING_PX
+        );
+        const maxTop = Math.max(
+            canvasRect.top + TOOLBAR_NODE_PLACEMENT_PADDING_PX,
+            canvasRect.bottom - estimatedNodeSize.height - TOOLBAR_NODE_PLACEMENT_PADDING_PX
+        );
+
+        const left = Math.min(
+            Math.max(
+                canvasRect.left + ((canvasRect.width - estimatedNodeSize.width) / 2),
+                canvasRect.left + TOOLBAR_NODE_PLACEMENT_PADDING_PX
+            ),
+            maxLeft
+        );
+        const top = Math.min(
+            Math.max(
+                toolbarTop - FLOATING_TOOLBAR_GAP_PX - estimatedNodeSize.height,
+                canvasRect.top + TOOLBAR_NODE_PLACEMENT_PADDING_PX
+            ),
+            maxTop
+        );
+
+        return screenToFlowPosition({ x: left, y: top });
+    }, [screenToFlowPosition]);
 
     const updatePendingToolbarPlacementPreview = useCallback((client: { x: number; y: number }) => {
         lastCanvasPointerClientRef.current = client;
@@ -3585,10 +3637,10 @@ function CanvasEditorInner({
                     {onToggleComments ? (
                         <FloatingToolbar
                             showCreationTools={floatingToolbarVariant === 'full'}
-                            onAddAiTurn={() => createToolbarNodeAtPosition('turn', { x: 100, y: 100 + (flow.steps?.length || 0) * 50 })}
-                            onAddUserTurn={() => createToolbarNodeAtPosition('user-turn', { x: 100, y: 100 + (flow.steps?.length || 0) * 50 })}
-                            onAddCondition={() => createToolbarNodeAtPosition('condition', { x: 100, y: 100 + (flow.steps?.length || 0) * 50 })}
-                            onAddNote={() => createToolbarNodeAtPosition('note', { x: 100, y: 100 + (flow.steps?.length || 0) * 50 })}
+                            onAddAiTurn={() => createToolbarNodeAtPosition('turn', getFloatingToolbarNodePlacement('turn'))}
+                            onAddUserTurn={() => createToolbarNodeAtPosition('user-turn', getFloatingToolbarNodePlacement('user-turn'))}
+                            onAddCondition={() => createToolbarNodeAtPosition('condition', getFloatingToolbarNodePlacement('condition'))}
+                            onAddNote={() => createToolbarNodeAtPosition('note', getFloatingToolbarNodePlacement('note'))}
                             onToggleComments={() => onToggleComments?.()}
                             isCommentsActive={isCommentModeActive || isCommentsPanelOpen}
                         />

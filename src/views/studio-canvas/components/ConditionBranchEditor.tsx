@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, ChevronDown, Plus, Split, Trash2 } from 'lucide-react';
 import { Branch } from '../../studio/types';
-import { createConditionBranch } from '../../studio/conditionBranches';
+import {
+    createConditionBranch,
+    getDefaultConditionPathLabel,
+    getNextConditionPathLabel,
+} from '../../studio/conditionBranches';
 import { getConditionPathLabel, getConditionRuleSummary } from '../../studio/conditionBranchLabels';
-import { ShellButton, ShellIconButton, ShellNotice } from '@/components/shell';
+import { ShellButton, ShellIconButton, ShellNotice, ShellSwitch } from '@/components/shell';
 import { cn } from '@/utils/cn';
 import { ComponentEditorPopover } from './ComponentEditorPopover';
 import { EditorRoot } from './editor-ui/EditorRoot';
@@ -11,7 +15,6 @@ import { EditorHeader } from './editor-ui/EditorHeader';
 import { EditorContent } from './editor-ui/EditorContent';
 import { EditorSection } from './editor-ui/EditorSection';
 import { EditorField } from './editor-ui/EditorField';
-import { EditorFieldRow } from './editor-ui/EditorFieldRow';
 
 interface ConditionBranchEditorProps {
     nodeId: string;
@@ -33,33 +36,63 @@ const EMPTY_MATCH_LOGIC: NonNullable<Branch['logic']> = {
     operator: 'eq',
 };
 
+const AUTO_GENERATED_FALLBACK_PATH_LABEL = /^fallback$/i;
+
+const reorderBranches = (branches: Branch[]): Branch[] => {
+    const matchingBranches: Branch[] = [];
+    const defaultBranches: Branch[] = [];
+
+    branches.forEach((branch) => {
+        if (branch.isDefault) {
+            defaultBranches.push(branch);
+        } else {
+            matchingBranches.push(branch);
+        }
+    });
+
+    return [...matchingBranches, ...defaultBranches];
+};
+
+const getMaterializedPathName = (branch: Branch, index: number): string => {
+    const trimmedCondition = branch.condition?.trim() || '';
+    if (trimmedCondition && !(branch.isDefault && AUTO_GENERATED_FALLBACK_PATH_LABEL.test(trimmedCondition))) {
+        return trimmedCondition;
+    }
+
+    const trimmedValue = branch.logic?.value !== undefined ? String(branch.logic.value).trim() : '';
+    if (trimmedValue && !branch.isDefault) {
+        return trimmedValue;
+    }
+
+    return getDefaultConditionPathLabel(index + 1);
+};
+
 const normalizeBranchesForEditor = (branches: Branch[]): Branch[] => {
     const matchingBranches: Branch[] = [];
     let fallbackBranch: Branch | null = null;
 
-    branches.forEach((branch) => {
+    branches.forEach((branch, index) => {
+        const normalizedBranch: Branch = {
+            ...branch,
+            condition: getMaterializedPathName(branch, index),
+            logic: branch.logic ?? { ...EMPTY_MATCH_LOGIC },
+        };
+
         if (branch.isDefault) {
             if (!fallbackBranch) {
-                fallbackBranch = {
-                    ...branch,
-                    condition: branch.condition?.trim() || 'Fallback',
-                    isDefault: true,
-                    logic: undefined,
-                };
+                fallbackBranch = { ...normalizedBranch, isDefault: true };
             } else {
                 matchingBranches.push({
-                    ...branch,
+                    ...normalizedBranch,
                     isDefault: false,
-                    logic: branch.logic ?? { ...EMPTY_MATCH_LOGIC },
                 });
             }
             return;
         }
 
         matchingBranches.push({
-            ...branch,
+            ...normalizedBranch,
             isDefault: false,
-            logic: branch.logic ?? { ...EMPTY_MATCH_LOGIC },
         });
     });
 
@@ -80,13 +113,10 @@ export function ConditionBranchEditor({
     const [draftQuestion, setDraftQuestion] = useState(question);
     const [expandedBranchId, setExpandedBranchId] = useState<string | null>(null);
     const editorBranches = useMemo(() => normalizeBranchesForEditor(branches), [branches]);
-    const fallbackIndex = editorBranches.findIndex((branch) => branch.isDefault);
-    const hasFallback = fallbackIndex !== -1;
     const distinctFieldNames = useMemo(
         () => Array.from(
             new Set(
                 editorBranches
-                    .filter((branch) => !branch.isDefault)
                     .map((branch) => branch.logic?.variable?.trim() || '')
                     .filter(Boolean)
             )
@@ -120,6 +150,7 @@ export function ConditionBranchEditor({
         if (readOnly) return;
 
         const newBranch = createConditionBranch({
+            condition: getNextConditionPathLabel(editorBranches),
             logic: sharedFieldValue
                 ? {
                     ...EMPTY_MATCH_LOGIC,
@@ -128,27 +159,8 @@ export function ConditionBranchEditor({
                 : undefined,
         });
 
-        if (fallbackIndex === -1) {
-            setExpandedBranchId(newBranch.id);
-            onBranchesChange([...editorBranches, newBranch]);
-            return;
-        }
-
-        const nextBranches = [...editorBranches];
-        nextBranches.splice(fallbackIndex, 0, newBranch);
         setExpandedBranchId(newBranch.id);
-        onBranchesChange(nextBranches);
-    };
-
-    const handleAddFallback = () => {
-        if (readOnly || hasFallback) return;
-
-        const fallbackBranch = createConditionBranch({ isDefault: true });
-        setExpandedBranchId(fallbackBranch.id);
-        onBranchesChange([
-            ...editorBranches,
-            fallbackBranch,
-        ]);
+        onBranchesChange(reorderBranches([...editorBranches, newBranch]));
     };
 
     const handleRemoveBranch = (branchId: string) => {
@@ -173,13 +185,8 @@ export function ConditionBranchEditor({
 
         onBranchesChange(
             editorBranches.map((branch) => {
-                if (branch.isDefault) {
-                    return branch;
-                }
-
                 return {
                     ...branch,
-                    isDefault: false,
                     logic: {
                         variable: value,
                         value: branch.logic?.value || '',
@@ -188,6 +195,30 @@ export function ConditionBranchEditor({
                 };
             })
         );
+    };
+
+    const handleOtherwiseToggle = (branchId: string, checked: boolean) => {
+        if (readOnly) return;
+
+        const nextBranches = editorBranches.map((branch) => {
+            if (branch.id === branchId) {
+                return {
+                    ...branch,
+                    isDefault: checked,
+                };
+            }
+
+            if (checked && branch.isDefault) {
+                return {
+                    ...branch,
+                    isDefault: false,
+                };
+            }
+
+            return branch;
+        });
+
+        onBranchesChange(reorderBranches(nextBranches));
     };
 
     const handleToggleBranch = (branchId: string) => {
@@ -205,44 +236,25 @@ export function ConditionBranchEditor({
             />
             <EditorContent>
                 <EditorSection title="General">
-                    <EditorFieldRow className="items-start sm:grid-cols-[minmax(0,1fr)_140px]">
-                        <EditorField
-                            label="Question"
-                            type="textarea"
-                            minRows={1}
-                            textareaVariant="compact"
-                            value={draftQuestion}
-                            onChange={(nextQuestion) => {
-                                setDraftQuestion(nextQuestion);
-                                onQuestionChange(nextQuestion);
-                            }}
-                            placeholder="Is user an admin?"
-                            hint="Appears in prototype"
-                            readOnly={readOnly}
-                        />
-                        <EditorField
-                            label="Variable name"
-                            value={sharedFieldValue}
-                            onChange={handleSharedFieldChange}
-                            placeholder="isAdmin"
-                            className="sm:max-w-[140px]"
-                            readOnly={readOnly}
-                        />
-                    </EditorFieldRow>
-                    {hasMixedFields && (
-                        <ShellNotice
-                            size="compact"
-                            variant="default"
-                            icon={<AlertTriangle size={14} />}
-                            title="Use one variable per condition"
-                            description={`This condition currently mixes: ${distinctFieldNames.join(', ')}. Editing the variable below will apply one shared variable to every matching path.`}
-                        />
-                    )}
+                    <EditorField
+                        label="Condition name"
+                        value={draftQuestion}
+                        onChange={(nextQuestion) => {
+                            setDraftQuestion(nextQuestion);
+                            onQuestionChange(nextQuestion);
+                        }}
+                        placeholder="Is user an admin?"
+                        readOnly={readOnly}
+                    />
                 </EditorSection>
 
                 <EditorSection title="Paths">
+                    <p className="text-[10px] leading-relaxed text-shell-muted">
+                        Paths are the different paths or edge cases the conversation can take.
+                    </p>
+
                     <div className="space-y-3">
-                        {editorBranches.map((branch) => {
+                        {editorBranches.map((branch, index) => {
                             const isExpanded = expandedBranchId === branch.id;
                             const summaryText = getConditionRuleSummary(branch, sharedFieldValue);
 
@@ -252,10 +264,13 @@ export function ConditionBranchEditor({
                                     className="group overflow-hidden rounded-lg border border-shell-border bg-shell-bg transition-colors hover:border-shell-accent-border"
                                 >
                                     <div
-                                        className="flex items-start gap-3 bg-shell-surface-subtle px-3 py-2 transition-colors hover:bg-shell-surface"
+                                        className={cn(
+                                            'flex gap-3 bg-shell-surface-subtle px-3 py-2 transition-colors hover:bg-shell-surface',
+                                            summaryText ? 'items-start' : 'items-center'
+                                        )}
                                         onClick={() => handleToggleBranch(branch.id)}
                                     >
-                                        <div className="pt-0.5 text-shell-muted">
+                                        <div className={cn('text-shell-muted', summaryText ? 'pt-0.5' : undefined)}>
                                             <ChevronDown
                                                 className={cn(
                                                     'h-4 w-4 transition-transform duration-200',
@@ -264,13 +279,15 @@ export function ConditionBranchEditor({
                                             />
                                         </div>
 
-                                        <div className="min-w-0 flex-1">
+                                        <div className={cn('min-w-0 flex-1', !summaryText && 'py-0.5')}>
                                             <p className="truncate text-xs font-medium text-shell-text">
                                                 {getBranchHeading(branch)}
                                             </p>
-                                            <p className="mt-0.5 truncate text-[10px] leading-snug text-shell-muted">
-                                                {summaryText || 'Set variable and value'}
-                                            </p>
+                                            {summaryText && (
+                                                <p className="mt-0.5 truncate text-[10px] leading-snug text-shell-muted">
+                                                    {summaryText}
+                                                </p>
+                                            )}
                                         </div>
 
                                         <div className="flex items-center gap-1">
@@ -293,52 +310,18 @@ export function ConditionBranchEditor({
 
                                     {isExpanded && (
                                         <div className="space-y-3 border-t border-shell-border-subtle bg-shell-bg p-3 animate-in fade-in slide-in-from-top-1">
-                                            {branch.isDefault ? (
-                                                <EditorField
-                                                    label="Label"
-                                                    value={branch.condition}
-                                                    onChange={(value) => {
-                                                        updateBranch(branch.id, (currentBranch) => ({
-                                                            ...currentBranch,
-                                                            condition: value,
-                                                        }));
-                                                    }}
-                                                    placeholder="Fallback"
-                                                    readOnly={readOnly}
-                                                />
-                                            ) : (
-                                                <EditorFieldRow>
-                                                    <EditorField
-                                                        label="Variable value"
-                                                        value={branch.logic?.value || ''}
-                                                        onChange={(value) => {
-                                                            updateBranch(branch.id, (currentBranch) => ({
-                                                                ...currentBranch,
-                                                                isDefault: false,
-                                                                logic: {
-                                                                    variable: currentBranch.logic?.variable || '',
-                                                                    value,
-                                                                    operator: 'eq',
-                                                                },
-                                                            }));
-                                                        }}
-                                                        placeholder="true"
-                                                        readOnly={readOnly}
-                                                    />
-                                                    <EditorField
-                                                        label="Label (optional)"
-                                                        value={branch.condition}
-                                                        onChange={(value) => {
-                                                            updateBranch(branch.id, (currentBranch) => ({
-                                                                ...currentBranch,
-                                                                condition: value,
-                                                            }));
-                                                        }}
-                                                        placeholder="Yes"
-                                                        readOnly={readOnly}
-                                                    />
-                                                </EditorFieldRow>
-                                            )}
+                                            <EditorField
+                                                label="Path name"
+                                                value={branch.condition}
+                                                onChange={(value) => {
+                                                    updateBranch(branch.id, (currentBranch) => ({
+                                                        ...currentBranch,
+                                                        condition: value,
+                                                    }));
+                                                }}
+                                                placeholder={getDefaultConditionPathLabel(index + 1)}
+                                                readOnly={readOnly}
+                                            />
                                         </div>
                                     )}
                                 </div>
@@ -356,19 +339,99 @@ export function ConditionBranchEditor({
                         <Plus size={14} />
                         Add path
                     </ShellButton>
+                </EditorSection>
 
-                    {!hasFallback && (
-                        <ShellButton
-                            type="button"
-                            variant="outline"
-                            className="mt-2 w-full justify-center gap-2"
-                            onClick={handleAddFallback}
-                            disabled={readOnly}
-                        >
-                            <Plus size={14} />
-                            Add fallback path
-                        </ShellButton>
+                <EditorSection
+                    title={(
+                        <>
+                            Details <span className="text-shell-muted">(optional)</span>
+                        </>
                     )}
+                    collapsible={true}
+                    defaultOpen={false}
+                >
+                    <p className="text-[10px] leading-relaxed text-shell-muted">
+                        Below are technical details needed for engineering.
+                    </p>
+
+                    <EditorField
+                        label="What are we checking?"
+                        value={sharedFieldValue}
+                        onChange={handleSharedFieldChange}
+                        placeholder="user role"
+                        readOnly={readOnly}
+                    />
+
+                    {hasMixedFields && (
+                        <ShellNotice
+                            size="compact"
+                            variant="default"
+                            icon={<AlertTriangle size={14} />}
+                            title="Use one shared check per condition"
+                            description={`This condition currently mixes: ${distinctFieldNames.join(', ')}. Editing the field above will apply one shared check to every path.`}
+                        />
+                    )}
+
+                    <div className="space-y-3">
+                        {editorBranches.map((branch) => (
+                            <div
+                                key={`details-${branch.id}`}
+                                className="rounded-lg border border-shell-border bg-shell-bg p-3"
+                            >
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate text-xs font-medium text-shell-text">
+                                            {getBranchHeading(branch)}
+                                        </p>
+                                        <p className="mt-0.5 text-[10px] leading-snug text-shell-muted">
+                                            {branch.isDefault
+                                                ? 'Used when none of the other paths match.'
+                                                : 'Optional technical rule for this path.'}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {!branch.isDefault && (
+                                    <div className="mt-3 space-y-3">
+                                        <EditorField
+                                            label="Matches"
+                                            value={branch.logic?.value || ''}
+                                            onChange={(value) => {
+                                                updateBranch(branch.id, (currentBranch) => ({
+                                                    ...currentBranch,
+                                                    logic: {
+                                                        variable: currentBranch.logic?.variable || '',
+                                                        value,
+                                                        operator: 'eq',
+                                                    },
+                                                }));
+                                            }}
+                                            placeholder="admin"
+                                            readOnly={readOnly}
+                                        />
+                                    </div>
+                                )}
+
+                                <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-shell-border-subtle bg-shell-surface-subtle px-3 py-2">
+                                    <div className="min-w-0">
+                                        <p className="text-[11px] font-medium text-shell-text">
+                                            Use when none of the others match
+                                        </p>
+                                        <p className="mt-0.5 text-[10px] leading-snug text-shell-muted">
+                                            Optional catch-all path for engineering handoff.
+                                        </p>
+                                    </div>
+                                    <ShellSwitch
+                                        checked={Boolean(branch.isDefault)}
+                                        onCheckedChange={(checked) => handleOtherwiseToggle(branch.id, checked)}
+                                        size="compact"
+                                        disabled={readOnly}
+                                        aria-label={`Toggle otherwise path for ${getBranchHeading(branch)}`}
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </EditorSection>
             </EditorContent>
         </EditorRoot>
