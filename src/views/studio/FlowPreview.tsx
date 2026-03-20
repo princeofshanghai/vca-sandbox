@@ -9,7 +9,7 @@ import { InfoMessage } from '@/components/vca-components/info-message/InfoMessag
 import { StatusCard } from '@/components/vca-components/status-card/StatusCard';
 import { PromptGroup } from '@/components/vca-components/prompt-group/PromptGroup';
 import { PhoneFrame } from '@/components/component-library/PhoneFrame';
-import { Flag, Pencil, Split } from 'lucide-react';
+import { Pencil, Split } from 'lucide-react';
 import { ShellIconButton } from '@/components/shell';
 
 import { InlineFeedback } from '@/components/vca-components/inline-feedback';
@@ -24,6 +24,7 @@ import {
     ContextInterceptorMessage,
     type ContextInterceptorResolution,
 } from './components/ContextInterceptorMessage';
+import { EndOfFlowBanner } from './components/EndOfFlowBanner';
 import { getConditionPathLabel, getConditionQuestionLabel } from './conditionBranchLabels';
 import { getUserTurnDisplayText, parseUserTurnTriggerExamples } from './userTurnLabels';
 import {
@@ -48,6 +49,9 @@ interface FlowPreviewProps {
     reviewPathChangeRequest?: FlowPreviewReviewPathChangeRequest | null;
     showInlinePathControls?: boolean;
     showEndOfFlowIndicator?: boolean;
+    endOfFlowDecisions?: FlowPreviewReviewDecision[];
+    onEndOfFlowRestart?: () => void;
+    onEndOfFlowOpenPaths?: () => void;
 }
 
 export interface FlowPreviewReviewPathSelection {
@@ -150,6 +154,9 @@ export const FlowPreview = ({
     reviewPathChangeRequest = null,
     showInlinePathControls = true,
     showEndOfFlowIndicator = false,
+    endOfFlowDecisions = [],
+    onEndOfFlowRestart,
+    onEndOfFlowOpenPaths,
 }: FlowPreviewProps) => {
     const hotspotsEnabled = flow.settings?.showHotspots ?? true;
     // Shared composer state
@@ -206,11 +213,14 @@ export const FlowPreview = ({
         onEndOfFlowStateChange: setShowEndOfFlowChipVisible,
     };
 
-    const endOfFlowChip = showEndOfFlowIndicator && showEndOfFlowChipVisible && !reviewMode ? (
-        <div className="pointer-events-auto inline-flex animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-1 duration-300 ease-out items-center gap-1.5 rounded-full border border-shell-success-border bg-shell-success-soft px-3.5 py-1.5 text-[11px] font-medium text-shell-success-text shadow-sm">
-            <Flag size={12} className="shrink-0 text-shell-success-text" />
-            End of flow
-        </div>
+    const hasRestartFromPathOption = endOfFlowDecisions.some(
+        (decision) => decision.mode === 'selection'
+    );
+    const endOfFlowBanner = showEndOfFlowIndicator && showEndOfFlowChipVisible && !reviewMode && onEndOfFlowRestart ? (
+        <EndOfFlowBanner
+            onRestart={onEndOfFlowRestart}
+            onRestartFromPath={hasRestartFromPathOption ? onEndOfFlowOpenPaths : undefined}
+        />
     ) : null;
 
     return (
@@ -229,7 +239,7 @@ export const FlowPreview = ({
                 {reviewMode ? (
                     <div className="pointer-events-auto inline-flex w-full flex-col items-center gap-4">
                         {topControl ? (
-                            <div className="w-full max-w-[420px]">{topControl}</div>
+                            <div className="flex w-full max-w-[420px] justify-center">{topControl}</div>
                         ) : null}
                         <div
                             className={`flex w-full flex-col overflow-hidden rounded-vca-sm border border-vca-border-faint bg-vca-background shadow-[0_4px_12px_0_rgba(0,0,0,0.30),0_0_1px_0_rgba(140,140,140,0.20)] ${isMobile ? 'max-w-[393px] min-h-[772px]' : 'max-w-[400px] min-h-[688px]'}`}
@@ -251,11 +261,11 @@ export const FlowPreview = ({
                         </div>
                     </div>
                 ) : isMobile ? (
-                    <div className="pointer-events-auto inline-flex flex-col items-center gap-5 mt-8">
+                    <div className="pointer-events-auto mt-8 inline-flex flex-col items-center gap-4">
                         {topControl ? (
                             <div>{topControl}</div>
                         ) : null}
-                        <div className="inline-flex flex-col items-center gap-3">
+                        <div className="inline-flex flex-col items-center">
                             <div className="relative w-[334px] h-[726px] shrink-0 flex items-center justify-center">
                                 <div className="scale-[0.85] origin-center">
                                     <PhoneFrame showStatusBar={true} dimBackground={false}>
@@ -270,6 +280,7 @@ export const FlowPreview = ({
                                             onComposerSend={handleComposerSend}
                                             composerStatus={reviewMode ? 'disabled' : composerStatus}
                                             onStop={handleComposerStop}
+                                            footer={endOfFlowBanner}
                                             composerHotspotVisible={!reviewMode && hotspotsEnabled && composerGuidance.showHotspot}
                                             composerHotspotSuggestions={composerGuidance.suggestions}
                                             onComposerHotspotUse={!reviewMode ? handleComposerHotspotUse : undefined}
@@ -279,16 +290,15 @@ export const FlowPreview = ({
                                     </PhoneFrame>
                                 </div>
                             </div>
-                            {endOfFlowChip}
                         </div>
                     </div>
                 ) : (
-                    <div className="relative pointer-events-auto inline-flex flex-col items-center gap-5">
+                    <div className="relative pointer-events-auto inline-flex flex-col items-center gap-4">
                         {topControl ? (
                             <div>{topControl}</div>
                         ) : null}
 
-                        <div className="inline-flex flex-col items-center gap-3">
+                        <div className="inline-flex flex-col items-center">
                             <Container
                                 headerTitle="Help"
                                 className="shadow-xl bg-shell-bg"
@@ -300,13 +310,13 @@ export const FlowPreview = ({
                                 onComposerSend={handleComposerSend}
                                 composerStatus={reviewMode ? 'disabled' : composerStatus}
                                 onStop={handleComposerStop}
+                                footer={endOfFlowBanner}
                                 composerHotspotVisible={!reviewMode && hotspotsEnabled && composerGuidance.showHotspot}
                                 composerHotspotSuggestions={composerGuidance.suggestions}
                                 onComposerHotspotUse={!reviewMode ? handleComposerHotspotUse : undefined}
                             >
                                 <PreviewContent {...previewContentProps} />
                             </Container>
-                            {endOfFlowChip}
                         </div>
                     </div>
                 )}

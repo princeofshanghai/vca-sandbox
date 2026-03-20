@@ -12,7 +12,10 @@ import {
     ShellSelectValue,
 } from '@/components/shell';
 import { cn } from '@/utils/cn';
-import { getInitialsFromName } from '@/utils/userIdentity';
+import {
+    CommentAvatar,
+    type CommentSurfaceTone,
+} from '@/components/comments/CommentPrimitives';
 import {
     formatCommentRelativeTime,
     getCanvasCommentsEmptyState,
@@ -26,7 +29,6 @@ import {
 } from './canvasCommentsLayout';
 import { usePreventBrowserPinchZoom } from '@/hooks/usePreventBrowserPinchZoom';
 import type { CanvasCommentsController } from './useCanvasCommentsController';
-import type { CommentSurfaceTone } from '@/components/comments/CommentPrimitives';
 
 interface CanvasCommentsDrawerProps {
     isOpen: boolean;
@@ -36,38 +38,6 @@ interface CanvasCommentsDrawerProps {
     desktopPresentation?: 'drawer' | 'card';
     tone?: CommentSurfaceTone;
 }
-
-const renderAvatar = ({
-    name,
-    avatarUrl,
-    tone = 'default',
-}: {
-    name: string;
-    avatarUrl?: string | null;
-    tone?: CommentSurfaceTone;
-}) => (
-    <span
-        className={cn(
-            'h-7 w-7 shrink-0 overflow-hidden rounded-full border',
-            tone === 'cinematicDark'
-                ? 'border-shell-dark-border bg-shell-dark-surface'
-                : 'border-shell-border/70 bg-shell-bg'
-        )}
-    >
-        {avatarUrl ? (
-            <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
-        ) : (
-            <span
-                className={cn(
-                    'flex h-full w-full items-center justify-center text-[10px] font-semibold',
-                    tone === 'cinematicDark' ? 'text-shell-dark-muted' : 'text-shell-muted'
-                )}
-            >
-                {getInitialsFromName(name)}
-            </span>
-        )}
-    </span>
-);
 
 const ResolvedBadge = ({ tone = 'default' }: { tone?: CommentSurfaceTone }) => (
     <span
@@ -219,11 +189,13 @@ export function CanvasCommentsDrawer({
                                         tone={tone}
                                         onClick={() => comments.selectThread(thread.id, { reveal: true })}
                                     >
-                                        {renderAvatar({
-                                            name: thread.root.author_name,
-                                            avatarUrl: thread.root.author_avatar_url,
-                                            tone,
-                                        })}
+                                        <CommentAvatar
+                                            name={thread.root.author_name}
+                                            avatarUrl={thread.root.author_avatar_url}
+                                            size="h-7 w-7 shrink-0"
+                                            textSize="text-[10px]"
+                                            tone={tone}
+                                        />
 
                                         <div className="min-w-0 flex-1">
                                             <div className="mb-1 flex items-start justify-between gap-2">

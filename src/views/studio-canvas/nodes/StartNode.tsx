@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
 import { Play } from 'lucide-react';
+import { OUTER_NODE_HANDLE_OFFSET_PX, OUTER_NODE_HANDLE_SIZE_PX } from './components/handleOffsets';
 
 export const StartNode = memo(({ selected }: NodeProps) => {
     const borderClassName = selected
@@ -21,7 +22,12 @@ export const StartNode = memo(({ selected }: NodeProps) => {
             <Handle
                 type="source"
                 position={Position.Right}
-                className="!w-3.5 !h-3.5 !bg-[rgb(var(--shell-node-start)/1)] !border-2 !border-shell-bg !z-50 !-right-[7px] !top-1/2 !-translate-y-1/2"
+                className="!bg-[rgb(var(--shell-node-start)/1)] !border-2 !border-shell-bg !z-50 !top-1/2 !-translate-y-1/2"
+                style={{
+                    width: OUTER_NODE_HANDLE_SIZE_PX,
+                    height: OUTER_NODE_HANDLE_SIZE_PX,
+                    right: -OUTER_NODE_HANDLE_OFFSET_PX,
+                }}
             />
         </div>
     );

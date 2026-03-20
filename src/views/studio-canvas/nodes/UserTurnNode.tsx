@@ -301,7 +301,7 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
                     type="target"
                     id="user-input"
                     position={Position.Left}
-                    className="!bg-shell-node-user !w-4 !h-4 !border-2 !border-shell-bg !z-50"
+                    className="!bg-shell-node-user !w-[18px] !h-[18px] !border-2 !border-shell-bg !z-50"
                     style={{ left: -OUTER_NODE_HANDLE_OFFSET_PX }}
                 />
 
@@ -318,7 +318,7 @@ export const UserTurnNode = memo(({ id, data, selected }: NodeProps) => {
                     type="source"
                     id="user-output"
                     position={Position.Right}
-                    className="!bg-shell-node-user !w-4 !h-4 !border-2 !border-shell-bg !z-50"
+                    className="!bg-shell-node-user !w-[18px] !h-[18px] !border-2 !border-shell-bg !z-50"
                     style={{ right: -OUTER_NODE_HANDLE_OFFSET_PX }}
                 />
             </div >

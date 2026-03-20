@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Check, ChevronDown, Pencil, RotateCcw, Split } from 'lucide-react';
+import { Check, ChevronDown, RotateCcw, Split } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { ShellButton, ShellNotice, ShellSelectableRow } from '@/components/shell';
 import type { Branch } from '../types';
@@ -55,7 +55,6 @@ export function PathsPanel({
         [decisions]
     );
     const [expandedStepId, setExpandedStepId] = useState<string | null>(null);
-    const [showPreviousPaths, setShowPreviousPaths] = useState(variant === 'panel');
 
     useEffect(() => {
         if (pendingDecision) return;
@@ -64,17 +63,6 @@ export function PathsPanel({
         setExpandedStepId(null);
     }, [chosenDecisions, expandedStepId, pendingDecision]);
 
-    useEffect(() => {
-        if (variant === 'panel') {
-            setShowPreviousPaths(true);
-            return;
-        }
-
-        if (pendingDecision) {
-            setShowPreviousPaths(false);
-        }
-    }, [pendingDecision, variant]);
-
     const sectionLabelClassName = tone === 'cinematicDark'
         ? 'text-[11px] font-semibold uppercase tracking-[0.08em] text-shell-dark-muted'
         : 'text-[11px] font-semibold uppercase tracking-[0.08em] text-shell-muted';
@@ -82,8 +70,8 @@ export function PathsPanel({
         ? 'text-shell-dark-muted'
         : 'text-shell-muted-strong';
     const pendingContainerClassName = tone === 'cinematicDark'
-        ? 'rounded-xl border border-shell-dark-accent/25 bg-shell-dark-surface/55 p-3'
-        : 'rounded-xl border border-shell-accent/20 bg-shell-surface-subtle p-3';
+        ? 'rounded-xl border border-shell-dark-accent/25 bg-shell-dark-surface/55 p-3.5'
+        : 'rounded-xl border border-shell-accent/20 bg-shell-surface-subtle p-3.5';
     const chipClassName = tone === 'cinematicDark'
         ? 'border-shell-dark-border bg-shell-dark-surface text-shell-dark-text'
         : 'border-shell-border bg-shell-surface-subtle text-shell-text';
@@ -92,22 +80,24 @@ export function PathsPanel({
         ? 'border-shell-dark-border bg-shell-dark-surface text-shell-dark-muted hover:bg-shell-dark-surface hover:text-shell-dark-text'
         : undefined;
     const isPopover = variant === 'popover';
-    const popoverChoiceClassName = 'rounded-full border border-shell-border bg-shell-bg px-3 py-2 shadow-sm hover:border-shell-border hover:bg-shell-surface-subtle hover:shadow-sm';
-    const popoverSelectedChoiceClassName = 'rounded-full border border-shell-accent/25 bg-shell-accent/5 px-3 py-2 shadow-sm hover:border-shell-accent/25 hover:bg-shell-accent/5';
-    const popoverDecisionRowClassName = 'rounded-[18px] border border-shell-border bg-shell-surface-subtle px-3 py-2.5 shadow-sm';
+    const popoverChoiceClassName = 'rounded-xl border border-shell-border/70 bg-shell-bg px-3 py-1.5 shadow-none hover:border-shell-border hover:bg-shell-surface-subtle';
+    const popoverSelectedChoiceClassName = 'rounded-xl border border-shell-accent/20 bg-shell-accent/5 px-3 py-1.5 shadow-none hover:border-shell-accent/20 hover:bg-shell-accent/5';
+    const popoverDecisionRowClassName = 'rounded-xl border border-shell-border/70 bg-shell-bg px-3 py-2 shadow-none';
     const popoverDecisionTitleClassName = cn(
         'truncate text-[12px] font-medium',
         tone === 'cinematicDark' ? 'text-shell-dark-text' : 'text-shell-text'
     );
-    const shouldShowPreviousPaths = isPopover
-        ? (!pendingDecision && chosenDecisions.length > 0) || showPreviousPaths
-        : chosenDecisions.length > 0;
-    const previousPathsToggleLabel = showPreviousPaths ? 'Hide previous paths' : 'Edit previous paths';
+    const popoverSecondaryTextClassName = tone === 'cinematicDark'
+        ? 'text-[10px] font-medium text-shell-dark-muted'
+        : 'text-[10px] font-medium text-shell-muted-strong';
+    const popoverSectionLabelClassName = tone === 'cinematicDark'
+        ? 'text-[11px] font-medium text-shell-dark-muted'
+        : 'text-[11px] font-medium text-shell-muted-strong';
+    const shouldShowPreviousPaths = chosenDecisions.length > 0;
     const popoverActionButtonClassName = tone === 'cinematicDark'
-        ? 'flex-1 justify-center gap-1.5 border-shell-dark-border bg-shell-dark-surface text-shell-dark-text hover:bg-shell-dark-surface'
-        : 'flex-1 justify-center gap-1.5';
-    const showPopoverEditAction = isPopover && !!pendingDecision && chosenDecisions.length > 0;
-    const showPopoverActionRow = isPopover && (showPopoverEditAction || !!onResetPaths);
+        ? 'w-full justify-center gap-1.5 border-shell-dark-border bg-shell-dark-surface text-shell-dark-text hover:bg-shell-dark-surface'
+        : 'w-full justify-center gap-1.5';
+    const showPopoverActionRow = isPopover && !!onResetPaths;
 
     if (isLoading) {
         if (isPopover) {
@@ -132,8 +122,11 @@ export function PathsPanel({
     if (decisions.length === 0) {
         if (isPopover) {
             return (
-                <div className={cn('px-3 py-4', className)}>
-                    <p className="text-sm font-medium text-shell-muted-strong">No paths yet.</p>
+                <div className={cn('space-y-1 px-3 py-4', className)}>
+                    <p className="text-sm font-medium text-shell-muted-strong">No paths yet</p>
+                    <p className="text-xs leading-relaxed text-shell-muted">
+                        Path choices appear when your flow reaches a condition.
+                    </p>
                 </div>
             );
         }
@@ -143,7 +136,8 @@ export function PathsPanel({
                 <ShellNotice
                     tone={emptyNoticeTone}
                     size="compact"
-                    description="No paths yet. Keep previewing until a condition is reached."
+                    title="No paths yet"
+                    description="Path choices appear when your flow reaches a condition."
                 />
             </div>
         );
@@ -151,7 +145,7 @@ export function PathsPanel({
 
     return (
         <div className={cn('flex h-full min-h-0 flex-col', className)}>
-            <div className={cn('flex-1 overflow-y-auto thin-scrollbar', isPopover ? 'space-y-3 p-2.5' : 'space-y-4 p-3')}>
+            <div className={cn('flex-1 overflow-y-auto thin-scrollbar', isPopover ? 'space-y-4 px-3 py-3' : 'space-y-4 p-3')}>
                 {pendingDecision ? (
                     <section className={isPopover ? 'space-y-2.5' : 'space-y-2'}>
                         {!isPopover ? (
@@ -163,54 +157,55 @@ export function PathsPanel({
                             </div>
                         ) : null}
                         {isPopover ? (
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-2 px-1">
-                                    <Split
-                                        size={13}
-                                        className="mt-0.5 shrink-0 text-shell-node-condition/85"
-                                    />
-                                    <div className="min-w-0 flex-1">
-                                        <p className={popoverDecisionTitleClassName}>
-                                            {pendingDecision.stepLabel}
-                                        </p>
+                            <div className={pendingContainerClassName}>
+                                <div className="space-y-2.5">
+                                    <div className="flex items-center gap-2.5">
+                                        <Split
+                                            size={13}
+                                            className="mt-0.5 shrink-0 text-shell-node-condition/85"
+                                        />
+                                        <div className="min-w-0 flex-1">
+                                            <p className={popoverDecisionTitleClassName}>
+                                                {pendingDecision.stepLabel}
+                                            </p>
+                                        </div>
+                                        <span
+                                            className={cn('shrink-0 truncate text-right', popoverSecondaryTextClassName)}
+                                            title="Choose path"
+                                        >
+                                            Choose path
+                                        </span>
                                     </div>
-                                    <span
-                                        className="inline-flex max-w-[46%] shrink-0 items-center truncate rounded-full border border-shell-accent/25 bg-shell-accent/5 px-2.5 py-1 text-[10px] font-medium text-shell-text"
-                                        title="Choose path"
-                                    >
-                                        Choose path
-                                    </span>
-                                </div>
 
-                                <div className="space-y-1.5">
-                                    {pendingDecision.branches.map((branch) => {
-                                        const label = getConditionPathLabel(branch);
+                                    <div className="space-y-1.5">
+                                        {pendingDecision.branches.map((branch) => {
+                                            const label = getConditionPathLabel(branch);
 
-                                        return (
-                                            <ShellSelectableRow
-                                                key={branch.id}
-                                                tone={tone}
-                                                size="compact"
-                                                onClick={() => onChangePath(pendingDecision, branch.id)}
-                                                className={cn(
-                                                    'items-center',
-                                                    popoverChoiceClassName
-                                                )}
-                                            >
-                                                <div className="flex min-w-0 flex-1 items-center gap-2">
-                                                    <span className={cn('h-[13px] w-[13px] shrink-0')} aria-hidden="true" />
-                                                    <span className={cn('truncate text-[12px] font-medium', tone === 'cinematicDark' ? 'text-shell-dark-text' : 'text-shell-text')}>
-                                                        {label}
-                                                    </span>
-                                                </div>
-                                            </ShellSelectableRow>
-                                        );
-                                    })}
+                                            return (
+                                                <ShellSelectableRow
+                                                    key={branch.id}
+                                                    tone={tone}
+                                                    size="compact"
+                                                    onClick={() => onChangePath(pendingDecision, branch.id)}
+                                                    className={cn(
+                                                        'items-center',
+                                                        popoverChoiceClassName
+                                                    )}
+                                                >
+                                                    <div className="flex min-w-0 flex-1 items-center">
+                                                        <span className={cn('truncate text-[12px] font-medium', tone === 'cinematicDark' ? 'text-shell-dark-text' : 'text-shell-text')}>
+                                                            {label}
+                                                        </span>
+                                                    </div>
+                                                </ShellSelectableRow>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
                             </div>
                         ) : (
                             <div className={pendingContainerClassName}>
-                                <div className="mb-2 flex items-start gap-2">
+                                <div className="mb-2.5 flex items-start gap-2">
                                     <Split
                                         size={14}
                                         className={tone === 'cinematicDark' ? 'mt-0.5 shrink-0 text-shell-node-condition' : 'mt-0.5 shrink-0 text-shell-node-condition'}
@@ -260,7 +255,11 @@ export function PathsPanel({
                                     Reopen any earlier decision to change it.
                                 </p>
                             </div>
-                        ) : null}
+                        ) : (
+                            <div className="px-1">
+                                <h3 className={popoverSectionLabelClassName}>Previous</h3>
+                            </div>
+                        )}
 
                         <div className={isPopover ? 'space-y-1.5' : 'space-y-2'}>
                             {chosenDecisions.map((decision) => {
@@ -273,7 +272,7 @@ export function PathsPanel({
                                             tone={tone}
                                             selected={isExpanded}
                                             onClick={() => setExpandedStepId((current) => current === decision.stepId ? null : decision.stepId)}
-                                            className={cn('items-center', isPopover ? `${popoverDecisionRowClassName} hover:bg-shell-surface` : undefined)}
+                                            className={cn('items-center', isPopover ? `${popoverDecisionRowClassName} hover:bg-shell-surface-subtle` : undefined)}
                                         >
                                             <Split
                                                 size={13}
@@ -281,7 +280,7 @@ export function PathsPanel({
                                             />
                                             <div className="min-w-0 flex-1">
                                                 <p className={cn(
-                                                    isPopover ? popoverDecisionTitleClassName : 'truncate text-sm font-medium',
+                                                    isPopover ? 'truncate text-[11px] font-medium' : 'truncate text-sm font-medium',
                                                     !isPopover && (tone === 'cinematicDark' ? 'text-shell-dark-text' : 'text-shell-text')
                                                 )}>
                                                     {decision.stepLabel}
@@ -289,8 +288,12 @@ export function PathsPanel({
                                             </div>
                                             <span
                                                 className={cn(
-                                                    'inline-flex max-w-[46%] shrink-0 items-center truncate rounded-full border px-2.5 py-1 text-[10px] font-medium',
-                                                    chipClassName
+                                                    'inline-flex max-w-[42%] shrink-0 items-center truncate rounded-full border px-2 py-0.5 text-[10px] font-medium',
+                                                    isPopover
+                                                        ? (tone === 'cinematicDark'
+                                                            ? 'border-shell-dark-border/70 bg-shell-dark-surface text-shell-dark-muted'
+                                                            : 'border-shell-border/70 bg-shell-surface-subtle text-shell-muted-strong')
+                                                        : chipClassName
                                                 )}
                                                 title={selectedPathLabel}
                                             >
@@ -307,7 +310,7 @@ export function PathsPanel({
                                         </ShellSelectableRow>
 
                                         {isExpanded ? (
-                                            <div className={cn('space-y-1.5', isPopover ? 'pl-1.5' : 'pl-2')}>
+                                            <div className={cn('space-y-1.5', isPopover ? 'pl-2.5' : 'pl-2')}>
                                                 {decision.branches.map((branch) => {
                                                     const label = getConditionPathLabel(branch);
                                                     const isSelected = branch.id === decision.selectedBranchId;
@@ -329,17 +332,18 @@ export function PathsPanel({
                                                             )}
                                                         >
                                                             <div className="flex min-w-0 flex-1 items-center gap-2">
-                                                                {isSelected ? (
-                                                                    <Check
-                                                                        size={13}
-                                                                        className={tone === 'cinematicDark' ? 'shrink-0 text-shell-dark-accent' : 'shrink-0 text-shell-accent'}
-                                                                    />
-                                                                ) : (
-                                                                    <span className="h-[13px] w-[13px] shrink-0" aria-hidden="true" />
-                                                                )}
                                                                 <span className={cn(isPopover ? 'truncate text-[12px] font-medium' : 'truncate text-sm font-medium', tone === 'cinematicDark' ? 'text-shell-dark-text' : 'text-shell-text')}>
                                                                     {label}
                                                                 </span>
+                                                                {isSelected ? (
+                                                                    <Check
+                                                                        size={13}
+                                                                        className={cn(
+                                                                            'ml-auto shrink-0',
+                                                                            tone === 'cinematicDark' ? 'text-shell-dark-accent' : 'text-shell-accent'
+                                                                        )}
+                                                                    />
+                                                                ) : null}
                                                             </div>
                                                         </ShellSelectableRow>
                                                     );
@@ -356,18 +360,7 @@ export function PathsPanel({
 
             {showPopoverActionRow ? (
                 <div className={cn('border-t p-3', tone === 'cinematicDark' ? 'border-shell-dark-border' : 'border-shell-border')}>
-                    <div className="flex items-center gap-2">
-                        {showPopoverEditAction ? (
-                            <ShellButton
-                                variant="outline"
-                                size="compact"
-                                onClick={() => setShowPreviousPaths((current) => !current)}
-                                className={popoverActionButtonClassName}
-                            >
-                                <Pencil size={12} className="shrink-0" />
-                                {previousPathsToggleLabel}
-                            </ShellButton>
-                        ) : null}
+                    <div className="flex flex-col items-stretch gap-2">
                         {onResetPaths ? (
                             <ShellButton
                                 variant="outline"

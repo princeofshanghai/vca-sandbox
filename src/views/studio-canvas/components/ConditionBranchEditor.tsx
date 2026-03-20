@@ -368,10 +368,10 @@ export function ConditionBranchEditor({
                     </p>
 
                     <EditorField
-                        label="What are we checking?"
+                        label="Variable"
                         value={sharedFieldValue}
                         onChange={handleSharedFieldChange}
-                        placeholder="user role"
+                        placeholder="user_role"
                         readOnly={readOnly}
                     />
 
@@ -407,7 +407,7 @@ export function ConditionBranchEditor({
                                 {!branch.isDefault && (
                                     <div className="mt-3 space-y-3">
                                         <EditorField
-                                            label="Matches"
+                                            label="Value"
                                             value={branch.logic?.value || ''}
                                             onChange={(value) => {
                                                 updateBranch(branch.id, (currentBranch) => ({

@@ -8,9 +8,9 @@ import {
     ShellMenuSeparator,
     ShellMenuTrigger,
     ShellTextareaAutosize,
+    ShellUserAvatar,
 } from '@/components/shell';
 import { cn } from '@/utils/cn';
-import { getInitialsFromName } from '@/utils/userIdentity';
 
 export type CommentSurfaceTone = 'default' | 'cinematicDark';
 
@@ -22,16 +22,6 @@ type CommentAvatarProps = {
     tone?: CommentSurfaceTone;
 };
 
-const avatarToneClasses: Record<CommentSurfaceTone, string> = {
-    default: 'border border-shell-border/70 bg-shell-bg',
-    cinematicDark: 'border border-shell-dark-border bg-shell-dark-surface',
-};
-
-const avatarTextToneClasses: Record<CommentSurfaceTone, string> = {
-    default: 'text-shell-muted',
-    cinematicDark: 'text-shell-dark-muted',
-};
-
 export const CommentAvatar = ({
     name,
     avatarUrl,
@@ -39,27 +29,13 @@ export const CommentAvatar = ({
     textSize,
     tone = 'default',
 }: CommentAvatarProps) => (
-    <span
-        className={cn(
-            'rounded-full overflow-hidden block',
-            avatarToneClasses[tone],
-            size
-        )}
-    >
-        {avatarUrl ? (
-            <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
-        ) : (
-            <span
-                className={cn(
-                    'w-full h-full flex items-center justify-center font-semibold',
-                    avatarTextToneClasses[tone],
-                    textSize
-                )}
-            >
-                {getInitialsFromName(name)}
-            </span>
-        )}
-    </span>
+    <ShellUserAvatar
+        name={name}
+        avatarUrl={avatarUrl}
+        sizeClassName={size}
+        textClassName={textSize}
+        tone={tone}
+    />
 );
 
 const resolvedBadgeToneClasses: Record<CommentSurfaceTone, string> = {

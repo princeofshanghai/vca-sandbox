@@ -60,6 +60,7 @@ export function MessageEditor({
                         value={localText}
                         onChange={handleTextChange}
                         placeholder="How can I help?"
+                        helperText={!readOnly ? 'Select text to see formatting options.' : undefined}
                         autoFocus={isOpen && !readOnly}
                         readOnly={readOnly}
                         surfaceVariant="field"

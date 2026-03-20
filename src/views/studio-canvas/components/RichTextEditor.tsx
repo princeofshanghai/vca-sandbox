@@ -26,6 +26,7 @@ interface RichTextEditorProps {
     onChange: (value: string) => void;
     placeholder?: string;
     className?: string;
+    helperText?: string;
     autoFocus?: boolean;
     readOnly?: boolean;
     surfaceVariant?: 'default' | 'field';
@@ -40,6 +41,7 @@ export function RichTextEditor({
     onChange,
     placeholder = 'Write something...',
     className,
+    helperText,
     autoFocus = false,
     readOnly = false,
     surfaceVariant = 'default',
@@ -285,158 +287,165 @@ export function RichTextEditor({
     );
 
     return (
-        <div
-            className={cn(
-                "border border-shell-border rounded-lg overflow-hidden transition-all focus-within:ring-2 focus-within:ring-shell-accent/20 focus-within:border-shell-accent",
-                surfaceVariant === 'field' ? "bg-shell-surface" : "bg-shell-bg",
-                readOnly ? "focus-within:ring-0 focus-within:border-shell-border" : "",
-                className
-            )}
-            onKeyDown={(e) => e.stopPropagation()}
-        >
-            {/* Bubble Menu */}
-            {editor && !readOnly && (
-                <BubbleMenu
-                    className="flex items-center gap-1 rounded-lg border border-shell-border bg-shell-surface p-1 shadow-xl"
-                    editor={editor}
-                    id="markdown-toolbar"
-                    data-editor-keep-open
-                >
-                    <ShellIconButton
-                        type="button"
-                        size="sm"
-                        aria-label="Bold"
-                        className={getToolbarButtonClassName(editor.isActive('bold'))}
-                        onClick={() => editor.chain().focus().toggleBold().run()}
-                    >
-                        <Bold size={14} />
-                    </ShellIconButton>
-                    <ShellIconButton
-                        type="button"
-                        size="sm"
-                        aria-label="Italic"
-                        className={getToolbarButtonClassName(editor.isActive('italic'))}
-                        onClick={() => editor.chain().focus().toggleItalic().run()}
-                    >
-                        <Italic size={14} />
-                    </ShellIconButton>
-                    <div className="w-px h-4 bg-shell-border-subtle my-auto mx-1" />
-                    <ShellIconButton
-                        type="button"
-                        size="sm"
-                        aria-label="Bulleted list"
-                        className={getToolbarButtonClassName(editor.isActive('bulletList'))}
-                        onClick={() => editor.chain().focus().toggleBulletList().run()}
-                    >
-                        <List size={14} />
-                    </ShellIconButton>
-                    <ShellIconButton
-                        type="button"
-                        size="sm"
-                        aria-label="Numbered list"
-                        className={getToolbarButtonClassName(editor.isActive('orderedList'))}
-                        onClick={() => editor.chain().focus().toggleOrderedList().run()}
-                    >
-                        <ListOrdered size={14} />
-                    </ShellIconButton>
-                    <div className="w-px h-4 bg-shell-border-subtle my-auto mx-1" />
-                    <ShellIconButton
-                        type="button"
-                        size="sm"
-                        aria-label="Link"
-                        className={getToolbarButtonClassName(editor.isActive('link'))}
-                        onMouseDown={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            openLinkDialog();
-                        }}
-                    >
-                        <LinkIcon size={14} />
-                    </ShellIconButton>
-                </BubbleMenu>
-            )}
-
-            <Dialog open={isLinkDialogOpen} onOpenChange={(open) => {
-                if (!open) {
-                    closeLinkDialog();
-                    return;
-                }
-                setIsLinkDialogOpen(true);
-            }}>
-                <DialogContent
-                    className="z-[1102] max-w-[360px] gap-0 overflow-hidden border-shell-border bg-shell-bg p-0 shadow-shell-lg"
-                    hideClose
-                >
-                    <div className="px-shell-5 pt-shell-5">
-                        <DialogHeader className="mb-shell-4">
-                            <DialogTitle className="text-sm font-semibold text-shell-text">
-                                Edit link
-                            </DialogTitle>
-                        </DialogHeader>
-
-                        <div className="space-y-shell-2">
-                            <ShellInput
-                                id="rich-text-link-url"
-                                value={linkDraftUrl}
-                                onChange={(event) => {
-                                    setLinkDraftUrl(event.target.value);
-                                    if (linkError) {
-                                        setLinkError(null);
-                                    }
-                                }}
-                                placeholder="Paste URL (optional)"
-                                autoFocus
-                                onKeyDown={(event) => {
-                                    event.stopPropagation();
-                                    if (event.key === 'Enter') {
-                                        event.preventDefault();
-                                        handleApplyLink();
-                                    }
-                                }}
-                            />
-                            {linkError ? (
-                                <p className={cn(
-                                    'text-[10px] leading-relaxed text-shell-danger'
-                                )}>
-                                    {linkError}
-                                </p>
-                            ) : null}
-                        </div>
-                    </div>
-
-                    <ShellDialogActions className="mt-shell-5 border-shell-border-subtle px-shell-4 py-shell-4">
-                        <ShellButton
-                            type="button"
-                            size="compact"
-                            variant="ghost"
-                            onClick={handleRemoveLink}
-                            className="mr-auto"
-                        >
-                            Remove link
-                        </ShellButton>
-                        <ShellButton
-                            type="button"
-                            size="compact"
-                            onClick={handleApplyLink}
-                        >
-                            Done
-                        </ShellButton>
-                    </ShellDialogActions>
-                </DialogContent>
-            </Dialog>
-
+        <div className="space-y-1.5">
             <div
                 className={cn(
-                    "min-h-0",
-                    resizable ? "resize-y overflow-auto" : ""
+                    "border border-shell-border rounded-lg overflow-hidden transition-all focus-within:ring-2 focus-within:ring-shell-accent/20 focus-within:border-shell-accent",
+                    surfaceVariant === 'field' ? "bg-shell-surface" : "bg-shell-bg",
+                    readOnly ? "focus-within:ring-0 focus-within:border-shell-border" : "",
+                    className
                 )}
-                style={{ minHeight }}
+                onKeyDown={(e) => e.stopPropagation()}
             >
-                <EditorContent
-                    editor={editor}
-                    className="[&_.ProseMirror]:h-full [&_.ProseMirror]:min-h-full [&_.tiptap]:h-full [&_.tiptap]:min-h-full"
-                />
+                {/* Bubble Menu */}
+                {editor && !readOnly && (
+                    <BubbleMenu
+                        className="flex items-center gap-1 rounded-lg border border-shell-border bg-shell-surface p-1 shadow-xl"
+                        editor={editor}
+                        id="markdown-toolbar"
+                        data-editor-keep-open
+                    >
+                        <ShellIconButton
+                            type="button"
+                            size="sm"
+                            aria-label="Bold"
+                            className={getToolbarButtonClassName(editor.isActive('bold'))}
+                            onClick={() => editor.chain().focus().toggleBold().run()}
+                        >
+                            <Bold size={14} />
+                        </ShellIconButton>
+                        <ShellIconButton
+                            type="button"
+                            size="sm"
+                            aria-label="Italic"
+                            className={getToolbarButtonClassName(editor.isActive('italic'))}
+                            onClick={() => editor.chain().focus().toggleItalic().run()}
+                        >
+                            <Italic size={14} />
+                        </ShellIconButton>
+                        <div className="w-px h-4 bg-shell-border-subtle my-auto mx-1" />
+                        <ShellIconButton
+                            type="button"
+                            size="sm"
+                            aria-label="Bulleted list"
+                            className={getToolbarButtonClassName(editor.isActive('bulletList'))}
+                            onClick={() => editor.chain().focus().toggleBulletList().run()}
+                        >
+                            <List size={14} />
+                        </ShellIconButton>
+                        <ShellIconButton
+                            type="button"
+                            size="sm"
+                            aria-label="Numbered list"
+                            className={getToolbarButtonClassName(editor.isActive('orderedList'))}
+                            onClick={() => editor.chain().focus().toggleOrderedList().run()}
+                        >
+                            <ListOrdered size={14} />
+                        </ShellIconButton>
+                        <div className="w-px h-4 bg-shell-border-subtle my-auto mx-1" />
+                        <ShellIconButton
+                            type="button"
+                            size="sm"
+                            aria-label="Link"
+                            className={getToolbarButtonClassName(editor.isActive('link'))}
+                            onMouseDown={(event) => {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                openLinkDialog();
+                            }}
+                        >
+                            <LinkIcon size={14} />
+                        </ShellIconButton>
+                    </BubbleMenu>
+                )}
+
+                <Dialog open={isLinkDialogOpen} onOpenChange={(open) => {
+                    if (!open) {
+                        closeLinkDialog();
+                        return;
+                    }
+                    setIsLinkDialogOpen(true);
+                }}>
+                    <DialogContent
+                        className="z-[1102] max-w-[360px] gap-0 overflow-hidden border-shell-border bg-shell-bg p-0 shadow-shell-lg"
+                        hideClose
+                    >
+                        <div className="px-shell-5 pt-shell-5">
+                            <DialogHeader className="mb-shell-4">
+                                <DialogTitle className="text-sm font-semibold text-shell-text">
+                                    Edit link
+                                </DialogTitle>
+                            </DialogHeader>
+
+                            <div className="space-y-shell-2">
+                                <ShellInput
+                                    id="rich-text-link-url"
+                                    value={linkDraftUrl}
+                                    onChange={(event) => {
+                                        setLinkDraftUrl(event.target.value);
+                                        if (linkError) {
+                                            setLinkError(null);
+                                        }
+                                    }}
+                                    placeholder="Paste URL (optional)"
+                                    autoFocus
+                                    onKeyDown={(event) => {
+                                        event.stopPropagation();
+                                        if (event.key === 'Enter') {
+                                            event.preventDefault();
+                                            handleApplyLink();
+                                        }
+                                    }}
+                                />
+                                {linkError ? (
+                                    <p className={cn(
+                                        'text-[10px] leading-relaxed text-shell-danger'
+                                    )}>
+                                        {linkError}
+                                    </p>
+                                ) : null}
+                            </div>
+                        </div>
+
+                        <ShellDialogActions className="mt-shell-5 border-shell-border-subtle px-shell-4 py-shell-4">
+                            <ShellButton
+                                type="button"
+                                size="compact"
+                                variant="ghost"
+                                onClick={handleRemoveLink}
+                                className="mr-auto"
+                            >
+                                Remove link
+                            </ShellButton>
+                            <ShellButton
+                                type="button"
+                                size="compact"
+                                onClick={handleApplyLink}
+                            >
+                                Done
+                            </ShellButton>
+                        </ShellDialogActions>
+                    </DialogContent>
+                </Dialog>
+
+                <div
+                    className={cn(
+                        "min-h-0",
+                        resizable ? "resize-y overflow-auto" : ""
+                    )}
+                    style={{ minHeight }}
+                >
+                    <EditorContent
+                        editor={editor}
+                        className="[&_.ProseMirror]:h-full [&_.ProseMirror]:min-h-full [&_.tiptap]:h-full [&_.tiptap]:min-h-full"
+                    />
+                </div>
             </div>
+            {helperText ? (
+                <p className="text-[10px] leading-relaxed text-shell-muted">
+                    {helperText}
+                </p>
+            ) : null}
         </div>
     );
 }

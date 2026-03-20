@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import * as HoverCard from '@radix-ui/react-hover-card';
 import { MessageSquare, MessageCirclePlus, MessageSquareText, Zap, LayoutList, CheckSquare, IdCard } from 'lucide-react';
 import { ShellButton, ShellPopoverContent } from '@/components/shell';
@@ -67,6 +69,29 @@ const peopleCheckboxPreviewOptions = [
     },
 ];
 
+function AnimatedStatusCardPreview() {
+    const [status, setStatus] = useState<'in-progress' | 'success'>('in-progress');
+
+    useEffect(() => {
+        const successTimer = window.setTimeout(() => {
+            setStatus('success');
+        }, 1200);
+
+        return () => {
+            window.clearTimeout(successTimer);
+        };
+    }, []);
+
+    return (
+        <StatusCard
+            status={status}
+            title={status === 'in-progress' ? 'Working on your request' : 'Action completed'}
+        >
+            Additional context about the action.
+        </StatusCard>
+    );
+}
+
 const componentOptions: ComponentOption[] = [
     {
         type: 'message',
@@ -121,12 +146,7 @@ const componentOptions: ComponentOption[] = [
         description: 'Shows progress bar for an agent action',
         previewComponent: (
             <div className="w-[300px]">
-                <StatusCard
-                    status="success"
-                    title="Action Completed"
-                >
-                    Additional context about the action.
-                </StatusCard>
+                <AnimatedStatusCardPreview />
             </div>
         ),
     },
@@ -197,62 +217,81 @@ const componentSections: ComponentSection[] = [
 const ComponentOptionCard = ({
     option,
     onClick,
-    side
+    side,
+    previewsEnabled,
 }: {
     option: ComponentOption;
     onClick: () => void;
     side: 'left' | 'right';
-}) => (
-    <HoverCard.Root openDelay={100} closeDelay={50}>
-        <HoverCard.Trigger asChild>
-            <ShellButton
-                onClick={onClick}
-                type="button"
-                variant="ghost"
-                size="compact"
-                className="group h-auto w-full justify-start gap-2.5 rounded-lg px-2.5 py-2 text-left text-shell-text transition-colors hover:bg-shell-surface focus-visible:ring-shell-accent/20"
-            >
-                <div className="text-shell-muted transition-colors group-hover:text-shell-text">
-                    {option.icon}
-                </div>
-                <span className="text-xs font-medium text-shell-text transition-colors">
-                    {option.name}
-                </span>
-            </ShellButton>
-        </HoverCard.Trigger>
-        <HoverCard.Portal>
-            <HoverCard.Content
-                data-canvas-shell-zoom-blocker="true"
-                className="max-w-[calc(100vw-2rem)] rounded-xl border border-shell-border bg-shell-bg p-0 text-shell-text shadow-2xl z-[1002] animate-in fade-in zoom-in-95 overflow-hidden"
-                style={{ width: `${HOVER_CARD_WIDTH_PX}px` }}
-                sideOffset={8}
-                side={side}
-            >
-                <div className="flex flex-col">
-                    {/* Content Area */}
-                    <div className="p-3 space-y-3">
-                        <div
-                            className="relative w-full flex justify-center py-3 items-center rounded-lg border border-shell-border bg-shell-surface-subtle shadow-sm"
-                            style={{ minHeight: `${HOVER_CARD_PREVIEW_MIN_HEIGHT_PX}px` }}
-                        >
-                            <div
-                                className="origin-center transform-gpu pointer-events-none select-none w-full flex justify-center"
-                                style={{ transform: `scale(${HOVER_CARD_PREVIEW_SCALE})` }}
-                            >
-                                {option.previewComponent}
-                            </div>
-                        </div>
+    previewsEnabled: boolean;
+}) => {
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
-                        <p className="px-2 text-xs text-left text-shell-muted leading-relaxed">
-                            {option.description}
-                        </p>
+    useEffect(() => {
+        if (previewsEnabled) {
+            return;
+        }
+
+        setIsPreviewOpen(false);
+    }, [previewsEnabled]);
+
+    return (
+        <HoverCard.Root
+            open={previewsEnabled && isPreviewOpen}
+            onOpenChange={setIsPreviewOpen}
+            openDelay={100}
+            closeDelay={50}
+        >
+            <HoverCard.Trigger asChild>
+                <ShellButton
+                    onClick={onClick}
+                    type="button"
+                    variant="ghost"
+                    size="compact"
+                    className="group h-auto w-full justify-start gap-2.5 rounded-lg px-2.5 py-2 text-left text-shell-text transition-colors hover:bg-shell-surface focus-visible:ring-shell-accent/20"
+                >
+                    <div className="text-shell-muted transition-colors group-hover:text-shell-text">
+                        {option.icon}
                     </div>
-                </div>
-                <HoverCard.Arrow className="fill-shell-bg stroke-shell-border" />
-            </HoverCard.Content>
-        </HoverCard.Portal>
-    </HoverCard.Root>
-);
+                    <span className="text-xs font-medium text-shell-text transition-colors">
+                        {option.name}
+                    </span>
+                </ShellButton>
+            </HoverCard.Trigger>
+            <HoverCard.Portal>
+                <HoverCard.Content
+                    data-canvas-shell-zoom-blocker="true"
+                    className="max-w-[calc(100vw-2rem)] rounded-xl border border-shell-border bg-shell-bg p-0 text-shell-text shadow-2xl z-[1002] animate-in fade-in zoom-in-95 overflow-hidden"
+                    style={{ width: `${HOVER_CARD_WIDTH_PX}px` }}
+                    sideOffset={8}
+                    side={side}
+                >
+                    <div className="flex flex-col">
+                        {/* Content Area */}
+                        <div className="p-3 space-y-3">
+                            <div
+                                className="relative w-full flex justify-center py-3 items-center rounded-lg border border-shell-border bg-shell-surface-subtle shadow-sm"
+                                style={{ minHeight: `${HOVER_CARD_PREVIEW_MIN_HEIGHT_PX}px` }}
+                            >
+                                <div
+                                    className="origin-center transform-gpu pointer-events-none select-none w-full flex justify-center"
+                                    style={{ transform: `scale(${HOVER_CARD_PREVIEW_SCALE})` }}
+                                >
+                                    {option.previewComponent}
+                                </div>
+                            </div>
+
+                            <p className="px-2 text-xs text-left text-shell-muted leading-relaxed">
+                                {option.description}
+                            </p>
+                        </div>
+                    </div>
+                    <HoverCard.Arrow className="fill-shell-bg stroke-shell-border" />
+                </HoverCard.Content>
+            </HoverCard.Portal>
+        </HoverCard.Root>
+    );
+};
 
 interface AddComponentContentProps {
     onAdd: (type: ComponentType) => void;
@@ -267,6 +306,9 @@ export function AddComponentContent({
     align = 'end',
     previewSide = 'right',
 }: AddComponentContentProps) {
+    const shouldSkipCloseAutoFocusRef = useRef(false);
+    const [previewsEnabled, setPreviewsEnabled] = useState(true);
+
     return (
         <ShellPopoverContent
             data-canvas-shell-zoom-blocker="true"
@@ -274,6 +316,14 @@ export function AddComponentContent({
             sideOffset={8}
             align={align}
             onOpenAutoFocus={(e: Event) => e.preventDefault()}
+            onCloseAutoFocus={(event) => {
+                if (!shouldSkipCloseAutoFocusRef.current) {
+                    return;
+                }
+
+                shouldSkipCloseAutoFocusRef.current = false;
+                event.preventDefault();
+            }}
             className="w-[220px] p-2 z-[1001] duration-200 ease-out"
         >
             <div className="flex flex-col">
@@ -290,8 +340,15 @@ export function AddComponentContent({
                                 <ComponentOptionCard
                                     key={option.type}
                                     option={option}
-                                    onClick={() => onAdd(option.type)}
+                                    onClick={() => {
+                                        flushSync(() => {
+                                            setPreviewsEnabled(false);
+                                        });
+                                        shouldSkipCloseAutoFocusRef.current = true;
+                                        onAdd(option.type);
+                                    }}
                                     side={previewSide}
+                                    previewsEnabled={previewsEnabled}
                                 />
                             ))}
                         </div>

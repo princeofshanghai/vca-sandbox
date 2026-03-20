@@ -39,6 +39,10 @@ interface StudioCardProps {
     compactWhenBodyEmpty?: boolean;
     /** Additional classes for the root element */
     className?: string;
+    /** Additional classes for the header */
+    headerClassName?: string;
+    /** Additional classes for the body */
+    bodyClassName?: string;
 }
 
 export const StudioCard = memo(({
@@ -57,6 +61,8 @@ export const StudioCard = memo(({
     outputHandleClassName,
     outputHandleOnClick,
     className,
+    headerClassName,
+    bodyClassName,
     isPlaceholder = false,
     overflowVisible = false,
     compactWhenBodyEmpty = false,
@@ -135,7 +141,8 @@ export const StudioCard = memo(({
                             "flex items-center gap-2 bg-shell-node-card-surface",
                             shouldUseCompactLayout
                                 ? "rounded-[inherit] p-3"
-                                : "rounded-t-[inherit] border-b border-shell-node-card-divider p-3 pb-2"
+                                : "rounded-t-[inherit] border-b border-shell-node-card-divider p-3 pb-2",
+                            headerClassName
                         )}
                     >
                         {icon && (
@@ -154,7 +161,8 @@ export const StudioCard = memo(({
                     <div
                         className={cn(
                             "w-full bg-shell-node-card-surface p-3",
-                            isPlaceholder ? "rounded-[inherit]" : "rounded-b-[inherit] pt-2"
+                            isPlaceholder ? "rounded-[inherit]" : "rounded-b-[inherit] pt-2",
+                            bodyClassName
                         )}
                     >
                         {isPlaceholder ? (

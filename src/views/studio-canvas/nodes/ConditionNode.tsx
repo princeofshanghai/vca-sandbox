@@ -322,7 +322,7 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
                 <Handle
                     type="target"
                     position={Position.Left}
-                    className="!bg-shell-node-condition !w-4 !h-4 !border-2 !border-shell-bg"
+                    className="!bg-shell-node-condition !w-[18px] !h-[18px] !border-2 !border-shell-bg"
                     style={{ left: -OUTER_NODE_HANDLE_OFFSET_PX }}
                 />
 
@@ -347,8 +347,9 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
                         onDragEnd={canReorderBranches ? handleBranchDragEnd : undefined}
                     >
                         <SortableContext items={branchIds} strategy={verticalListSortingStrategy}>
-                            <div className="flex flex-col gap-3">
-                                {branches.map((branch) => (
+                            <div className="relative overflow-visible rounded-xl">
+                                <div className="pointer-events-none absolute inset-0 rounded-xl border border-shell-node-condition/28 bg-[rgb(var(--shell-bg)/0.78)] shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]" />
+                                {branches.map((branch, index) => (
                                     <SortableBranchRow
                                         key={branch.id}
                                         branchId={branch.id}
@@ -358,6 +359,12 @@ export const ConditionNode = memo(({ id, data, selected }: NodeProps) => {
                                             branch={branch}
                                             isSelected={false}
                                             readOnly={typedData.readOnly}
+                                            className={[
+                                                'relative z-10',
+                                                index === 0 ? 'rounded-t-xl' : '',
+                                                index === branches.length - 1 ? 'rounded-b-xl' : '',
+                                                index > 0 ? 'border-t border-shell-node-condition/22' : '',
+                                            ].filter(Boolean).join(' ')}
                                             onCardClick={() => {
                                                 if (Date.now() - lastDragAt < 180) {
                                                     return;

@@ -25,7 +25,8 @@ import {
 } from 'lucide-react';
 import { INITIAL_FLOW } from '@/utils/flowStorage';
 import { ShareDialog } from '../studio/components/ShareDialog';
-import { PreviewHeaderActionButton } from '../studio/components/PreviewHeaderActionButton';
+import { PreviewRestartButton } from '../studio/components/PreviewRestartButton';
+import { AttachedStatusTag } from '../studio/components/AttachedStatusTag';
 import {
     ShareCommentPin,
     SHARE_COMMENT_PIN_HEIGHT_PX,
@@ -82,6 +83,7 @@ import { ActionTooltip } from '@/views/studio-canvas/components/ActionTooltip';
 import { useAuth } from '@/hooks/useAuth';
 import { type SmartFlowEngineSnapshot } from '@/hooks/useSmartFlowEngine';
 import { getUserAvatarUrl, getUserDisplayName } from '@/utils/userIdentity';
+import { ShareViewOnlyBadge } from './components/ShareViewOnlyBadge';
 import {
     type CommentFilter,
     type FlowCommentReviewAnchor,
@@ -506,6 +508,12 @@ export const ShareView = () => {
     const togglePathsPanel = useCallback(() => {
         setIsPathsPanelOpen((current) => !current);
     }, []);
+
+    const openPathsPanel = useCallback(() => {
+        setIsPathsPanelOpen(true);
+    }, []);
+
+    const pendingPathDecision = reviewState.decisions.find((decision) => decision.mode === 'interceptor') || null;
 
     const handleReviewBranchChange = useCallback(
         (decision: FlowPreviewReviewDecision, branchId: string) => {
@@ -1041,15 +1049,13 @@ export const ShareView = () => {
     const activeThread = activeThreadEntry?.thread || null;
 
     useEffect(() => {
-        const pendingDecision = reviewState.decisions.find((decision) => decision.mode === 'interceptor') || null;
-
-        if (!pendingDecision) {
+        if (!pendingPathDecision) {
             lastAutoOpenPendingPathRequestKeyRef.current = null;
             return;
         }
 
         const pendingRequestKey = [
-            pendingDecision.stepId,
+            pendingPathDecision.stepId,
             reviewState.pathSignature,
             reviewState.historyLength,
         ].join('|');
@@ -1057,7 +1063,7 @@ export const ShareView = () => {
         if (lastAutoOpenPendingPathRequestKeyRef.current === pendingRequestKey) return;
         lastAutoOpenPendingPathRequestKeyRef.current = pendingRequestKey;
         setIsPathsPanelOpen(true);
-    }, [reviewState.decisions, reviewState.historyLength, reviewState.pathSignature]);
+    }, [pendingPathDecision, reviewState.historyLength, reviewState.pathSignature]);
 
     useEffect(() => {
         if (!pendingThreadRevealId) return;
@@ -2460,18 +2466,29 @@ export const ShareView = () => {
                                     tone="cinematicDark"
                                     iconOnly
                                     active={isPathsWorkspaceActive}
+                                    className="overflow-visible"
                                     onClick={togglePathsPanel}
                                     aria-label="Toggle paths"
                                     aria-pressed={isPathsWorkspaceActive}
                                 >
                                     <Split />
+                                    {pendingPathDecision && !isPathsWorkspaceActive ? (
+                                        <AttachedStatusTag tone="cinematicDark">
+                                            Need action
+                                        </AttachedStatusTag>
+                                    ) : null}
                                 </ShellHeaderRailItem>
                             </ActionTooltip>
                         </ShellHeaderRail>
                     </div>
 
-                    <div className="absolute left-1/2 flex max-w-[34vw] -translate-x-1/2 items-center gap-2 px-4">
-                        <span className="truncate text-sm font-medium text-shell-dark-text">{flow.title}</span>
+                    <div className="absolute left-1/2 flex max-w-[34vw] -translate-x-1/2 items-center px-4">
+                        <div className="flex min-w-0 items-center gap-2">
+                            <span className="min-w-0 truncate text-sm font-medium text-shell-dark-text">
+                                {flow.title}
+                            </span>
+                            <ShareViewOnlyBadge tone="cinematicDark" />
+                        </div>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -2516,19 +2533,6 @@ export const ShareView = () => {
                                 />
                             </div>
                         </ShellSegmentedControl>
-
-                        <div className="flex items-center gap-2">
-                            <ActionTooltip content="Restart" shortcut="R" side="bottom">
-                                <PreviewHeaderActionButton
-                                    tone="cinematicDark"
-                                    onClick={handleRestart}
-                                    aria-keyshortcuts="R"
-                                >
-                                    <RotateCcw size={14} />
-                                    Restart
-                                </PreviewHeaderActionButton>
-                            </ActionTooltip>
-                        </div>
 
                         <ShareDialog
                             flow={flow}
@@ -2605,6 +2609,12 @@ export const ShareView = () => {
                                 isMobile={isMobile}
                                 variables={{}}
                                 desktopPosition="center"
+                                topControl={(
+                                    <PreviewRestartButton
+                                        tone="cinematicDark"
+                                        onClick={handleRestart}
+                                    />
+                                )}
                                 reviewMode={isCommentsWorkspaceActive}
                                 initialReviewSnapshot={reviewSnapshot}
                                 onReviewStateChange={setReviewState}
@@ -2612,6 +2622,9 @@ export const ShareView = () => {
                                 reviewPathChangeRequest={reviewPathChangeRequest}
                                 showInlinePathControls={false}
                                 showEndOfFlowIndicator={true}
+                                endOfFlowDecisions={reviewState.decisions}
+                                onEndOfFlowRestart={handleRestart}
+                                onEndOfFlowOpenPaths={openPathsPanel}
                             />
                         </div>
 

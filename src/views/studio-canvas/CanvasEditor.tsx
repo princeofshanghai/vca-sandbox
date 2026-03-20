@@ -14,10 +14,12 @@ import {
     ConnectionLineComponentProps,
     MarkerType,
     Position,
+    NodeToolbar,
     SelectionMode,
     useViewport,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import ELK, { type ELK as ElkLayoutEngine, type ElkNode } from 'elkjs/lib/elk.bundled.js';
 import { TurnNode } from './nodes/TurnNode';
 import { UserTurnNode } from './nodes/UserTurnNode';
 import { ConditionNode } from './nodes/ConditionNode';
@@ -51,7 +53,7 @@ import {
 } from './components/ConnectionLine';
 import { ConnectionQuickAddMenu, QuickAddNodeType } from './components/ConnectionQuickAddMenu';
 import { ShareDialog } from '../studio/components/ShareDialog';
-import { ArrowLeft, ChevronDown, Download, ExternalLink, PanelRightOpen, Play, Split, StickyNote, UserRound } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Download, ExternalLink, Grid3x3, PanelRightOpen, Play, Split, StickyNote, UserRound } from 'lucide-react';
 import {
     ShellButton,
     ShellIconButton,
@@ -70,6 +72,7 @@ import {
 } from '@/components/comments/CommentThreadHoverPreview';
 import { cn } from '@/utils/cn';
 import { CANVAS_DEFAULT_CURSOR, COMMENT_PLACEMENT_CURSOR } from '@/utils/commentPlacementCursor';
+import { toast } from 'sonner';
 import { CanvasCommentPopover } from '../studio/CanvasCommentPopover';
 import {
     formatCommentDate,
@@ -105,6 +108,7 @@ import {
     getVisibleUserTurnLabel,
 } from '../studio/userTurnLabels';
 import { getAutoConditionLabel, getVisibleConditionLabel } from '../studio/conditionLabels';
+import { ShareViewOnlyBadge } from '../share/components/ShareViewOnlyBadge';
 
 
 // Register custom node types
@@ -255,12 +259,20 @@ const FLOATING_TOOLBAR_GAP_PX = 24;
 const FLOATING_TOOLBAR_FALLBACK_BOTTOM_OFFSET_PX = 24;
 const FLOATING_TOOLBAR_FALLBACK_HEIGHT_PX = 56;
 const TOOLBAR_NODE_PLACEMENT_PADDING_PX = 16;
+const TOOLBAR_NODE_INSERT_HORIZONTAL_GAP_PX = 96;
+const TOOLBAR_NODE_COLLISION_PADDING_PX = 24;
+const TOOLBAR_NODE_COLLISION_MAX_ATTEMPTS = 12;
 const TOOLBAR_NODE_ESTIMATED_DIMENSIONS: Record<ToolbarPlacementType, { width: number; height: number }> = {
     turn: { width: 360, height: 48 },
     'user-turn': { width: 280, height: 64 },
     condition: { width: 280, height: 220 },
     note: { width: 300, height: 112 },
 };
+const SELECTION_ACTION_TOOLBAR_OFFSET_PX = 8;
+const AUTO_ORGANIZE_LAYER_SPACING_PX = 104;
+const AUTO_ORGANIZE_NODE_SPACING_PX = 48;
+const AUTO_ORGANIZE_GRID_COLUMN_GAP_PX = 96;
+const AUTO_ORGANIZE_GRID_ROW_GAP_PX = 48;
 
 const COMMENT_POPUP_EDGE_PADDING_PX = 12;
 const COMMENT_POPUP_NEW_WIDTH_PX = 320;
@@ -274,6 +286,31 @@ const CANVAS_SHELL_ZOOM_BLOCKER_SELECTOR = '[data-canvas-shell-zoom-blocker="tru
 const clampValue = (value: number, min: number, max: number) => {
     if (max < min) return min;
     return Math.min(Math.max(value, min), max);
+};
+
+const getRectBounds = <T extends { x: number; y: number; width: number; height: number }>(items: T[]) => {
+    if (items.length === 0) {
+        return { x: 0, y: 0, width: 0, height: 0 };
+    }
+
+    let minX = Number.POSITIVE_INFINITY;
+    let minY = Number.POSITIVE_INFINITY;
+    let maxX = Number.NEGATIVE_INFINITY;
+    let maxY = Number.NEGATIVE_INFINITY;
+
+    items.forEach((item) => {
+        minX = Math.min(minX, item.x);
+        minY = Math.min(minY, item.y);
+        maxX = Math.max(maxX, item.x + item.width);
+        maxY = Math.max(maxY, item.y + item.height);
+    });
+
+    return {
+        x: minX,
+        y: minY,
+        width: maxX - minX,
+        height: maxY - minY,
+    };
 };
 
 const getAnchoredPopoverPosition = ({
@@ -798,7 +835,7 @@ function CanvasEditorInner({
     onCommentSignIn,
     commentSurfaceTone = 'default',
 }: CanvasEditorProps) {
-    const { screenToFlowPosition, setCenter, getViewport, setViewport } = useReactFlow();
+    const { screenToFlowPosition, setCenter, getViewport, setViewport, getNodesBounds } = useReactFlow();
     const viewport = useViewport();
     const canvasAreaRef = useRef<HTMLDivElement | null>(null);
     const commentPopoverRef = useRef<HTMLDivElement | null>(null);
@@ -819,9 +856,16 @@ function CanvasEditorInner({
     // Selection state
     const [selection, setSelection] = useState<SelectionState | null>(null);
     const [pendingReactFlowSelectedNodeIds, setPendingReactFlowSelectedNodeIds] = useState<string[] | null>(null);
+    const [isSelectionLayoutPending, setIsSelectionLayoutPending] = useState(false);
+    const [isSelectionGestureActive, setIsSelectionGestureActive] = useState(false);
+    const [pendingAutoOpenComponent, setPendingAutoOpenComponent] = useState<{
+        nodeId: string;
+        componentId: string;
+    } | null>(null);
 
     const selectionRef = useRef<SelectionState | null>(selection);
     const flowRef = useRef(flow);
+    const elkRef = useRef<ElkLayoutEngine | null>(null);
     const clipboardRef = useRef<CanvasClipboardPayload | null>(null);
     const connectionGestureRef = useRef<ConnectionGestureState | null>(null);
     const lastCanvasPointerClientRef = useRef<{ x: number; y: number } | null>(null);
@@ -839,6 +883,10 @@ function CanvasEditorInner({
         clientX: number;
         clientY: number;
     } | null>(null);
+
+    if (!elkRef.current) {
+        elkRef.current = new ELK();
+    }
 
     const applyCanvasPinchZoom = useCallback((
         anchorFlowPoint: { x: number; y: number },
@@ -1004,6 +1052,16 @@ function CanvasEditorInner({
         setSelection(nextSelection);
     }, []);
 
+    const multiSelectedNodeIds = useMemo(
+        () => selection?.type === 'nodes' ? selection.nodeIds : [],
+        [selection]
+    );
+    const showSelectionAutoOrganizeAction =
+        !isFlowReadOnly &&
+        !isCommentModeActive &&
+        !isSelectionGestureActive &&
+        multiSelectedNodeIds.length > 1;
+
     useEffect(() => {
         flowRef.current = flow;
     }, [flow]);
@@ -1094,6 +1152,317 @@ function CanvasEditorInner({
         requestAnimationFrame(syncSelectionToNode);
     }, [setCanvasSelection]);
 
+    const getSelectedToolbarAnchorStepId = useCallback(() => {
+        const currentSelection = selectionRef.current;
+        if (!currentSelection) return null;
+
+        if (currentSelection.type === 'node') {
+            return currentSelection.nodeId;
+        }
+
+        if (currentSelection.type === 'nodes') {
+            return currentSelection.nodeIds.length === 1 ? currentSelection.nodeIds[0] : null;
+        }
+
+        return currentSelection.nodeId;
+    }, []);
+
+    const getEstimatedStepDimensions = useCallback((step: Step) => {
+        switch (step.type) {
+            case 'turn':
+                return TOOLBAR_NODE_ESTIMATED_DIMENSIONS.turn;
+            case 'user-turn':
+                return TOOLBAR_NODE_ESTIMATED_DIMENSIONS['user-turn'];
+            case 'condition':
+                return TOOLBAR_NODE_ESTIMATED_DIMENSIONS.condition;
+            case 'note':
+                return TOOLBAR_NODE_ESTIMATED_DIMENSIONS.note;
+            case 'start':
+                return { width: 132, height: 44 };
+            default: {
+                const exhaustiveCheck: never = step;
+                return exhaustiveCheck;
+            }
+        }
+    }, []);
+
+    const getRenderedStepSize = useCallback((step: Step) => {
+        const fallbackSize = getEstimatedStepDimensions(step);
+        const nodeEl = document.getElementById(`node-${step.id}`);
+        const nodeRect = nodeEl?.getBoundingClientRect();
+
+        if (!nodeRect || nodeRect.width <= 0 || nodeRect.height <= 0 || viewport.zoom <= 0) {
+            return fallbackSize;
+        }
+
+        return {
+            width: nodeRect.width / viewport.zoom,
+            height: nodeRect.height / viewport.zoom,
+        };
+    }, [getEstimatedStepDimensions, viewport.zoom]);
+
+    const getPlacementBoundsForStep = useCallback((step: Step) => {
+        const size = getRenderedStepSize(step);
+        const position = step.position ?? { x: 250, y: 0 };
+
+        return {
+            x: position.x,
+            y: position.y,
+            width: size.width,
+            height: size.height,
+        };
+    }, [getRenderedStepSize]);
+
+    const getFallbackSelectionLayout = useCallback((selectedSteps: Step[]) => {
+        const orderedSteps = [...selectedSteps]
+            .map((step) => ({
+                id: step.id,
+                ...(getPlacementBoundsForStep(step)),
+            }))
+            .sort((left, right) => left.x - right.x || left.y - right.y);
+
+        if (orderedSteps.length === 0) {
+            return [];
+        }
+
+        const columnCount = Math.max(1, Math.ceil(Math.sqrt(orderedSteps.length)));
+        let cursorX = 0;
+        let cursorY = 0;
+        let currentRowHeight = 0;
+
+        return orderedSteps.map((step, index) => {
+            const layout = {
+                id: step.id,
+                x: cursorX,
+                y: cursorY,
+                width: step.width,
+                height: step.height,
+            };
+
+            currentRowHeight = Math.max(currentRowHeight, step.height);
+            const isRowEnd = (index + 1) % columnCount === 0;
+
+            if (isRowEnd) {
+                cursorX = 0;
+                cursorY += currentRowHeight + AUTO_ORGANIZE_GRID_ROW_GAP_PX;
+                currentRowHeight = 0;
+            } else {
+                cursorX += step.width + AUTO_ORGANIZE_GRID_COLUMN_GAP_PX;
+            }
+
+            return layout;
+        });
+    }, [getPlacementBoundsForStep]);
+
+    const handleAutoOrganizeSelection = useCallback(async () => {
+        if (isFlowReadOnly || isSelectionLayoutPending) {
+            return;
+        }
+
+        const currentSelection = selectionRef.current;
+        if (currentSelection?.type !== 'nodes' || currentSelection.nodeIds.length < 2) {
+            return;
+        }
+
+        const currentFlow = flowRef.current;
+        const flowSteps = currentFlow.steps || [];
+        const selectedNodeIds = [...currentSelection.nodeIds];
+        const selectedStepIdSet = new Set(selectedNodeIds);
+        const selectedSteps = flowSteps
+            .filter((step) => selectedStepIdSet.has(step.id))
+            .sort((left, right) => {
+                const leftPosition = left.position ?? { x: 250, y: 0 };
+                const rightPosition = right.position ?? { x: 250, y: 0 };
+                return leftPosition.x - rightPosition.x || leftPosition.y - rightPosition.y;
+            });
+
+        if (selectedSteps.length < 2) {
+            return;
+        }
+
+        const selectionBounds = getNodesBounds(selectedNodeIds);
+        const internalConnections = (currentFlow.connections || []).filter((connection) => (
+            selectedStepIdSet.has(connection.source) &&
+            selectedStepIdSet.has(connection.target) &&
+            connection.source !== connection.target
+        ));
+
+        setIsSelectionLayoutPending(true);
+
+        try {
+            let nextLayout = getFallbackSelectionLayout(selectedSteps);
+
+            if (internalConnections.length > 0 && elkRef.current) {
+                const elkGraph: ElkNode = {
+                    id: 'selection-layout-root',
+                    layoutOptions: {
+                        'elk.algorithm': 'layered',
+                        'elk.direction': 'RIGHT',
+                        'elk.layered.spacing.nodeNodeBetweenLayers': String(AUTO_ORGANIZE_LAYER_SPACING_PX),
+                        'elk.spacing.nodeNode': String(AUTO_ORGANIZE_NODE_SPACING_PX),
+                        'elk.layered.nodePlacement.strategy': 'NETWORK_SIMPLEX',
+                        'elk.layered.considerModelOrder.strategy': 'NODES_AND_EDGES',
+                        'elk.layered.crossingMinimization.strategy': 'LAYER_SWEEP',
+                    },
+                    children: selectedSteps.map((step) => {
+                        const size = getRenderedStepSize(step);
+                        return {
+                            id: step.id,
+                            width: size.width,
+                            height: size.height,
+                        };
+                    }),
+                    edges: internalConnections.map((connection) => ({
+                        id: connection.id,
+                        sources: [connection.source],
+                        targets: [connection.target],
+                    })),
+                };
+
+                const elkLayout = await elkRef.current.layout(elkGraph);
+                const laidOutChildren = elkLayout.children?.map((child: ElkNode) => ({
+                    id: child.id,
+                    x: child.x ?? 0,
+                    y: child.y ?? 0,
+                    width: child.width ?? 0,
+                    height: child.height ?? 0,
+                })) ?? [];
+
+                if (laidOutChildren.length === selectedSteps.length) {
+                    nextLayout = laidOutChildren;
+                }
+            }
+
+            if (nextLayout.length === 0) {
+                return;
+            }
+
+            const nextLayoutBounds = getRectBounds(nextLayout);
+            const offsetX = selectionBounds.x - nextLayoutBounds.x;
+            const offsetY = selectionBounds.y - nextLayoutBounds.y;
+            const nextPositions = new Map(
+                nextLayout.map((node) => [
+                    node.id,
+                    {
+                        x: Math.round(node.x + offsetX),
+                        y: Math.round(node.y + offsetY),
+                    },
+                ])
+            );
+
+            const latestFlow = flowRef.current;
+            const latestSteps = latestFlow.steps || [];
+            let didChange = false;
+            const updatedSteps = latestSteps.map((step) => {
+                const nextPosition = nextPositions.get(step.id);
+                if (!nextPosition) {
+                    return step;
+                }
+
+                const currentPosition = step.position ?? { x: 250, y: 0 };
+                if (
+                    Math.abs(currentPosition.x - nextPosition.x) < 1 &&
+                    Math.abs(currentPosition.y - nextPosition.y) < 1
+                ) {
+                    return step;
+                }
+
+                didChange = true;
+                return {
+                    ...step,
+                    position: nextPosition,
+                };
+            });
+
+            if (!didChange) {
+                return;
+            }
+
+            applyFlowUpdate({
+                ...latestFlow,
+                steps: updatedSteps,
+                lastModified: Date.now(),
+            });
+            setPendingReactFlowSelectedNodeIds(selectedNodeIds);
+        } catch (error) {
+            console.error('Failed to organize selection', error);
+            toast("Couldn't organize selection");
+        } finally {
+            setIsSelectionLayoutPending(false);
+        }
+    }, [
+        applyFlowUpdate,
+        getFallbackSelectionLayout,
+        getNodesBounds,
+        getRenderedStepSize,
+        isFlowReadOnly,
+        isSelectionLayoutPending,
+    ]);
+
+    const getToolbarPlacementInputOffset = useCallback((type: ToolbarPlacementType) => {
+        const size = TOOLBAR_NODE_ESTIMATED_DIMENSIONS[type];
+        if (type === 'turn') {
+            return size.height / 2;
+        }
+        if (type === 'user-turn') {
+            return size.height / 2;
+        }
+        if (type === 'condition') {
+            return size.height / 2;
+        }
+        return size.height / 2;
+    }, []);
+
+    const getStepPrimaryOutputOffset = useCallback((step: Step, bounds: { height: number }) => {
+        if (step.type === 'turn') {
+            return step.components.length > 0 ? 19 : bounds.height / 2;
+        }
+
+        return bounds.height / 2;
+    }, []);
+
+    const findNonOverlappingToolbarPlacement = useCallback(({
+        initialPosition,
+        targetType,
+        excludedStepIds,
+    }: {
+        initialPosition: { x: number; y: number };
+        targetType: ToolbarPlacementType;
+        excludedStepIds?: string[];
+    }) => {
+        const targetSize = TOOLBAR_NODE_ESTIMATED_DIMENSIONS[targetType];
+        const currentSteps = flowRef.current.steps || [];
+        const excludedIds = new Set(excludedStepIds || []);
+        const occupiedBounds = currentSteps
+            .filter((step) => !excludedIds.has(step.id))
+            .map((step) => getPlacementBoundsForStep(step));
+
+        let candidate = {
+            x: Math.round(initialPosition.x),
+            y: Math.round(initialPosition.y),
+        };
+
+        for (let attempt = 0; attempt < TOOLBAR_NODE_COLLISION_MAX_ATTEMPTS; attempt += 1) {
+            const collision = occupiedBounds.find((bounds) => (
+                candidate.x < bounds.x + bounds.width + TOOLBAR_NODE_COLLISION_PADDING_PX &&
+                candidate.x + targetSize.width + TOOLBAR_NODE_COLLISION_PADDING_PX > bounds.x &&
+                candidate.y < bounds.y + bounds.height + TOOLBAR_NODE_COLLISION_PADDING_PX &&
+                candidate.y + targetSize.height + TOOLBAR_NODE_COLLISION_PADDING_PX > bounds.y
+            ));
+
+            if (!collision) {
+                return candidate;
+            }
+
+            candidate = {
+                x: candidate.x,
+                y: Math.round(collision.y + collision.height + TOOLBAR_NODE_COLLISION_PADDING_PX),
+            };
+        }
+
+        return candidate;
+    }, [getPlacementBoundsForStep]);
+
     const createToolbarNodeAtPosition = useCallback((type: ToolbarPlacementType, position: { x: number; y: number }) => {
         const currentFlow = flowRef.current;
         const currentSteps = currentFlow.steps || [];
@@ -1132,6 +1501,7 @@ function CanvasEditorInner({
                 steps: [...currentSteps, newUserTurn],
                 lastModified: Date.now(),
             });
+            focusNodeSelection(newUserTurn.id);
             return;
         }
 
@@ -1151,6 +1521,7 @@ function CanvasEditorInner({
                 steps: [...currentSteps, newCondition],
                 lastModified: Date.now(),
             });
+            focusNodeSelection(newCondition.id);
             return;
         }
 
@@ -1167,9 +1538,10 @@ function CanvasEditorInner({
             steps: [...currentSteps, newNote],
             lastModified: Date.now(),
         });
+        focusNodeSelection(newNote.id);
     }, [applyFlowUpdate, focusNodeSelection]);
 
-    const getFloatingToolbarNodePlacement = useCallback((type: ToolbarPlacementType) => {
+    const getFloatingToolbarFallbackPlacement = useCallback((type: ToolbarPlacementType) => {
         const canvasRect = canvasAreaRef.current?.getBoundingClientRect();
         if (!canvasRect) {
             const fallbackSteps = flowRef.current.steps?.length || 0;
@@ -1208,6 +1580,40 @@ function CanvasEditorInner({
 
         return screenToFlowPosition({ x: left, y: top });
     }, [screenToFlowPosition]);
+
+    const getFloatingToolbarNodePlacement = useCallback((type: ToolbarPlacementType) => {
+        const anchorStepId = getSelectedToolbarAnchorStepId();
+        if (!anchorStepId) {
+            return getFloatingToolbarFallbackPlacement(type);
+        }
+
+        const anchorStep = flowRef.current.steps?.find((step) => step.id === anchorStepId);
+        if (!anchorStep || !anchorStep.position) {
+            return getFloatingToolbarFallbackPlacement(type);
+        }
+
+        const anchorBounds = getPlacementBoundsForStep(anchorStep);
+        const targetInputOffset = getToolbarPlacementInputOffset(type);
+        const anchorOutputOffset = getStepPrimaryOutputOffset(anchorStep, anchorBounds);
+
+        const initialPosition = {
+            x: anchorBounds.x + anchorBounds.width + TOOLBAR_NODE_INSERT_HORIZONTAL_GAP_PX,
+            y: anchorStep.position.y + anchorOutputOffset - targetInputOffset,
+        };
+
+        return findNonOverlappingToolbarPlacement({
+            initialPosition,
+            targetType: type,
+            excludedStepIds: [anchorStep.id],
+        });
+    }, [
+        findNonOverlappingToolbarPlacement,
+        getFloatingToolbarFallbackPlacement,
+        getPlacementBoundsForStep,
+        getSelectedToolbarAnchorStepId,
+        getStepPrimaryOutputOffset,
+        getToolbarPlacementInputOffset,
+    ]);
 
     const updatePendingToolbarPlacementPreview = useCallback((client: { x: number; y: number }) => {
         lastCanvasPointerClientRef.current = client;
@@ -1886,7 +2292,11 @@ function CanvasEditorInner({
         });
     }, []);
 
-    const handleComponentAdd = useCallback((type: ComponentType, targetNodeId?: string) => {
+    const handleComponentAdd = useCallback((
+        type: ComponentType,
+        targetNodeId?: string,
+        options?: { autoOpenEditor?: boolean }
+    ) => {
         const currentFlow = flowRef.current;
         const currentSelection = selectionRef.current;
         const resolvedNodeId = targetNodeId ?? getSingleSelectedNodeId(currentSelection);
@@ -1909,12 +2319,17 @@ function CanvasEditorInner({
         );
 
         applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
-        setCanvasSelection({ type: 'component', nodeId: resolvedNodeId, componentId: newComponent.id });
         setPendingReactFlowSelectedNodeIds([]);
+        if (options?.autoOpenEditor) {
+            setPendingAutoOpenComponent({ nodeId: resolvedNodeId, componentId: newComponent.id });
+            return;
+        }
+
+        setCanvasSelection({ type: 'component', nodeId: resolvedNodeId, componentId: newComponent.id });
     }, [applyFlowUpdate, setCanvasSelection]);
 
     const handleTurnAddComponent = useCallback((nodeId: string, type: ComponentType) => {
-        handleComponentAdd(type, nodeId);
+        handleComponentAdd(type, nodeId, { autoOpenEditor: true });
     }, [handleComponentAdd]);
 
     const getNodeCommentState = useCallback(() => {
@@ -2319,6 +2734,18 @@ function CanvasEditorInner({
         setCanvasSelection({ type: 'nodes', nodeIds: selectedNodeIds });
     }, [handleDeselect, isCommentModeActive, setCanvasSelection]);
 
+    const handleSelectionStart = useCallback(() => {
+        if (isCommentModeActive) {
+            return;
+        }
+
+        setIsSelectionGestureActive(true);
+    }, [isCommentModeActive]);
+
+    const handleSelectionEnd = useCallback(() => {
+        setIsSelectionGestureActive(false);
+    }, []);
+
     // Sync edges when flow model changes
     useEffect(() => {
         setEdges(initialEdges as Edge[]);
@@ -2356,6 +2783,32 @@ function CanvasEditorInner({
         });
         setPendingReactFlowSelectedNodeIds(null);
     }, [nodes, pendingReactFlowSelectedNodeIds, setNodes]);
+
+    useEffect(() => {
+        if (!pendingAutoOpenComponent) {
+            return;
+        }
+
+        const step = flow.steps?.find((candidate) => (
+            candidate.id === pendingAutoOpenComponent.nodeId &&
+            candidate.type === 'turn'
+        ));
+        const componentExists = step?.type === 'turn' && step.components.some((component) => (
+            component.id === pendingAutoOpenComponent.componentId
+        ));
+        const targetNode = nodes.find((node) => node.id === pendingAutoOpenComponent.nodeId);
+
+        if (!componentExists || !targetNode || targetNode.selected) {
+            return;
+        }
+
+        setCanvasSelection({
+            type: 'component',
+            nodeId: pendingAutoOpenComponent.nodeId,
+            componentId: pendingAutoOpenComponent.componentId,
+        });
+        setPendingAutoOpenComponent(null);
+    }, [flow.steps, nodes, pendingAutoOpenComponent, setCanvasSelection]);
 
     // Sync node data when flow changes
     useEffect(() => {
@@ -3452,12 +3905,14 @@ function CanvasEditorInner({
                 )}
                 <div className="h-5 w-px bg-shell-chrome-divider" />
                 <div className="relative inline-grid items-center min-w-[60px] max-w-[320px]">
-                    <span className="invisible px-3 py-1 text-sm font-medium whitespace-pre border border-transparent col-start-1 row-start-1">
-                        {flow.title || "Untitled flow"}
+                    <span className="invisible flex items-center gap-2 px-3 py-1 text-sm font-medium whitespace-pre border border-transparent col-start-1 row-start-1">
+                        <span>{flow.title || 'Untitled flow'}</span>
+                        {isFlowReadOnly ? <ShareViewOnlyBadge /> : null}
                     </span>
                     {isFlowReadOnly ? (
-                        <div className="absolute inset-0 w-full h-full font-medium text-sm text-shell-text bg-transparent border border-transparent rounded px-3 py-1 flex items-center truncate">
-                            {flow.title || 'Untitled flow'}
+                        <div className="absolute inset-0 flex h-full w-full items-center gap-2 rounded border border-transparent bg-transparent px-3 py-1 text-sm font-medium text-shell-text">
+                            <span className="min-w-0 truncate">{flow.title || 'Untitled flow'}</span>
+                            <ShareViewOnlyBadge />
                         </div>
                     ) : (
                         <input
@@ -3596,6 +4051,8 @@ function CanvasEditorInner({
                     onEdgesDelete={isFlowReadOnly || isCommentModeActive ? undefined : onEdgesDelete}
                     onNodeDragStop={isFlowReadOnly || isCommentModeActive ? undefined : onNodeDragStop}
                     onPaneClick={handlePaneClick}
+                    onSelectionStart={isFlowReadOnly || isCommentModeActive ? undefined : handleSelectionStart}
+                    onSelectionEnd={isFlowReadOnly || isCommentModeActive ? undefined : handleSelectionEnd}
                     onSelectionChange={onSelectionChange}
                     panOnScroll
                     selectionOnDrag={selectionOnDragEnabled}
@@ -3615,6 +4072,42 @@ function CanvasEditorInner({
                     connectionLineComponent={connectionLineWithPreview}
                     className={`bg-shell-studio-canvas ${!isFlowReadOnly && isAltPressed ? 'is-alt-pressed' : ''} ${!isFlowReadOnly && pendingToolbarPlacement ? 'is-placement-active' : ''} ${isCommentModeActive ? 'is-comment-mode' : ''}`}
                 >
+                    {showSelectionAutoOrganizeAction ? (
+                        <NodeToolbar
+                            nodeId={multiSelectedNodeIds}
+                            isVisible
+                            position={Position.Top}
+                            align="end"
+                            offset={SELECTION_ACTION_TOOLBAR_OFFSET_PX}
+                        >
+                            <ActionTooltip
+                                content={isSelectionLayoutPending ? 'Organizing selection' : 'Organize selection'}
+                                disabled={isSelectionLayoutPending}
+                            >
+                                <span className="block">
+                                    <ShellIconButton
+                                        type="button"
+                                        size="sm"
+                                        shape="rounded"
+                                        variant="outline"
+                                        aria-label="Organize selection"
+                                        data-no-dnd="true"
+                                        data-canvas-shell-zoom-blocker="true"
+                                        disabled={isSelectionLayoutPending}
+                                        onClick={(event) => {
+                                            event.stopPropagation();
+                                            void handleAutoOrganizeSelection();
+                                        }}
+                                        onPointerDown={(event) => event.stopPropagation()}
+                                        className="nodrag nopan h-6 w-6 shrink-0 rounded-md border-shell-accent/40 bg-[rgb(var(--shell-node-ai-surface)/1)] text-shell-accent shadow-sm hover:border-shell-accent/65 hover:bg-shell-accent-soft hover:text-shell-accent-text focus-visible:ring-shell-accent/20 disabled:pointer-events-none disabled:opacity-70"
+                                    >
+                                        <Grid3x3 size={14} className={isSelectionLayoutPending ? 'animate-pulse' : undefined} />
+                                    </ShellIconButton>
+                                </span>
+                            </ActionTooltip>
+                        </NodeToolbar>
+                    ) : null}
+
                     <Background color="rgb(var(--shell-studio-canvas-grid) / 1)" gap={20} size={2} />
 
                     {onToggleComments ? (

@@ -168,7 +168,7 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
                                     data-no-dnd="true"
                                     onClick={(e) => e.stopPropagation()}
                                     onPointerDown={(e) => e.stopPropagation()}
-                                    className="nodrag nopan h-6 w-6 shrink-0 rounded-md border-shell-accent/40 bg-[rgb(var(--shell-node-ai-surface)/1)] text-shell-accent shadow-sm hover:border-shell-accent/65 hover:bg-shell-accent-soft hover:text-shell-accent-text focus-visible:ring-shell-accent/20"
+                                    className="nodrag nopan h-6 w-6 shrink-0 translate-x-0.5 rounded-md border-shell-accent/40 bg-[rgb(var(--shell-node-ai-surface)/1)] text-shell-accent shadow-sm hover:border-shell-accent/65 hover:bg-shell-accent-soft hover:text-shell-accent-text focus-visible:ring-shell-accent/20"
                                 >
                                     <Plus size={14} />
                                 </ShellIconButton>
@@ -192,7 +192,7 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
                 type="target"
                 id="main-input"
                 position={Position.Left}
-                className={`${handleClassName} !w-4 !h-4 !border-2 !border-shell-bg !z-50`}
+                className={`${handleClassName} !w-[18px] !h-[18px] !border-2 !border-shell-bg !z-50`}
                 style={hasComponents ? { top: 19, left: -OUTER_NODE_HANDLE_OFFSET_PX } : { left: -OUTER_NODE_HANDLE_OFFSET_PX }}
             />
 
@@ -220,7 +220,7 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
                 type="source"
                 id="main-output"
                 position={Position.Right}
-                className={`${handleClassName} !w-4 !h-4 !border-2 !border-shell-bg !z-50`}
+                className={`${handleClassName} !w-[18px] !h-[18px] !border-2 !border-shell-bg !z-50`}
                 style={hasComponents ? { top: 19, right: -OUTER_NODE_HANDLE_OFFSET_PX } : { right: -OUTER_NODE_HANDLE_OFFSET_PX }}
             />
         </div >

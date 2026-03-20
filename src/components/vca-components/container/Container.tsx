@@ -7,6 +7,7 @@ export type ContainerViewport = 'desktop' | 'mobile';
 
 export type ContainerProps = {
   children?: ReactNode;
+  footer?: ReactNode;
   viewport?: ContainerViewport;
   showPremiumBorder?: boolean;
   headerTitle?: string;
@@ -37,6 +38,7 @@ export type ContainerProps = {
  */
 export const Container = ({
   children,
+  footer,
   viewport = 'desktop',
   showPremiumBorder = false,
   headerTitle = 'Help',
@@ -124,6 +126,8 @@ export const Container = ({
           {children}
         </div>
       </div>
+
+      {footer ? <div className="shrink-0">{footer}</div> : null}
 
       {/* Composer - Fixed at bottom */}
       <Composer

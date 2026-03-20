@@ -40,3 +40,4 @@ export {
   ShellSelectValue,
 } from './ShellSelect';
 export { ShellTooltip } from './ShellTooltip';
+export { ShellUserAvatar } from './ShellUserAvatar';

@@ -8,6 +8,7 @@ import {
     ShellMenuSeparator,
     ShellMenuSwitchItem,
     ShellMenuTrigger,
+    ShellUserAvatar,
 } from '@/components/shell';
 import { ActionTooltip } from '@/views/studio-canvas/components/ActionTooltip';
 import { useApp } from '@/contexts/AppContext';
@@ -65,19 +66,14 @@ export function UserMenu({
                 <ActionTooltip content={userEmail} side="bottom">
                     <ShellMenuTrigger asChild>
                         <ShellIconButton aria-label="Open user menu" className="h-9 w-9">
-                            <div className="h-7 w-7 rounded-full overflow-hidden border border-shell-border/70 bg-shell-surface">
-                                {avatarUrl ? (
-                                    <img
-                                        src={avatarUrl}
-                                        alt="Your profile photo"
-                                        className="h-full w-full object-cover"
-                                    />
-                                ) : (
-                                    <div className="h-full w-full bg-[radial-gradient(circle_at_18%_20%,rgb(var(--shell-accent))_0%,rgb(var(--shell-accent-hover))_45%,rgb(var(--shell-muted-strong))_100%)] flex items-center justify-center text-shell-dark-text font-bold text-[10px] tracking-wide">
-                                        {initials}
-                                    </div>
-                                )}
-                            </div>
+                            <ShellUserAvatar
+                                name={userEmail || 'Signed-in user'}
+                                avatarUrl={avatarUrl}
+                                alt="Your profile photo"
+                                fallbackLabel={initials}
+                                sizeClassName="h-7 w-7"
+                                textClassName="text-[10px]"
+                            />
                         </ShellIconButton>
                     </ShellMenuTrigger>
                 </ActionTooltip>

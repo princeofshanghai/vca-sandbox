@@ -16,8 +16,10 @@ interface BranchCardProps extends React.HTMLAttributes<HTMLDivElement> {
 export const BranchCard = memo(forwardRef<HTMLDivElement, BranchCardProps>(({
     branch,
     isSelected,
+    readOnly,
     onCardClick,
     stopPropagationOnClick = true,
+    className,
     ...props
 }, ref) => {
     const pathLabel = getConditionPathLabel(branch);
@@ -25,10 +27,11 @@ export const BranchCard = memo(forwardRef<HTMLDivElement, BranchCardProps>(({
     const variable = branch.logic?.variable?.trim() || '';
     const value = branch.logic?.value !== undefined ? String(branch.logic.value).trim() : '';
     const hasRuleChips = !branch.isDefault && Boolean(variable || value);
+    const hasBranchDetail = branch.isDefault || hasRuleChips || Boolean(ruleSummary);
 
     const chipClassName = cn(
-        'inline-flex items-center rounded-full border border-shell-border bg-shell-surface px-2.5 py-1',
-        'text-[11px] font-medium leading-none text-shell-muted-strong shadow-[0_1px_1px_rgb(15_23_42/0.03)]'
+        'inline-flex items-center rounded-lg border border-shell-node-condition/30 bg-[rgb(var(--shell-node-condition-surface)/0.82)] px-2.5 py-1',
+        'font-mono text-[11px] font-medium leading-none text-shell-node-condition shadow-[0_1px_1px_rgb(15_23_42/0.03)]'
     );
 
     const renderContent = () => {
@@ -75,7 +78,7 @@ export const BranchCard = memo(forwardRef<HTMLDivElement, BranchCardProps>(({
         <div
             ref={ref}
             id={`component-${branch.id}`}
-            className="relative z-20 mb-2"
+            className={cn('relative z-20', className)}
             {...props}
         >
             <StudioCard
@@ -89,6 +92,15 @@ export const BranchCard = memo(forwardRef<HTMLDivElement, BranchCardProps>(({
                 outputHandleId={branch.id}
                 outputHandleOffsetPx={CARD_EDGE_OUTPUT_HANDLE_OFFSET_PX}
                 compactWhenBodyEmpty={true}
+                className={cn(
+                    'rounded-none border-0 bg-transparent shadow-none',
+                    readOnly ? 'cursor-default' : 'cursor-pointer'
+                )}
+                headerClassName={cn(
+                    'border-b-0 bg-transparent px-4',
+                    hasBranchDetail ? 'pb-1.5 pt-3.5' : 'py-3.5'
+                )}
+                bodyClassName="bg-transparent px-4 pb-3.5 pt-0"
             >
                 {renderContent()}
             </StudioCard>

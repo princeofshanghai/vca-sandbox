@@ -5,7 +5,7 @@ import { FlowPreview, type FlowPreviewReviewPathChangeRequest, type FlowPreviewR
 import { Flow } from './types';
 import { PreviewSettingsMenu } from './PreviewSettingsMenu';
 import { PreviewHeaderActionButton } from './components/PreviewHeaderActionButton';
-import { RotateCcw, Split, X, Monitor, Smartphone } from 'lucide-react';
+import { Split, X, Monitor, Smartphone } from 'lucide-react';
 import { ActionTooltip } from '../studio-canvas/components/ActionTooltip';
 import {
     ShellIconButton,
@@ -16,6 +16,8 @@ import {
 import { useApp } from '@/contexts/AppContext';
 import { usePreventBrowserPinchZoom } from '@/hooks/usePreventBrowserPinchZoom';
 import { PathsPanel } from './components/PathsPanel';
+import { PreviewRestartButton } from './components/PreviewRestartButton';
+import { AttachedStatusTag } from './components/AttachedStatusTag';
 
 interface PreviewDrawerProps {
     isOpen: boolean;
@@ -80,6 +82,10 @@ export function PreviewDrawer({
         if (mode === 'interceptor') {
             setIsPathsPanelOpen(false);
         }
+    }, []);
+
+    const openPathsPanel = useCallback(() => {
+        setIsPathsPanelOpen(true);
     }, []);
 
     const handleRestart = useCallback(() => {
@@ -211,6 +217,46 @@ export function PreviewDrawer({
                                 </ShellIconButton>
                             </ActionTooltip>
 
+                            <Popover.Root open={isPathsPanelOpen} onOpenChange={setIsPathsPanelOpen}>
+                                <Popover.Trigger asChild>
+                                    <PreviewHeaderActionButton
+                                        tone={previewControlTone}
+                                        active={isPathsPanelOpen}
+                                        aria-expanded={isPathsPanelOpen}
+                                    >
+                                        <Split size={14} />
+                                        Paths
+                                        {!!pendingPathDecision && !isPathsPanelOpen ? (
+                                            <AttachedStatusTag tone={previewControlTone}>
+                                                Need action
+                                            </AttachedStatusTag>
+                                        ) : null}
+                                    </PreviewHeaderActionButton>
+                                </Popover.Trigger>
+
+                                <ShellPopoverContent
+                                    tone="default"
+                                    side="bottom"
+                                    align="end"
+                                    sideOffset={10}
+                                    collisionPadding={12}
+                                    className="w-[344px] border-shell-border bg-shell-bg p-0"
+                                >
+                                    <PathsPanel
+                                        decisions={reviewState.decisions}
+                                        tone="default"
+                                        variant="popover"
+                                        onChangePath={(decision, branchId) =>
+                                            handlePathChange(decision.stepId, branchId, decision.mode)
+                                        }
+                                        onResetPaths={hasPathDecisions ? handleRestart : undefined}
+                                        className="max-h-[min(68vh,520px)]"
+                                    />
+                                </ShellPopoverContent>
+                            </Popover.Root>
+                        </div>
+
+                        <div className="flex items-center gap-2">
                             {/* Display Pill */}
                             <ShellSegmentedControl tone={previewControlTone} size="compact" aria-label="Preview mode">
                                 <ActionTooltip content="Desktop preview" side="bottom">
@@ -252,60 +298,6 @@ export function PreviewDrawer({
                                 </div>
                             </ShellSegmentedControl>
                         </div>
-
-                        <div className="flex items-center gap-2">
-                            <Popover.Root open={isPathsPanelOpen} onOpenChange={setIsPathsPanelOpen}>
-                                <Popover.Trigger asChild>
-                                    <PreviewHeaderActionButton
-                                        tone={previewControlTone}
-                                        active={isPathsPanelOpen || !!pendingPathDecision}
-                                        aria-expanded={isPathsPanelOpen}
-                                    >
-                                        <Split size={14} />
-                                        Paths
-                                    </PreviewHeaderActionButton>
-                                </Popover.Trigger>
-
-                                <ShellPopoverContent
-                                    tone="default"
-                                    side="bottom"
-                                    align="end"
-                                    sideOffset={10}
-                                    collisionPadding={12}
-                                    className="w-[344px] border-shell-border bg-shell-bg p-0"
-                                >
-                                    <PathsPanel
-                                        decisions={reviewState.decisions}
-                                        tone="default"
-                                        variant="popover"
-                                        onChangePath={(decision, branchId) =>
-                                            handlePathChange(decision.stepId, branchId, decision.mode)
-                                        }
-                                        onResetPaths={hasPathDecisions ? handleRestart : undefined}
-                                        className="max-h-[min(68vh,520px)]"
-                                    />
-                                </ShellPopoverContent>
-                            </Popover.Root>
-
-                            <ActionTooltip content="Restart" shortcut="R" side="bottom">
-                                <div className="relative">
-                                    <PreviewHeaderActionButton
-                                        tone={previewControlTone}
-                                        onClick={handleRestart}
-                                        aria-keyshortcuts="R"
-                                    >
-                                        <RotateCcw size={14} />
-                                        Restart
-                                    </PreviewHeaderActionButton>
-                                    {shouldShowRestartIndicator && (
-                                        <span
-                                            aria-hidden="true"
-                                            className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full border-2 border-shell-surface bg-shell-danger"
-                                        />
-                                    )}
-                                </div>
-                            </ActionTooltip>
-                        </div>
                     </div>
 
                     {/* Preview Content */}
@@ -317,10 +309,20 @@ export function PreviewDrawer({
                             isMobile={isMobile}
                             variables={simulationVariables}
                             onVariableUpdate={(key, val) => setSimulationVariables(prev => ({ ...prev, [key]: val }))}
+                            topControl={(
+                                <PreviewRestartButton
+                                    tone={previewControlTone}
+                                    showIndicator={shouldShowRestartIndicator}
+                                    onClick={handleRestart}
+                                />
+                            )}
                             onReviewStateChange={setReviewState}
                             reviewPathChangeRequest={reviewPathChangeRequest}
                             showInlinePathControls={false}
                             showEndOfFlowIndicator={true}
+                            endOfFlowDecisions={reviewState.decisions}
+                            onEndOfFlowRestart={handleRestart}
+                            onEndOfFlowOpenPaths={openPathsPanel}
                         />
                     </div>
                 </div>

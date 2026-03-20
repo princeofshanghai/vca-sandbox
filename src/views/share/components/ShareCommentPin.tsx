@@ -37,8 +37,8 @@ const pinStyles: Record<CommentSurfaceTone, Record<ShareCommentPinTone, ShareCom
         default: {
             fill: 'rgb(var(--shell-bg))',
             stroke: 'rgb(var(--shell-border) / 0.92)',
-            avatarBackgroundClassName: 'bg-shell-surface',
-            labelClassName: 'text-shell-text',
+            avatarBackgroundClassName: 'border border-shell-accent-border/80 bg-shell-accent-soft',
+            labelClassName: 'text-shell-accent-text',
         },
         selected: {
             fill: 'rgb(var(--shell-accent))',
@@ -50,8 +50,8 @@ const pinStyles: Record<CommentSurfaceTone, Record<ShareCommentPinTone, ShareCom
         resolved: {
             fill: 'rgb(var(--shell-surface))',
             stroke: 'rgb(var(--shell-border) / 0.96)',
-            avatarBackgroundClassName: 'bg-shell-bg',
-            labelClassName: 'text-shell-muted',
+            avatarBackgroundClassName: 'border border-shell-accent-border/80 bg-shell-accent-soft',
+            labelClassName: 'text-shell-accent-text',
         },
         pending: {
             fill: 'rgb(var(--shell-accent))',
@@ -65,8 +65,8 @@ const pinStyles: Record<CommentSurfaceTone, Record<ShareCommentPinTone, ShareCom
         default: {
             fill: 'rgb(var(--shell-dark-panel))',
             stroke: 'rgb(var(--shell-dark-border) / 0.35)',
-            avatarBackgroundClassName: 'bg-shell-dark-surface',
-            labelClassName: 'text-shell-dark-text',
+            avatarBackgroundClassName: 'border border-shell-dark-accent/30 bg-shell-dark-accent-soft',
+            labelClassName: 'text-shell-dark-accent-text',
         },
         selected: {
             fill: 'rgb(var(--shell-dark-accent))',
@@ -78,8 +78,8 @@ const pinStyles: Record<CommentSurfaceTone, Record<ShareCommentPinTone, ShareCom
         resolved: {
             fill: 'rgb(var(--shell-dark-surface))',
             stroke: 'rgb(var(--shell-dark-border) / 0.55)',
-            avatarBackgroundClassName: 'bg-[rgb(var(--shell-dark-panel-alt)/1)]',
-            labelClassName: 'text-shell-dark-muted',
+            avatarBackgroundClassName: 'border border-shell-dark-accent/30 bg-shell-dark-accent-soft',
+            labelClassName: 'text-shell-dark-accent-text',
         },
         pending: {
             fill: 'rgb(var(--shell-dark-accent))',

@@ -4,8 +4,8 @@ const NODE_CARD_HORIZONTAL_GUTTER_PX = 28;
 const DEFAULT_HANDLE_SIZE_PX = 14; // `w-3.5 h-3.5`
 const SELECTION_ITEM_HANDLE_SIZE_PX = 14; // `w-3.5 h-3.5`
 const CARD_BODY_PADDING_RIGHT_PX = 12; // `p-3`
-const OUTER_NODE_HANDLE_SIZE_PX = 16; // `w-4 h-4`
-const OUTER_NODE_HANDLE_GAP_PX = 6;
+export const OUTER_NODE_HANDLE_SIZE_PX = 18; // `w-[18px] h-[18px]`
+const OUTER_NODE_HANDLE_GAP_PX = 7;
 
 // Places a card-level output handle center on the node edge.
 export const CARD_EDGE_OUTPUT_HANDLE_OFFSET_PX =

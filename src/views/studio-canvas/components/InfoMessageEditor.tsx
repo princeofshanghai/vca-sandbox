@@ -147,6 +147,7 @@ export function InfoMessageEditor({
                             value={localBody}
                             onChange={handleBodyChange}
                             placeholder="To add a user in LinkedIn Recruiter, you need to be a Product Settings or Account Center Admin. Here's how you can do it"
+                            helperText={!readOnly ? 'Select text to see formatting options.' : undefined}
                             autoFocus={isOpen && !readOnly}
                             readOnly={readOnly}
                             surfaceVariant="field"
