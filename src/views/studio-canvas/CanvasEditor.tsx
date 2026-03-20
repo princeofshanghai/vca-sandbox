@@ -19,7 +19,7 @@ import {
     useViewport,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import ELK, { type ELK as ElkLayoutEngine, type ElkNode } from 'elkjs/lib/elk.bundled.js';
+import type { ELK as ElkLayoutEngine, ElkNode } from 'elkjs/lib/elk.bundled.js';
 import { TurnNode } from './nodes/TurnNode';
 import { UserTurnNode } from './nodes/UserTurnNode';
 import { ConditionNode } from './nodes/ConditionNode';
@@ -866,6 +866,7 @@ function CanvasEditorInner({
     const selectionRef = useRef<SelectionState | null>(selection);
     const flowRef = useRef(flow);
     const elkRef = useRef<ElkLayoutEngine | null>(null);
+    const elkLoadPromiseRef = useRef<Promise<ElkLayoutEngine> | null>(null);
     const clipboardRef = useRef<CanvasClipboardPayload | null>(null);
     const connectionGestureRef = useRef<ConnectionGestureState | null>(null);
     const lastCanvasPointerClientRef = useRef<{ x: number; y: number } | null>(null);
@@ -883,10 +884,6 @@ function CanvasEditorInner({
         clientX: number;
         clientY: number;
     } | null>(null);
-
-    if (!elkRef.current) {
-        elkRef.current = new ELK();
-    }
 
     const applyCanvasPinchZoom = useCallback((
         anchorFlowPoint: { x: number; y: number },
@@ -1050,6 +1047,23 @@ function CanvasEditorInner({
     const setCanvasSelection = useCallback((nextSelection: SelectionState | null) => {
         selectionRef.current = nextSelection;
         setSelection(nextSelection);
+    }, []);
+
+    const getElkEngine = useCallback(async () => {
+        if (elkRef.current) {
+            return elkRef.current;
+        }
+
+        if (!elkLoadPromiseRef.current) {
+            elkLoadPromiseRef.current = import('elkjs/lib/elk.bundled.js').then((module) => {
+                const ElkConstructor = module.default;
+                const instance = new ElkConstructor();
+                elkRef.current = instance;
+                return instance;
+            });
+        }
+
+        return elkLoadPromiseRef.current;
     }, []);
 
     const multiSelectedNodeIds = useMemo(
@@ -1292,7 +1306,8 @@ function CanvasEditorInner({
         try {
             let nextLayout = getFallbackSelectionLayout(selectedSteps);
 
-            if (internalConnections.length > 0 && elkRef.current) {
+            if (internalConnections.length > 0) {
+                const elkEngine = await getElkEngine();
                 const elkGraph: ElkNode = {
                     id: 'selection-layout-root',
                     layoutOptions: {
@@ -1319,7 +1334,7 @@ function CanvasEditorInner({
                     })),
                 };
 
-                const elkLayout = await elkRef.current.layout(elkGraph);
+                const elkLayout = await elkEngine.layout(elkGraph);
                 const laidOutChildren = elkLayout.children?.map((child: ElkNode) => ({
                     id: child.id,
                     x: child.x ?? 0,
@@ -1393,6 +1408,7 @@ function CanvasEditorInner({
     }, [
         applyFlowUpdate,
         getFallbackSelectionLayout,
+        getElkEngine,
         getNodesBounds,
         getRenderedStepSize,
         isFlowReadOnly,

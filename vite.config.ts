@@ -28,7 +28,6 @@ export default defineConfig(({ command, mode }) => {
             if (!id.includes('node_modules')) return;
 
             if (id.includes('react-router')) return 'react-router';
-            if (id.includes('@xyflow') || id.includes('reactflow') || id.includes('elkjs') || id.includes('d3-')) return 'flow';
             if (
               id.includes('@tiptap') ||
               id.includes('prosemirror') ||
