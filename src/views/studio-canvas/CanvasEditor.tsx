@@ -165,6 +165,7 @@ interface CanvasEditorProps {
     flow: Flow;
     onUpdateFlow: (flow: Flow) => void;
     onBack: () => void;
+    backItemLabel?: string;
     onPreview: () => void;
     isPreviewActive?: boolean;
     onToggleComments?: () => void;
@@ -178,6 +179,12 @@ interface CanvasEditorProps {
     };
     header?: React.ReactNode;
     mode?: 'edit' | 'share-readonly' | 'share-commentable';
+    menuActionItems?: Array<{
+        label: string;
+        onSelect: () => void;
+        disabled?: boolean;
+    }>;
+    useSectionedUserMenu?: boolean;
     onCommentSignIn?: () => void;
     commentSurfaceTone?: CommentSurfaceTone;
 }
@@ -823,6 +830,7 @@ function CanvasEditorInner({
     flow,
     onUpdateFlow,
     onBack,
+    backItemLabel,
     onPreview,
     isPreviewActive,
     onToggleComments,
@@ -832,6 +840,8 @@ function CanvasEditorInner({
     comments = null,
     showCommentsToggle,
     mode = 'edit',
+    menuActionItems = [],
+    useSectionedUserMenu = false,
     onCommentSignIn,
     commentSurfaceTone = 'default',
 }: CanvasEditorProps) {
@@ -3879,7 +3889,11 @@ function CanvasEditorInner({
             >
                 {usesStudioMenuTrigger ? (
                     <UserMenu
-                        backItem={{ label: isFlowReadOnly ? 'Go home' : 'Back to dashboard', onSelect: onBack }}
+                        backItem={{
+                            label: backItemLabel ?? (isFlowReadOnly ? 'Go home' : 'Back to dashboard'),
+                            onSelect: onBack,
+                        }}
+                        actionItems={menuActionItems}
                         switchItems={showCommentsToggle ? [{
                             label: 'Show comments',
                             checked: showCommentsToggle.checked,
@@ -3887,6 +3901,7 @@ function CanvasEditorInner({
                         }] : []}
                         contentAlign="start"
                         showAccountDetails={false}
+                        useSectionSeparators={useSectionedUserMenu}
                         trigger={(
                             <button
                                 type="button"

@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import ParticleBackground from '@/components/ParticleBackground';
 import { Button } from '@/components/ui/button';
+import { DEFAULT_COMPONENT_LIBRARY_PATH } from '@/config/componentNavigation';
 
 const HomeView = () => {
   const navigate = useNavigate();
@@ -16,7 +17,7 @@ const HomeView = () => {
           {/* View Components Button */}
           <Button
             size="lg"
-            onClick={() => navigate('/foundations/typography')}
+            onClick={() => navigate(DEFAULT_COMPONENT_LIBRARY_PATH)}
             className="bg-shell-accent text-white hover:bg-shell-accent-hover text-base"
           >
             View components

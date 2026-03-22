@@ -77,7 +77,7 @@ export function PathsPanel({
         : 'border-shell-border bg-shell-surface-subtle text-shell-text';
     const emptyNoticeTone = tone === 'cinematicDark' ? 'cinematicDark' : 'default';
     const resetButtonClassName = tone === 'cinematicDark'
-        ? 'border-shell-dark-border bg-shell-dark-surface text-shell-dark-muted hover:bg-shell-dark-surface hover:text-shell-dark-text'
+        ? 'border-shell-dark-border bg-shell-dark-surface text-shell-dark-muted-strong hover:bg-shell-dark-surface hover:text-shell-dark-text'
         : undefined;
     const isPopover = variant === 'popover';
     const popoverChoiceClassName = 'rounded-xl border border-shell-border/70 bg-shell-bg px-3 py-1.5 shadow-none hover:border-shell-border hover:bg-shell-surface-subtle';

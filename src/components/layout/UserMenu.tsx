@@ -19,6 +19,12 @@ type UserMenuBackItem = {
     onSelect: () => void;
 };
 
+type UserMenuActionItem = {
+    label: string;
+    onSelect: () => void;
+    disabled?: boolean;
+};
+
 type UserMenuSwitchItemConfig = {
     label: string;
     checked: boolean;
@@ -28,17 +34,21 @@ type UserMenuSwitchItemConfig = {
 type UserMenuProps = {
     trigger?: ReactElement;
     backItem?: UserMenuBackItem;
+    actionItems?: UserMenuActionItem[];
     switchItems?: UserMenuSwitchItemConfig[];
     contentAlign?: 'start' | 'center' | 'end';
     showAccountDetails?: boolean;
+    useSectionSeparators?: boolean;
 };
 
 export function UserMenu({
     trigger,
     backItem,
+    actionItems = [],
     switchItems = [],
     contentAlign = 'end',
     showAccountDetails = true,
+    useSectionSeparators = false,
 }: UserMenuProps) {
     const { user, signOut } = useAuth();
     const { state, setTheme } = useApp();
@@ -95,6 +105,18 @@ export function UserMenu({
                     </ShellMenuItem>
                 ) : null}
 
+                {useSectionSeparators && backItem ? <ShellMenuSeparator /> : null}
+
+                {actionItems.map((item) => (
+                    <ShellMenuItem
+                        key={item.label}
+                        disabled={item.disabled}
+                        onClick={item.onSelect}
+                    >
+                        <span>{item.label}</span>
+                    </ShellMenuItem>
+                ))}
+
                 {switchItems.map((item) => (
                     <ShellMenuSwitchItem
                         key={item.label}
@@ -111,6 +133,8 @@ export function UserMenu({
                 >
                     Dark mode
                 </ShellMenuSwitchItem>
+
+                {useSectionSeparators && showSignOut ? <ShellMenuSeparator /> : null}
 
                 {showSignOut ? (
                     <ShellMenuItem

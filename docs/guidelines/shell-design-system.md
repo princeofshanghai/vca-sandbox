@@ -57,6 +57,7 @@ Cinematic dark shell:
 - `shell-dark-surface`
 - `shell-dark-text`
 - `shell-dark-muted`
+- `shell-dark-muted-strong`
 - `shell-dark-border`
 - `shell-dark-accent`
 
@@ -69,6 +70,7 @@ Use this pattern for dark shell controls:
 - Interactive controls sitting on those containers use `shell-dark-surface`.
 - Selected/current text uses `shell-dark-text`.
 - Supporting text uses `shell-dark-muted`.
+- Secondary action labels on raised dark controls use `shell-dark-muted-strong`.
 - Default edges use `shell-dark-border`.
 - Blue is mostly reserved for focus, active, selected, and primary CTA states.
 

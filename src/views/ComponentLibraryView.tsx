@@ -7,7 +7,7 @@ import MainContent from '@/components/layout/MainContent';
 import CollapsibleSection from '@/components/layout/CollapsibleSection';
 import NavLink from '@/components/layout/NavLink';
 import NavigationGroup from '@/components/layout/NavigationGroup';
-import { componentNavigation } from '@/config/componentNavigation';
+import { componentNavigation, DEFAULT_COMPONENT_LIBRARY_PATH } from '@/config/componentNavigation';
 import { useApp } from '@/contexts/AppContext';
 import TypographyView from './TypographyView';
 import ColorsView from './ColorsView';
@@ -44,15 +44,31 @@ import HumanHandoffPatternView from './patterns/HumanHandoffPatternView';
 import SelectionListComponentView from './components/SelectionListComponentView';
 import ConfirmationCardComponentView from './components/ConfirmationCardComponentView';
 
+type LibrarySection = 'foundations' | 'atoms' | 'components' | 'patterns';
+
+const foundationPaths = new Set(componentNavigation.foundations.map((item) => item.path));
+const atomPaths = new Set(componentNavigation.atoms.flatMap((category) => category.items.map((item) => item.path)));
+const componentPaths = new Set(componentNavigation.components.flatMap((category) => category.items.map((item) => item.path)));
+const patternPaths = new Set(componentNavigation.patterns.map((item) => item.path));
+
+const getInitialExpandedSection = (pathname: string): LibrarySection => {
+  if (componentPaths.has(pathname)) return 'components';
+  if (foundationPaths.has(pathname)) return 'foundations';
+  if (atomPaths.has(pathname)) return 'atoms';
+  if (patternPaths.has(pathname)) return 'patterns';
+
+  return 'components';
+};
 
 const ComponentLibraryView = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { state, setMobileMenuOpen } = useApp();
-  const [foundationsExpanded, setFoundationsExpanded] = useState(true);
-  const [atomsExpanded, setAtomsExpanded] = useState(false);
-  const [componentsExpanded, setComponentsExpanded] = useState(false);
-  const [patternsExpanded, setPatternsExpanded] = useState(false);
+  const initialExpandedSection = getInitialExpandedSection(location.pathname);
+  const [foundationsExpanded, setFoundationsExpanded] = useState(initialExpandedSection === 'foundations');
+  const [atomsExpanded, setAtomsExpanded] = useState(initialExpandedSection === 'atoms');
+  const [componentsExpanded, setComponentsExpanded] = useState(initialExpandedSection === 'components');
+  const [patternsExpanded, setPatternsExpanded] = useState(initialExpandedSection === 'patterns');
   const prevPathnameRef = useRef(location.pathname);
 
   const isActive = (path: string) => location.pathname === path;
@@ -96,6 +112,30 @@ const ComponentLibraryView = () => {
         onClose={() => setMobileMenuOpen(false)}
       >
 
+        {/* Components */}
+        <CollapsibleSection
+          title="Components"
+          expanded={componentsExpanded}
+          onToggle={() => setComponentsExpanded(!componentsExpanded)}
+          className={sidebarSectionClass}
+        >
+          <div className="mb-6">
+            {componentNavigation.components.map((category, categoryIndex) => (
+              <NavigationGroup
+                key={category.label}
+                label={category.label}
+                className={categoryIndex > 0 ? 'mt-6' : ''}
+              >
+                {category.items.map((item) => (
+                  <NavLink key={item.path} to={item.path} isActive={isActive(item.path)}>
+                    {item.label}
+                  </NavLink>
+                ))}
+              </NavigationGroup>
+            ))}
+          </div>
+        </CollapsibleSection>
+
         {/* Foundations */}
         <CollapsibleSection
           title="Foundations"
@@ -121,30 +161,6 @@ const ComponentLibraryView = () => {
         >
           <div className="mb-6">
             {componentNavigation.atoms.map((category, categoryIndex) => (
-              <NavigationGroup
-                key={category.label}
-                label={category.label}
-                className={categoryIndex > 0 ? 'mt-6' : ''}
-              >
-                {category.items.map((item) => (
-                  <NavLink key={item.path} to={item.path} isActive={isActive(item.path)}>
-                    {item.label}
-                  </NavLink>
-                ))}
-              </NavigationGroup>
-            ))}
-          </div>
-        </CollapsibleSection>
-
-        {/* Components */}
-        <CollapsibleSection
-          title="Components"
-          expanded={componentsExpanded}
-          onToggle={() => setComponentsExpanded(!componentsExpanded)}
-          className={sidebarSectionClass}
-        >
-          <div className="mb-6">
-            {componentNavigation.components.map((category, categoryIndex) => (
               <NavigationGroup
                 key={category.label}
                 label={category.label}
@@ -192,7 +208,7 @@ const ComponentLibraryView = () => {
           <Route path="radius" element={<RadiusView />} />
 
           {/* Component Routes */}
-          <Route index element={<Navigate to="/foundations/typography" replace />} />
+          <Route index element={<Navigate to={DEFAULT_COMPONENT_LIBRARY_PATH} replace />} />
           <Route path="message" element={<MessageComponentView />} />
           <Route path="info-message" element={<InfoMessageComponentView />} />
           <Route path="status-card" element={<StatusCardComponentView />} />

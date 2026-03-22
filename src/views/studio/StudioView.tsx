@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
 import { PreviewDrawer } from './PreviewDrawer';
@@ -9,6 +9,12 @@ import { useFlowHistory } from './hooks/useFlowHistory';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { useCanvasCommentsController } from './useCanvasCommentsController';
 import { useApp } from '@/contexts/AppContext';
+import { flowStorage } from '@/utils/flowStorage';
+import {
+    duplicateFlowForCurrentUser,
+    markProjectDuplicatedToastPending,
+} from '@/utils/projectDuplication';
+import { toast } from 'sonner';
 
 type StudioRightPanelMode = 'preview' | 'comments' | null;
 
@@ -58,6 +64,7 @@ export const StudioView = () => {
     const [showComments, setShowComments] = useState(true);
     const [isCommentModeActive, setIsCommentModeActive] = useState(false);
     const [rightPanelMode, setRightPanelMode] = useState<StudioRightPanelMode>(null);
+    const [isDuplicatingProject, setIsDuplicatingProject] = useState(false);
 
     const handleBack = () => {
         navigate('/');
@@ -109,6 +116,39 @@ export const StudioView = () => {
         canvasComments.resetClosedState();
     };
 
+    const handleDuplicateProject = useCallback(async () => {
+        if (isDuplicatingProject) return;
+
+        setIsDuplicatingProject(true);
+
+        try {
+            const [existingFlows, folders] = await Promise.all([
+                flowStorage.getAllFlows(),
+                flowStorage.getAllFolders(),
+            ]);
+            const sourceMetadata = existingFlows.find((existingFlow) => existingFlow.id === flow.id);
+            const duplicateFolderId =
+                sourceMetadata?.folderId && folders.some((folder) => folder.id === sourceMetadata.folderId)
+                    ? sourceMetadata.folderId
+                    : undefined;
+
+            await duplicateFlowForCurrentUser({
+                sourceFlow: flow,
+                sourceTitle: sourceMetadata?.title ?? flow.title,
+                existingTitles: existingFlows.map((existingFlow) => existingFlow.title),
+                folderId: duplicateFolderId,
+            });
+
+            markProjectDuplicatedToastPending();
+            navigate('/', { replace: true });
+        } catch (duplicateError: unknown) {
+            console.error('Error duplicating studio project:', duplicateError);
+            toast.error('Failed to duplicate project. Please try again.');
+        } finally {
+            setIsDuplicatingProject(false);
+        }
+    }, [flow, isDuplicatingProject, navigate]);
+
     if (isLoading) return <LoadingScreen fullScreen />;
 
     return (
@@ -136,6 +176,14 @@ export const StudioView = () => {
                         onCheckedChange: handleShowCommentsChange,
                     }}
                     isCommentsPanelOpen={isCommentsOpen}
+                    menuActionItems={[{
+                        label: isDuplicatingProject ? 'Duplicating...' : 'Duplicate project',
+                        onSelect: () => {
+                            void handleDuplicateProject();
+                        },
+                        disabled: isDuplicatingProject,
+                    }]}
+                    useSectionedUserMenu
                 />
             </div>
 

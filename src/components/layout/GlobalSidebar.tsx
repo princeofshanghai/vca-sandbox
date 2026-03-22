@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { BookMarked, Blocks } from 'lucide-react';
 import VcaLogo from '@/components/VcaLogo';
+import { DEFAULT_COMPONENT_LIBRARY_PATH } from '@/config/componentNavigation';
 import { cn } from '@/utils/cn'; // Assuming cn utility exists, otherwise I'll use template literals
 import { ShellButton } from '@/components/shell';
 
@@ -63,7 +64,7 @@ export const GlobalSidebar = () => {
                     icon={BookMarked}
                     label="Library"
                     isActive={isLibraryActive}
-                    onClick={() => navigate('/foundations/typography')}
+                    onClick={() => navigate(DEFAULT_COMPONENT_LIBRARY_PATH)}
                 />
             </div>
         </div>

@@ -14,6 +14,11 @@ import { useApp } from '@/contexts/AppContext';
 import { UserMenu } from '@/components/layout/UserMenu';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { DashboardEmptyState } from '@/components/dashboard/DashboardEmptyState';
+import { DEFAULT_COMPONENT_LIBRARY_PATH } from '@/config/componentNavigation';
+import {
+    consumeProjectDuplicatedToastPending,
+    duplicateFlowForCurrentUser,
+} from '@/utils/projectDuplication';
 import {
     Dialog,
     DialogContent,
@@ -22,32 +27,6 @@ import {
     DialogTitle,
     DialogFooter,
 } from "@/components/ui/dialog";
-
-function getDuplicateBaseTitle(title: string): string {
-    const trimmedTitle = title.trim() || 'Untitled';
-    const copyPatternMatch = trimmedTitle.match(/^(.*) \(Copy(?: \d+)?\)$/i);
-    if (!copyPatternMatch?.[1]) return trimmedTitle;
-    return copyPatternMatch[1].trim() || 'Untitled';
-}
-
-function getDuplicateTitle(baseTitle: string, existingTitles: string[]): string {
-    const normalizedExistingTitles = new Set(
-        existingTitles.map(title => title.trim().toLowerCase())
-    );
-    const normalizedBaseTitle = getDuplicateBaseTitle(baseTitle);
-    const firstDuplicateTitle = `${normalizedBaseTitle} (Copy)`;
-
-    if (!normalizedExistingTitles.has(firstDuplicateTitle.toLowerCase())) {
-        return firstDuplicateTitle;
-    }
-
-    let copyIndex = 2;
-    while (normalizedExistingTitles.has(`${normalizedBaseTitle} (Copy ${copyIndex})`.toLowerCase())) {
-        copyIndex += 1;
-    }
-
-    return `${normalizedBaseTitle} (Copy ${copyIndex})`;
-}
 
 export const DashboardView = () => {
     const navigate = useNavigate();
@@ -78,6 +57,11 @@ export const DashboardView = () => {
     useEffect(() => {
         loadData();
     }, [loadData]);
+
+    useEffect(() => {
+        if (!consumeProjectDuplicatedToastPending()) return;
+        toast.success('Project duplicated');
+    }, []);
 
     const handleCreateFlow = async (flow: Flow) => {
         // Save flow with folder if active
@@ -142,22 +126,12 @@ export const DashboardView = () => {
                 return;
             }
 
-            const duplicateTitle = getDuplicateTitle(
-                sourceMetadata.title,
-                flows.map(flow => flow.title)
-            );
             const hasSourceFolder = !!sourceMetadata.folderId && folders.some(folder => folder.id === sourceMetadata.folderId);
             const duplicateFolderId = hasSourceFolder ? sourceMetadata.folderId : undefined;
-            const duplicatedFlow: Flow = {
-                ...sourceFlow,
-                id: crypto.randomUUID(),
-                title: duplicateTitle,
-                lastModified: Date.now(),
-                is_public: false,
-            };
-
-            await flowStorage.saveFlow({
-                ...duplicatedFlow,
+            await duplicateFlowForCurrentUser({
+                sourceFlow,
+                sourceTitle: sourceMetadata.title,
+                existingTitles: flows.map((flow) => flow.title),
                 folderId: duplicateFolderId,
             });
             await loadData();
@@ -219,7 +193,7 @@ export const DashboardView = () => {
     const sidebarFooter = (
         <div className="p-4 bg-shell-bg">
             <div className="h-px bg-shell-border dark:bg-shell-border/60 mb-4" />
-            <NavLink to="/foundations/typography">
+            <NavLink to={DEFAULT_COMPONENT_LIBRARY_PATH}>
                 <div className="flex items-center gap-2">
                     <Component size={16} strokeWidth={1.5} />
                     <span>Component Library</span>

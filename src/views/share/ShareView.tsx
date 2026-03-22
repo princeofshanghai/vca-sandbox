@@ -55,6 +55,7 @@ import {
     ShellMenuContent,
     ShellMenuItem,
     ShellMenuSeparator,
+    ShellMenuSwitchItem,
     ShellMenuTrigger,
     ShellNotice,
     ShellSegmentedControl,
@@ -80,9 +81,19 @@ import {
 import { cn } from '@/utils/cn';
 import { CANVAS_DEFAULT_CURSOR, COMMENT_PLACEMENT_CURSOR } from '@/utils/commentPlacementCursor';
 import { ActionTooltip } from '@/views/studio-canvas/components/ActionTooltip';
+import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/hooks/useAuth';
 import { type SmartFlowEngineSnapshot } from '@/hooks/useSmartFlowEngine';
 import { getUserAvatarUrl, getUserDisplayName } from '@/utils/userIdentity';
+import { toast } from 'sonner';
+import { startGoogleSignInRedirect } from '@/utils/authRedirect';
+import {
+    buildShareDuplicateRedirectUrl,
+    clearPendingShareDuplicateFromCurrentUrl,
+    duplicateSharedFlowForCurrentUser,
+    hasPendingShareDuplicate,
+    markProjectDuplicatedToastPending,
+} from '@/utils/projectDuplication';
 import { ShareViewOnlyBadge } from './components/ShareViewOnlyBadge';
 import {
     type CommentFilter,
@@ -368,27 +379,25 @@ const getCommentEmptyState = (filter: CommentFilter) => {
     if (filter === 'open') {
         return {
             title: 'No open comments',
-            description: 'Open comments will appear here. Switch filters to review resolved feedback.',
         };
     }
 
     if (filter === 'resolved') {
         return {
             title: 'No resolved comments',
-            description: 'Resolved threads will appear here once feedback has been closed out.',
         };
     }
 
     return {
-        title: 'No comments yet',
-        description: 'Press Comments, then click anywhere on the review transcript to leave feedback.',
+        title: 'No comments',
     };
 };
 
 export const ShareView = () => {
-    const { user, isLoading: isAuthLoading } = useAuth();
+    const { user, isLoading: isAuthLoading, signOut } = useAuth();
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
+    const { state, setTheme } = useApp();
 
     const [flow, setFlow] = useState<Flow | null>(null);
     const [flowOwnerId, setFlowOwnerId] = useState<string | null>(null);
@@ -446,6 +455,7 @@ export const ShareView = () => {
     );
     const [dragState, setDragState] = useState<DragState | null>(null);
     const [isSavingDragPin, setIsSavingDragPin] = useState(false);
+    const [isDuplicatingProject, setIsDuplicatingProject] = useState(false);
 
     const commentSurfaceRef = useRef<HTMLDivElement | null>(null);
     const composerCardRef = useRef<HTMLDivElement | null>(null);
@@ -456,9 +466,15 @@ export const ShareView = () => {
     const suppressedPlacementPointerIdRef = useRef<number | null>(null);
     const lastAutoPathRequestKeyRef = useRef<string | null>(null);
     const lastAutoOpenPendingPathRequestKeyRef = useRef<string | null>(null);
+    const hasHandledPendingDuplicateRef = useRef(false);
+
+    useEffect(() => {
+        hasHandledPendingDuplicateRef.current = false;
+    }, [id]);
 
     const commenterName = useMemo(() => getUserDisplayName(user), [user]);
     const commenterAvatarUrl = useMemo(() => getUserAvatarUrl(user), [user]);
+    const isDarkMode = state.theme === 'dark';
 
     const openCommentsWorkspace = useCallback(() => {
         hasHandledInitialPanelVisibilityRef.current = true;
@@ -746,6 +762,13 @@ export const ShareView = () => {
 
         navigate(isFlowOwner ? `/studio/${id}` : `/share/studio/${id}`);
     }, [id, isFlowOwner, navigate]);
+
+    const handleDarkModeChange = useCallback(
+        (checked: boolean) => {
+            setTheme(checked ? 'dark' : 'light');
+        },
+        [setTheme]
+    );
 
     const getPinPointFromClient = useCallback((clientX: number, clientY: number): PinPoint | null => {
         const surface = commentSurfaceRef.current;
@@ -1279,24 +1302,67 @@ export const ShareView = () => {
         setCommentsError(null);
 
         try {
-            const redirectTo = `${window.location.origin}${window.location.pathname}?comments=1`;
-            const { error: signInError } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    queryParams: {
-                        access_type: 'offline',
-                        prompt: 'consent',
-                    },
-                    redirectTo,
-                },
-            });
-
-            if (signInError) throw signInError;
+            const redirectUrl = new URL(window.location.href);
+            redirectUrl.searchParams.set('comments', '1');
+            await startGoogleSignInRedirect(redirectUrl.toString());
         } catch (signInError: unknown) {
             console.error('Error signing in for comments:', signInError);
             setCommentsError('Could not start sign-in. Please try again.');
         }
     };
+
+    const completeProjectDuplication = useCallback(async () => {
+        if (!flow || isDuplicatingProject) return;
+
+        setIsDuplicatingProject(true);
+        if (hasPendingShareDuplicate()) {
+            clearPendingShareDuplicateFromCurrentUrl();
+        }
+
+        try {
+            await duplicateSharedFlowForCurrentUser(flow);
+            markProjectDuplicatedToastPending();
+            navigate('/', { replace: true });
+        } catch (duplicateError: unknown) {
+            console.error('Error duplicating shared project:', duplicateError);
+            toast.error('Failed to duplicate project. Please try again.');
+        } finally {
+            setIsDuplicatingProject(false);
+        }
+    }, [flow, isDuplicatingProject, navigate]);
+
+    const handleDuplicateProject = useCallback(async () => {
+        if (!flow || isDuplicatingProject) return;
+
+        if (!user) {
+            try {
+                await startGoogleSignInRedirect(buildShareDuplicateRedirectUrl(window.location.href));
+            } catch (signInError: unknown) {
+                console.error('Error starting sign-in for project duplication:', signInError);
+                toast.error('Could not start sign-in. Please try again.');
+            }
+            return;
+        }
+
+        await completeProjectDuplication();
+    }, [completeProjectDuplication, flow, isDuplicatingProject, user]);
+
+    useEffect(() => {
+        if (isAuthLoading) return;
+        if (user) return;
+        if (!hasPendingShareDuplicate()) return;
+
+        clearPendingShareDuplicateFromCurrentUrl();
+    }, [isAuthLoading, user]);
+
+    useEffect(() => {
+        if (hasHandledPendingDuplicateRef.current) return;
+        if (!flow || isAuthLoading || !user) return;
+        if (!hasPendingShareDuplicate()) return;
+
+        hasHandledPendingDuplicateRef.current = true;
+        void completeProjectDuplication();
+    }, [completeProjectDuplication, flow, isAuthLoading, user]);
 
     const handleCommentFilterChange = useCallback((value: CommentFilter) => {
         setCommentFilter(value);
@@ -2428,13 +2494,21 @@ export const ShareView = () => {
                                     align="start"
                                     side="bottom"
                                     sideOffset={6}
-                                    className="w-[196px]"
+                                    className="w-[212px]"
                                 >
                                     <ShellMenuItem onClick={handleDashboardNavigation}>
                                         <Home size={14} className="text-current opacity-70" />
                                         <span>{dashboardMenuLabel}</span>
                                     </ShellMenuItem>
                                     <ShellMenuSeparator />
+                                    <ShellMenuItem
+                                        disabled={isDuplicatingProject}
+                                        onClick={() => {
+                                            void handleDuplicateProject();
+                                        }}
+                                    >
+                                        <span>{isDuplicatingProject ? 'Duplicating...' : 'Duplicate project'}</span>
+                                    </ShellMenuItem>
                                     <ShellMenuItem onClick={handleCanvasNavigation}>
                                         {isFlowOwner ? (
                                             <Pencil size={14} className="text-current opacity-70" />
@@ -2443,42 +2517,38 @@ export const ShareView = () => {
                                         )}
                                         <span>{editorMenuLabel}</span>
                                     </ShellMenuItem>
+                                    <ShellMenuSwitchItem
+                                        checked={isCommentsWorkspaceActive}
+                                        onCheckedChange={(checked) => {
+                                            if (checked) {
+                                                openCommentsWorkspace();
+                                                return;
+                                            }
+
+                                            closeCommentsWorkspace();
+                                        }}
+                                    >
+                                        Show comments
+                                    </ShellMenuSwitchItem>
+                                    <ShellMenuSwitchItem
+                                        checked={isDarkMode}
+                                        onCheckedChange={handleDarkModeChange}
+                                    >
+                                        Dark mode
+                                    </ShellMenuSwitchItem>
+                                    {user ? <ShellMenuSeparator /> : null}
+                                    {user ? (
+                                        <ShellMenuItem
+                                            variant="destructive"
+                                            onClick={() => {
+                                                void signOut();
+                                            }}
+                                        >
+                                            <span>Sign out</span>
+                                        </ShellMenuItem>
+                                    ) : null}
                                 </ShellMenuContent>
                             </ShellMenu>
-
-                            <ActionTooltip content="Comments" shortcut="C" side="bottom">
-                                <ShellHeaderRailItem
-                                    tone="cinematicDark"
-                                    iconOnly
-                                    active={isCommentsWorkspaceActive}
-                                    onClick={toggleCommentsWorkspace}
-                                    aria-label="Toggle comments"
-                                    aria-keyshortcuts="C"
-                                    aria-pressed={isCommentsWorkspaceActive}
-                                    aria-controls="share-comment-popover"
-                                >
-                                    <MessageSquare />
-                                </ShellHeaderRailItem>
-                            </ActionTooltip>
-
-                            <ActionTooltip content="Paths" side="bottom">
-                                <ShellHeaderRailItem
-                                    tone="cinematicDark"
-                                    iconOnly
-                                    active={isPathsWorkspaceActive}
-                                    className="overflow-visible"
-                                    onClick={togglePathsPanel}
-                                    aria-label="Toggle paths"
-                                    aria-pressed={isPathsWorkspaceActive}
-                                >
-                                    <Split />
-                                    {pendingPathDecision && !isPathsWorkspaceActive ? (
-                                        <AttachedStatusTag tone="cinematicDark">
-                                            Need action
-                                        </AttachedStatusTag>
-                                    ) : null}
-                                </ShellHeaderRailItem>
-                            </ActionTooltip>
                         </ShellHeaderRail>
                     </div>
 
@@ -2491,7 +2561,7 @@ export const ShareView = () => {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex self-stretch items-center gap-2">
                         <ShellSegmentedControl tone="cinematicDark" size="compact" aria-label="Preview mode">
                             <ActionTooltip content="Desktop preview" side="bottom">
                                 <ShellSegmentedControlItem
@@ -2533,6 +2603,44 @@ export const ShareView = () => {
                                 />
                             </div>
                         </ShellSegmentedControl>
+
+                        <div className="flex self-stretch items-stretch">
+                            <ShellHeaderRail tone="cinematicDark" aria-label="Share actions">
+                                <ActionTooltip content="Paths" side="bottom">
+                                    <ShellHeaderRailItem
+                                        tone="cinematicDark"
+                                        iconOnly
+                                        active={isPathsWorkspaceActive}
+                                        className="overflow-visible"
+                                        onClick={togglePathsPanel}
+                                        aria-label="Toggle paths"
+                                        aria-pressed={isPathsWorkspaceActive}
+                                    >
+                                        <Split />
+                                        {pendingPathDecision && !isPathsWorkspaceActive ? (
+                                            <AttachedStatusTag tone="cinematicDark">
+                                                Need action
+                                            </AttachedStatusTag>
+                                        ) : null}
+                                    </ShellHeaderRailItem>
+                                </ActionTooltip>
+
+                                <ActionTooltip content="Comments" shortcut="C" side="bottom">
+                                    <ShellHeaderRailItem
+                                        tone="cinematicDark"
+                                        iconOnly
+                                        active={isCommentsWorkspaceActive}
+                                        onClick={toggleCommentsWorkspace}
+                                        aria-label="Toggle comments"
+                                        aria-keyshortcuts="C"
+                                        aria-pressed={isCommentsWorkspaceActive}
+                                        aria-controls="share-comment-popover"
+                                    >
+                                        <MessageSquare />
+                                    </ShellHeaderRailItem>
+                                </ActionTooltip>
+                            </ShellHeaderRail>
+                        </div>
 
                         <ShareDialog
                             flow={flow}
@@ -2890,12 +2998,9 @@ export const ShareView = () => {
                                             </div>
                                         ) : visibleThreads.length === 0 ? (
                                             <div className="h-full px-4 py-8 text-center text-shell-dark-muted">
-                                                <div className="text-sm font-medium text-shell-dark-text mb-1">
+                                                <div className="text-sm font-medium text-shell-dark-muted">
                                                     {commentsEmptyState.title}
                                                 </div>
-                                                <p className="text-xs leading-relaxed text-shell-dark-muted">
-                                                    {commentsEmptyState.description}
-                                                </p>
                                             </div>
                                         ) : (
                                             <div className="px-2 py-2 space-y-1.5">
@@ -2953,12 +3058,9 @@ export const ShareView = () => {
                                             </div>
                                         ) : visibleThreads.length === 0 ? (
                                             <div className="h-full px-4 py-6 text-center text-shell-dark-muted text-xs leading-relaxed">
-                                                <div className="text-shell-dark-text font-medium mb-1">
+                                                <div className="font-medium text-shell-dark-muted">
                                                     {commentsEmptyState.title}
                                                 </div>
-                                                <p className="text-shell-dark-muted">
-                                                    {commentsEmptyState.description}
-                                                </p>
                                             </div>
                                         ) : (
                                             <div className="px-2 py-2 space-y-1">

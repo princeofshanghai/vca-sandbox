@@ -211,6 +211,7 @@ export default {
           surface: 'rgb(var(--shell-dark-surface) / <alpha-value>)',
           text: 'rgb(var(--shell-dark-text) / <alpha-value>)',
           muted: 'rgb(var(--shell-dark-muted) / <alpha-value>)',
+          'muted-strong': 'rgb(var(--shell-dark-muted-strong) / <alpha-value>)',
           border: 'rgb(var(--shell-dark-border) / var(--shell-dark-border-alpha))',
           'border-strong': 'rgb(var(--shell-dark-border-strong) / var(--shell-dark-border-strong-alpha))',
           accent: 'rgb(var(--shell-dark-accent) / <alpha-value>)',

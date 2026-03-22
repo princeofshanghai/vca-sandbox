@@ -172,10 +172,7 @@ export function CanvasCommentsDrawer({
                             borderClass,
                             emptyStateSurfaceClass
                         )}>
-                            <div className={cn('text-sm font-medium', titleTextClass)}>{emptyState.title}</div>
-                            <p className={cn('mt-1 text-xs leading-relaxed', mutedTextClass)}>
-                                {emptyState.description}
-                            </p>
+                            <div className={cn('text-sm font-medium', mutedTextClass)}>{emptyState.title}</div>
                         </div>
                     ) : (
                         <div className="space-y-2">

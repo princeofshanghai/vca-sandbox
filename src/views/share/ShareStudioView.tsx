@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { CanvasEditor } from '@/views/studio-canvas/CanvasEditor';
@@ -11,6 +11,15 @@ import { useCanvasCommentsController } from '@/views/studio/useCanvasCommentsCon
 import { ShellButton } from '@/components/shell';
 import { toast } from 'sonner';
 import { useApp } from '@/contexts/AppContext';
+import { useAuth } from '@/hooks/useAuth';
+import { startGoogleSignInRedirect } from '@/utils/authRedirect';
+import {
+    buildShareDuplicateRedirectUrl,
+    clearPendingShareDuplicateFromCurrentUrl,
+    duplicateSharedFlowForCurrentUser,
+    hasPendingShareDuplicate,
+    markProjectDuplicatedToastPending,
+} from '@/utils/projectDuplication';
 
 type ShareStudioRightPanelMode = 'preview' | 'comments' | null;
 
@@ -18,6 +27,7 @@ export const ShareStudioView = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
     const { state } = useApp();
+    const { user, isLoading: isAuthLoading } = useAuth();
 
     const [flow, setFlow] = useState<Flow | null>(null);
     const [loading, setLoading] = useState(true);
@@ -27,6 +37,12 @@ export const ShareStudioView = () => {
     const [showComments, setShowComments] = useState(true);
     const [isCommentModeActive, setIsCommentModeActive] = useState(false);
     const [rightPanelMode, setRightPanelMode] = useState<ShareStudioRightPanelMode>(null);
+    const [isDuplicatingProject, setIsDuplicatingProject] = useState(false);
+    const hasHandledPendingDuplicateRef = useRef(false);
+
+    useEffect(() => {
+        hasHandledPendingDuplicateRef.current = false;
+    }, [id]);
 
     useEffect(() => {
         const fetchFlow = async () => {
@@ -153,23 +169,65 @@ export const ShareStudioView = () => {
             const redirectUrl = new URL(window.location.href);
             redirectUrl.searchParams.set('comments', '1');
 
-            const { error: signInError } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    queryParams: {
-                        access_type: 'offline',
-                        prompt: 'consent',
-                    },
-                    redirectTo: redirectUrl.toString(),
-                },
-            });
-
-            if (signInError) throw signInError;
+            await startGoogleSignInRedirect(redirectUrl.toString());
         } catch (signInError: unknown) {
             console.error('Error signing in for shared studio comments:', signInError);
             toast.error('Could not start sign-in. Please try again.');
         }
     };
+
+    const completeProjectDuplication = useCallback(async () => {
+        if (!flow || isDuplicatingProject) return;
+
+        setIsDuplicatingProject(true);
+        if (hasPendingShareDuplicate()) {
+            clearPendingShareDuplicateFromCurrentUrl();
+        }
+
+        try {
+            await duplicateSharedFlowForCurrentUser(flow);
+            markProjectDuplicatedToastPending();
+            navigate('/', { replace: true });
+        } catch (duplicateError: unknown) {
+            console.error('Error duplicating shared studio project:', duplicateError);
+            toast.error('Failed to duplicate project. Please try again.');
+        } finally {
+            setIsDuplicatingProject(false);
+        }
+    }, [flow, isDuplicatingProject, navigate]);
+
+    const handleDuplicateProject = useCallback(async () => {
+        if (!flow || isDuplicatingProject) return;
+
+        if (!user) {
+            try {
+                await startGoogleSignInRedirect(buildShareDuplicateRedirectUrl(window.location.href));
+            } catch (signInError: unknown) {
+                console.error('Error starting sign-in for project duplication:', signInError);
+                toast.error('Could not start sign-in. Please try again.');
+            }
+            return;
+        }
+
+        await completeProjectDuplication();
+    }, [completeProjectDuplication, flow, isDuplicatingProject, user]);
+
+    useEffect(() => {
+        if (isAuthLoading) return;
+        if (user) return;
+        if (!hasPendingShareDuplicate()) return;
+
+        clearPendingShareDuplicateFromCurrentUrl();
+    }, [isAuthLoading, user]);
+
+    useEffect(() => {
+        if (hasHandledPendingDuplicateRef.current) return;
+        if (!flow || isAuthLoading || !user) return;
+        if (!hasPendingShareDuplicate()) return;
+
+        hasHandledPendingDuplicateRef.current = true;
+        void completeProjectDuplication();
+    }, [completeProjectDuplication, flow, isAuthLoading, user]);
 
     const isEmptyFlow = useMemo(() => {
         if (!flow) return false;
@@ -208,7 +266,8 @@ export const ShareStudioView = () => {
             <CanvasEditor
                 flow={flow}
                 onUpdateFlow={setFlow}
-                onBack={() => navigate('/')}
+                onBack={() => navigate(user ? '/' : '/login')}
+                backItemLabel={user ? 'Go to dashboard' : 'Sign in to dashboard'}
                 onPreview={handleTogglePreview}
                 isPreviewActive={isPreviewOpen}
                 onToggleComments={handleToggleCommentsWorkspace}
@@ -222,6 +281,14 @@ export const ShareStudioView = () => {
                     onCheckedChange: handleShowCommentsChange,
                 }}
                 mode="share-commentable"
+                menuActionItems={[{
+                    label: isDuplicatingProject ? 'Duplicating...' : 'Duplicate project',
+                    onSelect: () => {
+                        void handleDuplicateProject();
+                    },
+                    disabled: isDuplicatingProject,
+                }]}
+                useSectionedUserMenu
                 onCommentSignIn={handleCommentSignIn}
             />
 

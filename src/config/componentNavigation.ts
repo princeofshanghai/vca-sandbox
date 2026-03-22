@@ -29,6 +29,8 @@ export type NavigationConfig = {
   patterns: NavItem[];
 };
 
+export const DEFAULT_COMPONENT_LIBRARY_PATH = '/components/checkbox-group';
+
 /**
  * Helper function to sort items alphabetically by label
  */
@@ -102,7 +104,7 @@ const rawNavigation: NavigationConfig = {
     {
       label: 'Actions',
       items: [
-        { path: '/components/checkbox-group', label: 'Checkbox Group' },
+        { path: DEFAULT_COMPONENT_LIBRARY_PATH, label: 'Checkbox Group' },
         { path: '/components/display-card', label: 'Display Card' },
         { path: '/components/recommendation-card', label: 'Recommendation Card' },
         { path: '/components/prompt', label: 'Prompt' },

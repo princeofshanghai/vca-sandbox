@@ -100,7 +100,7 @@ export const PreviewSettingsMenu = ({
                         ? 'h-7 gap-2 px-3 text-[11px] font-medium'
                         : 'h-8 gap-2 px-3 text-xs font-medium',
                     isDark
-                        ? 'border border-shell-dark-border bg-transparent text-shell-dark-muted hover:text-shell-dark-text hover:border-shell-dark-border-strong hover:bg-shell-dark-surface rounded-md transition-colors'
+                        ? 'border border-shell-dark-border bg-transparent text-shell-dark-muted-strong hover:text-shell-dark-text hover:border-shell-dark-border-strong hover:bg-shell-dark-surface rounded-md transition-colors'
                         : 'bg-shell-bg border border-shell-border text-shell-muted-strong hover:bg-shell-surface hover:text-shell-text shadow-sm rounded-md transition-all'
                 )}
             >

@@ -109,20 +109,17 @@ export const getCanvasCommentsEmptyState = (filter: CommentFilter) => {
     if (filter === 'open') {
         return {
             title: 'No open comments',
-            description: 'Open comments will appear here. Switch filters to review resolved feedback.',
         };
     }
 
     if (filter === 'resolved') {
         return {
             title: 'No resolved comments',
-            description: 'Resolved comments will appear here once a thread has been closed.',
         };
     }
 
     return {
-        title: 'No comments yet',
-        description: 'Click anywhere on the canvas to add one.',
+        title: 'No comments',
     };
 };
 
