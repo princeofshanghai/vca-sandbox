@@ -6,7 +6,6 @@ import { cn } from '@/utils/cn';
 import { flowStorage, FlowMetadata, Folder as FolderType } from '@/utils/flowStorage';
 import { FlowCard } from '@/components/dashboard/FlowCard';
 import { ShellButton, ShellIconButton, ShellSearchInput } from '@/components/shell';
-import { NewFlowDialog } from '@/components/dashboard/NewFlowDialog';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import NavLink from '@/components/layout/NavLink';
 import { Flow } from '@/views/studio/types';
@@ -34,7 +33,6 @@ export const DashboardView = () => {
     const [folders, setFolders] = useState<FolderType[]>([]);
     const [activeFolderId, setActiveFolderId] = useState<string | null>(null); // null = All
     const [searchQuery, setSearchQuery] = useState('');
-    const [showNewFlowDialog, setShowNewFlowDialog] = useState(false);
     const [deleteConfirmation, setDeleteConfirmation] = useState<{ id: string; title: string; isPermanent: boolean } | null>(null);
     const [duplicatingFlowId, setDuplicatingFlowId] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -71,6 +69,12 @@ export const DashboardView = () => {
             await flowStorage.saveFlow(flow);
         }
         navigate(`/studio/${flow.id}`);
+    };
+
+    const handleStartNewFlow = async () => {
+        const { createNewFlow } = await import('@/utils/flowCreation');
+        const newFlow = createNewFlow();
+        await handleCreateFlow(newFlow);
     };
 
 
@@ -258,7 +262,7 @@ export const DashboardView = () => {
                             </div>
                             {activeFolderId !== 'trash' && (
                                 <ShellButton
-                                    onClick={() => setShowNewFlowDialog(true)}
+                                    onClick={() => void handleStartNewFlow()}
                                     size="compact"
                                     className="gap-2"
                                 >
@@ -291,22 +295,12 @@ export const DashboardView = () => {
                         ) : (
                             <DashboardEmptyState
                                 isFolderEmpty={!!activeFolderId}
-                                onCreateNew={() => setShowNewFlowDialog(true)}
+                                onCreateNew={() => void handleStartNewFlow()}
                                 isTrash={activeFolderId === 'trash'}
                             />
                         )}
                     </div>
                 </div>
-
-                {/* New Flow Dialog */}
-                {
-                    showNewFlowDialog && (
-                        <NewFlowDialog
-                            onCreateFlow={handleCreateFlow}
-                            onClose={() => setShowNewFlowDialog(false)}
-                        />
-                    )
-                }
 
                 {/* Delete Confirmation Dialog */}
                 <Dialog open={!!deleteConfirmation} onOpenChange={(open) => !open && setDeleteConfirmation(null)}>

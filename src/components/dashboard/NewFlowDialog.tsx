@@ -1,5 +1,3 @@
-import { useState } from 'react';
-import { ENTRY_POINTS, EntryPointId } from '@/utils/entryPoints';
 import { Flow } from '@/views/studio/types';
 import { ShellButton } from '@/components/shell';
 import {
@@ -15,23 +13,10 @@ interface NewFlowDialogProps {
     onClose: () => void;
 }
 
-// Define explicit order for display
-const ENTRY_POINT_ORDER: EntryPointId[] = [
-    'flagship',
-    'admin-center',
-    'recruiter',
-    'campaign-manager',
-    'sales-navigator',
-    'learning'
-];
-
 export function NewFlowDialog({ onCreateFlow, onClose }: NewFlowDialogProps) {
-    const [selectedEntryPoint, setSelectedEntryPoint] = useState<EntryPointId>('flagship');
-
     const handleCreate = () => {
-        // Import here to avoid circular dependency
         import('@/utils/flowCreation').then(({ createNewFlow }) => {
-            const newFlow = createNewFlow(selectedEntryPoint);
+            const newFlow = createNewFlow();
             onCreateFlow(newFlow);
             onClose();
         });
@@ -41,49 +26,14 @@ export function NewFlowDialog({ onCreateFlow, onClose }: NewFlowDialogProps) {
         <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="max-w-[320px] p-shell-0 gap-shell-0 border-shell-border shadow-shell-lg bg-shell-bg dark:bg-shell-surface overflow-hidden" hideClose>
                 <div className="px-shell-5 pt-shell-5">
-                    <DialogHeader className="mb-shell-4">
+                    <DialogHeader className="mb-shell-3">
                         <DialogTitle className="text-sm font-semibold text-shell-text">
                             Create project
                         </DialogTitle>
                     </DialogHeader>
-
-                    <div className="space-y-shell-1 mb-shell-6">
-                        <p className="block text-xs font-medium text-shell-muted mb-shell-2 px-shell-1">
-                            Choose entry point
-                        </p>
-
-                        <div role="radiogroup" aria-label="Choose entry point" className="space-y-shell-1">
-                            {ENTRY_POINT_ORDER.map((id) => {
-                                const config = ENTRY_POINTS[id];
-                                if (!config) return null;
-
-                                const isSelected = selectedEntryPoint === id;
-
-                                return (
-                                    <ShellButton
-                                        key={id}
-                                        type="button"
-                                        role="radio"
-                                        aria-checked={isSelected}
-                                        onClick={() => setSelectedEntryPoint(id)}
-                                        className={`h-auto w-full justify-start gap-2.5 px-shell-3 py-shell-2 text-xs transition-all border ${isSelected
-                                            ? 'bg-shell-accent-soft border-shell-accent-border text-shell-accent-text'
-                                            : 'bg-shell-bg border-transparent hover:bg-shell-surface hover:border-shell-border-subtle text-shell-muted'
-                                            }`}
-                                        variant="ghost"
-                                    >
-                                        <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center transition-colors ${isSelected
-                                            ? 'border-shell-accent bg-shell-accent'
-                                            : 'border-shell-border bg-shell-bg'
-                                            }`}>
-                                            {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-shell-bg" />}
-                                        </div>
-                                        <span className="text-xs font-medium">{config.productName}</span>
-                                    </ShellButton>
-                                );
-                            })}
-                        </div>
-                    </div>
+                    <p className="mb-shell-5 text-xs leading-5 text-shell-muted">
+                        New projects start with a generic welcome message and two starter prompts.
+                    </p>
                 </div>
 
                 <DialogFooter className="p-shell-4 border-t border-shell-border-subtle flex flex-row justify-end gap-shell-1 sm:space-x-0">

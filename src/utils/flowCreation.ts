@@ -1,54 +1,63 @@
-import { Flow, Turn, Component } from '../views/studio/types';
-import { ENTRY_POINTS, EntryPointId } from './entryPoints';
+import { Flow, Turn, Component, StartNode, Connection } from '../views/studio/types';
 
 /**
- * Creates a new flow with a locked Welcome node using Turn/Component model
- * @param entryPoint - The entry point ID (admin-center, recruiter, etc.)
- * @returns A complete Flow object with Welcome Turn
+ * Creates a new flow with a start node and locked welcome turn.
+ * @returns A complete Flow object with a generic starter experience
  */
-export function createNewFlow(entryPoint: EntryPointId): Flow {
-    const entryConfig = ENTRY_POINTS[entryPoint];
+export function createNewFlow(): Flow {
+    const startNodeId = crypto.randomUUID();
     const welcomeTurnId = crypto.randomUUID();
 
-    // Create components for the Welcome turn
     const components: Component[] = [
-        // Welcome message
         {
             id: crypto.randomUUID(),
             type: 'message',
             content: {
-                text: `Hi there. With the help of AI, I can answer questions about ${entryPoint === 'flagship' ? 'your Premium account' : entryConfig.productName} or connect you to our team.`
+                text: 'Hi there. With the help of AI, I can help answer your questions or connect you to our team. Not sure where to start? You can try:'
             }
         },
-        // Title/intro message for prompts
         {
             id: crypto.randomUUID(),
-            type: 'message',
+            type: 'prompt',
             content: {
-                text: 'Not sure where to start? You can try:'
-            }
-        },
-        // Individual prompt components
-        ...entryConfig.defaultPrompts.map(text => ({
-            id: crypto.randomUUID(),
-            type: 'prompt' as const,
-            content: {
-                text,
+                text: 'Prompt 1',
                 showAiIcon: false
             }
-        }))
+        },
+        {
+            id: crypto.randomUUID(),
+            type: 'prompt',
+            content: {
+                text: 'Prompt 2',
+                showAiIcon: false
+            }
+        }
     ];
 
-    // Create the Welcome Turn
+    const startNode: StartNode = {
+        id: startNodeId,
+        type: 'start',
+        position: { x: 50, y: 50 }
+    };
+
     const welcomeTurn: Turn = {
         id: welcomeTurnId,
         type: 'turn',
         speaker: 'ai',
         phase: 'welcome',
-        label: 'AI Turn 1',
+        label: 'Welcome message',
+        locked: true,
         components,
         position: { x: 250, y: 50 }
     };
+
+    const connections: Connection[] = [
+        {
+            id: crypto.randomUUID(),
+            source: startNodeId,
+            target: welcomeTurnId
+        }
+    ];
 
     return {
         id: crypto.randomUUID(),
@@ -59,16 +68,14 @@ export function createNewFlow(entryPoint: EntryPointId): Flow {
             showDisclaimer: true,
             simulateThinking: true,
             showHotspots: true,
-            entryPoint,
-            productName: entryConfig.productName
+            entryPoint: 'custom',
+            productName: 'LinkedIn'
         },
 
-        // NEW: Turn-based structure
-        steps: [welcomeTurn],
-        connections: [],
-        startStepId: welcomeTurnId,
+        steps: [startNode, welcomeTurn],
+        connections,
+        startStepId: startNodeId,
 
-        // OLD: Keep empty blocks for backward compatibility
         blocks: [],
 
         lastModified: Date.now()

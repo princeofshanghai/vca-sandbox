@@ -48,41 +48,35 @@ export const INITIAL_FLOW: Flow = {
             type: 'turn',
             speaker: 'ai',
             phase: 'welcome',
-            label: 'Welcome Message',
+            label: 'Welcome message',
             locked: true,
             position: { x: 250, y: 50 },
             components: [
                 {
                     id: 'c1',
                     type: 'message',
-                    content: { text: 'Hi there! I can help you with your account.' }
+                    content: {
+                        text: 'Hi there. With the help of AI, I can help answer your questions or connect you to our team. Not sure where to start? You can try:'
+                    }
                 },
                 {
                     id: 'c2',
                     type: 'prompt',
-                    content: { text: 'Remove a user', showAiIcon: false }
+                    content: { text: 'Prompt 1', showAiIcon: false }
+                },
+                {
+                    id: 'c3',
+                    type: 'prompt',
+                    content: { text: 'Prompt 2', showAiIcon: false }
                 }
             ]
         },
-        {
-            id: 'user-1',
-            type: 'user-turn',
-            label: "User selects 'Remove a user'",
-            inputType: 'prompt',
-            triggerValue: 'Remove a user',
-            position: { x: 250, y: 350 }
-        }
     ],
     connections: [
         {
             id: 'e-start',
             source: 'start-1',
             target: 'welcome-1'
-        },
-        {
-            id: 'e1',
-            source: 'welcome-1',
-            target: 'user-1'
         }
     ],
     blocks: []
