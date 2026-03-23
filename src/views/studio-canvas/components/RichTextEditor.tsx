@@ -21,6 +21,27 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 
+const EMAIL_ADDRESS_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
+
+const isMailtoHref = (value?: string | null) =>
+    (value || '').trim().toLowerCase().startsWith('mailto:');
+
+const isAutoEmailLink = (value: string) => {
+    const normalizedValue = value.trim();
+
+    if (!normalizedValue) return false;
+    if (isMailtoHref(normalizedValue)) return true;
+
+    return EMAIL_ADDRESS_PATTERN.test(normalizedValue);
+};
+
+const isAllowedEditorLinkHref = (value?: string | null) => {
+    if (!value) return false;
+    if (value === VCA_PENDING_LINK_HREF) return true;
+
+    return !isMailtoHref(value);
+};
+
 interface RichTextEditorProps {
     value: string;
     onChange: (value: string) => void;
@@ -145,6 +166,10 @@ export function RichTextEditor({
     }, []);
 
     const isValidLinkHref = useCallback((value: string) => {
+        if (!isAllowedEditorLinkHref(value)) {
+            return false;
+        }
+
         try {
             return Boolean(new URL(value));
         } catch (_error) {
@@ -162,6 +187,10 @@ export function RichTextEditor({
                 openOnClick: false,
                 autolink: false,
                 linkOnPaste: false,
+                isAllowedUri: (url, ctx) => (
+                    isAllowedEditorLinkHref(url) && ctx.defaultValidate(url)
+                ),
+                shouldAutoLink: (url) => !isAutoEmailLink(url),
                 HTMLAttributes: {
                     class: 'text-shell-accent hover:text-shell-accent-hover hover:underline cursor-pointer',
                 },
@@ -268,7 +297,7 @@ export function RichTextEditor({
         }
 
         if (!isValidLinkHref(trimmedUrl)) {
-            setLinkError('Enter a valid URL');
+            setLinkError('Enter a valid web URL');
             return;
         }
 
