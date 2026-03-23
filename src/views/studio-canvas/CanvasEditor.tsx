@@ -433,8 +433,111 @@ type CanvasClipboardPayload =
     | { type: 'component'; component: Component }
     | { type: 'components'; components: Component[] }
     | { type: 'branch'; branch: Branch };
+type SharedCanvasClipboardRecord = {
+    version: 1;
+    copiedAt: number;
+    sourceFlowId: string;
+    payload: CanvasClipboardPayload;
+};
 
 const cloneValue = <T,>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
+const SHARED_CANVAS_CLIPBOARD_STORAGE_KEY = 'studio-canvas:clipboard:v1';
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+    typeof value === 'object' && value !== null;
+
+const isClipboardNodeStep = (value: unknown): value is ClipboardNodeStep => {
+    if (!isRecord(value) || typeof value.id !== 'string' || typeof value.type !== 'string') {
+        return false;
+    }
+
+    switch (value.type) {
+        case 'turn':
+            return Array.isArray(value.components);
+        case 'user-turn':
+            return typeof value.label === 'string' && typeof value.inputType === 'string';
+        case 'condition':
+            return Array.isArray(value.branches);
+        case 'note':
+            return typeof value.content === 'string';
+        default:
+            return false;
+    }
+};
+
+const isClipboardComponent = (value: unknown): value is Component =>
+    isRecord(value) &&
+    typeof value.id === 'string' &&
+    typeof value.type === 'string' &&
+    'content' in value;
+
+const isClipboardBranch = (value: unknown): value is Branch =>
+    isRecord(value) &&
+    typeof value.id === 'string' &&
+    typeof value.condition === 'string';
+
+const isCanvasClipboardPayload = (value: unknown): value is CanvasClipboardPayload => {
+    if (!isRecord(value) || typeof value.type !== 'string') {
+        return false;
+    }
+
+    switch (value.type) {
+        case 'node':
+            return isClipboardNodeStep(value.step) && typeof value.pasteCount === 'number';
+        case 'nodes':
+            return Array.isArray(value.steps) &&
+                value.steps.every(isClipboardNodeStep) &&
+                typeof value.pasteCount === 'number';
+        case 'component':
+            return isClipboardComponent(value.component);
+        case 'components':
+            return Array.isArray(value.components) && value.components.every(isClipboardComponent);
+        case 'branch':
+            return isClipboardBranch(value.branch);
+        default:
+            return false;
+    }
+};
+
+const readSharedCanvasClipboard = (): CanvasClipboardPayload | null => {
+    if (typeof window === 'undefined') {
+        return null;
+    }
+
+    try {
+        const rawClipboard = window.localStorage.getItem(SHARED_CANVAS_CLIPBOARD_STORAGE_KEY);
+        if (!rawClipboard) {
+            return null;
+        }
+
+        const parsedClipboard: unknown = JSON.parse(rawClipboard);
+        if (!isRecord(parsedClipboard) || parsedClipboard.version !== 1 || !isCanvasClipboardPayload(parsedClipboard.payload)) {
+            return null;
+        }
+
+        return parsedClipboard.payload;
+    } catch {
+        return null;
+    }
+};
+
+const writeSharedCanvasClipboard = (sourceFlowId: string, payload: CanvasClipboardPayload): void => {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    try {
+        const record: SharedCanvasClipboardRecord = {
+            version: 1,
+            copiedAt: Date.now(),
+            sourceFlowId,
+            payload,
+        };
+        window.localStorage.setItem(SHARED_CANVAS_CLIPBOARD_STORAGE_KEY, JSON.stringify(record));
+    } catch (error) {
+        console.warn('Failed to persist shared canvas clipboard.', error);
+    }
+};
 
 type LabelableNodeType = ClipboardNodeStep['type'];
 
@@ -1089,6 +1192,21 @@ function CanvasEditorInner({
     useEffect(() => {
         flowRef.current = flow;
     }, [flow]);
+
+    const setActiveClipboard = useCallback((nextClipboard: CanvasClipboardPayload) => {
+        clipboardRef.current = nextClipboard;
+        writeSharedCanvasClipboard(flowRef.current.id, nextClipboard);
+    }, []);
+
+    const getActiveClipboard = useCallback((): CanvasClipboardPayload | null => {
+        const sharedClipboard = readSharedCanvasClipboard();
+        if (sharedClipboard) {
+            clipboardRef.current = sharedClipboard;
+            return sharedClipboard;
+        }
+
+        return clipboardRef.current;
+    }, []);
 
     const getCanvasPositionFromClient = useCallback((client: { x: number; y: number }) => {
         const canvasRect = canvasAreaRef.current?.getBoundingClientRect();
@@ -3162,11 +3280,11 @@ function CanvasEditorInner({
                 return false;
             }
 
-            clipboardRef.current = {
+            setActiveClipboard({
                 type: 'node',
                 step: cloneValue(selectedStep),
                 pasteCount: 0,
-            };
+            });
             return true;
         }
 
@@ -3180,7 +3298,7 @@ function CanvasEditorInner({
                 return false;
             }
 
-            clipboardRef.current = selectedSteps.length === 1
+            setActiveClipboard(selectedSteps.length === 1
                 ? {
                     type: 'node',
                     step: cloneValue(selectedSteps[0]),
@@ -3190,7 +3308,7 @@ function CanvasEditorInner({
                     type: 'nodes',
                     steps: cloneValue(selectedSteps),
                     pasteCount: 0,
-                };
+                });
             return true;
         }
 
@@ -3209,7 +3327,7 @@ function CanvasEditorInner({
                 return false;
             }
 
-            clipboardRef.current = selectedComponents.length === 1
+            setActiveClipboard(selectedComponents.length === 1
                 ? {
                     type: 'component',
                     component: cloneValue(selectedComponents[0]),
@@ -3217,7 +3335,7 @@ function CanvasEditorInner({
                 : {
                     type: 'components',
                     components: cloneValue(selectedComponents),
-                };
+                });
             return true;
         }
 
@@ -3231,19 +3349,19 @@ function CanvasEditorInner({
             return false;
         }
 
-        clipboardRef.current = {
+        setActiveClipboard({
             type: 'branch',
             branch: cloneValue(selectedBranch),
-        };
+        });
         return true;
-    }, []);
+    }, [setActiveClipboard]);
 
     const handlePasteSelection = useCallback((): boolean => {
         if (isFlowReadOnly) {
             return false;
         }
 
-        const clipboard = clipboardRef.current;
+        const clipboard = getActiveClipboard();
         if (!clipboard) {
             return false;
         }
@@ -3254,10 +3372,10 @@ function CanvasEditorInner({
         if (clipboard.type === 'node') {
             const nextPasteCount = clipboard.pasteCount + 1;
             const newStep = cloneNodeStepForPaste(clipboard.step, nextPasteCount, currentSteps);
-            clipboardRef.current = {
+            setActiveClipboard({
                 ...clipboard,
                 pasteCount: nextPasteCount,
-            };
+            });
 
             applyFlowUpdate({
                 ...currentFlow,
@@ -3272,10 +3390,10 @@ function CanvasEditorInner({
         if (clipboard.type === 'nodes') {
             const nextPasteCount = clipboard.pasteCount + 1;
             const newSteps = cloneNodeStepsForPaste(clipboard.steps, nextPasteCount, currentSteps);
-            clipboardRef.current = {
+            setActiveClipboard({
                 ...clipboard,
                 pasteCount: nextPasteCount,
-            };
+            });
 
             applyFlowUpdate({
                 ...currentFlow,
@@ -3420,7 +3538,7 @@ function CanvasEditorInner({
         setCanvasSelection({ type: 'branch', nodeId: targetNodeId, branchId: newBranchId });
         setPendingReactFlowSelectedNodeIds([]);
         return true;
-    }, [applyFlowUpdate, isFlowReadOnly, setCanvasSelection]);
+    }, [applyFlowUpdate, getActiveClipboard, isFlowReadOnly, setActiveClipboard, setCanvasSelection]);
 
     // Manual delete trigger for nested selections (cards and branch cards).
     const handleDeleteSelection = useCallback(() => {
