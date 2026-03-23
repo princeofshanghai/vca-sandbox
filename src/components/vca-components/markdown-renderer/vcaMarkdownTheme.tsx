@@ -87,7 +87,7 @@ export function createVCAMarkdownComponents({
         a: ({ node: _node, children, ...props }) => {
             if (isPendingVCALinkHref(props.href)) {
                 if (linkMode === 'static') {
-                    return <span className={staticLinkClasses}>{children}</span>;
+                    return <span className={`${staticLinkClasses} vca-static-link`}>{children}</span>;
                 }
 
                 return (
@@ -105,7 +105,7 @@ export function createVCAMarkdownComponents({
             }
 
             if (linkMode === 'static') {
-                return <span className={staticLinkClasses}>{children}</span>;
+                return <span className={`${staticLinkClasses} vca-static-link`}>{children}</span>;
             }
 
             return (
