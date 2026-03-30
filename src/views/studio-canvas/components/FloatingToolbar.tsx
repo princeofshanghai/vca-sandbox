@@ -77,14 +77,7 @@ export function FloatingToolbar({
     showCreationTools = true,
     commentButtonLabel = 'Comments',
 }: FloatingToolbarProps) {
-    const areCreationToolsDisabled = isCommentsActive;
-
     const onDragStart = (event: React.DragEvent, nodeType: string) => {
-        if (areCreationToolsDisabled) {
-            event.preventDefault();
-            return;
-        }
-
         event.dataTransfer.setData('application/reactflow', nodeType);
         event.dataTransfer.effectAllowed = 'move';
 
@@ -164,15 +157,13 @@ export function FloatingToolbar({
                     <div className="flex items-center gap-1">
                         <ActionTooltip content="AI turn" shortcut="A">
                             <button
-                                onClick={areCreationToolsDisabled ? undefined : onAddAiTurn}
-                                draggable={!areCreationToolsDisabled}
+                                type="button"
+                                onClick={onAddAiTurn}
+                                draggable
                                 onDragStart={(e) => onDragStart(e, 'turn')}
-                                disabled={areCreationToolsDisabled}
                                 className={cn(
                                     'group relative flex items-center justify-center w-10 h-10 rounded-md transition-colors tooltip-trigger',
-                                    areCreationToolsDisabled
-                                        ? 'cursor-not-allowed text-shell-muted/60'
-                                        : 'hover:bg-shell-surface cursor-grab active:cursor-grabbing'
+                                    'hover:bg-shell-surface cursor-grab active:cursor-grabbing'
                                 )}
                             >
                                 <VcaIcon icon="signal-ai" size="md" className="text-shell-accent" />
@@ -181,15 +172,13 @@ export function FloatingToolbar({
 
                         <ActionTooltip content="User turn" shortcut="U">
                             <button
-                                onClick={areCreationToolsDisabled ? undefined : onAddUserTurn}
-                                draggable={!areCreationToolsDisabled}
+                                type="button"
+                                onClick={onAddUserTurn}
+                                draggable
                                 onDragStart={(e) => onDragStart(e, 'user-turn')}
-                                disabled={areCreationToolsDisabled}
                                 className={cn(
                                     'group relative flex items-center justify-center w-10 h-10 rounded-md transition-colors',
-                                    areCreationToolsDisabled
-                                        ? 'cursor-not-allowed text-shell-muted/60'
-                                        : 'hover:bg-shell-surface cursor-grab active:cursor-grabbing'
+                                    'hover:bg-shell-surface cursor-grab active:cursor-grabbing'
                                 )}
                             >
                                 <UserRound className="text-shell-node-user" size={20} />
@@ -198,15 +187,13 @@ export function FloatingToolbar({
 
                         <ActionTooltip content="Condition" shortcut="D">
                             <button
-                                onClick={areCreationToolsDisabled ? undefined : onAddCondition}
-                                draggable={!areCreationToolsDisabled}
+                                type="button"
+                                onClick={onAddCondition}
+                                draggable
                                 onDragStart={(e) => onDragStart(e, 'condition')}
-                                disabled={areCreationToolsDisabled}
                                 className={cn(
                                     'group relative flex items-center justify-center w-10 h-10 rounded-md transition-colors',
-                                    areCreationToolsDisabled
-                                        ? 'cursor-not-allowed text-shell-muted/60'
-                                        : 'hover:bg-shell-surface cursor-grab active:cursor-grabbing'
+                                    'hover:bg-shell-surface cursor-grab active:cursor-grabbing'
                                 )}
                             >
                                 <Split className="text-shell-node-condition" size={20} />
@@ -218,15 +205,13 @@ export function FloatingToolbar({
 
                     <ActionTooltip content="Sticky note" shortcut="N">
                         <button
-                            draggable={!areCreationToolsDisabled}
+                            type="button"
+                            draggable
                             onDragStart={(e) => onDragStart(e, 'note')}
-                            onClick={areCreationToolsDisabled ? undefined : onAddNote}
-                            disabled={areCreationToolsDisabled}
+                            onClick={onAddNote}
                             className={cn(
                                 'group relative flex items-center justify-center w-10 h-10 rounded-md transition-colors tooltip-trigger',
-                                areCreationToolsDisabled
-                                    ? 'cursor-not-allowed text-shell-muted/60'
-                                    : 'hover:bg-shell-surface cursor-grab active:cursor-grabbing'
+                                'hover:bg-shell-surface cursor-grab active:cursor-grabbing'
                             )}
                         >
                             <StickyNote className="text-shell-node-note" size={20} fill="currentColor" />

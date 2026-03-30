@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type Ref } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode, type Ref } from 'react';
 import { ArrowUp, Loader2, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import {
     ShellIconButton,
@@ -61,9 +61,9 @@ export const CommentResolvedBadge = ({
 type CommentActionsMenuProps = {
     ariaLabel: string;
     editLabel: string;
-    deleteLabel: string;
+    deleteLabel?: string;
     onEdit: () => void;
-    onDelete: () => void;
+    onDelete?: () => void;
     tone?: CommentSurfaceTone;
 };
 
@@ -81,16 +81,25 @@ export const CommentActionsMenu = ({
                 <MoreHorizontal size={14} />
             </ShellIconButton>
         </ShellMenuTrigger>
-        <ShellMenuContent align="end" tone={tone} className="w-40">
+        <ShellMenuContent
+            align="end"
+            tone={tone}
+            className="w-40"
+            data-comment-placement-ignore="true"
+        >
             <ShellMenuItem tone={tone} onSelect={onEdit}>
                 <Pencil size={14} />
                 <span>{editLabel}</span>
             </ShellMenuItem>
-            <ShellMenuSeparator tone={tone} />
-            <ShellMenuItem tone={tone} variant="destructive" onSelect={onDelete}>
-                <Trash2 size={14} />
-                <span>{deleteLabel}</span>
-            </ShellMenuItem>
+            {deleteLabel && onDelete ? (
+                <>
+                    <ShellMenuSeparator tone={tone} />
+                    <ShellMenuItem tone={tone} variant="destructive" onSelect={onDelete}>
+                        <Trash2 size={14} />
+                        <span>{deleteLabel}</span>
+                    </ShellMenuItem>
+                </>
+            ) : null}
         </ShellMenuContent>
     </ShellMenu>
 );
@@ -107,6 +116,13 @@ type CommentComposerInputRowProps = {
     autoFocus?: boolean;
     className?: string;
     tone?: CommentSurfaceTone;
+    overlay?: ReactNode;
+    onTextareaKeyDown?: (event: KeyboardEvent<HTMLTextAreaElement>) => boolean | void;
+    onTextareaFocus?: () => void;
+    onTextareaBlur?: () => void;
+    onTextareaClick?: () => void;
+    onTextareaSelect?: () => void;
+    onTextareaKeyUp?: () => void;
 };
 
 const assignTextareaRef = (
@@ -135,6 +151,13 @@ export const CommentComposerInputRow = ({
     autoFocus = false,
     className,
     tone = 'default',
+    overlay,
+    onTextareaKeyDown,
+    onTextareaFocus,
+    onTextareaBlur,
+    onTextareaClick,
+    onTextareaSelect,
+    onTextareaKeyUp,
 }: CommentComposerInputRowProps) => {
     const internalTextareaRef = useRef<HTMLTextAreaElement | null>(null);
     const [isExpanded, setIsExpanded] = useState(value.includes('\n'));
@@ -160,7 +183,8 @@ export const CommentComposerInputRow = ({
     }, [value]);
 
     return (
-        <div className={cn('w-full max-w-[312px]', className)}>
+        <div className={cn('relative w-full max-w-[312px]', className)}>
+            {overlay}
             <div
                 className={cn(
                     'overflow-hidden rounded-[22px] border',
@@ -186,11 +210,21 @@ export const CommentComposerInputRow = ({
                         maxRows={5}
                         value={value}
                         onChange={(event) => onValueChange(event.target.value)}
+                        onFocus={onTextareaFocus}
+                        onBlur={onTextareaBlur}
+                        onClick={onTextareaClick}
+                        onSelect={onTextareaSelect}
+                        onKeyUp={onTextareaKeyUp}
                         // Keep a small buffer so the composer doesn't flip at the wrap threshold.
                         onHeightChange={(height) =>
                             setIsExpanded((current) => (current ? height > 30 : height > 34))
                         }
                         onKeyDown={(event) => {
+                            const wasHandled = onTextareaKeyDown?.(event);
+                            if (wasHandled) {
+                                return;
+                            }
+
                             if (
                                 event.key !== 'Enter' ||
                                 event.shiftKey ||

@@ -1,11 +1,14 @@
+import { useState } from 'react';
 import {
     CheckCircle2,
     Loader2,
     RotateCcw,
+    Trash2,
     X,
 } from 'lucide-react';
 import {
     ShellButton,
+    ShellDialogActions,
     ShellIconButton,
     ShellNotice,
     ShellTextarea,
@@ -13,13 +16,21 @@ import {
 import {
     CommentActionsMenu,
     CommentAvatar,
-    CommentComposerInputRow,
     CommentResolvedBadge,
     type CommentSurfaceTone,
 } from '@/components/comments/CommentPrimitives';
+import { CommentComposerWithMentions } from '@/components/comments/CommentComposerWithMentions';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { cn } from '@/utils/cn';
 import type { FlowComment, FlowCommentThread } from '../share/shareComments';
 import { formatCommentDate, formatCommentRelativeTime } from './canvasComments';
+import type { CommentDraftMention } from '@/lib/commentMentions';
 
 type CanvasCommentPopoverProps =
     | {
@@ -29,11 +40,14 @@ type CanvasCommentPopoverProps =
       userCanComment: boolean;
       onSignIn?: () => void;
       value: string;
+      mentions: CommentDraftMention[];
       isSubmitting: boolean;
       onValueChange: (value: string) => void;
+      onMentionsChange: (mentions: CommentDraftMention[]) => void;
       onSubmit: () => void;
       onClose: () => void;
       surfaceTone?: CommentSurfaceTone;
+      currentUserId?: string | null;
       }
     | {
           mode: 'thread';
@@ -43,7 +57,9 @@ type CanvasCommentPopoverProps =
           onSignIn?: () => void;
           thread: FlowCommentThread;
           replyDraft: string;
+          replyMentions: CommentDraftMention[];
           onReplyDraftChange: (value: string) => void;
+          onReplyMentionsChange: (mentions: CommentDraftMention[]) => void;
           onReplySubmit: () => void;
           isReplySubmitting: boolean;
           canManageComment: (comment: FlowComment) => boolean;
@@ -61,6 +77,7 @@ type CanvasCommentPopoverProps =
           onDeleteComment: (comment: FlowComment) => void;
           onClose: () => void;
           surfaceTone?: CommentSurfaceTone;
+          currentUserId?: string | null;
       };
 
 const NEW_COMMENT_POPOVER_WIDTH_PX = 320;
@@ -137,7 +154,8 @@ function ThreadCommentBody({
     const isEditing = editingCommentId === comment.id;
     const isSaving = savingEditCommentId === comment.id;
     const canSaveEdit = editDraft.trim().length > 0;
-    const canManage = canManageComment(comment) && thread.root.status !== 'resolved';
+    const canEditComment = canManageComment(comment) && thread.root.status !== 'resolved';
+    const canDeleteComment = canEditComment && comment.id !== thread.root.id;
     const toneClasses = popoverToneClasses[surfaceTone];
 
     return (
@@ -167,13 +185,13 @@ function ThreadCommentBody({
                             </div>
                         </div>
 
-                        {canManage ? (
+                        {canEditComment ? (
                             <CommentActionsMenu
-                                ariaLabel={comment.id === thread.root.id ? 'Thread actions' : 'Comment actions'}
+                                ariaLabel={comment.id === thread.root.id ? 'Root comment actions' : 'Comment actions'}
                                 editLabel={comment.id === thread.root.id ? 'Edit comment' : 'Edit'}
-                                deleteLabel={comment.id === thread.root.id ? 'Delete thread' : 'Delete reply'}
+                                deleteLabel={canDeleteComment ? 'Delete reply' : undefined}
                                 onEdit={() => onStartEditing(comment)}
-                                onDelete={() => onDeleteComment(comment)}
+                                onDelete={canDeleteComment ? () => onDeleteComment(comment) : undefined}
                                 tone={surfaceTone}
                             />
                         ) : null}
@@ -242,6 +260,7 @@ function ThreadCommentBody({
 export function CanvasCommentPopover(props: CanvasCommentPopoverProps) {
     const surfaceTone = props.surfaceTone ?? 'default';
     const toneClasses = popoverToneClasses[surfaceTone];
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
     if (props.mode === 'new') {
         const canSubmit = props.userCanComment && props.value.trim().length > 0 && !props.isSubmitting;
@@ -287,9 +306,11 @@ export function CanvasCommentPopover(props: CanvasCommentPopoverProps) {
                         className="w-full max-w-[calc(100vw-40px)]"
                         style={{ width: NEW_COMMENT_POPOVER_WIDTH_PX }}
                     >
-                        <CommentComposerInputRow
+                        <CommentComposerWithMentions
                             value={props.value}
                             onValueChange={props.onValueChange}
+                            mentions={props.mentions}
+                            onMentionsChange={props.onMentionsChange}
                             onSubmit={props.onSubmit}
                             placeholder="Add a comment"
                             submitAriaLabel="Post comment"
@@ -298,6 +319,7 @@ export function CanvasCommentPopover(props: CanvasCommentPopoverProps) {
                             autoFocus
                             className="max-w-none"
                             tone={surfaceTone}
+                            currentUserId={props.currentUserId}
                         />
                     </div>
                 )}
@@ -308,7 +330,9 @@ export function CanvasCommentPopover(props: CanvasCommentPopoverProps) {
     const {
         thread,
         replyDraft,
+        replyMentions,
         onReplyDraftChange,
+        onReplyMentionsChange,
         onReplySubmit,
         isReplySubmitting,
         userCanComment,
@@ -328,122 +352,203 @@ export function CanvasCommentPopover(props: CanvasCommentPopoverProps) {
         onDeleteComment,
         onClose,
         error,
+        currentUserId,
     } = props;
 
     const isResolved = thread.root.status === 'resolved';
     const canSubmitReply = userCanComment && replyDraft.trim().length > 0 && !isReplySubmitting;
+    const canDeleteThread = canManageComment(thread.root);
+    const isDeletingThread = deletingCommentId === thread.root.id;
 
     const threadComments = [thread.root, ...thread.replies];
 
     return (
-        <div
-            className={cn(
-                'max-w-[calc(100vw-40px)] rounded-3xl border backdrop-blur overflow-hidden',
-                toneClasses.panel
-            )}
-            style={{ width: COMMENT_POPOVER_WIDTH_PX }}
-        >
-            {error ? (
-                <ShellNotice
-                    tone={surfaceTone}
-                    variant="error"
-                    description={error}
-                    className="rounded-none border-x-0 border-t-0"
-                />
-            ) : null}
+        <>
+            <div
+                className={cn(
+                    'max-w-[calc(100vw-40px)] rounded-3xl border backdrop-blur overflow-hidden',
+                    toneClasses.panel
+                )}
+                style={{ width: COMMENT_POPOVER_WIDTH_PX }}
+            >
+                {error ? (
+                    <ShellNotice
+                        tone={surfaceTone}
+                        variant="error"
+                        description={error}
+                        className="rounded-none border-x-0 border-t-0"
+                    />
+                ) : null}
 
-            <div className={cn('px-4 py-3 border-b flex items-center justify-between gap-3', toneClasses.divider)}>
-                <div className="flex items-center gap-2 min-w-0">
-                    <h3 className={cn('text-sm font-semibold', toneClasses.text)}>Comment</h3>
-                    {isResolved ? <CommentResolvedBadge tone={surfaceTone} /> : null}
-                </div>
+                <div className={cn('px-4 py-3 border-b flex items-center justify-between gap-3', toneClasses.divider)}>
+                    <div className="flex items-center gap-2 min-w-0">
+                        <h3 className={cn('text-sm font-semibold', toneClasses.text)}>Comment</h3>
+                        {isResolved ? <CommentResolvedBadge tone={surfaceTone} /> : null}
+                    </div>
 
-                <div className="flex items-center gap-1 shrink-0">
-                    {canResolveThread ? (
+                    <div className="flex items-center gap-1 shrink-0">
+                        {canResolveThread ? (
+                            <ShellIconButton
+                                size="sm"
+                                tone={surfaceTone}
+                                shape="circle"
+                                onClick={onToggleThreadStatus}
+                                disabled={isStatusUpdating}
+                                aria-label={isResolved ? 'Reopen thread' : 'Resolve thread'}
+                            >
+                                {isStatusUpdating ? (
+                                    <Loader2 size={14} className="animate-spin" />
+                                ) : isResolved ? (
+                                    <RotateCcw size={14} />
+                                ) : (
+                                    <CheckCircle2 size={14} />
+                                )}
+                            </ShellIconButton>
+                        ) : null}
+
+                        {canDeleteThread ? (
+                            <ShellIconButton
+                                size="sm"
+                                tone={surfaceTone}
+                                shape="circle"
+                                onClick={() => setIsDeleteDialogOpen(true)}
+                                disabled={isDeletingThread}
+                                aria-label="Delete thread"
+                                className={cn(
+                                    surfaceTone === 'cinematicDark'
+                                        ? 'text-shell-dark-muted hover:bg-shell-dark-surface hover:text-shell-danger'
+                                        : 'text-shell-muted hover:bg-shell-danger-soft hover:text-shell-danger'
+                                )}
+                            >
+                                {isDeletingThread ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                            </ShellIconButton>
+                        ) : null}
+
                         <ShellIconButton
                             size="sm"
                             tone={surfaceTone}
                             shape="circle"
-                            onClick={onToggleThreadStatus}
-                            disabled={isStatusUpdating}
-                            aria-label={isResolved ? 'Reopen thread' : 'Resolve thread'}
+                            onClick={onClose}
+                            aria-label="Close comment thread"
                         >
-                            {isStatusUpdating ? (
-                                <Loader2 size={14} className="animate-spin" />
-                            ) : isResolved ? (
-                                <RotateCcw size={14} />
-                            ) : (
-                                <CheckCircle2 size={14} />
-                            )}
+                            <X size={14} />
                         </ShellIconButton>
-                    ) : null}
-
-                    <ShellIconButton
-                        size="sm"
-                        tone={surfaceTone}
-                        shape="circle"
-                        onClick={onClose}
-                        aria-label="Close comment thread"
-                    >
-                        <X size={14} />
-                    </ShellIconButton>
+                    </div>
                 </div>
+
+                <div className={cn('max-h-[340px] overflow-y-auto thin-scrollbar divide-y', toneClasses.listDivider)}>
+                    {threadComments.map((comment) => (
+                        <ThreadCommentBody
+                            key={comment.id}
+                            thread={thread}
+                            comment={comment}
+                            editingCommentId={editingCommentId}
+                            editDraft={editDraft}
+                            onStartEditing={onStartEditing}
+                            onEditDraftChange={onEditDraftChange}
+                            onSaveEdit={onSaveEdit}
+                            onCancelEdit={onCancelEdit}
+                            savingEditCommentId={savingEditCommentId}
+                            deletingCommentId={deletingCommentId}
+                            canManageComment={canManageComment}
+                            onDeleteComment={onDeleteComment}
+                            surfaceTone={surfaceTone}
+                        />
+                    ))}
+                </div>
+
+                {isResolved ? (
+                    <div className={cn('px-4 py-3 border-t', toneClasses.divider, toneClasses.footerSurface)}>
+                        <div className={cn('text-xs', toneClasses.muted)}>Resolved. Reopen to reply.</div>
+                    </div>
+                ) : !userCanComment ? (
+                    <div className={cn('px-4 py-3 border-t flex items-center justify-between gap-3', toneClasses.divider)}>
+                        <div className={cn('text-xs', toneClasses.muted)}>Sign in to reply.</div>
+                        {onSignIn ? (
+                            <ShellButton
+                                size="compact"
+                                className={toneClasses.primaryButton}
+                                onClick={onSignIn}
+                                disabled={props.isAuthLoading}
+                            >
+                                {props.isAuthLoading ? <Loader2 size={12} className="animate-spin" /> : null}
+                                Sign in
+                            </ShellButton>
+                        ) : null}
+                    </div>
+                ) : (
+                    <div className={cn('px-4 py-3 border-t', toneClasses.divider)}>
+                        <CommentComposerWithMentions
+                            value={replyDraft}
+                            onValueChange={onReplyDraftChange}
+                            mentions={replyMentions}
+                            onMentionsChange={onReplyMentionsChange}
+                            onSubmit={onReplySubmit}
+                            placeholder="Reply"
+                            submitAriaLabel="Post reply"
+                            disabled={!canSubmitReply}
+                            isSubmitting={isReplySubmitting}
+                            tone={surfaceTone}
+                            currentUserId={currentUserId}
+                        />
+                    </div>
+                )}
             </div>
 
-            <div className={cn('max-h-[340px] overflow-y-auto thin-scrollbar divide-y', toneClasses.listDivider)}>
-                {threadComments.map((comment) => (
-                    <ThreadCommentBody
-                        key={comment.id}
-                        thread={thread}
-                        comment={comment}
-                        editingCommentId={editingCommentId}
-                        editDraft={editDraft}
-                        onStartEditing={onStartEditing}
-                        onEditDraftChange={onEditDraftChange}
-                        onSaveEdit={onSaveEdit}
-                        onCancelEdit={onCancelEdit}
-                        savingEditCommentId={savingEditCommentId}
-                        deletingCommentId={deletingCommentId}
-                        canManageComment={canManageComment}
-                        onDeleteComment={onDeleteComment}
-                        surfaceTone={surfaceTone}
-                    />
-                ))}
-            </div>
-
-            {isResolved ? (
-                <div className={cn('px-4 py-3 border-t', toneClasses.divider, toneClasses.footerSurface)}>
-                    <div className={cn('text-xs', toneClasses.muted)}>Resolved. Reopen to reply.</div>
-                </div>
-            ) : !userCanComment ? (
-                <div className={cn('px-4 py-3 border-t flex items-center justify-between gap-3', toneClasses.divider)}>
-                    <div className={cn('text-xs', toneClasses.muted)}>Sign in to reply.</div>
-                    {onSignIn ? (
+            <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <DialogContent
+                    hideClose
+                    data-comment-placement-ignore="true"
+                    overlayProps={{ 'data-comment-placement-ignore': 'true' }}
+                    className={cn(
+                        'max-w-[360px] gap-0 shadow-2xl',
+                        surfaceTone === 'cinematicDark'
+                            ? 'border-shell-dark-border bg-shell-dark-panel text-shell-dark-text'
+                            : 'border-shell-border bg-shell-bg text-shell-text'
+                    )}
+                >
+                    <DialogHeader className="text-left">
+                        <DialogTitle className={cn('text-base', toneClasses.text)}>Delete thread?</DialogTitle>
+                        <DialogDescription className={toneClasses.muted}>
+                            {thread.replies.length > 0
+                                ? 'This will permanently remove the pinned comment and all replies in this thread.'
+                                : 'This will permanently remove the pinned comment from the prototype.'}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <ShellDialogActions tone={surfaceTone}>
                         <ShellButton
                             size="compact"
-                            className={toneClasses.primaryButton}
-                            onClick={onSignIn}
-                            disabled={props.isAuthLoading}
+                            variant="ghost"
+                            className={cn(
+                                surfaceTone === 'cinematicDark'
+                                    ? 'text-shell-dark-muted hover:bg-shell-dark-surface hover:text-shell-dark-text'
+                                    : undefined
+                            )}
+                            onClick={() => setIsDeleteDialogOpen(false)}
+                            disabled={isDeletingThread}
                         >
-                            {props.isAuthLoading ? <Loader2 size={12} className="animate-spin" /> : null}
-                            Sign in
+                            Cancel
                         </ShellButton>
-                    ) : null}
-                </div>
-            ) : (
-                <div className={cn('px-4 py-3 border-t', toneClasses.divider)}>
-                    <CommentComposerInputRow
-                        value={replyDraft}
-                        onValueChange={onReplyDraftChange}
-                        onSubmit={onReplySubmit}
-                        placeholder="Reply"
-                        submitAriaLabel="Post reply"
-                        disabled={!canSubmitReply}
-                        isSubmitting={isReplySubmitting}
-                        tone={surfaceTone}
-                    />
-                </div>
-            )}
-        </div>
+                        <ShellButton
+                            size="compact"
+                            variant="destructive"
+                            className={cn(
+                                surfaceTone === 'cinematicDark'
+                                    ? 'bg-shell-dark-danger text-white hover:bg-shell-dark-danger'
+                                    : undefined
+                            )}
+                            onClick={() => {
+                                setIsDeleteDialogOpen(false);
+                                onDeleteComment(thread.root);
+                            }}
+                            disabled={isDeletingThread}
+                        >
+                            {isDeletingThread ? <Loader2 size={14} className="animate-spin" /> : null}
+                            Delete thread
+                        </ShellButton>
+                    </ShellDialogActions>
+                </DialogContent>
+            </Dialog>
+        </>
     );
 }

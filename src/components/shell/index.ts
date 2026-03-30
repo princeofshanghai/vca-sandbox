@@ -1,4 +1,5 @@
 export { ShellButton } from './ShellButton';
+export { ShellCoachmark } from './ShellCoachmark';
 export { ShellDialogActions } from './ShellDialogActions';
 export { ShellHeaderRail, ShellHeaderRailItem } from './ShellHeaderRail';
 export { ShellInput } from './ShellInput';

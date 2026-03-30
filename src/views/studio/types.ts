@@ -70,6 +70,7 @@ export interface Flow {
     settings: GlobalSettings; // Required in new flows
     lastModified: number;
     is_public?: boolean; // Controls public access
+    ownerUserId?: string;
 
     // NEW: Turn-based model
     steps?: Step[]; // New turn/condition-based structure

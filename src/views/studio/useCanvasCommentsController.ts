@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
-import { getUserAvatarUrl, getUserDisplayName } from '@/utils/userIdentity';
 import {
     type CommentFilter,
     type FlowComment,
@@ -25,6 +24,7 @@ import {
     sortCanvasCommentThreads,
 } from './canvasComments';
 import { Flow } from './types';
+import type { CommentDraftMention } from '@/lib/commentMentions';
 
 export type PendingCanvasComment = {
     anchor: FlowCommentCanvasAnchor;
@@ -43,7 +43,10 @@ export interface CanvasCommentsController {
     pendingComment: PendingCanvasComment | null;
     newCommentText: string;
     setNewCommentText: (value: string) => void;
+    newCommentMentions: CommentDraftMention[];
+    setNewCommentMentions: (mentions: CommentDraftMention[]) => void;
     replyDrafts: Record<string, string>;
+    replyMentions: Record<string, CommentDraftMention[]>;
     editingCommentId: string | null;
     editDraft: string;
     setEditDraft: (value: string) => void;
@@ -55,8 +58,7 @@ export interface CanvasCommentsController {
     movingThreadId: string | null;
     isAuthLoading: boolean;
     userCanComment: boolean;
-    commenterName: string;
-    commenterAvatarUrl: string | null;
+    currentUserId: string | null;
     pendingRevealThreadId: string | null;
     startPendingComment: (anchor: FlowCommentCanvasAnchor) => void;
     dismissPendingComment: () => void;
@@ -67,6 +69,7 @@ export interface CanvasCommentsController {
     refresh: (options?: { showLoader?: boolean }) => Promise<void>;
     submitPendingComment: () => Promise<boolean>;
     setReplyDraft: (threadId: string, value: string) => void;
+    setReplyMentions: (threadId: string, mentions: CommentDraftMention[]) => void;
     submitReply: (threadId: string) => Promise<boolean>;
     startEditingComment: (comment: FlowComment) => void;
     cancelEditingComment: () => void;
@@ -118,7 +121,9 @@ export const useCanvasCommentsController = ({
     const [hoveredThreadId, setHoveredThreadId] = useState<string | null>(null);
     const [pendingComment, setPendingComment] = useState<PendingCanvasComment | null>(null);
     const [newCommentText, setNewCommentText] = useState('');
+    const [newCommentMentions, setNewCommentMentions] = useState<CommentDraftMention[]>([]);
     const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
+    const [replyMentions, setReplyMentionsState] = useState<Record<string, CommentDraftMention[]>>({});
     const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
     const [editDraft, setEditDraft] = useState('');
     const [postingRootComment, setPostingRootComment] = useState(false);
@@ -131,8 +136,6 @@ export const useCanvasCommentsController = ({
     const moveRequestSequenceRef = useRef(0);
     const latestMoveRequestByThreadRef = useRef<Record<string, number>>({});
 
-    const commenterName = useMemo(() => getUserDisplayName(user), [user]);
-    const commenterAvatarUrl = useMemo(() => getUserAvatarUrl(user), [user]);
     const isFlowOwner = !!user && !!ownerUserId && user.id === ownerUserId;
     const userCanComment = !!user;
     const sortedThreads = useMemo(() => sortCanvasCommentThreads(threads), [threads]);
@@ -160,7 +163,9 @@ export const useCanvasCommentsController = ({
         setHoveredThreadId(null);
         setPendingComment(null);
         setNewCommentText('');
+        setNewCommentMentions([]);
         setReplyDrafts({});
+        setReplyMentionsState({});
         setEditingCommentId(null);
         setEditDraft('');
         setPendingRevealThreadId(null);
@@ -258,6 +263,7 @@ export const useCanvasCommentsController = ({
     const startPendingComment = useCallback((anchor: FlowCommentCanvasAnchor) => {
         setPendingComment({ anchor });
         setNewCommentText('');
+        setNewCommentMentions([]);
         setActiveThreadId(null);
         setHoveredThreadId(null);
         setEditingCommentId(null);
@@ -269,6 +275,7 @@ export const useCanvasCommentsController = ({
     const dismissPendingComment = useCallback(() => {
         setPendingComment(null);
         setNewCommentText('');
+        setNewCommentMentions([]);
         setEditingCommentId(null);
         setEditDraft('');
     }, []);
@@ -276,8 +283,10 @@ export const useCanvasCommentsController = ({
     const dismissComposer = useCallback(() => {
         setPendingComment(null);
         setNewCommentText('');
+        setNewCommentMentions([]);
         setActiveThreadId(null);
         setHoveredThreadId(null);
+        setReplyMentionsState({});
         setEditingCommentId(null);
         setEditDraft('');
         setPendingRevealThreadId(null);
@@ -303,8 +312,7 @@ export const useCanvasCommentsController = ({
         if (!flow.id || !pendingComment || !user) return false;
 
         const message = newCommentText.trim();
-        const authorName = commenterName.trim();
-        if (!message || !authorName) return false;
+        if (!message) return false;
 
         setPostingRootComment(true);
         setError(null);
@@ -312,15 +320,16 @@ export const useCanvasCommentsController = ({
         try {
             await createFlowRootComment({
                 flowId: flow.id,
-                authorName,
-                authorUserId: user.id,
-                authorAvatarUrl: commenterAvatarUrl,
                 message,
+                mentionedUserIds: newCommentMentions.map((mention) => mention.userId),
+                shareSurface: 'studio',
+                siteOrigin: window.location.origin,
                 anchor: pendingComment.anchor,
             });
 
             setPendingComment(null);
             setNewCommentText('');
+            setNewCommentMentions([]);
             await refresh();
             return true;
         } catch (createError) {
@@ -330,10 +339,14 @@ export const useCanvasCommentsController = ({
         } finally {
             setPostingRootComment(false);
         }
-    }, [commenterAvatarUrl, commenterName, flow.id, newCommentText, pendingComment, refresh, user]);
+    }, [flow.id, newCommentMentions, newCommentText, pendingComment, refresh, user]);
 
     const setReplyDraft = useCallback((threadId: string, value: string) => {
         setReplyDrafts((current) => ({ ...current, [threadId]: value }));
+    }, []);
+
+    const setReplyMentions = useCallback((threadId: string, mentions: CommentDraftMention[]) => {
+        setReplyMentionsState((current) => ({ ...current, [threadId]: mentions }));
     }, []);
 
     const submitReply = useCallback(
@@ -344,8 +357,7 @@ export const useCanvasCommentsController = ({
             if (!targetThread || targetThread.root.status === 'resolved') return false;
 
             const message = (replyDrafts[threadId] || '').trim();
-            const authorName = commenterName.trim();
-            if (!message || !authorName) return false;
+            if (!message) return false;
 
             setPostingReplyThreadId(threadId);
             setError(null);
@@ -354,13 +366,14 @@ export const useCanvasCommentsController = ({
                 await replyToFlowComment({
                     flowId: flow.id,
                     parentId: threadId,
-                    authorName,
-                    authorUserId: user.id,
-                    authorAvatarUrl: commenterAvatarUrl,
                     message,
+                    mentionedUserIds: (replyMentions[threadId] || []).map((mention) => mention.userId),
+                    shareSurface: 'studio',
+                    siteOrigin: window.location.origin,
                 });
 
                 setReplyDrafts((current) => ({ ...current, [threadId]: '' }));
+                setReplyMentionsState((current) => ({ ...current, [threadId]: [] }));
                 setActiveThreadId(threadId);
                 await refresh();
                 return true;
@@ -372,7 +385,7 @@ export const useCanvasCommentsController = ({
                 setPostingReplyThreadId(null);
             }
         },
-        [commenterAvatarUrl, commenterName, flow.id, refresh, replyDrafts, threads, user]
+        [flow.id, refresh, replyDrafts, replyMentions, threads, user]
     );
 
     const startEditingComment = useCallback((comment: FlowComment) => {
@@ -556,7 +569,10 @@ export const useCanvasCommentsController = ({
         pendingComment,
         newCommentText,
         setNewCommentText,
+        newCommentMentions,
+        setNewCommentMentions,
         replyDrafts,
+        replyMentions,
         editingCommentId,
         editDraft,
         setEditDraft,
@@ -568,8 +584,7 @@ export const useCanvasCommentsController = ({
         movingThreadId,
         isAuthLoading,
         userCanComment,
-        commenterName,
-        commenterAvatarUrl,
+        currentUserId: user?.id ?? null,
         pendingRevealThreadId,
         startPendingComment,
         dismissPendingComment,
@@ -580,6 +595,7 @@ export const useCanvasCommentsController = ({
         refresh,
         submitPendingComment,
         setReplyDraft,
+        setReplyMentions,
         submitReply,
         startEditingComment,
         cancelEditingComment,

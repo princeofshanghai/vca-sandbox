@@ -330,6 +330,11 @@
     animation: hotspot-dot-pulse 2s ease-in-out infinite;
     transform-origin: center;
   }
+
+  .shell-coachmark-float-animation {
+    animation: shell-coachmark-float 2.6s ease-in-out infinite;
+    transform-origin: 90% 100%;
+  }
 }
 
 @layer components {
@@ -413,7 +418,19 @@
   }
 }
 
+@keyframes shell-coachmark-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .shell-coachmark-float-animation,
   .hotspot-ripple-animation,
   .hotspot-dot-pulse-animation {
     animation: none !important;

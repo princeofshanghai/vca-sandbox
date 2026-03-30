@@ -202,6 +202,7 @@ export const flowStorage = {
             steps: data.content?.steps || [],
             connections: data.content?.connections || [],
             blocks: data.content?.blocks || [],
+            ownerUserId: typeof data.user_id === 'string' ? data.user_id : undefined,
             metadata: {
                 previewText: data.metadata?.previewText,
                 entryPoint: data.metadata?.entryPoint,

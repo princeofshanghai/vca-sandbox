@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Flow } from '../types';
 import { flowStorage, INITIAL_FLOW } from '@/utils/flowStorage';
 
-export const useStudioFlow = (id?: string) => {
+export const useStudioFlow = (id?: string, currentUserId?: string | null) => {
     const [isLoading, setIsLoading] = useState(true);
     const [flow, setFlow] = useState<Flow>(INITIAL_FLOW);
 
@@ -56,13 +56,17 @@ export const useStudioFlow = (id?: string) => {
     // Persistence
     useEffect(() => {
         if (!isLoading && flow.id && flow.id !== 'initial') {
+            if (currentUserId && flow.ownerUserId && flow.ownerUserId !== currentUserId) {
+                return undefined;
+            }
+
             const saveDebounce = setTimeout(() => {
                 flowStorage.saveFlow(flow);
             }, 1000); // 1s auto-save debounce
 
             return () => clearTimeout(saveDebounce);
         }
-    }, [flow, isLoading]);
+    }, [currentUserId, flow, isLoading]);
 
     return { flow, setFlow, isLoading };
 };

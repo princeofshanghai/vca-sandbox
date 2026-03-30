@@ -9,6 +9,7 @@ import { useFlowHistory } from './hooks/useFlowHistory';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { useCanvasCommentsController } from './useCanvasCommentsController';
 import { useApp } from '@/contexts/AppContext';
+import { useAuth } from '@/hooks/useAuth';
 import { flowStorage } from '@/utils/flowStorage';
 import {
     duplicateFlowForCurrentUser,
@@ -22,9 +23,10 @@ export const StudioView = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { state } = useApp();
+    const { user } = useAuth();
 
     // Custom hook handles loading and persistence
-    const { flow, setFlow, isLoading } = useStudioFlow(id);
+    const { flow, setFlow, isLoading } = useStudioFlow(id, user?.id);
     const { setFlowWithHistory, undo, redo } = useFlowHistory(flow, setFlow);
 
     useEffect(() => {
@@ -58,6 +60,13 @@ export const StudioView = () => {
             body.style.overscrollBehaviorX = previousBodyOverscrollX;
         };
     }, []);
+
+    useEffect(() => {
+        if (isLoading || !id || !user || !flow.ownerUserId) return;
+        if (flow.ownerUserId === user.id) return;
+
+        navigate(`/share/studio/${id}`, { replace: true });
+    }, [flow.ownerUserId, id, isLoading, navigate, user]);
 
     const [isPremium, setIsPremium] = useState(false);
     const [isMobile, setIsMobile] = useState(false);

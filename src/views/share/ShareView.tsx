@@ -71,9 +71,9 @@ import {
 import {
     CommentActionsMenu,
     CommentAvatar,
-    CommentComposerInputRow,
     CommentResolvedBadge,
 } from '@/components/comments/CommentPrimitives';
+import { CommentComposerWithMentions } from '@/components/comments/CommentComposerWithMentions';
 import {
     CommentThreadHoverPreview,
     COMMENT_THREAD_HOVER_PREVIEW_GAP_PX,
@@ -84,7 +84,6 @@ import { ActionTooltip } from '@/views/studio-canvas/components/ActionTooltip';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/hooks/useAuth';
 import { type SmartFlowEngineSnapshot } from '@/hooks/useSmartFlowEngine';
-import { getUserAvatarUrl, getUserDisplayName } from '@/utils/userIdentity';
 import { toast } from 'sonner';
 import { startGoogleSignInRedirect } from '@/utils/authRedirect';
 import {
@@ -95,6 +94,7 @@ import {
     markProjectDuplicatedToastPending,
 } from '@/utils/projectDuplication';
 import { ShareViewOnlyBadge } from './components/ShareViewOnlyBadge';
+import type { CommentDraftMention } from '@/lib/commentMentions';
 import {
     type CommentFilter,
     type FlowCommentReviewAnchor,
@@ -439,8 +439,10 @@ export const ShareView = () => {
     const [hoveredThreadId, setHoveredThreadId] = useState<string | null>(null);
 
     const [newCommentText, setNewCommentText] = useState('');
+    const [newCommentMentions, setNewCommentMentions] = useState<CommentDraftMention[]>([]);
 
     const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
+    const [replyMentionsByThread, setReplyMentionsByThread] = useState<Record<string, CommentDraftMention[]>>({});
     const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
     const [editDraft, setEditDraft] = useState('');
     const [isSavingEditCommentId, setIsSavingEditCommentId] = useState<string | null>(null);
@@ -467,13 +469,13 @@ export const ShareView = () => {
     const lastAutoPathRequestKeyRef = useRef<string | null>(null);
     const lastAutoOpenPendingPathRequestKeyRef = useRef<string | null>(null);
     const hasHandledPendingDuplicateRef = useRef(false);
+    const pendingDeepLinkThreadIdRef = useRef<string | null>(null);
+    const hasTriggeredMentionSignInRef = useRef(false);
 
     useEffect(() => {
         hasHandledPendingDuplicateRef.current = false;
     }, [id]);
 
-    const commenterName = useMemo(() => getUserDisplayName(user), [user]);
-    const commenterAvatarUrl = useMemo(() => getUserAvatarUrl(user), [user]);
     const isDarkMode = state.theme === 'dark';
 
     const openCommentsWorkspace = useCallback(() => {
@@ -488,6 +490,7 @@ export const ShareView = () => {
         setActiveThreadId(null);
         setEditingCommentId(null);
         setEditDraft('');
+        setNewCommentMentions([]);
         setCommentsError(null);
     }, []);
 
@@ -503,7 +506,9 @@ export const ShareView = () => {
         setActiveThreadId(null);
         setHoveredThreadId(null);
         setNewCommentText('');
+        setNewCommentMentions([]);
         setReplyDrafts({});
+        setReplyMentionsByThread({});
         setEditingCommentId(null);
         setEditDraft('');
         setThreadStatusPendingId(null);
@@ -540,6 +545,7 @@ export const ShareView = () => {
             setPendingPin(null);
             setPendingReviewAnchor(null);
             setNewCommentText('');
+            setNewCommentMentions([]);
             setHoveredThreadId(null);
             setReviewPathChangeRequest({
                 token: Date.now() + Math.random(),
@@ -686,6 +692,10 @@ export const ShareView = () => {
         setReviewState(createEmptyReviewState());
         setReviewPathChangeRequest(null);
         setIsPathsPanelOpen(false);
+        setNewCommentText('');
+        setNewCommentMentions([]);
+        setReplyDrafts({});
+        setReplyMentionsByThread({});
         void loadComments(id, { showLoader: true });
     }, [id, loadComments]);
 
@@ -695,10 +705,26 @@ export const ShareView = () => {
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
-        if (params.get('comments') !== '1') return;
+        const threadId = params.get('thread');
+        const shouldOpenComments = params.get('comments') === '1' || !!threadId;
+        if (!shouldOpenComments) return;
 
+        pendingDeepLinkThreadIdRef.current = threadId;
         openCommentsWorkspace();
     }, [openCommentsWorkspace]);
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('mention') !== '1') return;
+        if (isAuthLoading || user || hasTriggeredMentionSignInRef.current) return;
+
+        hasTriggeredMentionSignInRef.current = true;
+        void startGoogleSignInRedirect(window.location.href).catch((signInError: unknown) => {
+            console.error('Error signing in from mention link:', signInError);
+            setCommentsError('Could not start sign-in. Please try again.');
+            hasTriggeredMentionSignInRef.current = false;
+        });
+    }, [isAuthLoading, user]);
 
     useEffect(() => {
         if (!id || !isPanelOpen) return;
@@ -1137,9 +1163,11 @@ export const ShareView = () => {
         setPendingPin(null);
         setPendingReviewAnchor(null);
         setNewCommentText('');
+        setNewCommentMentions([]);
         setActiveThreadId(null);
         setHoveredThreadId(null);
         setReplyDrafts({});
+        setReplyMentionsByThread({});
         setEditingCommentId(null);
         setEditDraft('');
         setActiveReplyThreadId(null);
@@ -1487,6 +1515,20 @@ export const ShareView = () => {
 
         setPendingThreadPathNavigation(null);
     }, []);
+
+    useEffect(() => {
+        const pendingThreadId = pendingDeepLinkThreadIdRef.current;
+        if (!pendingThreadId || commentsLoading || !hasLoadedCommentsOnce) return;
+
+        const threadEntry = reviewThreadEntries.find((entry) => entry.thread.id === pendingThreadId);
+        if (!threadEntry) {
+            pendingDeepLinkThreadIdRef.current = null;
+            return;
+        }
+
+        handleSelectThreadFromRail(threadEntry);
+        pendingDeepLinkThreadIdRef.current = null;
+    }, [commentsLoading, handleSelectThreadFromRail, hasLoadedCommentsOnce, reviewThreadEntries]);
 
     const handleStartEditComment = useCallback((comment: FlowComment) => {
         setCommentsError(null);
@@ -1861,9 +1903,7 @@ export const ShareView = () => {
         if (!id || !pendingPin || !pendingReviewAnchor || !user) return;
 
         const message = newCommentText.trim();
-        const authorName = commenterName.trim();
-
-        if (!message || !authorName) return;
+        if (!message) return;
 
         setIsPostingComment(true);
         setCommentsError(null);
@@ -1871,16 +1911,17 @@ export const ShareView = () => {
         try {
             await createFlowRootComment({
                 flowId: id,
-                authorName,
-                authorUserId: user.id,
-                authorAvatarUrl: commenterAvatarUrl,
                 message,
+                mentionedUserIds: newCommentMentions.map((mention) => mention.userId),
+                shareSurface: 'review',
+                siteOrigin: window.location.origin,
                 pinX: pendingPin.x,
                 pinY: pendingPin.y,
                 anchor: pendingReviewAnchor,
             });
 
             setNewCommentText('');
+            setNewCommentMentions([]);
             setPendingPin(null);
             setPendingReviewAnchor(null);
             setActiveThreadId(null);
@@ -1900,6 +1941,10 @@ export const ShareView = () => {
         setReplyDrafts((prev) => ({ ...prev, [threadId]: value }));
     };
 
+    const handleReplyMentionsChange = (threadId: string, mentions: CommentDraftMention[]) => {
+        setReplyMentionsByThread((prev) => ({ ...prev, [threadId]: mentions }));
+    };
+
     const handleReplySubmit = async (threadId: string) => {
         if (!id || !user) return;
 
@@ -1907,9 +1952,7 @@ export const ShareView = () => {
         if (targetThread?.root.status === 'resolved') return;
 
         const message = (replyDrafts[threadId] || '').trim();
-        const authorName = commenterName.trim();
-
-        if (!message || !authorName) return;
+        if (!message) return;
 
         setActiveReplyThreadId(threadId);
         setCommentsError(null);
@@ -1918,13 +1961,14 @@ export const ShareView = () => {
             await replyToFlowComment({
                 flowId: id,
                 parentId: threadId,
-                authorName,
-                authorUserId: user.id,
-                authorAvatarUrl: commenterAvatarUrl,
                 message,
+                mentionedUserIds: (replyMentionsByThread[threadId] || []).map((mention) => mention.userId),
+                shareSurface: 'review',
+                siteOrigin: window.location.origin,
             });
 
             setReplyDrafts((prev) => ({ ...prev, [threadId]: '' }));
+            setReplyMentionsByThread((prev) => ({ ...prev, [threadId]: [] }));
             setActiveThreadId(threadId);
             await loadComments(id);
         } catch (replyError: unknown) {
@@ -2158,9 +2202,11 @@ export const ShareView = () => {
                     className="w-full max-w-[calc(100vw-40px)]"
                     style={{ width: DEFAULT_NEW_COMMENT_WIDTH_PX }}
                 >
-                    <CommentComposerInputRow
+                    <CommentComposerWithMentions
                         value={newCommentText}
                         onValueChange={setNewCommentText}
+                        mentions={newCommentMentions}
+                        onMentionsChange={setNewCommentMentions}
                         onSubmit={() => void handleCreateComment()}
                         placeholder="Add a comment"
                         submitAriaLabel="Post comment"
@@ -2169,6 +2215,7 @@ export const ShareView = () => {
                         autoFocus
                         className="max-w-none"
                         tone={COMMENT_SURFACE_TONE}
+                        currentUserId={user?.id}
                     />
                 </div>
             );
@@ -2278,15 +2325,20 @@ export const ShareView = () => {
                     </div>
                 ) : (
                     <div className="px-4 py-3 border-t border-shell-dark-border">
-                        <CommentComposerInputRow
+                        <CommentComposerWithMentions
                             value={replyText}
                             onValueChange={(value) => handleReplyChange(activeThread.id, value)}
+                            mentions={replyMentionsByThread[activeThread.id] || []}
+                            onMentionsChange={(mentions) =>
+                                handleReplyMentionsChange(activeThread.id, mentions)
+                            }
                             onSubmit={() => handleReplySubmit(activeThread.id)}
                             placeholder="Reply"
                             submitAriaLabel="Post reply"
                             disabled={isReplyDisabled}
                             isSubmitting={isReplyPosting}
                             tone={COMMENT_SURFACE_TONE}
+                            currentUserId={user?.id}
                         />
                     </div>
                 )}

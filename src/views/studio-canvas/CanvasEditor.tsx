@@ -56,6 +56,7 @@ import { ShareDialog } from '../studio/components/ShareDialog';
 import { ArrowLeft, ChevronDown, Download, ExternalLink, Grid3x3, PanelRightOpen, Play, Split, StickyNote, UserRound } from 'lucide-react';
 import {
     ShellButton,
+    ShellCoachmark,
     ShellIconButton,
     ShellMenu,
     ShellMenuContent,
@@ -187,6 +188,10 @@ interface CanvasEditorProps {
     useSectionedUserMenu?: boolean;
     onCommentSignIn?: () => void;
     commentSurfaceTone?: CommentSurfaceTone;
+    previewCoachmark?: {
+        message: string;
+        onDismiss: () => void;
+    };
 }
 
 const QUICK_CONNECT_CLICK_DISTANCE_PX = 6;
@@ -947,12 +952,14 @@ function CanvasEditorInner({
     useSectionedUserMenu = false,
     onCommentSignIn,
     commentSurfaceTone = 'default',
+    previewCoachmark,
 }: CanvasEditorProps) {
     const { screenToFlowPosition, setCenter, getViewport, setViewport, getNodesBounds } = useReactFlow();
     const viewport = useViewport();
     const canvasAreaRef = useRef<HTMLDivElement | null>(null);
     const commentPopoverRef = useRef<HTMLDivElement | null>(null);
     const suppressNextCommentPlacementRef = useRef(false);
+    const suppressCommentPlacementUntilRef = useRef(0);
     const suppressCommentClickRef = useRef<{ threadId: string; expiresAt: number } | null>(null);
     const isFlowReadOnly = mode !== 'edit';
     const usesStudioMenuTrigger = mode !== 'share-readonly';
@@ -971,6 +978,7 @@ function CanvasEditorInner({
     const [pendingReactFlowSelectedNodeIds, setPendingReactFlowSelectedNodeIds] = useState<string[] | null>(null);
     const [isSelectionLayoutPending, setIsSelectionLayoutPending] = useState(false);
     const [isSelectionGestureActive, setIsSelectionGestureActive] = useState(false);
+    const [isPreviewMenuOpen, setIsPreviewMenuOpen] = useState(false);
     const [pendingAutoOpenComponent, setPendingAutoOpenComponent] = useState<{
         nodeId: string;
         componentId: string;
@@ -2816,6 +2824,10 @@ function CanvasEditorInner({
             event.preventDefault();
             event.stopPropagation();
 
+            if (suppressCommentPlacementUntilRef.current > Date.now()) {
+                return;
+            }
+
             if (suppressNextCommentPlacementRef.current) {
                 suppressNextCommentPlacementRef.current = false;
                 return;
@@ -3809,6 +3821,7 @@ function CanvasEditorInner({
                 return;
             }
 
+            suppressCommentPlacementUntilRef.current = Date.now() + 150;
             createToolbarNodeAtPosition(type, screenToFlowPosition({
                 x: event.clientX,
                 y: event.clientY,
@@ -3819,6 +3832,10 @@ function CanvasEditorInner({
 
     const handlePaneClick = useCallback((event: React.MouseEvent) => {
         if (isCommentModeActive) {
+            if (suppressCommentPlacementUntilRef.current > Date.now()) {
+                return;
+            }
+
             if (suppressNextCommentPlacementRef.current) {
                 suppressNextCommentPlacementRef.current = false;
                 return;
@@ -3848,6 +3865,7 @@ function CanvasEditorInner({
         const target = event.target as HTMLElement | null;
         if (!target) return;
         if (commentPopoverRef.current?.contains(target)) return;
+        if (target.closest('[data-comment-placement-ignore="true"]')) return;
         if (target.closest('[data-comment-pin-id]')) return;
 
         comments.dismissComposer();
@@ -3955,47 +3973,75 @@ function CanvasEditorInner({
         <ConnectionLine {...props} />
     ), []);
 
-    const renderPreviewOpenMenu = () => (
-        <ShellMenu>
-            <ActionTooltip content="Play prototype" disabled={isPreviewActive}>
-                <ShellMenuTrigger asChild>
-                    <ShellIconButton
-                        aria-label="Play prototype"
-                        className={`flex items-center justify-center w-8 h-8 rounded-md transition-all group ${isPreviewActive
-                            ? "text-shell-accent-text bg-shell-accent-soft ring-1 ring-shell-accent-border"
-                            : "text-shell-muted hover:text-shell-text hover:bg-shell-surface"
-                            }`}
+    const renderPreviewOpenMenu = () => {
+        const showPreviewCoachmark = Boolean(previewCoachmark && !isPreviewActive && !isPreviewMenuOpen);
+
+        return (
+            <div className="relative flex items-center">
+                {showPreviewCoachmark ? (
+                    <ShellCoachmark
+                        message={previewCoachmark!.message}
+                        onDismiss={previewCoachmark!.onDismiss}
+                        tone="cinematicDark"
+                        arrowPlacement="top"
+                        className="absolute top-[calc(100%+14px)] right-0 z-[75] w-[214px]"
+                        arrowClassName="right-[11px]"
+                        data-canvas-shell-zoom-blocker="true"
+                        data-comment-placement-ignore="true"
+                    />
+                ) : null}
+
+                <ShellMenu open={isPreviewMenuOpen} onOpenChange={setIsPreviewMenuOpen}>
+                    <ActionTooltip content="Play prototype" disabled={isPreviewActive || showPreviewCoachmark}>
+                        <ShellMenuTrigger asChild>
+                            <ShellIconButton
+                                aria-label="Play prototype"
+                                className={`relative flex items-center justify-center w-8 h-8 rounded-md overflow-visible transition-all group ${isPreviewActive
+                                    ? "text-shell-accent-text bg-shell-accent-soft ring-1 ring-shell-accent-border"
+                                    : showPreviewCoachmark
+                                        ? "text-shell-text bg-shell-surface ring-1 ring-shell-accent-border/70 shadow-[0_0_0_4px_rgb(var(--shell-accent)/0.08)]"
+                                        : "text-shell-muted hover:text-shell-text hover:bg-shell-surface"
+                                    }`}
+                                data-comment-placement-ignore="true"
+                            >
+                                <Play size={16} fill={isPreviewActive ? "currentColor" : "none"} className="mr-[1px]" />
+                            </ShellIconButton>
+                        </ShellMenuTrigger>
+                    </ActionTooltip>
+                    <ShellMenuContent
+                        align="end"
+                        sideOffset={8}
+                        className="w-[196px] rounded-xl p-1.5 shadow-[0_20px_48px_rgb(15_23_42/0.18)]"
+                        data-canvas-shell-zoom-blocker="true"
                     >
-                        <Play size={16} fill={isPreviewActive ? "currentColor" : "none"} className="mr-[1px]" />
-                    </ShellIconButton>
-                </ShellMenuTrigger>
-            </ActionTooltip>
-            <ShellMenuContent
-                align="end"
-                sideOffset={8}
-                className="w-[196px] rounded-xl p-1.5 shadow-[0_20px_48px_rgb(15_23_42/0.18)]"
-                data-canvas-shell-zoom-blocker="true"
-            >
-                <ShellMenuItem
-                    size="compact"
-                    className="gap-2.5 rounded-lg px-2.5 text-[12px]"
-                    onClick={onPreview}
-                >
-                    <PanelRightOpen size={14} className="text-current opacity-70" />
-                    Open here in canvas
-                </ShellMenuItem>
-                <ShellMenuSeparator className="my-1" />
-                <ShellMenuItem
-                    size="compact"
-                    className="gap-2.5 rounded-lg px-2.5 text-[12px]"
-                    onClick={() => window.open(`/share/${flow.id}`, '_blank')}
-                >
-                    <ExternalLink size={14} className="text-current opacity-70" />
-                    Open in new tab
-                </ShellMenuItem>
-            </ShellMenuContent>
-        </ShellMenu>
-    );
+                        <ShellMenuItem
+                            size="compact"
+                            className="gap-2.5 rounded-lg px-2.5 text-[12px]"
+                            onClick={() => {
+                                previewCoachmark?.onDismiss();
+                                onPreview();
+                            }}
+                        >
+                            <PanelRightOpen size={14} className="text-current opacity-70" />
+                            Open here in canvas
+                        </ShellMenuItem>
+                        <ShellMenuSeparator className="my-1" />
+                        <ShellMenuItem
+                            size="compact"
+                            className="gap-2.5 rounded-lg px-2.5 text-[12px]"
+                            onClick={() => {
+                                previewCoachmark?.onDismiss();
+                                window.open(`/share/${flow.id}`, '_blank');
+                            }}
+                        >
+                            <ExternalLink size={14} className="text-current opacity-70" />
+                            Open in new tab
+                        </ShellMenuItem>
+                    </ShellMenuContent>
+                </ShellMenu>
+            </div>
+        );
+    };
 
     return (
         <div className="w-full h-full flex flex-col relative bg-shell-canvas">
@@ -4216,8 +4262,8 @@ function CanvasEditorInner({
                     proOptions={{ hideAttribution: true }}
                     minZoom={0.1}
                     maxZoom={2}
-                    onDragOver={isFlowReadOnly || isCommentModeActive ? undefined : onDragOver}
-                    onDrop={isFlowReadOnly || isCommentModeActive ? undefined : onDrop}
+                    onDragOver={isFlowReadOnly ? undefined : onDragOver}
+                    onDrop={isFlowReadOnly ? undefined : onDrop}
                     connectionLineComponent={connectionLineWithPreview}
                     className={`bg-shell-studio-canvas ${!isFlowReadOnly && isAltPressed ? 'is-alt-pressed' : ''} ${!isFlowReadOnly && pendingToolbarPlacement ? 'is-placement-active' : ''} ${isCommentModeActive ? 'is-comment-mode' : ''}`}
                 >
@@ -4448,12 +4494,15 @@ function CanvasEditorInner({
                                             isAuthLoading={comments.isAuthLoading}
                                             userCanComment={comments.userCanComment}
                                             value={comments.newCommentText}
+                                            mentions={comments.newCommentMentions}
                                             isSubmitting={comments.postingRootComment}
                                             onValueChange={comments.setNewCommentText}
+                                            onMentionsChange={comments.setNewCommentMentions}
                                             onSubmit={() => void comments.submitPendingComment()}
                                             onClose={comments.dismissPendingComment}
                                             onSignIn={onCommentSignIn}
                                             surfaceTone={commentSurfaceTone}
+                                            currentUserId={comments.currentUserId}
                                         />
                                     ) : comments?.activeThread ? (
                                         <CanvasCommentPopover
@@ -4463,7 +4512,11 @@ function CanvasEditorInner({
                                             userCanComment={comments.userCanComment}
                                             thread={comments.activeThread}
                                             replyDraft={comments.replyDrafts[comments.activeThread.id] || ''}
+                                            replyMentions={comments.replyMentions[comments.activeThread.id] || []}
                                             onReplyDraftChange={(value) => comments.setReplyDraft(comments.activeThread!.id, value)}
+                                            onReplyMentionsChange={(mentions) =>
+                                                comments.setReplyMentions(comments.activeThread!.id, mentions)
+                                            }
                                             onReplySubmit={() => void comments.submitReply(comments.activeThread!.id)}
                                             isReplySubmitting={comments.postingReplyThreadId === comments.activeThread.id}
                                             canManageComment={comments.canManageComment}
@@ -4489,6 +4542,7 @@ function CanvasEditorInner({
                                             onClose={comments.dismissComposer}
                                             onSignIn={onCommentSignIn}
                                             surfaceTone={commentSurfaceTone}
+                                            currentUserId={comments.currentUserId}
                                         />
                                     ) : null}
                                 </div>

@@ -22,6 +22,7 @@ import {
 } from '@/utils/projectDuplication';
 
 type ShareStudioRightPanelMode = 'preview' | 'comments' | null;
+const SHARED_STUDIO_PLAY_HINT_DISMISSED_KEY = 'shared-studio-play-hint-dismissed';
 
 export const ShareStudioView = () => {
     const navigate = useNavigate();
@@ -38,7 +39,18 @@ export const ShareStudioView = () => {
     const [isCommentModeActive, setIsCommentModeActive] = useState(false);
     const [rightPanelMode, setRightPanelMode] = useState<ShareStudioRightPanelMode>(null);
     const [isDuplicatingProject, setIsDuplicatingProject] = useState(false);
+    const [isPlayHintDismissed, setIsPlayHintDismissed] = useState(() => {
+        if (typeof window === 'undefined') return false;
+
+        try {
+            return window.localStorage.getItem(SHARED_STUDIO_PLAY_HINT_DISMISSED_KEY) === '1';
+        } catch {
+            return false;
+        }
+    });
     const hasHandledPendingDuplicateRef = useRef(false);
+    const pendingDeepLinkThreadIdRef = useRef<string | null>(null);
+    const hasTriggeredMentionSignInRef = useRef(false);
 
     useEffect(() => {
         hasHandledPendingDuplicateRef.current = false;
@@ -120,6 +132,16 @@ export const ShareStudioView = () => {
         canvasComments.resetClosedState();
     };
 
+    const dismissPlayHint = useCallback(() => {
+        setIsPlayHintDismissed(true);
+
+        try {
+            window.localStorage.setItem(SHARED_STUDIO_PLAY_HINT_DISMISSED_KEY, '1');
+        } catch {
+            // Ignore storage failures so the shared experience still works.
+        }
+    }, []);
+
     const handleToggleCommentsWorkspace = () => {
         if (isCommentsOpen || isCommentModeActive) {
             setRightPanelMode((currentMode) => (currentMode === 'comments' ? null : currentMode));
@@ -153,16 +175,43 @@ export const ShareStudioView = () => {
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
-        if (params.get('comments') !== '1') return;
+        const threadId = params.get('thread');
+        const shouldOpenComments = params.get('comments') === '1' || !!threadId;
+        if (!shouldOpenComments) return;
 
         setShowComments(true);
         setRightPanelMode('comments');
-
-        const nextUrl = new URL(window.location.href);
-        nextUrl.searchParams.delete('comments');
-        const nextSearch = nextUrl.search ? nextUrl.search : '';
-        window.history.replaceState({}, '', `${nextUrl.pathname}${nextSearch}${nextUrl.hash}`);
+        pendingDeepLinkThreadIdRef.current = threadId;
     }, []);
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('mention') !== '1') return;
+        if (isAuthLoading || user || hasTriggeredMentionSignInRef.current) return;
+
+        hasTriggeredMentionSignInRef.current = true;
+        void startGoogleSignInRedirect(window.location.href).catch((signInError: unknown) => {
+            console.error('Error starting mention sign-in for shared studio:', signInError);
+            toast.error('Could not start sign-in. Please try again.');
+            hasTriggeredMentionSignInRef.current = false;
+        });
+    }, [isAuthLoading, user]);
+
+    useEffect(() => {
+        const pendingThreadId = pendingDeepLinkThreadIdRef.current;
+        if (!pendingThreadId || canvasComments.isLoading) return;
+
+        const hasTargetThread = canvasComments.threads.some((thread) => thread.id === pendingThreadId);
+        if (!hasTargetThread) {
+            pendingDeepLinkThreadIdRef.current = null;
+            return;
+        }
+
+        setShowComments(true);
+        setRightPanelMode('comments');
+        canvasComments.selectThread(pendingThreadId, { reveal: true });
+        pendingDeepLinkThreadIdRef.current = null;
+    }, [canvasComments, canvasComments.isLoading, canvasComments.threads]);
 
     const handleCommentSignIn = async () => {
         try {
@@ -234,6 +283,11 @@ export const ShareStudioView = () => {
         return (flow.steps?.length || 0) === 0 && (flow.blocks?.length || 0) === 0;
     }, [flow]);
 
+    useEffect(() => {
+        if (!isPreviewOpen || isPlayHintDismissed) return;
+        dismissPlayHint();
+    }, [dismissPlayHint, isPlayHintDismissed, isPreviewOpen]);
+
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-shell-surface">
@@ -290,6 +344,14 @@ export const ShareStudioView = () => {
                 }]}
                 useSectionedUserMenu
                 onCommentSignIn={handleCommentSignIn}
+                previewCoachmark={
+                    !isEmptyFlow && !isPreviewOpen && !isPlayHintDismissed
+                        ? {
+                              message: 'Click here to play prototype',
+                              onDismiss: dismissPlayHint,
+                          }
+                        : undefined
+                }
             />
 
             <PreviewDrawer
