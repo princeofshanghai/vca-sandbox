@@ -114,7 +114,7 @@ export function PreviewDrawer({
         setIsPathsPanelOpen(true);
     }, []);
 
-    const handleRestart = useCallback((nextEntryStepIdOverride = entryStepIdOverride) => {
+    const handleRestart = useCallback((nextEntryStepIdOverride: string | null = null) => {
         // 1. Cancel any pending debounce updates to prevent race conditions
         if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
 
@@ -132,7 +132,7 @@ export function PreviewDrawer({
 
         // 5. Trigger reset
         setResetKey(prev => prev + 1);
-    }, [entryStepIdOverride, flow]);
+    }, [flow]);
 
     const handleEntryFlowChange = useCallback((nextStartStepId: string) => {
         setSelectedStartStepId(nextStartStepId);
