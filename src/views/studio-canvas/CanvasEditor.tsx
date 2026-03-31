@@ -294,6 +294,10 @@ const COMMENT_POPUP_THREAD_HEIGHT_PX = 380;
 const COMMENT_POPUP_GAP_PX = 8;
 const COMMENT_DRAG_THRESHOLD_PX = 5;
 const CANVAS_SHELL_ZOOM_BLOCKER_SELECTOR = '[data-canvas-shell-zoom-blocker="true"]';
+const TITLE_PILL_COLLAPSED_MAX_WIDTH_PX = 320;
+const TITLE_PILL_EXPANDED_MAX_WIDTH_PX = 560;
+const TITLE_PILL_VIEWPORT_EDGE_PADDING_PX = 16;
+const TITLE_PILL_ACTION_GAP_PX = 24;
 
 const clampValue = (value: number, min: number, max: number) => {
     if (max < min) return min;
@@ -958,6 +962,9 @@ function CanvasEditorInner({
     const viewport = useViewport();
     const canvasAreaRef = useRef<HTMLDivElement | null>(null);
     const commentPopoverRef = useRef<HTMLDivElement | null>(null);
+    const leftHeaderPillRef = useRef<HTMLDivElement | null>(null);
+    const rightHeaderPillRef = useRef<HTMLDivElement | null>(null);
+    const titleShellRef = useRef<HTMLDivElement | null>(null);
     const suppressNextCommentPlacementRef = useRef(false);
     const suppressCommentPlacementUntilRef = useRef(0);
     const suppressCommentClickRef = useRef<{ threadId: string; expiresAt: number } | null>(null);
@@ -979,6 +986,10 @@ function CanvasEditorInner({
     const [isSelectionLayoutPending, setIsSelectionLayoutPending] = useState(false);
     const [isSelectionGestureActive, setIsSelectionGestureActive] = useState(false);
     const [isPreviewMenuOpen, setIsPreviewMenuOpen] = useState(false);
+    const [isTitleHovered, setIsTitleHovered] = useState(false);
+    const [isTitleFocused, setIsTitleFocused] = useState(false);
+    const [isTitlePinnedOpen, setIsTitlePinnedOpen] = useState(false);
+    const [expandedTitleMaxWidth, setExpandedTitleMaxWidth] = useState(TITLE_PILL_COLLAPSED_MAX_WIDTH_PX);
     const [pendingAutoOpenComponent, setPendingAutoOpenComponent] = useState<{
         nodeId: string;
         componentId: string;
@@ -1028,6 +1039,35 @@ function CanvasEditorInner({
             zoom: nextZoom,
         });
     }, [setViewport]);
+
+    const titleText = flow.title || 'Untitled flow';
+    const isTitleExpanded = isTitleHovered || isTitleFocused || isTitlePinnedOpen;
+    const titleSlotMaxWidth = isTitleExpanded ? expandedTitleMaxWidth : TITLE_PILL_COLLAPSED_MAX_WIDTH_PX;
+
+    const updateExpandedTitleMaxWidth = useCallback(() => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        const titleShell = titleShellRef.current;
+        if (!titleShell) {
+            return;
+        }
+
+        const titleRect = titleShell.getBoundingClientRect();
+        const rightHeaderRect = rightHeaderPillRef.current?.getBoundingClientRect();
+        const viewportAvailableWidth = window.innerWidth - titleRect.left - TITLE_PILL_VIEWPORT_EDGE_PADDING_PX;
+        const headerGapAvailableWidth = rightHeaderRect
+            ? rightHeaderRect.left - titleRect.left - TITLE_PILL_ACTION_GAP_PX
+            : viewportAvailableWidth;
+        const nextExpandedWidth = Math.min(
+            TITLE_PILL_EXPANDED_MAX_WIDTH_PX,
+            viewportAvailableWidth,
+            headerGapAvailableWidth
+        );
+
+        setExpandedTitleMaxWidth(Math.max(TITLE_PILL_COLLAPSED_MAX_WIDTH_PX, Math.floor(nextExpandedWidth)));
+    }, []);
 
     useEffect(() => {
         const handleWheel = (event: WheelEvent) => {
@@ -1148,6 +1188,76 @@ function CanvasEditorInner({
             document.removeEventListener('gestureend', handleGestureEnd, true);
         };
     }, [applyCanvasPinchZoom, getViewport, screenToFlowPosition]);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        updateExpandedTitleMaxWidth();
+
+        const handleResize = () => {
+            updateExpandedTitleMaxWidth();
+        };
+
+        const resizeObserver = typeof ResizeObserver === 'undefined'
+            ? null
+            : new ResizeObserver(() => {
+                updateExpandedTitleMaxWidth();
+            });
+
+        if (resizeObserver) {
+            if (leftHeaderPillRef.current) resizeObserver.observe(leftHeaderPillRef.current);
+            if (rightHeaderPillRef.current) resizeObserver.observe(rightHeaderPillRef.current);
+            if (titleShellRef.current) resizeObserver.observe(titleShellRef.current);
+        }
+
+        window.addEventListener('resize', handleResize);
+
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            resizeObserver?.disconnect();
+        };
+    }, [titleText, updateExpandedTitleMaxWidth]);
+
+    useEffect(() => {
+        if (isFlowReadOnly) {
+            return;
+        }
+
+        setIsTitlePinnedOpen(false);
+    }, [isFlowReadOnly]);
+
+    useEffect(() => {
+        if (!isTitlePinnedOpen) {
+            return;
+        }
+
+        const handlePointerDown = (event: PointerEvent) => {
+            const target = event.target as globalThis.Node | null;
+            if (target && titleShellRef.current?.contains(target)) {
+                return;
+            }
+
+            setIsTitlePinnedOpen(false);
+        };
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key !== 'Escape') {
+                return;
+            }
+
+            setIsTitlePinnedOpen(false);
+        };
+
+        document.addEventListener('pointerdown', handlePointerDown);
+        document.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            document.removeEventListener('pointerdown', handlePointerDown);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [isTitlePinnedOpen]);
 
     const applyFlowUpdate = useCallback((nextFlow: Flow) => {
         if (isFlowReadOnly) return;
@@ -4048,6 +4158,7 @@ function CanvasEditorInner({
             {/* Header */}
             {/* Top Left Pill: Back & Title */}
             <div
+                ref={leftHeaderPillRef}
                 data-canvas-shell-zoom-blocker="true"
                 className="absolute top-4 left-4 z-50 flex items-center h-11 gap-1.5 bg-shell-bg dark:bg-shell-surface-subtle px-2 rounded-xl shadow-sm dark:shadow-[0_14px_32px_rgb(0_0_0/0.26)] border border-shell-border/70 dark:border-shell-border/55 backdrop-blur-sm"
             >
@@ -4099,22 +4210,46 @@ function CanvasEditorInner({
                     </ActionTooltip>
                 )}
                 <div className="h-5 w-px bg-shell-chrome-divider" />
-                <div className="relative inline-grid items-center min-w-[60px] max-w-[320px]">
+                <div
+                    ref={titleShellRef}
+                    className="relative inline-grid items-center min-w-[60px] overflow-hidden transition-[max-width] duration-200 ease-out"
+                    style={{ maxWidth: `${titleSlotMaxWidth}px` }}
+                    onMouseEnter={() => setIsTitleHovered(true)}
+                    onMouseLeave={() => setIsTitleHovered(false)}
+                    onFocusCapture={() => setIsTitleFocused(true)}
+                    onBlurCapture={(event) => {
+                        if (event.currentTarget.contains(event.relatedTarget as globalThis.Node | null)) {
+                            return;
+                        }
+
+                        setIsTitleFocused(false);
+                    }}
+                >
                     <span className="invisible flex items-center gap-2 px-3 py-1 text-sm font-medium whitespace-pre border border-transparent col-start-1 row-start-1">
-                        <span>{flow.title || 'Untitled flow'}</span>
+                        <span>{titleText}</span>
                         {isFlowReadOnly ? <ShareViewOnlyBadge /> : null}
                     </span>
                     {isFlowReadOnly ? (
-                        <div className="absolute inset-0 flex h-full w-full items-center gap-2 rounded border border-transparent bg-transparent px-3 py-1 text-sm font-medium text-shell-text">
-                            <span className="min-w-0 truncate">{flow.title || 'Untitled flow'}</span>
+                        <button
+                            type="button"
+                            className={cn(
+                                'absolute inset-0 flex h-full w-full items-center gap-2 rounded border border-transparent bg-transparent px-3 py-1 text-left text-sm font-medium text-shell-text transition-colors',
+                                isTitleExpanded && 'bg-shell-surface/80 dark:bg-shell-surface'
+                            )}
+                            onClick={() => setIsTitlePinnedOpen((currentValue) => !currentValue)}
+                            aria-label={isTitleExpanded ? 'Collapse full project title' : `Show full project title: ${titleText}`}
+                            title={titleText}
+                        >
+                            <span className="min-w-0 flex-1 truncate">{titleText}</span>
                             <ShareViewOnlyBadge />
-                        </div>
+                        </button>
                     ) : (
                         <input
                             value={flow.title}
                             onChange={(e) => applyFlowUpdate({ ...flow, title: e.target.value, lastModified: Date.now() })}
-                            className="absolute inset-0 w-full h-full font-medium text-sm text-shell-text bg-transparent hover:bg-shell-surface-subtle focus:bg-shell-bg border border-transparent focus:border-shell-accent-border rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-shell-accent/20 transition-all truncate placeholder:text-shell-muted"
+                            className="absolute inset-0 h-full w-full font-medium text-sm text-shell-text bg-transparent hover:bg-shell-surface-subtle focus:bg-shell-bg border border-transparent focus:border-shell-accent-border rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-shell-accent/20 transition-all truncate placeholder:text-shell-muted"
                             placeholder="Untitled flow"
+                            title={titleText}
                         />
                     )}
                 </div>
@@ -4122,6 +4257,7 @@ function CanvasEditorInner({
 
             {/* Top Right Pill: File, Run & Share */}
             <div
+                ref={rightHeaderPillRef}
                 data-canvas-shell-zoom-blocker="true"
                 className="absolute top-4 right-4 z-50 flex items-center h-11 gap-2 bg-shell-bg dark:bg-shell-surface-subtle px-1.5 rounded-xl shadow-sm dark:shadow-[0_14px_32px_rgb(0_0_0/0.26)] border border-shell-border/70 dark:border-shell-border/55 backdrop-blur-sm"
             >
@@ -4494,15 +4630,12 @@ function CanvasEditorInner({
                                             isAuthLoading={comments.isAuthLoading}
                                             userCanComment={comments.userCanComment}
                                             value={comments.newCommentText}
-                                            mentions={comments.newCommentMentions}
                                             isSubmitting={comments.postingRootComment}
                                             onValueChange={comments.setNewCommentText}
-                                            onMentionsChange={comments.setNewCommentMentions}
                                             onSubmit={() => void comments.submitPendingComment()}
                                             onClose={comments.dismissPendingComment}
                                             onSignIn={onCommentSignIn}
                                             surfaceTone={commentSurfaceTone}
-                                            currentUserId={comments.currentUserId}
                                         />
                                     ) : comments?.activeThread ? (
                                         <CanvasCommentPopover
@@ -4512,11 +4645,7 @@ function CanvasEditorInner({
                                             userCanComment={comments.userCanComment}
                                             thread={comments.activeThread}
                                             replyDraft={comments.replyDrafts[comments.activeThread.id] || ''}
-                                            replyMentions={comments.replyMentions[comments.activeThread.id] || []}
                                             onReplyDraftChange={(value) => comments.setReplyDraft(comments.activeThread!.id, value)}
-                                            onReplyMentionsChange={(mentions) =>
-                                                comments.setReplyMentions(comments.activeThread!.id, mentions)
-                                            }
                                             onReplySubmit={() => void comments.submitReply(comments.activeThread!.id)}
                                             isReplySubmitting={comments.postingReplyThreadId === comments.activeThread.id}
                                             canManageComment={comments.canManageComment}
@@ -4542,7 +4671,6 @@ function CanvasEditorInner({
                                             onClose={comments.dismissComposer}
                                             onSignIn={onCommentSignIn}
                                             surfaceTone={commentSurfaceTone}
-                                            currentUserId={comments.currentUserId}
                                         />
                                     ) : null}
                                 </div>

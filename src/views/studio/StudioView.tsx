@@ -10,6 +10,11 @@ import { LoadingScreen } from '@/components/ui/loading-screen';
 import { useCanvasCommentsController } from './useCanvasCommentsController';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/hooks/useAuth';
+import {
+    buildProjectDocumentTitle,
+    buildProjectLoadingDocumentTitle,
+    useDocumentTitle,
+} from '@/hooks/useDocumentTitle';
 import { flowStorage } from '@/utils/flowStorage';
 import {
     duplicateFlowForCurrentUser,
@@ -28,6 +33,11 @@ export const StudioView = () => {
     // Custom hook handles loading and persistence
     const { flow, setFlow, isLoading } = useStudioFlow(id, user?.id);
     const { setFlowWithHistory, undo, redo } = useFlowHistory(flow, setFlow);
+    const documentTitle = isLoading
+        ? buildProjectLoadingDocumentTitle()
+        : buildProjectDocumentTitle(flow.title);
+
+    useDocumentTitle(documentTitle);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {

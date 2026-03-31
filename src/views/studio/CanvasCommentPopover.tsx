@@ -16,10 +16,10 @@ import {
 import {
     CommentActionsMenu,
     CommentAvatar,
+    CommentComposerInputRow,
     CommentResolvedBadge,
     type CommentSurfaceTone,
 } from '@/components/comments/CommentPrimitives';
-import { CommentComposerWithMentions } from '@/components/comments/CommentComposerWithMentions';
 import {
     Dialog,
     DialogContent,
@@ -30,7 +30,6 @@ import {
 import { cn } from '@/utils/cn';
 import type { FlowComment, FlowCommentThread } from '../share/shareComments';
 import { formatCommentDate, formatCommentRelativeTime } from './canvasComments';
-import type { CommentDraftMention } from '@/lib/commentMentions';
 
 type CanvasCommentPopoverProps =
     | {
@@ -40,14 +39,11 @@ type CanvasCommentPopoverProps =
       userCanComment: boolean;
       onSignIn?: () => void;
       value: string;
-      mentions: CommentDraftMention[];
       isSubmitting: boolean;
       onValueChange: (value: string) => void;
-      onMentionsChange: (mentions: CommentDraftMention[]) => void;
       onSubmit: () => void;
       onClose: () => void;
       surfaceTone?: CommentSurfaceTone;
-      currentUserId?: string | null;
       }
     | {
           mode: 'thread';
@@ -57,9 +53,7 @@ type CanvasCommentPopoverProps =
           onSignIn?: () => void;
           thread: FlowCommentThread;
           replyDraft: string;
-          replyMentions: CommentDraftMention[];
           onReplyDraftChange: (value: string) => void;
-          onReplyMentionsChange: (mentions: CommentDraftMention[]) => void;
           onReplySubmit: () => void;
           isReplySubmitting: boolean;
           canManageComment: (comment: FlowComment) => boolean;
@@ -77,7 +71,6 @@ type CanvasCommentPopoverProps =
           onDeleteComment: (comment: FlowComment) => void;
           onClose: () => void;
           surfaceTone?: CommentSurfaceTone;
-          currentUserId?: string | null;
       };
 
 const NEW_COMMENT_POPOVER_WIDTH_PX = 320;
@@ -306,11 +299,9 @@ export function CanvasCommentPopover(props: CanvasCommentPopoverProps) {
                         className="w-full max-w-[calc(100vw-40px)]"
                         style={{ width: NEW_COMMENT_POPOVER_WIDTH_PX }}
                     >
-                        <CommentComposerWithMentions
+                        <CommentComposerInputRow
                             value={props.value}
                             onValueChange={props.onValueChange}
-                            mentions={props.mentions}
-                            onMentionsChange={props.onMentionsChange}
                             onSubmit={props.onSubmit}
                             placeholder="Add a comment"
                             submitAriaLabel="Post comment"
@@ -319,7 +310,6 @@ export function CanvasCommentPopover(props: CanvasCommentPopoverProps) {
                             autoFocus
                             className="max-w-none"
                             tone={surfaceTone}
-                            currentUserId={props.currentUserId}
                         />
                     </div>
                 )}
@@ -330,9 +320,7 @@ export function CanvasCommentPopover(props: CanvasCommentPopoverProps) {
     const {
         thread,
         replyDraft,
-        replyMentions,
         onReplyDraftChange,
-        onReplyMentionsChange,
         onReplySubmit,
         isReplySubmitting,
         userCanComment,
@@ -352,7 +340,6 @@ export function CanvasCommentPopover(props: CanvasCommentPopoverProps) {
         onDeleteComment,
         onClose,
         error,
-        currentUserId,
     } = props;
 
     const isResolved = thread.root.status === 'resolved';
@@ -478,18 +465,15 @@ export function CanvasCommentPopover(props: CanvasCommentPopoverProps) {
                     </div>
                 ) : (
                     <div className={cn('px-4 py-3 border-t', toneClasses.divider)}>
-                        <CommentComposerWithMentions
+                        <CommentComposerInputRow
                             value={replyDraft}
                             onValueChange={onReplyDraftChange}
-                            mentions={replyMentions}
-                            onMentionsChange={onReplyMentionsChange}
                             onSubmit={onReplySubmit}
                             placeholder="Reply"
                             submitAriaLabel="Post reply"
                             disabled={!canSubmitReply}
                             isSubmitting={isReplySubmitting}
                             tone={surfaceTone}
-                            currentUserId={currentUserId}
                         />
                     </div>
                 )}

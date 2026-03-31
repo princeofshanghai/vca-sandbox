@@ -5,7 +5,6 @@ export type CommentFilter = 'open' | 'all' | 'resolved';
 export type CommentAnchorMode = 'canvas' | 'review';
 export type CommentAnchorKind = 'turn' | 'component' | 'decision' | 'feedback';
 export type CanvasCommentAnchorType = 'node' | 'free';
-export type CommentShareSurface = 'review' | 'studio';
 
 export interface FlowCommentCanvasNodeAnchor {
     anchorMode: 'canvas';
@@ -208,10 +207,10 @@ export const isFlowCommentCanvasFreeAnchor = (
 
 type CreateRootCommentBaseParams = {
     flowId: string;
+    authorName: string;
+    authorUserId: string;
+    authorAvatarUrl?: string | null;
     message: string;
-    mentionedUserIds?: string[];
-    shareSurface: CommentShareSurface;
-    siteOrigin: string;
 };
 
 type CreateRootReviewCommentParams = CreateRootCommentBaseParams & {
@@ -227,59 +226,69 @@ type CreateRootCanvasCommentParams = CreateRootCommentBaseParams & {
 export const createFlowRootComment = async (
     params: CreateRootReviewCommentParams | CreateRootCanvasCommentParams
 ) => {
-    const { flowId, message, anchor, mentionedUserIds = [], shareSurface, siteOrigin } = params;
+    const {
+        flowId,
+        authorName,
+        authorUserId,
+        authorAvatarUrl,
+        message,
+        anchor,
+    } = params;
+    const reviewPins =
+        'pinX' in params
+            ? { pin_x: params.pinX, pin_y: params.pinY }
+            : { pin_x: null, pin_y: null };
 
-    const { data, error } = await supabase.functions.invoke('comment-mentions', {
-        body: {
-            flowId,
-            message,
-            mentionedUserIds,
-            shareSurface,
-            siteOrigin,
-            anchor,
-            pinX: 'pinX' in params ? params.pinX : null,
-            pinY: 'pinY' in params ? params.pinY : null,
-        },
-    });
+    const { data, error } = await supabase
+        .from('flow_comments')
+        .insert({
+            flow_id: flowId,
+            parent_id: null,
+            author_name: authorName.trim(),
+            author_user_id: authorUserId,
+            author_avatar_url: authorAvatarUrl || null,
+            message: message.trim(),
+            status: 'open',
+            ...reviewPins,
+            ...getCommentAnchorColumns(anchor),
+        })
+        .select('*')
+        .single();
 
     if (error) throw error;
-    if (!data?.comment) {
-        throw new Error('Comment creation did not return a comment.');
-    }
-    return data.comment as FlowComment;
+    return data as FlowComment;
 };
 
 export const replyToFlowComment = async ({
     flowId,
     parentId,
+    authorName,
+    authorUserId,
+    authorAvatarUrl,
     message,
-    mentionedUserIds = [],
-    shareSurface,
-    siteOrigin,
 }: {
     flowId: string;
     parentId: string;
+    authorName: string;
+    authorUserId: string;
+    authorAvatarUrl?: string | null;
     message: string;
-    mentionedUserIds?: string[];
-    shareSurface: CommentShareSurface;
-    siteOrigin: string;
 }) => {
-    const { data, error } = await supabase.functions.invoke('comment-mentions', {
-        body: {
-            flowId,
-            parentId,
-            message,
-            mentionedUserIds,
-            shareSurface,
-            siteOrigin,
-        },
-    });
+    const { data, error } = await supabase
+        .from('flow_comments')
+        .insert({
+            flow_id: flowId,
+            parent_id: parentId,
+            author_name: authorName.trim(),
+            author_user_id: authorUserId,
+            author_avatar_url: authorAvatarUrl || null,
+            message: message.trim(),
+        })
+        .select('*')
+        .single();
 
     if (error) throw error;
-    if (!data?.comment) {
-        throw new Error('Reply creation did not return a comment.');
-    }
-    return data.comment as FlowComment;
+    return data as FlowComment;
 };
 
 export const updateFlowCommentStatus = async ({

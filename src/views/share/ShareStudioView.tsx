@@ -12,6 +12,12 @@ import { ShellButton } from '@/components/shell';
 import { toast } from 'sonner';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/hooks/useAuth';
+import {
+    buildProjectDocumentTitle,
+    buildProjectLoadingDocumentTitle,
+    buildProjectUnavailableDocumentTitle,
+    useDocumentTitle,
+} from '@/hooks/useDocumentTitle';
 import { startGoogleSignInRedirect } from '@/utils/authRedirect';
 import {
     buildShareDuplicateRedirectUrl,
@@ -50,7 +56,13 @@ export const ShareStudioView = () => {
     });
     const hasHandledPendingDuplicateRef = useRef(false);
     const pendingDeepLinkThreadIdRef = useRef<string | null>(null);
-    const hasTriggeredMentionSignInRef = useRef(false);
+    const documentTitle = loading
+        ? buildProjectLoadingDocumentTitle()
+        : error
+            ? buildProjectUnavailableDocumentTitle()
+            : buildProjectDocumentTitle(flow?.title, 'shared');
+
+    useDocumentTitle(documentTitle);
 
     useEffect(() => {
         hasHandledPendingDuplicateRef.current = false;
@@ -183,19 +195,6 @@ export const ShareStudioView = () => {
         setRightPanelMode('comments');
         pendingDeepLinkThreadIdRef.current = threadId;
     }, []);
-
-    useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('mention') !== '1') return;
-        if (isAuthLoading || user || hasTriggeredMentionSignInRef.current) return;
-
-        hasTriggeredMentionSignInRef.current = true;
-        void startGoogleSignInRedirect(window.location.href).catch((signInError: unknown) => {
-            console.error('Error starting mention sign-in for shared studio:', signInError);
-            toast.error('Could not start sign-in. Please try again.');
-            hasTriggeredMentionSignInRef.current = false;
-        });
-    }, [isAuthLoading, user]);
 
     useEffect(() => {
         const pendingThreadId = pendingDeepLinkThreadIdRef.current;
