@@ -75,7 +75,7 @@ export interface Flow {
     // NEW: Turn-based model
     steps?: Step[]; // New turn/condition-based structure
     connections?: Connection[]; // Connections between steps
-    startStepId?: string; // ID of the first step (Welcome node)
+    startStepId?: string; // ID of the default start node
     metadata?: {
         previewText?: string;
         entryPoint?: string;
@@ -228,6 +228,7 @@ export type Step = Turn | UserTurn | Condition | StartNode | Note;
 export interface StartNode {
     id: string;
     type: 'start';
+    label: string;
     position?: { x: number; y: number };
 }
 

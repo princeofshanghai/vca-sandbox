@@ -1,10 +1,11 @@
 import { VcaIcon } from '@/components/vca-components/icons/VcaIcon';
-import { Split, UserRound, StickyNote, MessageCircle } from 'lucide-react';
+import { Play, Split, UserRound, StickyNote, MessageCircle } from 'lucide-react';
 import { ActionTooltip } from './ActionTooltip';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { cn } from '@/utils/cn';
 
 interface FloatingToolbarProps {
+    onAddStart?: () => void;
     onAddAiTurn?: () => void;
     onAddUserTurn?: () => void;
     onAddCondition?: () => void;
@@ -68,6 +69,7 @@ const createDragPreview = (config: {
 };
 
 export function FloatingToolbar({
+    onAddStart,
     onAddAiTurn,
     onAddUserTurn,
     onAddCondition,
@@ -84,15 +86,26 @@ export function FloatingToolbar({
         // Create custom drag preview based on node type
         let dragPreview: HTMLElement | null = null;
         const accent = 'rgb(var(--shell-accent) / 1)';
+        const startAccent = 'rgb(var(--shell-node-start) / 1)';
         const userAccent = 'rgb(var(--shell-node-user) / 1)';
         const conditionAccent = 'rgb(var(--shell-node-condition) / 1)';
         const noteAccent = 'rgb(var(--shell-node-note) / 1)';
+        const startSoft = 'rgb(var(--shell-node-start-surface) / 1)';
         const aiSoft = 'rgb(var(--shell-node-ai-surface) / 1)';
         const userSoft = 'rgb(var(--shell-node-user-surface) / 1)';
         const conditionSoft = 'rgb(var(--shell-node-condition-surface) / 1)';
         const noteSoft = 'rgb(var(--shell-node-note) / 0.14)';
 
         switch (nodeType) {
+            case 'start':
+                dragPreview = createDragPreview({
+                    label: 'Start',
+                    icon: <Play className="fill-current text-[rgb(var(--shell-node-start)/1)]" size={20} />,
+                    accentColor: startAccent,
+                    bgColor: startSoft,
+                    width: 168,
+                });
+                break;
             case 'turn':
                 dragPreview = createDragPreview({
                     label: 'AI Turn',
@@ -155,7 +168,7 @@ export function FloatingToolbar({
                 <>
                     {/* Group 1: Logic Nodes */}
                     <div className="flex items-center gap-1">
-                        <ActionTooltip content="AI turn" shortcut="A">
+                        <ActionTooltip content="AI turn" description="What the AI assistant does" shortcut="A">
                             <button
                                 type="button"
                                 onClick={onAddAiTurn}
@@ -170,7 +183,7 @@ export function FloatingToolbar({
                             </button>
                         </ActionTooltip>
 
-                        <ActionTooltip content="User turn" shortcut="U">
+                        <ActionTooltip content="User turn" description="What the user does" shortcut="U">
                             <button
                                 type="button"
                                 onClick={onAddUserTurn}
@@ -185,7 +198,7 @@ export function FloatingToolbar({
                             </button>
                         </ActionTooltip>
 
-                        <ActionTooltip content="Condition" shortcut="D">
+                        <ActionTooltip content="Condition" description="Choose different paths" shortcut="D">
                             <button
                                 type="button"
                                 onClick={onAddCondition}
@@ -197,6 +210,21 @@ export function FloatingToolbar({
                                 )}
                             >
                                 <Split className="text-shell-node-condition" size={20} />
+                            </button>
+                        </ActionTooltip>
+
+                        <ActionTooltip content="Start" description="Add new flow" shortcut="S">
+                            <button
+                                type="button"
+                                onClick={onAddStart}
+                                draggable
+                                onDragStart={(e) => onDragStart(e, 'start')}
+                                className={cn(
+                                    'group relative flex items-center justify-center w-10 h-10 rounded-md transition-colors tooltip-trigger',
+                                    'hover:bg-shell-surface cursor-grab active:cursor-grabbing'
+                                )}
+                            >
+                                <Play className="fill-current text-[rgb(var(--shell-node-start)/1)]" size={18} />
                             </button>
                         </ActionTooltip>
                     </div>

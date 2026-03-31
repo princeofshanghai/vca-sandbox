@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Flow } from '../types';
 import { flowStorage, INITIAL_FLOW } from '@/utils/flowStorage';
+import { normalizeFlowStartNodes } from '../startNodes';
 
 export const useStudioFlow = (id?: string, currentUserId?: string | null) => {
     const [isLoading, setIsLoading] = useState(true);
@@ -12,11 +13,13 @@ export const useStudioFlow = (id?: string, currentUserId?: string | null) => {
             if (id) {
                 const loaded = await flowStorage.getFlow(id);
                 if (loaded) {
+                    let nextFlow = loaded;
                     // Migration: Ensure Start Node exists for V4 flows
                     if (loaded.steps && !loaded.steps.find(s => s.type === 'start')) {
                         const startNode: import('../types').StartNode = {
                             id: 'start-node-' + Date.now(),
                             type: 'start',
+                            label: 'Flow 1',
                             position: { x: 50, y: 50 }
                         };
 
@@ -35,14 +38,15 @@ export const useStudioFlow = (id?: string, currentUserId?: string | null) => {
                             ];
                         }
 
-                        setFlow({
+                        nextFlow = {
                             ...loaded,
                             steps: [startNode, ...loaded.steps],
-                            connections: newConnections
-                        });
-                    } else {
-                        setFlow(loaded);
+                            connections: newConnections,
+                            startStepId: startNode.id,
+                        };
                     }
+
+                    setFlow(normalizeFlowStartNodes(nextFlow));
                 } else {
                     console.warn(`Flow ${id} not found, initializing empty.`);
                     setFlow({ ...INITIAL_FLOW, id });

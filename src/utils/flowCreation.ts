@@ -37,6 +37,7 @@ export function createNewFlow(): Flow {
     const startNode: StartNode = {
         id: startNodeId,
         type: 'start',
+        label: 'Flow 1',
         position: { x: 50, y: 50 }
     };
 

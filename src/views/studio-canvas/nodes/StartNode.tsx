@@ -1,24 +1,160 @@
-import { memo } from 'react';
-import { Handle, Position, NodeProps } from '@xyflow/react';
-import { Play } from 'lucide-react';
+import { memo, useEffect, useRef, useState } from 'react';
+import { Handle, NodeProps, NodeToolbar, Position, useReactFlow, useStore } from '@xyflow/react';
+import { Play, Star, Trash2 } from 'lucide-react';
+import { ShellTooltip } from '@/components/shell';
 import { OUTER_NODE_HANDLE_OFFSET_PX, OUTER_NODE_HANDLE_SIZE_PX } from './components/handleOffsets';
+import { getStartNodeDisplayLabel } from '../../studio/startNodes';
 
-export const StartNode = memo(({ selected }: NodeProps) => {
+interface StartNodeData {
+    label?: string;
+    isDefault?: boolean;
+    readOnly?: boolean;
+    canDelete?: boolean;
+    onLabelChange?: (nodeId: string, label: string) => void;
+    onSetDefault?: (nodeId: string) => void;
+    onDelete?: (nodeId: string) => void;
+}
+
+export const StartNode = memo(({ id, data, selected }: NodeProps) => {
+    const typedData = data as unknown as StartNodeData;
+    const { updateNodeData } = useReactFlow();
+    const displayLabel = getStartNodeDisplayLabel({ label: typedData.label || '' });
+    const [isEditingLabel, setIsEditingLabel] = useState(false);
+    const [editedLabel, setEditedLabel] = useState(displayLabel);
+    const inputRef = useRef<HTMLInputElement>(null);
+    const zoom = useStore((state) => state.transform[2]);
+    const scale = Math.max(1, 1 / zoom);
+
+    useEffect(() => {
+        if (!isEditingLabel) {
+            setEditedLabel(displayLabel);
+        }
+    }, [displayLabel, isEditingLabel]);
+
+    useEffect(() => {
+        if (!isEditingLabel || !inputRef.current) {
+            return;
+        }
+
+        inputRef.current.focus();
+        inputRef.current.select();
+    }, [isEditingLabel]);
+
+    const handleLabelSave = () => {
+        const nextLabel = editedLabel.trim() || displayLabel;
+        if (!typedData.readOnly && nextLabel !== displayLabel) {
+            typedData.onLabelChange?.(String(id), nextLabel);
+            updateNodeData(String(id), { label: nextLabel });
+        }
+        setIsEditingLabel(false);
+    };
+
+    const handleLabelKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+        if (event.key === 'Enter') {
+            handleLabelSave();
+        } else if (event.key === 'Escape') {
+            setEditedLabel(displayLabel);
+            setIsEditingLabel(false);
+        }
+    };
+
     const borderClassName = selected
         ? 'border-[rgb(var(--shell-node-start)/0.9)] ring-1 ring-[rgb(var(--shell-node-start)/0.3)]'
         : 'border-[rgb(var(--shell-node-start)/0.45)] hover:border-[rgb(var(--shell-node-start)/0.62)]';
 
     return (
         <div className="group relative">
-            {/* Main Pill Shape */}
+            {selected && !typedData.readOnly ? (
+                <NodeToolbar
+                    isVisible
+                    position={Position.Top}
+                    offset={36}
+                    className="nodrag nopan flex items-center gap-2 rounded-xl border border-shell-border/70 bg-shell-bg px-2 py-1.5 shadow-lg"
+                >
+                    {typedData.isDefault ? (
+                        <ShellTooltip
+                            label="This is the only flow right now"
+                            disabled={Boolean(typedData.canDelete)}
+                        >
+                            <div className="inline-flex items-center gap-1 rounded-full bg-[rgb(var(--shell-node-start-surface)/1)] px-2 py-1 text-[11px] font-medium text-[rgb(var(--shell-node-start-text)/1)]">
+                                <Star size={11} className="fill-current" />
+                                Default flow
+                            </div>
+                        </ShellTooltip>
+                    ) : (
+                        <button
+                            type="button"
+                            className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-medium text-shell-muted transition-colors hover:bg-shell-surface hover:text-shell-text"
+                            onClick={(event) => {
+                                event.stopPropagation();
+                                typedData.onSetDefault?.(String(id));
+                            }}
+                        >
+                            <Star size={11} />
+                            Make default
+                        </button>
+                    )}
+
+                    {typedData.canDelete ? (
+                        <button
+                            type="button"
+                            className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-medium text-shell-muted transition-colors hover:bg-shell-surface hover:text-shell-text"
+                            onClick={(event) => {
+                                event.stopPropagation();
+                                typedData.onDelete?.(String(id));
+                            }}
+                        >
+                            <Trash2 size={11} />
+                            Delete
+                        </button>
+                    ) : null}
+                </NodeToolbar>
+            ) : null}
+
+            {typedData.isDefault ? (
+                <div
+                    className="absolute bottom-full right-0 mb-1.5 flex items-center px-0.5 origin-bottom-right"
+                    style={{
+                        transform: `scale(${scale})`,
+                    }}
+                >
+                    <span className="shrink-0 rounded-md border border-[rgb(var(--shell-node-start)/0.24)] bg-[rgb(var(--shell-node-start-surface)/1)] px-2 py-1 text-[10px] font-medium leading-none text-[rgb(var(--shell-node-start-text)/1)]">
+                        Default
+                    </span>
+                </div>
+            ) : null}
+
             <div
-                className={`flex items-center gap-2 rounded-full border px-6 py-2.5 text-[rgb(var(--shell-node-start-text)/1)] shadow-sm transition-colors bg-[rgb(var(--shell-node-start-surface)/1)] ${borderClassName}`}
+                className={`flex min-w-[180px] max-w-[280px] items-center gap-2 rounded-full border px-4 py-2.5 text-[rgb(var(--shell-node-start-text)/1)] shadow-sm transition-colors bg-[rgb(var(--shell-node-start-surface)/1)] ${borderClassName}`}
+                onDoubleClick={(event) => {
+                    if (typedData.readOnly) {
+                        return;
+                    }
+
+                    event.stopPropagation();
+                    setIsEditingLabel(true);
+                }}
             >
-                <Play size={18} className="mr-[1px] fill-current text-[rgb(var(--shell-node-start)/1)]" />
-                <span className="font-semibold text-sm tracking-wide">Start</span>
+                <Play size={18} className="shrink-0 fill-current text-[rgb(var(--shell-node-start)/1)]" />
+                <div className="min-w-0 flex-1">
+                    {isEditingLabel ? (
+                        <input
+                            ref={inputRef}
+                            value={editedLabel}
+                            onChange={(event) => setEditedLabel(event.target.value)}
+                            onBlur={handleLabelSave}
+                            onKeyDown={handleLabelKeyDown}
+                            onClick={(event) => event.stopPropagation()}
+                            className="nodrag w-full bg-transparent text-sm font-semibold text-[rgb(var(--shell-node-start-text)/1)] outline-none"
+                        />
+                    ) : (
+                        <span className="block truncate text-sm font-semibold" title={displayLabel}>
+                            {displayLabel}
+                        </span>
+                    )}
+                </div>
             </div>
 
-            {/* Connection Handle (Right) */}
             <Handle
                 type="source"
                 position={Position.Right}

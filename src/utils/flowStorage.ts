@@ -1,5 +1,6 @@
 import { Flow, Block } from '../views/studio/types';
 import { supabase } from '@/lib/supabase';
+import { normalizeFlowStartNodes } from '@/views/studio/startNodes';
 
 const THUMBNAIL_BUCKET = 'flow-thumbnails';
 let hasLoggedThumbnailBucketIssue = false;
@@ -41,6 +42,7 @@ export const INITIAL_FLOW: Flow = {
         {
             id: 'start-1',
             type: 'start',
+            label: 'Flow 1',
             position: { x: 50, y: 50 }
         },
         {
@@ -79,6 +81,7 @@ export const INITIAL_FLOW: Flow = {
             target: 'welcome-1'
         }
     ],
+    startStepId: 'start-1',
     blocks: []
 };
 
@@ -201,6 +204,7 @@ export const flowStorage = {
             settings: data.content?.settings || INITIAL_FLOW.settings,
             steps: data.content?.steps || [],
             connections: data.content?.connections || [],
+            startStepId: data.content?.startStepId,
             blocks: data.content?.blocks || [],
             ownerUserId: typeof data.user_id === 'string' ? data.user_id : undefined,
             metadata: {
@@ -219,7 +223,7 @@ export const flowStorage = {
             }));
         }
 
-        return flow;
+        return normalizeFlowStartNodes(flow);
     },
 
     saveFlow: async (flow: Flow & { folderId?: string }) => {
@@ -234,6 +238,7 @@ export const flowStorage = {
             settings: flow.settings,
             steps: flow.steps,
             connections: flow.connections,
+            startStepId: flow.startStepId,
             blocks: flow.blocks
         };
 
@@ -272,6 +277,7 @@ export const flowStorage = {
             settings: INITIAL_FLOW.settings,
             steps: INITIAL_FLOW.steps,
             connections: INITIAL_FLOW.connections,
+            startStepId: INITIAL_FLOW.startStepId,
             blocks: []
         };
 

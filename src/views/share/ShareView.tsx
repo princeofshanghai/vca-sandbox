@@ -10,6 +10,7 @@ import {
 } from '@/views/studio/FlowPreview';
 import { PreviewSettingsMenu } from '@/views/studio/PreviewSettingsMenu';
 import { PathsPanel } from '@/views/studio/components/PathsPanel';
+import { FlowEntrySwitcher } from '@/views/studio/components/FlowEntrySwitcher';
 import {
     AlertCircle,
     CheckCircle2,
@@ -101,6 +102,7 @@ import {
     markProjectDuplicatedToastPending,
 } from '@/utils/projectDuplication';
 import { ShareViewOnlyBadge } from './components/ShareViewOnlyBadge';
+import { normalizeFlowStartNodes, resolveStartStepId } from '@/views/studio/startNodes';
 import {
     type CommentFilter,
     type FlowCommentReviewAnchor,
@@ -414,6 +416,7 @@ export const ShareView = () => {
     const [isMobile, setIsMobile] = useState(false);
     const [isPremium, setIsPremium] = useState(false);
     const [resetKey, setResetKey] = useState(0);
+    const [selectedStartStepId, setSelectedStartStepId] = useState<string | null>(null);
     const [isNarrowViewport, setIsNarrowViewport] = useState(() =>
         typeof window !== 'undefined' ? window.innerWidth < 768 : false
     );
@@ -479,6 +482,7 @@ export const ShareView = () => {
         : error
             ? buildProjectUnavailableDocumentTitle()
             : buildProjectDocumentTitle(flow?.title, 'preview');
+    const resolvedSelectedStartStepId = resolveStartStepId(flow, selectedStartStepId);
 
     useDocumentTitle(documentTitle);
     const commenterName = useMemo(() => getUserDisplayName(user), [user]);
@@ -572,6 +576,19 @@ export const ShareView = () => {
         setReviewPathChangeRequest(null);
         setPendingThreadPathNavigation(null);
         setPendingThreadRevealId(null);
+        writeStoredReviewSnapshot(id, null);
+    }, [id]);
+
+    const handleEntryFlowChange = useCallback((nextStartStepId: string) => {
+        setSelectedStartStepId(nextStartStepId);
+        setResetKey((prev) => prev + 1);
+        setReviewState(createEmptyReviewState());
+        setReviewSnapshot(null);
+        setReviewPathChangeRequest(null);
+        setPendingThreadPathNavigation(null);
+        setPendingThreadRevealId(null);
+        setPendingPin(null);
+        setPendingReviewAnchor(null);
         writeStoredReviewSnapshot(id, null);
     }, [id]);
 
@@ -670,11 +687,12 @@ export const ShareView = () => {
                     blocks: data.content?.blocks || [],
                     steps: data.content?.steps || [],
                     connections: data.content?.connections || [],
+                    startStepId: data.content?.startStepId,
                     settings: data.content?.settings || INITIAL_FLOW.settings,
                     lastModified: new Date(data.updated_at).getTime(),
                 };
 
-                setFlow(loadedFlow);
+                setFlow(normalizeFlowStartNodes(loadedFlow));
                 setFlowOwnerId(typeof data.user_id === 'string' ? data.user_id : null);
             } catch (loadFlowError: unknown) {
                 console.error('Error loading shared flow:', loadFlowError);
@@ -700,6 +718,7 @@ export const ShareView = () => {
         setReviewState(createEmptyReviewState());
         setReviewPathChangeRequest(null);
         setIsPathsPanelOpen(false);
+        setSelectedStartStepId(null);
         setNewCommentText('');
         setReplyDrafts({});
         void loadComments(id, { showLoader: true });
@@ -2593,6 +2612,17 @@ export const ShareView = () => {
                     </div>
 
                     <div className="flex self-stretch items-center gap-2">
+                        {flow ? (
+                            <FlowEntrySwitcher
+                                flow={flow}
+                                value={resolvedSelectedStartStepId}
+                                onValueChange={handleEntryFlowChange}
+                                tone="cinematicDark"
+                                triggerClassName="w-[196px]"
+                                contentClassName="min-w-[196px]"
+                            />
+                        ) : null}
+
                         <ShellSegmentedControl tone="cinematicDark" size="compact" aria-label="Preview mode">
                             <ActionTooltip content="Desktop preview" side="bottom">
                                 <ShellSegmentedControlItem
@@ -2742,8 +2772,9 @@ export const ShareView = () => {
                             }
                         >
                             <FlowPreview
-                                key={resetKey}
+                                key={`${resetKey}:${resolvedSelectedStartStepId || 'default'}`}
                                 flow={flow}
+                                entryStepId={resolvedSelectedStartStepId}
                                 isPremium={isPremium}
                                 isMobile={isMobile}
                                 variables={{}}

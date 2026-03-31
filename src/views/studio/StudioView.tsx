@@ -24,6 +24,11 @@ import { toast } from 'sonner';
 
 type StudioRightPanelMode = 'preview' | 'comments' | null;
 
+type PreviewEntryRequest = {
+    stepId: string | null;
+    token: number;
+};
+
 export const StudioView = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -84,6 +89,7 @@ export const StudioView = () => {
     const [isCommentModeActive, setIsCommentModeActive] = useState(false);
     const [rightPanelMode, setRightPanelMode] = useState<StudioRightPanelMode>(null);
     const [isDuplicatingProject, setIsDuplicatingProject] = useState(false);
+    const [previewEntryRequest, setPreviewEntryRequest] = useState<PreviewEntryRequest | null>(null);
 
     const handleBack = () => {
         navigate('/');
@@ -98,11 +104,28 @@ export const StudioView = () => {
         isVisible: areCanvasCommentsVisible,
     });
 
-    const handleTogglePreview = () => {
-        setRightPanelMode((currentMode) => (currentMode === 'preview' ? null : 'preview'));
+    const openPreview = useCallback((stepId: string | null) => {
+        setPreviewEntryRequest({
+            stepId,
+            token: Date.now() + Math.random(),
+        });
+        setRightPanelMode('preview');
         setIsCommentModeActive(false);
         canvasComments.resetClosedState();
-    };
+    }, [canvasComments]);
+
+    const handleTogglePreview = useCallback(() => {
+        if (isPreviewOpen) {
+            setRightPanelMode(null);
+            return;
+        }
+
+        openPreview(null);
+    }, [isPreviewOpen, openPreview]);
+
+    const handlePreviewFromTurn = useCallback((turnId: string) => {
+        openPreview(turnId);
+    }, [openPreview]);
 
     const handleToggleCommentsWorkspace = () => {
         if (isCommentsOpen || isCommentModeActive) {
@@ -184,6 +207,7 @@ export const StudioView = () => {
                     onUpdateFlow={setFlowWithHistory}
                     onBack={handleBack}
                     onPreview={handleTogglePreview}
+                    onPreviewFromTurn={handlePreviewFromTurn}
                     isPreviewActive={isPreviewOpen}
                     onToggleComments={handleToggleCommentsWorkspace}
                     onOpenCommentsPanel={handleOpenCommentsPanel}
@@ -214,6 +238,7 @@ export const StudioView = () => {
                 onUpdateFlow={setFlowWithHistory}
                 isPremium={isPremium}
                 isMobile={isMobile}
+                previewEntryRequest={previewEntryRequest}
                 onTogglePremium={() => setIsPremium(!isPremium)}
                 onToggleMobile={() => setIsMobile(!isMobile)}
             />

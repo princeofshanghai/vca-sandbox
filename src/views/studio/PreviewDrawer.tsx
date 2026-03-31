@@ -5,6 +5,7 @@ import { FlowPreview, type FlowPreviewReviewPathChangeRequest, type FlowPreviewR
 import { Flow } from './types';
 import { PreviewSettingsMenu } from './PreviewSettingsMenu';
 import { PreviewHeaderActionButton } from './components/PreviewHeaderActionButton';
+import { FlowEntrySwitcher } from './components/FlowEntrySwitcher';
 import { Split, X, Monitor, Smartphone } from 'lucide-react';
 import { ActionTooltip } from '../studio-canvas/components/ActionTooltip';
 import {
@@ -18,6 +19,14 @@ import { usePreventBrowserPinchZoom } from '@/hooks/usePreventBrowserPinchZoom';
 import { PathsPanel } from './components/PathsPanel';
 import { PreviewRestartButton } from './components/PreviewRestartButton';
 import { AttachedStatusTag } from './components/AttachedStatusTag';
+import { resolveStartStepId } from './startNodes';
+
+const createEmptyReviewState = (): FlowPreviewReviewState => ({
+    pathSelections: [],
+    decisions: [],
+    pathSignature: '',
+    historyLength: 0,
+});
 
 interface PreviewDrawerProps {
     isOpen: boolean;
@@ -26,6 +35,10 @@ interface PreviewDrawerProps {
     onUpdateFlow: (flow: Flow) => void;
     isPremium: boolean;
     isMobile: boolean;
+    previewEntryRequest?: {
+        stepId: string | null;
+        token: number;
+    } | null;
     onTogglePremium: () => void;
     onToggleMobile: () => void;
 }
@@ -37,21 +50,19 @@ export function PreviewDrawer({
     onUpdateFlow,
     isPremium,
     isMobile,
+    previewEntryRequest = null,
     onTogglePremium,
     onToggleMobile,
 }: PreviewDrawerProps) {
     const { state } = useApp();
     const [shouldRender, setShouldRender] = useState(isOpen);
     const [activeFlow, setActiveFlow] = useState<Flow>(flow);
+    const [selectedStartStepId, setSelectedStartStepId] = useState<string | null>(() => resolveStartStepId(flow));
+    const [entryStepIdOverride, setEntryStepIdOverride] = useState<string | null>(null);
     const [resetKey, setResetKey] = useState(0);
     const [simulationVariables, setSimulationVariables] = useState<Record<string, string>>({});
     const [lastRestartedModifiedAt, setLastRestartedModifiedAt] = useState(flow.lastModified);
-    const [reviewState, setReviewState] = useState<FlowPreviewReviewState>({
-        pathSelections: [],
-        decisions: [],
-        pathSignature: '',
-        historyLength: 0,
-    });
+    const [reviewState, setReviewState] = useState<FlowPreviewReviewState>(createEmptyReviewState);
     const [reviewPathChangeRequest, setReviewPathChangeRequest] =
         useState<FlowPreviewReviewPathChangeRequest | null>(null);
     const [isPathsPanelOpen, setIsPathsPanelOpen] = useState(false);
@@ -61,12 +72,27 @@ export function PreviewDrawer({
     const latestFlowModifiedAtRef = useRef(flow.lastModified);
     const lastAutoOpenPendingRequestKeyRef = useRef<string | null>(null);
     const drawerRef = useRef<HTMLDivElement | null>(null);
+    const resolvedSelectedStartStepId = resolveStartStepId(flow, selectedStartStepId);
+    const effectiveEntryStepId = entryStepIdOverride || resolvedSelectedStartStepId;
 
     usePreventBrowserPinchZoom(drawerRef, shouldRender);
 
     useEffect(() => {
         latestFlowModifiedAtRef.current = flow.lastModified;
     }, [flow.lastModified]);
+
+    useEffect(() => {
+        setSelectedStartStepId((current) => resolveStartStepId(flow, current));
+    }, [flow]);
+
+    useEffect(() => {
+        setEntryStepIdOverride((current) => {
+            if (!current) return null;
+
+            const matchingStep = (flow.steps || []).find((step) => step.id === current);
+            return matchingStep?.type === 'turn' ? current : null;
+        });
+    }, [flow.steps]);
 
     const shouldShowRestartIndicator = flow.lastModified > lastRestartedModifiedAt;
     const hasPathDecisions = reviewState.decisions.length > 0;
@@ -88,15 +114,17 @@ export function PreviewDrawer({
         setIsPathsPanelOpen(true);
     }, []);
 
-    const handleRestart = useCallback(() => {
+    const handleRestart = useCallback((nextEntryStepIdOverride = entryStepIdOverride) => {
         // 1. Cancel any pending debounce updates to prevent race conditions
         if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
 
         // 2. Sync immediately to latest data
+        setEntryStepIdOverride(nextEntryStepIdOverride);
         setActiveFlow(flow);
 
         // 3. Reset simulation variables so required path choices appear again.
         setSimulationVariables({});
+        setReviewState(createEmptyReviewState());
         setReviewPathChangeRequest(null);
 
         // 4. Mark the preview as replayed against the latest flow revision.
@@ -104,7 +132,12 @@ export function PreviewDrawer({
 
         // 5. Trigger reset
         setResetKey(prev => prev + 1);
-    }, [flow]);
+    }, [entryStepIdOverride, flow]);
+
+    const handleEntryFlowChange = useCallback((nextStartStepId: string) => {
+        setSelectedStartStepId(nextStartStepId);
+        handleRestart(null);
+    }, [handleRestart]);
 
     const handlePreviewFlowUpdate = useCallback((nextFlow: Flow) => {
         if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
@@ -152,6 +185,12 @@ export function PreviewDrawer({
             return () => clearTimeout(timer);
         }
     }, [isOpen]);
+
+    useEffect(() => {
+        if (!previewEntryRequest) return;
+
+        handleRestart(previewEntryRequest.stepId);
+    }, [handleRestart, previewEntryRequest]);
 
     useEffect(() => {
         if (isOpen) return;
@@ -254,6 +293,15 @@ export function PreviewDrawer({
                                     />
                                 </ShellPopoverContent>
                             </Popover.Root>
+
+                            <FlowEntrySwitcher
+                                flow={flow}
+                                value={resolvedSelectedStartStepId}
+                                onValueChange={handleEntryFlowChange}
+                                showStartIcon={true}
+                                triggerClassName="w-[176px] text-xs font-medium"
+                                contentClassName="min-w-[176px]"
+                            />
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -303,8 +351,9 @@ export function PreviewDrawer({
                     {/* Preview Content */}
                     <div className="flex-1 overflow-hidden relative bg-shell-surface">
                         <FlowPreview
-                            key={resetKey}
+                            key={`${resetKey}:${effectiveEntryStepId || 'default'}`}
                             flow={activeFlow}
+                            entryStepId={effectiveEntryStepId}
                             isPremium={isPremium}
                             isMobile={isMobile}
                             variables={simulationVariables}

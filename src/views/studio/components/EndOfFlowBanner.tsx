@@ -33,7 +33,7 @@ export function EndOfFlowBanner({
     return (
         <div
             className={cn(
-                'animate-in fade-in-0 slide-in-from-bottom-2 duration-300 border-t border-shell-success-border bg-shell-success-soft px-4 py-3',
+                'w-full animate-in fade-in-0 slide-in-from-bottom-2 rounded-xl border border-shell-success-border bg-shell-success-soft px-4 py-3 shadow-sm duration-300',
                 className
             )}
         >

@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Flow, Step, Branch, Connection, UserTurn, Condition } from '@/views/studio/types';
 import { getConditionSelectionLabel } from '@/views/studio/conditionBranchLabels';
+import { resolvePreviewEntryStepId } from '@/views/studio/startNodes';
 
 // Types for local history extension
 export type HistoryStep = Step | {
@@ -37,6 +38,7 @@ export interface ConditionPathSelection {
 
 interface UseSmartFlowEngineProps {
     flow: Flow;
+    entryStepId?: string | null;
     variables?: Record<string, string>;
     onVariableUpdate?: (key: string, value: string) => void;
     initialSnapshot?: SmartFlowEngineSnapshot | null;
@@ -52,6 +54,7 @@ export interface SmartFlowEngineSnapshot {
 
 export const useSmartFlowEngine = ({
     flow,
+    entryStepId,
     variables,
     onVariableUpdate,
     initialSnapshot,
@@ -81,6 +84,7 @@ export const useSmartFlowEngine = ({
     const simulateThinking = flow.settings?.simulateThinking;
     const shouldSimulateThinking = !reviewMode && simulateThinking;
     const variablesString = JSON.stringify(variables);
+    const resolvedEntryStepId = resolvePreviewEntryStepId(flow, entryStepId);
     const historyRef = useRef(history); // Ref to access latest history in callbacks
     const pathSelectionsRef = useRef(pathSelections);
     const currentRunId = useRef(0); // Track active delivery run
@@ -847,11 +851,28 @@ export const useSmartFlowEngine = ({
             currentRunId.current = Date.now();
             setIsProcessingQueue(false);
 
-            // 1. Try starting from Start Node
-            const startNode = flow.steps.find(s => s.type === 'start');
-            if (startNode) {
-                traverse(startNode.id);
-                return;
+            // 1. Try starting from the requested preview entry.
+            if (resolvedEntryStepId) {
+                const entryStep = flow.steps.find((step) => step.id === resolvedEntryStepId);
+
+                if (entryStep?.type === 'start') {
+                    traverse(entryStep.id);
+                    return;
+                }
+
+                if (entryStep?.type === 'turn') {
+                    if (shouldSimulateThinking) {
+                        setDeliveryQueue([entryStep]);
+                    } else {
+                        setHistory([entryStep]);
+                        const visibleIds = new Set<string>();
+                        entryStep.components.forEach((component) => visibleIds.add(component.id));
+                        setVisibleComponentIds(visibleIds);
+                    }
+
+                    traverse(entryStep.id);
+                    return;
+                }
             }
 
             // 2. Fallback: Find first turn manually
@@ -895,7 +916,7 @@ export const useSmartFlowEngine = ({
             });
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [flow.steps, flow.connections, reviewMode, shouldSimulateThinking, variablesString]);
+    }, [flow.steps, flow.connections, resolvedEntryStepId, reviewMode, shouldSimulateThinking, variablesString]);
 
     useEffect(() => {
         if (!reviewMode) {

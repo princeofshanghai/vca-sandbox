@@ -5,6 +5,7 @@ import { cn } from '@/utils';
 export type ShellTooltipProps = {
   children: React.ReactNode;
   label: string;
+  description?: string;
   shortcut?: string;
   side?: 'top' | 'right' | 'bottom' | 'left';
   disabled?: boolean;
@@ -13,6 +14,7 @@ export type ShellTooltipProps = {
 export function ShellTooltip({
   children,
   label,
+  description,
   shortcut,
   side = 'top',
   disabled = false,
@@ -29,14 +31,21 @@ export function ShellTooltip({
           <Tooltip.Content
             side={side}
             sideOffset={8}
-            className="relative z-[1100] rounded-[10px] border border-shell-dark-border bg-shell-dark-panel px-2.5 py-1.5 text-shell-dark-text shadow-[0_18px_40px_rgb(0_0_0/0.36)] animate-in fade-in zoom-in-95 duration-150"
+            className="relative z-[1100] rounded-[10px] border border-shell-dark-border bg-shell-dark-panel px-2.5 py-2 text-shell-dark-text shadow-[0_18px_40px_rgb(0_0_0/0.36)] animate-in fade-in zoom-in-95 duration-150"
           >
-            <div className={cn('flex items-center whitespace-nowrap', shortcut ? 'gap-2.5' : 'gap-0')}>
-              <span className="text-[11px] font-medium leading-none text-shell-dark-text">{label}</span>
-              {shortcut ? (
-                <span className="text-[10px] font-medium leading-none tracking-[0.06em] text-shell-dark-muted">
-                  {shortcut}
-                </span>
+            <div className={cn('min-w-0', description ? 'max-w-[180px]' : 'whitespace-nowrap')}>
+              <div className={cn('flex items-center', shortcut ? 'gap-2.5' : 'gap-0')}>
+                <span className="text-[11px] font-medium leading-none text-shell-dark-text">{label}</span>
+                {shortcut ? (
+                  <span className="text-[10px] font-medium leading-none tracking-[0.06em] text-shell-dark-muted">
+                    {shortcut}
+                  </span>
+                ) : null}
+              </div>
+              {description ? (
+                <p className="mt-1 text-[10px] leading-[1.3] text-shell-dark-muted whitespace-normal">
+                  {description}
+                </p>
               ) : null}
             </div>
             <Tooltip.Arrow asChild>

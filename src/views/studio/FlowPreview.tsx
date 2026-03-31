@@ -1,5 +1,5 @@
 // ... (imports)
-import { useState, useEffect, useRef, useCallback, useMemo, type ReactNode } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, type ReactNode, type RefObject } from 'react';
 import { Branch, Flow } from './types';
 import { Composer } from '@/components/vca-components/composer';
 import { Container } from '@/components/vca-components/container/Container';
@@ -9,7 +9,7 @@ import { InfoMessage } from '@/components/vca-components/info-message/InfoMessag
 import { StatusCard } from '@/components/vca-components/status-card/StatusCard';
 import { PromptGroup } from '@/components/vca-components/prompt-group/PromptGroup';
 import { PhoneFrame } from '@/components/component-library/PhoneFrame';
-import { Pencil, Split } from 'lucide-react';
+import { Pencil, Play, Split } from 'lucide-react';
 import { ShellIconButton } from '@/components/shell';
 
 import { InlineFeedback } from '@/components/vca-components/inline-feedback';
@@ -32,10 +32,16 @@ import {
     type SmartFlowEngineSnapshot,
     useSmartFlowEngine,
 } from '@/hooks/useSmartFlowEngine';
+import {
+    getStartNodeDisplayLabel,
+    hasOutgoingConnectionFromStart,
+    resolvePreviewEntryStepId,
+} from './startNodes';
 
 
 interface FlowPreviewProps {
     flow: Flow;
+    entryStepId?: string | null;
     isPremium: boolean;
     isMobile: boolean;
     variables: Record<string, string>;
@@ -141,6 +147,7 @@ const buildReviewBlockId = ({
 
 export const FlowPreview = ({
     flow,
+    entryStepId = null,
     isPremium,
     isMobile,
     variables,
@@ -159,6 +166,7 @@ export const FlowPreview = ({
     onEndOfFlowOpenPaths,
 }: FlowPreviewProps) => {
     const hotspotsEnabled = flow.settings?.showHotspots ?? true;
+    const contentScrollRef = useRef<HTMLDivElement>(null);
     // Shared composer state
     const [composerValue, setComposerValue] = useState('');
     const handleSendRef = useRef<ComposerSendHandler | undefined>(undefined);
@@ -192,10 +200,9 @@ export const FlowPreview = ({
         stopHandlerRef.current?.();
     }, []);
 
-    const [showEndOfFlowChipVisible, setShowEndOfFlowChipVisible] = useState(false);
-
     const previewContentProps = {
         flow,
+        entryStepId,
         variables,
         onVariableUpdate,
         onRegisterSend: handleRegisterSend,
@@ -210,18 +217,12 @@ export const FlowPreview = ({
         onReviewSnapshotChange,
         reviewPathChangeRequest,
         showInlinePathControls,
-        onEndOfFlowStateChange: setShowEndOfFlowChipVisible,
+        showEndOfFlowIndicator,
+        endOfFlowDecisions,
+        onEndOfFlowRestart,
+        onEndOfFlowOpenPaths,
+        scrollContainerRef: contentScrollRef,
     };
-
-    const hasRestartFromPathOption = endOfFlowDecisions.some(
-        (decision) => decision.mode === 'selection'
-    );
-    const endOfFlowBanner = showEndOfFlowIndicator && showEndOfFlowChipVisible && !reviewMode && onEndOfFlowRestart ? (
-        <EndOfFlowBanner
-            onRestart={onEndOfFlowRestart}
-            onRestartFromPath={hasRestartFromPathOption ? onEndOfFlowOpenPaths : undefined}
-        />
-    ) : null;
 
     return (
         <div className="h-full w-full flex flex-col relative bg-transparent pointer-events-none">
@@ -272,6 +273,7 @@ export const FlowPreview = ({
                                         <Container
                                             headerTitle="Help"
                                             className="bg-shell-bg h-[772px] w-[393px]"
+                                            contentRef={contentScrollRef}
                                             viewport="mobile"
                                             showHeaderPremiumIcon={isPremium}
                                             showPremiumBorder={isPremium}
@@ -280,7 +282,6 @@ export const FlowPreview = ({
                                             onComposerSend={handleComposerSend}
                                             composerStatus={reviewMode ? 'disabled' : composerStatus}
                                             onStop={handleComposerStop}
-                                            footer={endOfFlowBanner}
                                             composerHotspotVisible={!reviewMode && hotspotsEnabled && composerGuidance.showHotspot}
                                             composerHotspotSuggestions={composerGuidance.suggestions}
                                             onComposerHotspotUse={!reviewMode ? handleComposerHotspotUse : undefined}
@@ -302,6 +303,7 @@ export const FlowPreview = ({
                             <Container
                                 headerTitle="Help"
                                 className="shadow-xl bg-shell-bg"
+                                contentRef={contentScrollRef}
                                 viewport="desktop"
                                 showHeaderPremiumIcon={isPremium}
                                 showPremiumBorder={isPremium}
@@ -310,7 +312,6 @@ export const FlowPreview = ({
                                 onComposerSend={handleComposerSend}
                                 composerStatus={reviewMode ? 'disabled' : composerStatus}
                                 onStop={handleComposerStop}
-                                footer={endOfFlowBanner}
                                 composerHotspotVisible={!reviewMode && hotspotsEnabled && composerGuidance.showHotspot}
                                 composerHotspotSuggestions={composerGuidance.suggestions}
                                 onComposerHotspotUse={!reviewMode ? handleComposerHotspotUse : undefined}
@@ -328,6 +329,7 @@ export const FlowPreview = ({
 // Interactive Preview Content
 const PreviewContent = ({
     flow,
+    entryStepId = null,
     variables,
     onVariableUpdate,
     onRegisterSend,
@@ -343,9 +345,14 @@ const PreviewContent = ({
     onReviewSnapshotChange,
     reviewPathChangeRequest = null,
     showInlinePathControls = true,
-    onEndOfFlowStateChange,
+    showEndOfFlowIndicator = false,
+    endOfFlowDecisions = [],
+    onEndOfFlowRestart,
+    onEndOfFlowOpenPaths,
+    scrollContainerRef,
 }: {
     flow: Flow,
+    entryStepId?: string | null,
     variables?: Record<string, string>,
     onVariableUpdate?: (key: string, value: string) => void,
     onRegisterSend: (fn: ComposerSendHandler) => void,
@@ -360,8 +367,19 @@ const PreviewContent = ({
     onReviewSnapshotChange?: (snapshot: SmartFlowEngineSnapshot) => void,
     reviewPathChangeRequest?: FlowPreviewReviewPathChangeRequest | null,
     showInlinePathControls?: boolean,
-    onEndOfFlowStateChange?: (isEndOfFlow: boolean) => void,
+    showEndOfFlowIndicator?: boolean,
+    endOfFlowDecisions?: FlowPreviewReviewDecision[],
+    onEndOfFlowRestart?: () => void,
+    onEndOfFlowOpenPaths?: () => void,
+    scrollContainerRef?: RefObject<HTMLDivElement | null>,
 }) => {
+    const resolvedEntryStepId = resolvePreviewEntryStepId(flow, entryStepId);
+    const activeEntryStep = useMemo(
+        () => (flow.steps || []).find((step) => step.id === resolvedEntryStepId) || null,
+        [flow.steps, resolvedEntryStepId]
+    );
+    const activeStartNode = activeEntryStep?.type === 'start' ? activeEntryStep : null;
+    const isDisconnectedEntry = !!activeStartNode && !hasOutgoingConnectionFromStart(flow, activeStartNode.id);
 
     // USE SMART FLOW ENGINE
     const {
@@ -383,6 +401,7 @@ const PreviewContent = ({
         pathSelections,
     } = useSmartFlowEngine({
         flow,
+        entryStepId: resolvedEntryStepId,
         variables,
         onVariableUpdate,
         initialSnapshot: initialReviewSnapshot,
@@ -675,13 +694,13 @@ const PreviewContent = ({
     const hasInteractivePathAvailable = interactionState?.hasAnyInteractivePath ?? false;
 
     useEffect(() => {
-        if (reviewMode || !showHotspotsEnabled || shouldShowFullPathPanel) {
+        if (reviewMode || isDisconnectedEntry || !showHotspotsEnabled || shouldShowFullPathPanel) {
             onComposerGuidanceChange?.(EMPTY_COMPOSER_GUIDANCE);
             return;
         }
 
         onComposerGuidanceChange?.(interactionHotspots?.composer || EMPTY_COMPOSER_GUIDANCE);
-    }, [interactionHotspots, onComposerGuidanceChange, reviewMode, shouldShowFullPathPanel, showHotspotsEnabled]);
+    }, [interactionHotspots, isDisconnectedEntry, onComposerGuidanceChange, reviewMode, shouldShowFullPathPanel, showHotspotsEnabled]);
 
     const handleOverlayResolve = (resolution: ContextInterceptorResolution) => {
         if (!overlaySelection) return;
@@ -725,14 +744,9 @@ const PreviewContent = ({
         !!lastMeaningfulStep &&
         (lastMeaningfulStep.type === 'turn' || lastMeaningfulStep.type === 'condition-selection');
 
-    useEffect(() => {
-        onEndOfFlowStateChange?.(hasReachedEndOfCurrentPath);
-    }, [hasReachedEndOfCurrentPath, onEndOfFlowStateChange]);
-
-
     // Report Status to Parent (Container)
     useEffect(() => {
-        if (reviewMode) {
+        if (reviewMode || isDisconnectedEntry) {
             onStatusChange?.('disabled', undefined);
             return;
         }
@@ -744,12 +758,12 @@ const PreviewContent = ({
         } else {
             onStatusChange?.('default', undefined);
         }
-    }, [handleStop, isProcessingQueue, isThinking, onStatusChange, reviewMode, streamingComponentId]);
+    }, [handleStop, isDisconnectedEntry, isProcessingQueue, isThinking, onStatusChange, reviewMode, streamingComponentId]);
 
 
     // REGISTER COMPOSER HANDLER
     useEffect(() => {
-        if (reviewMode) {
+        if (reviewMode || isDisconnectedEntry) {
             onRegisterSend(() => undefined);
             return;
         }
@@ -761,21 +775,54 @@ const PreviewContent = ({
             onComposerReset();
             handleSend(input);
         });
-    }, [composerValue, handleSend, onComposerReset, onRegisterSend, reviewMode]);
+    }, [composerValue, handleSend, isDisconnectedEntry, onComposerReset, onRegisterSend, reviewMode]);
 
 
     // --- AUTO-SCROLL LOGIC ---
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
+    const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
+        const scrollContainer = scrollContainerRef?.current;
+
+        if (scrollContainer) {
+            if (behavior === 'auto') {
+                scrollContainer.scrollTo({
+                    top: scrollContainer.scrollHeight,
+                    behavior: 'auto',
+                });
+                return;
+            }
+
+            scrollContainer.scrollTo({
+                top: scrollContainer.scrollHeight,
+                behavior,
+            });
+            return;
+        }
+
+        messagesEndRef.current?.scrollIntoView({ behavior });
+    }, [scrollContainerRef]);
 
     useEffect(() => {
         if (reviewMode) return;
-        // Scroll when history changes or thinking state toggles
-        scrollToBottom();
-    }, [history, isThinking, reviewMode, visibleComponentIds]);
+        // Scroll when new content or the inline end state appears.
+        scrollToBottom(streamingComponentId ? 'auto' : 'smooth');
+    }, [hasReachedEndOfCurrentPath, history, isThinking, reviewMode, scrollToBottom, streamingComponentId, visibleComponentIds]);
+
+    useEffect(() => {
+        if (reviewMode || !streamingComponentId) return;
+
+        let frameId = 0;
+
+        const pinToBottom = () => {
+            scrollToBottom('auto');
+            frameId = window.requestAnimationFrame(pinToBottom);
+        };
+
+        frameId = window.requestAnimationFrame(pinToBottom);
+
+        return () => window.cancelAnimationFrame(frameId);
+    }, [reviewMode, scrollToBottom, streamingComponentId]);
 
     const getReviewBlockProps = useCallback(
         ({
@@ -806,15 +853,53 @@ const PreviewContent = ({
             reviewMode ? baseClassName : `${baseClassName} animate-fade-in`,
         [reviewMode]
     );
+    const showDisconnectedEntryState =
+        isDisconnectedEntry &&
+        history.length === 0 &&
+        !isThinking &&
+        !isProcessingQueue &&
+        !streamingComponentId;
+    const disconnectedEntryLabel = getStartNodeDisplayLabel(activeStartNode);
+    const hasRestartFromPathOption = endOfFlowDecisions.some(
+        (decision) => decision.mode === 'selection'
+    );
+    const endOfFlowBanner = showEndOfFlowIndicator && hasReachedEndOfCurrentPath && onEndOfFlowRestart ? (
+        <EndOfFlowBanner
+            className="mt-2"
+            onRestart={onEndOfFlowRestart}
+            onRestartFromPath={hasRestartFromPathOption ? onEndOfFlowOpenPaths : undefined}
+        />
+    ) : null;
 
     // Render logic
     return (
-        <div className="relative">
-            <div className="space-y-4">
-            {/* Disclaimer (Global) */}
-            {flow.settings?.showDisclaimer && <Message variant="disclaimer" />}
+        <div className="relative flex min-h-full flex-col">
+            <div className="flex flex-1 flex-col">
+                <div className="space-y-4">
+                {/* Disclaimer (Global) */}
+                {flow.settings?.showDisclaimer && <Message variant="disclaimer" />}
 
-            {history.map((step, historyIndex) => {
+                {showDisconnectedEntryState ? (
+                    <div className={withRevealClass('flex justify-center')}>
+                        <div className="w-full max-w-[420px] rounded-2xl border border-shell-border/70 bg-shell-surface px-4 py-4 shadow-sm">
+                            <div className="flex items-start gap-3">
+                                <div className="mt-0.5 rounded-full bg-[rgb(var(--shell-node-start-surface)/1)] p-2 text-[rgb(var(--shell-node-start)/1)]">
+                                    <Play size={14} className="fill-current" />
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-sm font-medium text-shell-text">
+                                        {disconnectedEntryLabel} is not connected yet
+                                    </p>
+                                    <p className="mt-1 text-sm text-shell-muted">
+                                        Connect this start node to a step to preview this flow.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ) : null}
+
+                {history.map((step, historyIndex) => {
 
                 // 3. Feedback Step (NEW)
                 if (step.type === 'feedback') {
@@ -1256,82 +1341,85 @@ const PreviewContent = ({
                 return null;
             })}
 
-            {/* Thinking Indicator */}
-            {!reviewMode && isThinking && (
-                <div className={withRevealClass('flex justify-start')}>
-                    <Message
-                        variant="ai"
-                        isThinking={true}
-                    />
-                </div>
-            )}
+                {/* Thinking Indicator */}
+                {!reviewMode && isThinking && (
+                    <div className={withRevealClass('flex justify-start')}>
+                        <Message
+                            variant="ai"
+                            isThinking={true}
+                        />
+                    </div>
+                )}
 
+                </div>
+
+                {overlaySelection && shouldShowFullPathPanel && (
+                    <div className="mt-2 flex justify-center px-2">
+                        <ContextInterceptorMessage
+                            className="w-full max-w-[420px]"
+                            question={overlaySelection.stepLabel}
+                            variableName={overlaySelection.variableName}
+                            branches={overlaySelection.branches}
+                            onResolve={handleOverlayResolve}
+                            showRuleSummary={reviewMode}
+                        />
+                    </div>
+                )}
+
+                {shouldShowCompactPathPill && (
+                    <div className="mt-2 flex justify-center px-2">
+                        <div
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => setIsPathPanelExpanded(true)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    setIsPathPanelExpanded(true);
+                                }
+                            }}
+                            className="flex w-full max-w-[420px] items-center gap-2 rounded-xl border border-shell-node-condition/35 bg-[rgb(var(--shell-node-condition-surface)/1)] px-3 py-2.5 text-left shadow-sm"
+                        >
+                            <Split size={13} className="shrink-0 text-shell-node-condition" />
+                            <div className="min-w-0 flex flex-1 items-center gap-2.5 overflow-hidden">
+                                <p
+                                    className="min-w-0 flex-1 truncate text-[13px] font-semibold text-shell-text"
+                                    title={overlaySelection.stepLabel}
+                                >
+                                    {overlaySelection.stepLabel}
+                                </p>
+                                <span
+                                    className={
+                                        overlaySelection.mode === 'interceptor'
+                                            ? 'inline-flex max-w-[48%] shrink-0 items-center truncate rounded-full border border-shell-node-condition/35 bg-shell-bg px-2.5 py-1 text-[11px] font-semibold text-shell-node-condition'
+                                            : 'inline-flex max-w-[48%] shrink-0 items-center truncate rounded-full border border-shell-border bg-shell-bg px-2.5 py-1 text-[11px] font-medium text-shell-muted-strong'
+                                    }
+                                    title={compactPathLabel}
+                                >
+                                    {compactPathLabel}
+                                </span>
+                            </div>
+                            <ShellIconButton
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                aria-label="Edit path"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsPathPanelExpanded(true);
+                                }}
+                                className="shrink-0 text-shell-muted hover:text-shell-node-condition"
+                            >
+                                <Pencil size={14} />
+                            </ShellIconButton>
+                        </div>
+                    </div>
+                )}
             </div>
 
-            {overlaySelection && shouldShowFullPathPanel && (
-                <div className="mt-2 flex justify-center px-2">
-                    <ContextInterceptorMessage
-                        className="w-full max-w-[420px]"
-                        question={overlaySelection.stepLabel}
-                        variableName={overlaySelection.variableName}
-                        branches={overlaySelection.branches}
-                        onResolve={handleOverlayResolve}
-                        showRuleSummary={reviewMode}
-                    />
-                </div>
-            )}
+            {endOfFlowBanner}
 
-            {shouldShowCompactPathPill && (
-                <div className="mt-2 flex justify-center px-2">
-                    <div
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => setIsPathPanelExpanded(true)}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault();
-                                setIsPathPanelExpanded(true);
-                            }
-                        }}
-                        className="flex w-full max-w-[420px] items-center gap-2 rounded-xl border border-shell-node-condition/35 bg-[rgb(var(--shell-node-condition-surface)/1)] px-3 py-2.5 text-left shadow-sm"
-                    >
-                        <Split size={13} className="shrink-0 text-shell-node-condition" />
-                        <div className="min-w-0 flex flex-1 items-center gap-2.5 overflow-hidden">
-                            <p
-                                className="min-w-0 flex-1 truncate text-[13px] font-semibold text-shell-text"
-                                title={overlaySelection.stepLabel}
-                            >
-                                {overlaySelection.stepLabel}
-                            </p>
-                            <span
-                                className={
-                                    overlaySelection.mode === 'interceptor'
-                                        ? 'inline-flex max-w-[48%] shrink-0 items-center truncate rounded-full border border-shell-node-condition/35 bg-shell-bg px-2.5 py-1 text-[11px] font-semibold text-shell-node-condition'
-                                        : 'inline-flex max-w-[48%] shrink-0 items-center truncate rounded-full border border-shell-border bg-shell-bg px-2.5 py-1 text-[11px] font-medium text-shell-muted-strong'
-                                }
-                                title={compactPathLabel}
-                            >
-                                {compactPathLabel}
-                            </span>
-                        </div>
-                        <ShellIconButton
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            aria-label="Edit path"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setIsPathPanelExpanded(true);
-                            }}
-                            className="shrink-0 text-shell-muted hover:text-shell-node-condition"
-                        >
-                            <Pencil size={14} />
-                        </ShellIconButton>
-                    </div>
-                </div>
-            )}
-
-            <div ref={messagesEndRef} className="h-4" />
+            <div ref={messagesEndRef} className="h-4 shrink-0" />
         </div>
     );
 };

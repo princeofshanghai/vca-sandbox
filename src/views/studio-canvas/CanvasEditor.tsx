@@ -23,7 +23,7 @@ import type { ELK as ElkLayoutEngine, ElkNode } from 'elkjs/lib/elk.bundled.js';
 import { TurnNode } from './nodes/TurnNode';
 import { UserTurnNode } from './nodes/UserTurnNode';
 import { ConditionNode } from './nodes/ConditionNode';
-import { StartNode } from './nodes/StartNode';
+import { StartNode as StartNodeComponent } from './nodes/StartNode';
 import { NoteNode } from './nodes/NoteNode';
 import {
     Flow,
@@ -36,6 +36,7 @@ import {
     Branch,
     Note,
     Step,
+    StartNode as StartStep,
     PromptContent,
     SelectionListContent,
     ConfirmationCardContent,
@@ -110,6 +111,7 @@ import {
 } from '../studio/userTurnLabels';
 import { getAutoConditionLabel, getVisibleConditionLabel } from '../studio/conditionLabels';
 import { ShareViewOnlyBadge } from '../share/components/ShareViewOnlyBadge';
+import { getStartNodeDisplayLabel, normalizeFlowStartNodes, resolveStartStepId } from '../studio/startNodes';
 
 
 // Register custom node types
@@ -117,7 +119,7 @@ const nodeTypes: NodeTypes = {
     turn: TurnNode,
     'user-turn': UserTurnNode,
     condition: ConditionNode,
-    start: StartNode,
+    start: StartNodeComponent,
     note: NoteNode,
 };
 
@@ -168,6 +170,7 @@ interface CanvasEditorProps {
     onBack: () => void;
     backItemLabel?: string;
     onPreview: () => void;
+    onPreviewFromTurn?: (turnId: string) => void;
     isPreviewActive?: boolean;
     onToggleComments?: () => void;
     onOpenCommentsPanel?: () => void;
@@ -223,7 +226,7 @@ interface QuickAddConnectionPreviewState {
     variant: ConnectionPreviewVariant;
 }
 
-type ToolbarPlacementType = QuickAddNodeType | 'note';
+type ToolbarPlacementType = QuickAddNodeType | 'note' | 'start';
 
 interface PendingToolbarPlacementState {
     type: ToolbarPlacementType;
@@ -275,6 +278,7 @@ const TOOLBAR_NODE_INSERT_HORIZONTAL_GAP_PX = 96;
 const TOOLBAR_NODE_COLLISION_PADDING_PX = 24;
 const TOOLBAR_NODE_COLLISION_MAX_ATTEMPTS = 12;
 const TOOLBAR_NODE_ESTIMATED_DIMENSIONS: Record<ToolbarPlacementType, { width: number; height: number }> = {
+    start: { width: 220, height: 52 },
     turn: { width: 360, height: 48 },
     'user-turn': { width: 280, height: 64 },
     condition: { width: 280, height: 220 },
@@ -392,6 +396,13 @@ const getToolbarPlacementPreviewConfig = (type: ToolbarPlacementType): {
                 surfaceClassName: 'bg-[rgb(var(--shell-node-ai-surface)/0.96)]',
                 icon: <VcaIcon icon="signal-ai" size="md" className="text-shell-accent" />,
             };
+        case 'start':
+            return {
+                label: 'Start',
+                borderClassName: 'border-[rgb(var(--shell-node-start)/1)]',
+                surfaceClassName: 'bg-[rgb(var(--shell-node-start-surface)/0.96)]',
+                icon: <Play className="fill-current text-[rgb(var(--shell-node-start)/1)]" size={18} />,
+            };
         case 'user-turn':
             return {
                 label: 'User Turn',
@@ -435,7 +446,7 @@ const getQuickAddPreviewVariant = (type: QuickAddNodeType | null): ConnectionPre
     return 'neutral';
 };
 
-type ClipboardNodeStep = Turn | UserTurn | Condition | Note;
+type ClipboardNodeStep = Turn | UserTurn | Condition | Note | StartStep;
 type CanvasClipboardPayload =
     | { type: 'node'; step: ClipboardNodeStep; pasteCount: number }
     | { type: 'nodes'; steps: ClipboardNodeStep[]; pasteCount: number }
@@ -467,6 +478,8 @@ const isClipboardNodeStep = (value: unknown): value is ClipboardNodeStep => {
             return typeof value.label === 'string' && typeof value.inputType === 'string';
         case 'condition':
             return Array.isArray(value.branches);
+        case 'start':
+            return typeof value.label === 'string';
         case 'note':
             return typeof value.content === 'string';
         default:
@@ -552,6 +565,7 @@ type LabelableNodeType = ClipboardNodeStep['type'];
 
 const COPY_SUFFIX_PATTERN = /^(.*) \(Copy(?: (\d+))?\)$/i;
 const DEFAULT_NODE_LABELS: Record<LabelableNodeType, string> = {
+    start: 'Flow',
     turn: 'AI Turn',
     'user-turn': 'User Turn',
     condition: 'Condition',
@@ -808,6 +822,19 @@ const cloneNodeStepForPaste = (
 ): ClipboardNodeStep => {
     const offset = NODE_PASTE_OFFSET_PX * Math.max(1, pasteCount);
 
+    if (step.type === 'start') {
+        const clonedStep = cloneValue(step);
+        return {
+            ...clonedStep,
+            id: crypto.randomUUID(),
+            label: getNextDuplicateNodeLabel('start', clonedStep.label, existingSteps),
+            position: {
+                x: (clonedStep.position?.x ?? 250) + offset,
+                y: (clonedStep.position?.y ?? 0) + offset,
+            },
+        };
+    }
+
     if (step.type === 'turn') {
         const clonedStep = cloneValue(step);
         return {
@@ -944,6 +971,7 @@ function CanvasEditorInner({
     onBack,
     backItemLabel,
     onPreview,
+    onPreviewFromTurn,
     isPreviewActive,
     onToggleComments,
     onOpenCommentsPanel,
@@ -1261,7 +1289,7 @@ function CanvasEditorInner({
 
     const applyFlowUpdate = useCallback((nextFlow: Flow) => {
         if (isFlowReadOnly) return;
-        onUpdateFlow(syncAutoManagedConditions(syncAutoManagedUserTurns(nextFlow)));
+        onUpdateFlow(normalizeFlowStartNodes(syncAutoManagedConditions(syncAutoManagedUserTurns(nextFlow))));
     }, [isFlowReadOnly, onUpdateFlow]);
 
     useEffect(() => {
@@ -1429,6 +1457,8 @@ function CanvasEditorInner({
 
     const getEstimatedStepDimensions = useCallback((step: Step) => {
         switch (step.type) {
+            case 'start':
+                return TOOLBAR_NODE_ESTIMATED_DIMENSIONS.start;
             case 'turn':
                 return TOOLBAR_NODE_ESTIMATED_DIMENSIONS.turn;
             case 'user-turn':
@@ -1437,8 +1467,6 @@ function CanvasEditorInner({
                 return TOOLBAR_NODE_ESTIMATED_DIMENSIONS.condition;
             case 'note':
                 return TOOLBAR_NODE_ESTIMATED_DIMENSIONS.note;
-            case 'start':
-                return { width: 132, height: 44 };
             default: {
                 const exhaustiveCheck: never = step;
                 return exhaustiveCheck;
@@ -1728,6 +1756,24 @@ function CanvasEditorInner({
     const createToolbarNodeAtPosition = useCallback((type: ToolbarPlacementType, position: { x: number; y: number }) => {
         const currentFlow = flowRef.current;
         const currentSteps = currentFlow.steps || [];
+
+        if (type === 'start') {
+            const newStartNode: StartStep = {
+                id: crypto.randomUUID(),
+                type: 'start',
+                label: getNextFreshNodeLabel('start', currentSteps),
+                position,
+            };
+
+            applyFlowUpdate({
+                ...currentFlow,
+                steps: [...currentSteps, newStartNode],
+                startStepId: currentFlow.startStepId || newStartNode.id,
+                lastModified: Date.now(),
+            });
+            focusNodeSelection(newStartNode.id);
+            return;
+        }
 
         if (type === 'turn') {
             const newTurn: Turn = {
@@ -2191,6 +2237,37 @@ function CanvasEditorInner({
         applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
     }, [applyFlowUpdate]);
 
+    const handleStartNodeLabelChange = useCallback((nodeId: string, newLabel: string) => {
+        const currentFlow = flowRef.current;
+        if (!currentFlow.steps) return;
+
+        const trimmedLabel = newLabel.trim();
+        if (!trimmedLabel) {
+            return;
+        }
+
+        const updatedSteps = currentFlow.steps.map((step) =>
+            step.id === nodeId && step.type === 'start'
+                ? { ...step, label: trimmedLabel }
+                : step
+        );
+
+        applyFlowUpdate({
+            ...currentFlow,
+            steps: updatedSteps,
+            lastModified: Date.now(),
+        });
+    }, [applyFlowUpdate]);
+
+    const handleSetDefaultStartNode = useCallback((nodeId: string) => {
+        const currentFlow = flowRef.current;
+        applyFlowUpdate({
+            ...currentFlow,
+            startStepId: nodeId,
+            lastModified: Date.now(),
+        });
+    }, [applyFlowUpdate]);
+
     const deleteNodesFromFlow = useCallback((nodeIds: string[]) => {
         if (nodeIds.length === 0) {
             return;
@@ -2198,16 +2275,33 @@ function CanvasEditorInner({
 
         const currentFlow = flowRef.current;
         const deletedIds = new Set(nodeIds);
+        const startNodes = (currentFlow.steps || []).filter((step): step is StartStep => step.type === 'start');
+        const deletedStartNodes = startNodes.filter((startNode) => deletedIds.has(startNode.id));
+
+        if (startNodes.length > 0 && startNodes.length - deletedStartNodes.length < 1) {
+            const preservedStartId = resolveStartStepId(currentFlow) || startNodes[0].id;
+            deletedIds.delete(preservedStartId);
+            toast('Keep at least one flow entry');
+        }
+
+        if (deletedIds.size === 0) {
+            return;
+        }
 
         const updatedSteps = (currentFlow.steps || []).filter((step) => !deletedIds.has(step.id));
         const updatedConnections = (currentFlow.connections || []).filter(
             (connection) => !deletedIds.has(connection.source) && !deletedIds.has(connection.target)
         );
+        const nextStartStepId = resolveStartStepId({
+            steps: updatedSteps,
+            startStepId: deletedIds.has(currentFlow.startStepId || '') ? undefined : currentFlow.startStepId,
+        });
 
         applyFlowUpdate({
             ...currentFlow,
             steps: updatedSteps,
             connections: updatedConnections,
+            startStepId: nextStartStepId || undefined,
             lastModified: Date.now(),
         });
 
@@ -2594,6 +2688,10 @@ function CanvasEditorInner({
         handleComponentAdd(type, nodeId, { autoOpenEditor: true });
     }, [handleComponentAdd]);
 
+    const handleTurnPreviewFromHere = useCallback((nodeId: string) => {
+        onPreviewFromTurn?.(nodeId);
+    }, [onPreviewFromTurn]);
+
     const getNodeCommentState = useCallback(() => {
         return {
             hasComments: false,
@@ -2601,6 +2699,11 @@ function CanvasEditorInner({
             isPlacementMode: isCommentModeActive,
         };
     }, [isCommentModeActive]);
+    const defaultStartStepId = useMemo(() => resolveStartStepId(flow), [flow]);
+    const startNodeCount = useMemo(
+        () => (flow.steps || []).filter((step) => step.type === 'start').length,
+        [flow.steps]
+    );
 
     // Convert flow steps to React Flow nodes
     const baseNodes = useMemo(() => {
@@ -2651,6 +2754,7 @@ function CanvasEditorInner({
                         onLabelChange: handleTurnLabelChange,
                         onComponentUpdate: handleTurnComponentUpdate,
                         onAddComponent: handleTurnAddComponent,
+                        onPreviewFromTurn: handleTurnPreviewFromHere,
                     },
                 };
             } else if (step.type === 'user-turn') {
@@ -2710,12 +2814,21 @@ function CanvasEditorInner({
                     id: step.id,
                     type: 'start',
                     position: step.position || { x: 250, y: 0 },
-                    data: {},
-                    deletable: false, // Start node cannot be deleted
+                    data: {
+                        label: getStartNodeDisplayLabel(step),
+                        readOnly: isFlowReadOnly,
+                        isDefault: step.id === defaultStartStepId,
+                        canDelete: startNodeCount > 1,
+                        onLabelChange: handleStartNodeLabelChange,
+                        onSetDefault: handleSetDefaultStartNode,
+                        onDelete: handleDeleteFlowNode,
+                    },
+                    deletable: startNodeCount > 1,
                 };
             }
         });
     }, [
+        defaultStartStepId,
         flow.blocks,
         isFlowReadOnly,
         flow.settings.entryPoint,
@@ -2724,14 +2837,19 @@ function CanvasEditorInner({
         handleConditionQuestionChange,
         handleConditionUpdateBranches,
         handleDeselect,
+        handleDeleteFlowNode,
         getNodeCommentState,
         handleNoteContentChange,
         handleNoteLabelChange,
         handleSelectComponent,
+        handleSetDefaultStartNode,
+        handleStartNodeLabelChange,
         handleTurnComponentReorder,
         handleTurnComponentUpdate,
         handleTurnLabelChange,
+        handleTurnPreviewFromHere,
         handleUserTurnUpdate,
+        startNodeCount,
     ]);
 
     // Create connections from flow.connections or generate from blocks
@@ -2825,7 +2943,14 @@ function CanvasEditorInner({
             setCommentDragState(null);
             setCommentComposerPlacement(null);
             suppressNextCommentPlacementRef.current = false;
+            return;
         }
+
+        // Entering comment mode should always feel immediately "armed".
+        // Clear any stale suppression left over from dismissing a prior composer
+        // or from unrelated drag/drop interactions.
+        suppressNextCommentPlacementRef.current = false;
+        suppressCommentPlacementUntilRef.current = 0;
     }, [isCommentModeActive]);
 
     useEffect(() => {
@@ -2947,6 +3072,7 @@ function CanvasEditorInner({
             if (!placement) return;
 
             setCommentComposerPlacement(null);
+            setPendingCommentPoint(placement.point);
             comments?.startPendingComment(placement.anchor);
 
             return;
@@ -3398,7 +3524,7 @@ function CanvasEditorInner({
 
         if (currentSelection.type === 'node') {
             const selectedStep = currentFlow.steps?.find((step) => step.id === currentSelection.nodeId);
-            if (!selectedStep || selectedStep.type === 'start') {
+            if (!selectedStep) {
                 return false;
             }
 
@@ -3413,7 +3539,7 @@ function CanvasEditorInner({
         if (currentSelection.type === 'nodes') {
             const selectedNodeIds = new Set(currentSelection.nodeIds);
             const selectedSteps = (currentFlow.steps || []).filter(
-                (step): step is ClipboardNodeStep => selectedNodeIds.has(step.id) && step.type !== 'start'
+                (step): step is ClipboardNodeStep => selectedNodeIds.has(step.id)
             );
 
             if (selectedSteps.length === 0) {
@@ -3728,6 +3854,12 @@ function CanvasEditorInner({
             }
 
             if (!isMetaOrCtrl && !e.altKey && !e.shiftKey) {
+                if (keyLower === 's') {
+                    e.preventDefault();
+                    armPendingToolbarPlacement('start');
+                    return;
+                }
+
                 if (keyLower === 'a') {
                     e.preventDefault();
                     armPendingToolbarPlacement('turn');
@@ -3814,7 +3946,7 @@ function CanvasEditorInner({
     const onNodeDragStart = useCallback((event: React.MouseEvent, node: Node) => {
         if (event.altKey) {
             const originalStep = flow.steps?.find(s => s.id === node.id);
-            if (!originalStep || originalStep.type === 'start') return;
+            if (!originalStep) return;
 
             // Strategy:
             // 1. The node being dragged (Node A, original ID) becomes the "Duplicate" (moving).
@@ -3892,7 +4024,12 @@ function CanvasEditorInner({
                         autoLabel: undefined,
                         labelMode: nodeToUpdate.labelMode ?? 'auto',
                     };
-                } else if (nodeToUpdate.type !== 'start' && 'label' in nodeToUpdate) {
+                } else if (nodeToUpdate.type === 'start') {
+                    updatedSteps[draggedNodeIndex] = {
+                        ...nodeToUpdate,
+                        label: getNextDuplicateNodeLabel('start', nodeToUpdate.label, flow.steps || []),
+                    };
+                } else if ('label' in nodeToUpdate) {
                     updatedSteps[draggedNodeIndex] = {
                         ...nodeToUpdate,
                         label: getNextDuplicateNodeLabel(nodeToUpdate.type, nodeToUpdate.label, flow.steps || []),
@@ -3907,6 +4044,9 @@ function CanvasEditorInner({
                 ...flow,
                 steps: updatedSteps,
                 connections: finalConnections,
+                startStepId: originalStep.type === 'start' && flow.startStepId === node.id
+                    ? newOriginalId
+                    : flow.startStepId,
                 lastModified: Date.now()
             });
         }
@@ -3927,7 +4067,7 @@ function CanvasEditorInner({
                 return;
             }
 
-            if (type !== 'turn' && type !== 'user-turn' && type !== 'condition' && type !== 'note') {
+            if (type !== 'start' && type !== 'turn' && type !== 'user-turn' && type !== 'condition' && type !== 'note') {
                 return;
             }
 
@@ -3954,6 +4094,7 @@ function CanvasEditorInner({
             const placement = getFreeAnchorFromClient(event.clientX, event.clientY);
             if (!placement) return;
             setCommentComposerPlacement(null);
+            setPendingCommentPoint(placement.point);
             comments?.startPendingComment(placement.anchor);
             return;
         }
@@ -4444,6 +4585,7 @@ function CanvasEditorInner({
                     {onToggleComments ? (
                         <FloatingToolbar
                             showCreationTools={floatingToolbarVariant === 'full'}
+                            onAddStart={() => createToolbarNodeAtPosition('start', getFloatingToolbarNodePlacement('start'))}
                             onAddAiTurn={() => createToolbarNodeAtPosition('turn', getFloatingToolbarNodePlacement('turn'))}
                             onAddUserTurn={() => createToolbarNodeAtPosition('user-turn', getFloatingToolbarNodePlacement('user-turn'))}
                             onAddCondition={() => createToolbarNodeAtPosition('condition', getFloatingToolbarNodePlacement('condition'))}

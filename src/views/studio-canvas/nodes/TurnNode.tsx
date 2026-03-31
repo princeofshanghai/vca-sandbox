@@ -1,7 +1,7 @@
 import { memo, useState, useRef, useEffect } from 'react';
 import * as Popover from '@radix-ui/react-popover';
 import { Handle, Position, NodeProps, useStore } from '@xyflow/react';
-import { Plus } from 'lucide-react';
+import { Play, Plus } from 'lucide-react';
 import { ShellIconButton } from '@/components/shell';
 import { VcaIcon } from '@/components/vca-components/icons/VcaIcon';
 import { Component, ComponentType } from '../../studio/types';
@@ -36,6 +36,7 @@ interface TurnNodeData {
     onLabelChange?: (nodeId: string, newLabel: string) => void;
     onComponentUpdate?: (nodeId: string, componentId: string, updates: Partial<Component>) => void;
     onAddComponent?: (nodeId: string, type: ComponentType) => void;
+    onPreviewFromTurn?: (nodeId: string) => void;
 }
 
 export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
@@ -106,7 +107,10 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
     const handleClassName = isAI ? '!bg-shell-accent' : '!bg-shell-node-user';
     const labelInputBorderClassName = isAI ? 'border-shell-accent' : 'border-shell-node-user';
     const nodeWidthClassName = isAI ? 'w-[360px]' : 'w-[320px]';
-    const showAddComponentButton = isAI && !typedData.readOnly && !isEditingLabel && Boolean(typedData.onAddComponent);
+    const showAiTurnActionTray = isAI && !typedData.readOnly && !isEditingLabel && (
+        Boolean(typedData.onAddComponent) || Boolean(typedData.onPreviewFromTurn)
+    );
+    const trayButtonClassName = 'h-6 w-6 shrink-0 rounded-none border-0 bg-transparent text-shell-accent shadow-none hover:bg-shell-accent-soft hover:text-shell-accent-text focus-visible:ring-shell-accent/20';
 
     return (
         <div
@@ -155,35 +159,66 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
                     )}
                 </div>
 
-                {showAddComponentButton && (
-                    <Popover.Root open={isAddComponentPopoverOpen} onOpenChange={setIsAddComponentPopoverOpen}>
-                        <ActionTooltip content="Add component">
-                            <Popover.Trigger asChild>
+                {showAiTurnActionTray && (
+                    <div
+                        className="nodrag nopan inline-flex shrink-0 translate-x-0.5 items-center overflow-hidden rounded-md border border-shell-accent/40 bg-[rgb(var(--shell-node-ai-surface)/1)] text-shell-accent shadow-sm"
+                        data-no-dnd="true"
+                        onClick={(event) => event.stopPropagation()}
+                        onPointerDown={(event) => event.stopPropagation()}
+                    >
+                        {typedData.onPreviewFromTurn && (
+                            <ActionTooltip content="Play prototype from here">
                                 <ShellIconButton
                                     type="button"
                                     size="sm"
                                     shape="rounded"
-                                    variant="outline"
-                                    aria-label="Add component"
+                                    variant="ghost"
+                                    aria-label="Play prototype from here"
                                     data-no-dnd="true"
-                                    onClick={(e) => e.stopPropagation()}
-                                    onPointerDown={(e) => e.stopPropagation()}
-                                    className="nodrag nopan h-6 w-6 shrink-0 translate-x-0.5 rounded-md border-shell-accent/40 bg-[rgb(var(--shell-node-ai-surface)/1)] text-shell-accent shadow-sm hover:border-shell-accent/65 hover:bg-shell-accent-soft hover:text-shell-accent-text focus-visible:ring-shell-accent/20"
+                                    onClick={(event) => {
+                                        event.stopPropagation();
+                                        setIsAddComponentPopoverOpen(false);
+                                        typedData.onPreviewFromTurn?.(nodeId);
+                                    }}
+                                    onPointerDown={(event) => event.stopPropagation()}
+                                    className={`${trayButtonClassName}${typedData.onAddComponent ? ' border-r border-shell-accent/25' : ''}`}
                                 >
-                                    <Plus size={14} />
+                                    <Play size={13} />
                                 </ShellIconButton>
-                            </Popover.Trigger>
-                        </ActionTooltip>
-                        <AddComponentContent
-                            side="bottom"
-                            align="end"
-                            previewSide="right"
-                            onAdd={(type) => {
-                                typedData.onAddComponent?.(nodeId, type);
-                                setIsAddComponentPopoverOpen(false);
-                            }}
-                        />
-                    </Popover.Root>
+                            </ActionTooltip>
+                        )}
+
+                        {typedData.onAddComponent && (
+                            <Popover.Root open={isAddComponentPopoverOpen} onOpenChange={setIsAddComponentPopoverOpen}>
+                                <ActionTooltip content="Add component">
+                                    <Popover.Trigger asChild>
+                                        <ShellIconButton
+                                            type="button"
+                                            size="sm"
+                                            shape="rounded"
+                                            variant="ghost"
+                                            aria-label="Add component"
+                                            data-no-dnd="true"
+                                            onClick={(event) => event.stopPropagation()}
+                                            onPointerDown={(event) => event.stopPropagation()}
+                                            className={trayButtonClassName}
+                                        >
+                                            <Plus size={14} />
+                                        </ShellIconButton>
+                                    </Popover.Trigger>
+                                </ActionTooltip>
+                                <AddComponentContent
+                                    side="bottom"
+                                    align="end"
+                                    previewSide="right"
+                                    onAdd={(type) => {
+                                        typedData.onAddComponent?.(nodeId, type);
+                                        setIsAddComponentPopoverOpen(false);
+                                    }}
+                                />
+                            </Popover.Root>
+                        )}
+                    </div>
                 )}
             </div>
 
