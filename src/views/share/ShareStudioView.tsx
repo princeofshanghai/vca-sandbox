@@ -30,6 +30,11 @@ import {
 type ShareStudioRightPanelMode = 'preview' | 'comments' | null;
 const SHARED_STUDIO_PLAY_HINT_DISMISSED_KEY = 'shared-studio-play-hint-dismissed';
 
+type PreviewEntryRequest = {
+    stepId: string | null;
+    token: number;
+};
+
 export const ShareStudioView = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
@@ -44,6 +49,7 @@ export const ShareStudioView = () => {
     const [showComments, setShowComments] = useState(true);
     const [isCommentModeActive, setIsCommentModeActive] = useState(false);
     const [rightPanelMode, setRightPanelMode] = useState<ShareStudioRightPanelMode>(null);
+    const [previewEntryRequest, setPreviewEntryRequest] = useState<PreviewEntryRequest | null>(null);
     const [isDuplicatingProject, setIsDuplicatingProject] = useState(false);
     const [isPlayHintDismissed, setIsPlayHintDismissed] = useState(() => {
         if (typeof window === 'undefined') return false;
@@ -138,11 +144,31 @@ export const ShareStudioView = () => {
         isVisible: areCanvasCommentsVisible,
     });
 
-    const handleTogglePreview = () => {
-        setRightPanelMode((currentMode) => (currentMode === 'preview' ? null : 'preview'));
+    const openPreview = useCallback((stepId: string | null) => {
+        setPreviewEntryRequest({
+            stepId,
+            token: Date.now() + Math.random(),
+        });
+        setRightPanelMode('preview');
         setIsCommentModeActive(false);
         canvasComments.resetClosedState();
-    };
+    }, [canvasComments]);
+
+    const handleTogglePreview = useCallback(() => {
+        setRightPanelMode((currentMode) => (currentMode === 'preview' ? null : 'preview'));
+
+        if (!isPreviewOpen) {
+            openPreview(null);
+            return;
+        }
+
+        setIsCommentModeActive(false);
+        canvasComments.resetClosedState();
+    }, [canvasComments, isPreviewOpen, openPreview]);
+
+    const handlePreviewFromTurn = useCallback((turnId: string) => {
+        openPreview(turnId);
+    }, [openPreview]);
 
     const dismissPlayHint = useCallback(() => {
         setIsPlayHintDismissed(true);
@@ -322,6 +348,7 @@ export const ShareStudioView = () => {
                 onBack={() => navigate(user ? '/' : '/login')}
                 backItemLabel={user ? 'Go to dashboard' : 'Sign in to dashboard'}
                 onPreview={handleTogglePreview}
+                onPreviewFromTurn={handlePreviewFromTurn}
                 isPreviewActive={isPreviewOpen}
                 onToggleComments={handleToggleCommentsWorkspace}
                 onOpenCommentsPanel={handleOpenCommentsPanel}
@@ -360,6 +387,7 @@ export const ShareStudioView = () => {
                 onUpdateFlow={setFlow}
                 isPremium={isPremium}
                 isMobile={isMobile}
+                previewEntryRequest={previewEntryRequest}
                 onTogglePremium={() => setIsPremium((prev) => !prev)}
                 onToggleMobile={() => setIsMobile((prev) => !prev)}
             />

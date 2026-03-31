@@ -1,5 +1,5 @@
 import { memo, useEffect, useRef, useState } from 'react';
-import { Handle, NodeProps, NodeToolbar, Position, useReactFlow, useStore } from '@xyflow/react';
+import { Handle, NodeProps, NodeToolbar, Position, useReactFlow } from '@xyflow/react';
 import { Play, Star, Trash2 } from 'lucide-react';
 import { ShellTooltip } from '@/components/shell';
 import { OUTER_NODE_HANDLE_OFFSET_PX, OUTER_NODE_HANDLE_SIZE_PX } from './components/handleOffsets';
@@ -22,8 +22,6 @@ export const StartNode = memo(({ id, data, selected }: NodeProps) => {
     const [isEditingLabel, setIsEditingLabel] = useState(false);
     const [editedLabel, setEditedLabel] = useState(displayLabel);
     const inputRef = useRef<HTMLInputElement>(null);
-    const zoom = useStore((state) => state.transform[2]);
-    const scale = Math.max(1, 1 / zoom);
 
     useEffect(() => {
         if (!isEditingLabel) {
@@ -111,19 +109,6 @@ export const StartNode = memo(({ id, data, selected }: NodeProps) => {
                 </NodeToolbar>
             ) : null}
 
-            {typedData.isDefault ? (
-                <div
-                    className="absolute bottom-full right-0 mb-1.5 flex items-center px-0.5 origin-bottom-right"
-                    style={{
-                        transform: `scale(${scale})`,
-                    }}
-                >
-                    <span className="shrink-0 rounded-md border border-[rgb(var(--shell-node-start)/0.24)] bg-[rgb(var(--shell-node-start-surface)/1)] px-2 py-1 text-[10px] font-medium leading-none text-[rgb(var(--shell-node-start-text)/1)]">
-                        Default
-                    </span>
-                </div>
-            ) : null}
-
             <div
                 className={`flex min-w-[180px] max-w-[280px] items-center gap-2 rounded-full border px-4 py-2.5 text-[rgb(var(--shell-node-start-text)/1)] shadow-sm transition-colors bg-[rgb(var(--shell-node-start-surface)/1)] ${borderClassName}`}
                 onDoubleClick={(event) => {
@@ -153,6 +138,11 @@ export const StartNode = memo(({ id, data, selected }: NodeProps) => {
                         </span>
                     )}
                 </div>
+                {typedData.isDefault ? (
+                    <span className="shrink-0 rounded-full border border-[rgb(var(--shell-node-start)/0.24)] bg-[rgb(var(--shell-node-start)/0.9)] px-2 py-1 text-[10px] font-medium leading-none text-[rgb(var(--shell-node-start-text)/1)]">
+                        Default
+                    </span>
+                ) : null}
             </div>
 
             <Handle

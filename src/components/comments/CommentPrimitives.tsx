@@ -207,7 +207,7 @@ export const CommentComposerInputRow = ({
                             assignTextareaRef(textareaRef, node);
                         }}
                         minRows={1}
-                        maxRows={5}
+                        maxRows={8}
                         value={value}
                         onChange={(event) => onValueChange(event.target.value)}
                         onFocus={onTextareaFocus}
@@ -240,7 +240,7 @@ export const CommentComposerInputRow = ({
                         placeholder={placeholder}
                         tone={tone}
                         variant="bare"
-                        className="max-h-[132px] resize-none overflow-y-auto py-[6px] text-sm leading-5"
+                        className="resize-none overflow-y-auto py-[6px] text-sm leading-5"
                     />
 
                     {!isExpanded ? (

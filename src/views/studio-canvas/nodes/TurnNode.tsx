@@ -107,9 +107,9 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
     const handleClassName = isAI ? '!bg-shell-accent' : '!bg-shell-node-user';
     const labelInputBorderClassName = isAI ? 'border-shell-accent' : 'border-shell-node-user';
     const nodeWidthClassName = isAI ? 'w-[360px]' : 'w-[320px]';
-    const showAiTurnActionTray = isAI && !typedData.readOnly && !isEditingLabel && (
-        Boolean(typedData.onAddComponent) || Boolean(typedData.onPreviewFromTurn)
-    );
+    const canShowPreviewFromTurn = isAI && !isEditingLabel && Boolean(typedData.onPreviewFromTurn);
+    const canShowAddComponent = isAI && !typedData.readOnly && !isEditingLabel && Boolean(typedData.onAddComponent);
+    const showAiTurnActionTray = canShowPreviewFromTurn || canShowAddComponent;
     const trayButtonClassName = 'h-6 w-6 shrink-0 rounded-none border-0 bg-transparent text-shell-accent shadow-none hover:bg-shell-accent-soft hover:text-shell-accent-text focus-visible:ring-shell-accent/20';
 
     return (
@@ -166,7 +166,7 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
                         onClick={(event) => event.stopPropagation()}
                         onPointerDown={(event) => event.stopPropagation()}
                     >
-                        {typedData.onPreviewFromTurn && (
+                        {canShowPreviewFromTurn && (
                             <ActionTooltip content="Play prototype from here">
                                 <ShellIconButton
                                     type="button"
@@ -181,14 +181,14 @@ export const TurnNode = memo(({ id, data, selected }: NodeProps) => {
                                         typedData.onPreviewFromTurn?.(nodeId);
                                     }}
                                     onPointerDown={(event) => event.stopPropagation()}
-                                    className={`${trayButtonClassName}${typedData.onAddComponent ? ' border-r border-shell-accent/25' : ''}`}
+                                    className={`${trayButtonClassName}${canShowAddComponent ? ' border-r border-shell-accent/25' : ''}`}
                                 >
                                     <Play size={13} />
                                 </ShellIconButton>
                             </ActionTooltip>
                         )}
 
-                        {typedData.onAddComponent && (
+                        {canShowAddComponent && (
                             <Popover.Root open={isAddComponentPopoverOpen} onOpenChange={setIsAddComponentPopoverOpen}>
                                 <ActionTooltip content="Add component">
                                     <Popover.Trigger asChild>
