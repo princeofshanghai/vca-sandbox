@@ -13,6 +13,7 @@ import { LoadingScreen } from '@/components/ui/loading-screen';
 
 const ComponentLibraryView = lazy(() => import('@/views/ComponentLibraryView'));
 const StudioView = lazy(() => import('@/views/studio/StudioView'));
+const RecruiterSupportDemoView = lazy(() => import('@/views/demo/RecruiterSupportDemoView'));
 
 const RouteLoadingFallback = () => <LoadingScreen fullScreen />;
 
@@ -25,6 +26,11 @@ const App = () => {
             <Route path="/login" element={<LoginView />} />
             <Route path="/share/:id" element={<ShareView />} />
             <Route path="/share/studio/:id" element={<ShareStudioView />} />
+            <Route path="/demo/recruiter-support" element={
+              <Suspense fallback={<RouteLoadingFallback />}>
+                <RecruiterSupportDemoView />
+              </Suspense>
+            } />
 
             <Route path="/" element={
               <ProtectedRoute>
