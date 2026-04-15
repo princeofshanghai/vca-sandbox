@@ -14,6 +14,9 @@ import {
     vcaRichTextEditorContentClassName,
 } from '@/components/vca-components/markdown-renderer/vcaMarkdownTheme';
 import {
+    isEmailLikeHref,
+} from '@/components/vca-components/markdown-renderer/linkHrefUtils';
+import {
     Dialog,
     DialogContent,
     DialogHeader,
@@ -21,25 +24,11 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 
-const EMAIL_ADDRESS_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
-
-const isMailtoHref = (value?: string | null) =>
-    (value || '').trim().toLowerCase().startsWith('mailto:');
-
-const isAutoEmailLink = (value: string) => {
-    const normalizedValue = value.trim();
-
-    if (!normalizedValue) return false;
-    if (isMailtoHref(normalizedValue)) return true;
-
-    return EMAIL_ADDRESS_PATTERN.test(normalizedValue);
-};
-
 const isAllowedEditorLinkHref = (value?: string | null) => {
     if (!value) return false;
     if (value === VCA_PENDING_LINK_HREF) return true;
 
-    return !isMailtoHref(value);
+    return !isEmailLikeHref(value);
 };
 
 interface RichTextEditorProps {
@@ -126,8 +115,10 @@ export function RichTextEditor({
                     const prefix = parent === 'ol' ? '1. ' : '- ';
                     return `${prefix}${children.trim()}\n`;
                 }
-                case 'a':
-                    return `[${children}](${element.getAttribute('href') || ''})`;
+                case 'a': {
+                    const href = element.getAttribute('href') || '';
+                    return isAllowedEditorLinkHref(href) ? `[${children}](${href})` : children;
+                }
                 case 'br':
                     return '\n';
                 case 'div':
@@ -146,7 +137,9 @@ export function RichTextEditor({
         html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
         html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
-        html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>');
+        html = html.replace(/\[(.*?)\]\((.*?)\)/g, (_match, text, href) =>
+            isAllowedEditorLinkHref(href) ? `<a href="${href}">${text}</a>` : text
+        );
 
         const paragraphs = html.split(/\n\n+/);
         html = paragraphs.map(p => {
@@ -190,7 +183,7 @@ export function RichTextEditor({
                 isAllowedUri: (url, ctx) => (
                     isAllowedEditorLinkHref(url) && ctx.defaultValidate(url)
                 ),
-                shouldAutoLink: (url) => !isAutoEmailLink(url),
+                shouldAutoLink: (url) => !isEmailLikeHref(url),
                 HTMLAttributes: {
                     class: 'text-shell-accent hover:text-shell-accent-hover hover:underline cursor-pointer',
                 },

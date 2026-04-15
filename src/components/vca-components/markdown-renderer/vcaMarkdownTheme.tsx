@@ -1,5 +1,6 @@
 import { toast } from 'sonner';
 import type { Components } from 'react-markdown';
+import { isEmailLikeHref } from './linkHrefUtils';
 
 export type VCAMarkdownSpacing = 'default' | 'compact';
 export type VCAMarkdownLinkMode = 'interactive' | 'static';
@@ -85,6 +86,10 @@ export function createVCAMarkdownComponents({
 
     return {
         a: ({ node: _node, children, ...props }) => {
+            if (isEmailLikeHref(props.href)) {
+                return <span className={`${baseTextClasses} vca-static-link`}>{children}</span>;
+            }
+
             if (isPendingVCALinkHref(props.href)) {
                 if (linkMode === 'static') {
                     return <span className={`${staticLinkClasses} vca-static-link`}>{children}</span>;
