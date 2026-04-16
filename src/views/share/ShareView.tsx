@@ -688,6 +688,7 @@ export const ShareView = () => {
                     steps: data.content?.steps || [],
                     connections: data.content?.connections || [],
                     startStepId: data.content?.startStepId,
+                    annotations: data.content?.annotations || [],
                     settings: data.content?.settings || INITIAL_FLOW.settings,
                     lastModified: new Date(data.updated_at).getTime(),
                 };

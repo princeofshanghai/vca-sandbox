@@ -1,5 +1,5 @@
 import { VcaIcon } from '@/components/vca-components/icons/VcaIcon';
-import { Play, Split, UserRound, StickyNote, MessageCircle } from 'lucide-react';
+import { Play, Split, UserRound, StickyNote, MessageCircle, Type, Square } from 'lucide-react';
 import { ActionTooltip } from './ActionTooltip';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { cn } from '@/utils/cn';
@@ -10,6 +10,8 @@ interface FloatingToolbarProps {
     onAddUserTurn?: () => void;
     onAddCondition?: () => void;
     onAddNote?: () => void;
+    onAddText?: () => void;
+    onAddRectangle?: () => void;
     onToggleComments: () => void;
     isCommentsActive?: boolean;
     showCreationTools?: boolean;
@@ -74,11 +76,23 @@ export function FloatingToolbar({
     onAddUserTurn,
     onAddCondition,
     onAddNote,
+    onAddText,
+    onAddRectangle,
     onToggleComments,
     isCommentsActive = false,
     showCreationTools = true,
     commentButtonLabel = 'Comments',
 }: FloatingToolbarProps) {
+    const handleToolbarAction = (
+        action?: () => void,
+    ) => (event: React.MouseEvent<HTMLButtonElement>) => {
+        if (event.detail > 0) {
+            event.currentTarget.blur();
+        }
+
+        action?.();
+    };
+
     const onDragStart = (event: React.DragEvent, nodeType: string) => {
         event.dataTransfer.setData('application/reactflow', nodeType);
         event.dataTransfer.effectAllowed = 'move';
@@ -90,11 +104,13 @@ export function FloatingToolbar({
         const userAccent = 'rgb(var(--shell-node-user) / 1)';
         const conditionAccent = 'rgb(var(--shell-node-condition) / 1)';
         const noteAccent = 'rgb(var(--shell-node-note) / 1)';
+        const textAccent = 'rgb(var(--shell-text) / 1)';
         const startSoft = 'rgb(var(--shell-node-start-surface) / 1)';
         const aiSoft = 'rgb(var(--shell-node-ai-surface) / 1)';
         const userSoft = 'rgb(var(--shell-node-user-surface) / 1)';
         const conditionSoft = 'rgb(var(--shell-node-condition-surface) / 1)';
         const noteSoft = 'rgb(var(--shell-node-note) / 0.14)';
+        const annotationSoft = 'rgb(var(--shell-surface-subtle) / 0.92)';
 
         switch (nodeType) {
             case 'start':
@@ -142,6 +158,24 @@ export function FloatingToolbar({
                     width: 180,
                 });
                 break;
+            case 'text':
+                dragPreview = createDragPreview({
+                    label: 'Text',
+                    icon: <Type className="text-shell-text" size={20} />,
+                    accentColor: textAccent,
+                    bgColor: annotationSoft,
+                    width: 160,
+                });
+                break;
+            case 'rectangle':
+                dragPreview = createDragPreview({
+                    label: 'Rectangle',
+                    icon: <Square className="text-shell-text" size={18} />,
+                    accentColor: textAccent,
+                    bgColor: annotationSoft,
+                    width: 180,
+                });
+                break;
         }
 
         if (dragPreview) {
@@ -171,7 +205,7 @@ export function FloatingToolbar({
                         <ActionTooltip content="AI turn" description="What the AI assistant does" shortcut="A">
                             <button
                                 type="button"
-                                onClick={onAddAiTurn}
+                                onClick={handleToolbarAction(onAddAiTurn)}
                                 draggable
                                 onDragStart={(e) => onDragStart(e, 'turn')}
                                 className={cn(
@@ -186,7 +220,7 @@ export function FloatingToolbar({
                         <ActionTooltip content="User turn" description="What the user does" shortcut="U">
                             <button
                                 type="button"
-                                onClick={onAddUserTurn}
+                                onClick={handleToolbarAction(onAddUserTurn)}
                                 draggable
                                 onDragStart={(e) => onDragStart(e, 'user-turn')}
                                 className={cn(
@@ -201,7 +235,7 @@ export function FloatingToolbar({
                         <ActionTooltip content="Condition" description="Choose different paths" shortcut="D">
                             <button
                                 type="button"
-                                onClick={onAddCondition}
+                                onClick={handleToolbarAction(onAddCondition)}
                                 draggable
                                 onDragStart={(e) => onDragStart(e, 'condition')}
                                 className={cn(
@@ -216,7 +250,7 @@ export function FloatingToolbar({
                         <ActionTooltip content="Start" description="Add new flow" shortcut="S">
                             <button
                                 type="button"
-                                onClick={onAddStart}
+                                onClick={handleToolbarAction(onAddStart)}
                                 draggable
                                 onDragStart={(e) => onDragStart(e, 'start')}
                                 className={cn(
@@ -236,7 +270,7 @@ export function FloatingToolbar({
                             type="button"
                             draggable
                             onDragStart={(e) => onDragStart(e, 'note')}
-                            onClick={onAddNote}
+                            onClick={handleToolbarAction(onAddNote)}
                             className={cn(
                                 'group relative flex items-center justify-center w-10 h-10 rounded-md transition-colors tooltip-trigger',
                                 'hover:bg-shell-surface cursor-grab active:cursor-grabbing'
@@ -245,13 +279,43 @@ export function FloatingToolbar({
                             <StickyNote className="text-shell-node-note" size={20} fill="currentColor" />
                         </button>
                     </ActionTooltip>
+
+                    <ActionTooltip content="Text" shortcut="T">
+                        <button
+                            type="button"
+                            draggable
+                            onDragStart={(e) => onDragStart(e, 'text')}
+                            onClick={handleToolbarAction(onAddText)}
+                            className={cn(
+                                'group relative flex items-center justify-center w-10 h-10 rounded-md transition-colors tooltip-trigger',
+                                'hover:bg-shell-surface cursor-grab active:cursor-grabbing'
+                            )}
+                        >
+                            <Type className="text-shell-text" size={20} />
+                        </button>
+                    </ActionTooltip>
+
+                    <ActionTooltip content="Rectangle" shortcut="R">
+                        <button
+                            type="button"
+                            draggable
+                            onDragStart={(e) => onDragStart(e, 'rectangle')}
+                            onClick={handleToolbarAction(onAddRectangle)}
+                            className={cn(
+                                'group relative flex items-center justify-center w-10 h-10 rounded-md transition-colors tooltip-trigger',
+                                'hover:bg-shell-surface cursor-grab active:cursor-grabbing'
+                            )}
+                        >
+                            <Square className="text-shell-text" size={18} />
+                        </button>
+                    </ActionTooltip>
                 </>
             ) : null}
 
             <ActionTooltip content={commentButtonLabel} shortcut="C">
                 <button
                     type="button"
-                    onClick={onToggleComments}
+                    onClick={handleToolbarAction(onToggleComments)}
                     aria-pressed={isCommentsActive}
                     aria-keyshortcuts="C"
                     className={cn(

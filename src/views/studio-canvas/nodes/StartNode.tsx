@@ -66,7 +66,7 @@ export const StartNode = memo(({ id, data, selected }: NodeProps) => {
                 <NodeToolbar
                     isVisible
                     position={Position.Top}
-                    offset={36}
+                    offset={16}
                     className="nodrag nopan flex items-center gap-2 rounded-xl border border-shell-border/70 bg-shell-bg px-2 py-1.5 shadow-lg"
                 >
                     {typedData.isDefault ? (
@@ -110,7 +110,7 @@ export const StartNode = memo(({ id, data, selected }: NodeProps) => {
             ) : null}
 
             <div
-                className={`flex min-w-[180px] max-w-[280px] items-center gap-2 rounded-full border px-4 py-2.5 text-[rgb(var(--shell-node-start-text)/1)] shadow-sm transition-colors bg-[rgb(var(--shell-node-start-surface)/1)] ${borderClassName}`}
+                className={`flex min-w-[220px] max-w-[360px] items-center gap-2 rounded-full border px-4 py-2.5 text-[rgb(var(--shell-node-start-text)/1)] shadow-sm transition-colors bg-[rgb(var(--shell-node-start-surface)/1)] ${borderClassName}`}
                 onDoubleClick={(event) => {
                     if (typedData.readOnly) {
                         return;
@@ -139,9 +139,15 @@ export const StartNode = memo(({ id, data, selected }: NodeProps) => {
                     )}
                 </div>
                 {typedData.isDefault ? (
-                    <span className="shrink-0 rounded-full border border-[rgb(var(--shell-node-start)/0.24)] bg-[rgb(var(--shell-node-start)/0.9)] px-2 py-1 text-[10px] font-medium leading-none text-[rgb(var(--shell-node-start-text)/1)]">
-                        Default
-                    </span>
+                    <ShellTooltip label="Default flow">
+                        <span
+                            className="shrink-0 rounded-full border border-[rgb(var(--shell-node-start)/0.2)] bg-[rgb(var(--shell-node-start)/0.12)] p-1.5 text-[rgb(var(--shell-node-start)/1)]"
+                            role="img"
+                            aria-label="Default flow"
+                        >
+                            <Star size={12} className="fill-current" />
+                        </span>
+                    </ShellTooltip>
                 ) : null}
             </div>
 

@@ -25,7 +25,14 @@ import { UserTurnNode } from './nodes/UserTurnNode';
 import { ConditionNode } from './nodes/ConditionNode';
 import { StartNode as StartNodeComponent } from './nodes/StartNode';
 import { NoteNode } from './nodes/NoteNode';
+import { AnnotationTextNode } from './nodes/AnnotationTextNode';
+import { AnnotationRectangleNode } from './nodes/AnnotationRectangleNode';
 import {
+    CanvasAnnotation,
+    CanvasRectangleAnnotation,
+    CanvasRectangleAnnotationColor,
+    CanvasTextAnnotation,
+    CanvasTextAnnotationSize,
     Flow,
     Component,
     ComponentType,
@@ -42,11 +49,16 @@ import {
     ConfirmationCardContent,
     CheckboxGroupContent,
 } from '../studio/types';
+import {
+    DEFAULT_RECTANGLE_ANNOTATION_COLOR,
+    resolveRectangleAnnotationColor,
+} from '../studio/annotationColors';
 import { useCallback, useMemo, useEffect, useState, useRef } from 'react';
 import { SelectionState } from './types';
 import { FloatingToolbar } from './components/FloatingToolbar';
 import { ZoomControls } from './components/ZoomControls';
 import { ActionTooltip } from './components/ActionTooltip';
+import { AnnotationToolbar } from './components/AnnotationToolbar';
 import {
     ConnectionLine,
     FrozenConnectionPreview,
@@ -54,7 +66,7 @@ import {
 } from './components/ConnectionLine';
 import { ConnectionQuickAddMenu, QuickAddNodeType } from './components/ConnectionQuickAddMenu';
 import { ShareDialog } from '../studio/components/ShareDialog';
-import { ArrowLeft, ChevronDown, Download, ExternalLink, Grid3x3, PanelRightOpen, Play, Split, StickyNote, UserRound } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Download, ExternalLink, Grid3x3, PanelRightOpen, Play, Split, Square, StickyNote, Type, UserRound } from 'lucide-react';
 import {
     ShellButton,
     ShellCoachmark,
@@ -121,6 +133,8 @@ const nodeTypes: NodeTypes = {
     condition: ConditionNode,
     start: StartNodeComponent,
     note: NoteNode,
+    'annotation-text': AnnotationTextNode,
+    'annotation-rectangle': AnnotationRectangleNode,
 };
 
 // Helper function to create default content for each component type
@@ -226,11 +240,17 @@ interface QuickAddConnectionPreviewState {
     variant: ConnectionPreviewVariant;
 }
 
-type ToolbarPlacementType = QuickAddNodeType | 'note' | 'start';
+type ToolbarPlacementType = QuickAddNodeType | 'note' | 'start' | 'text' | 'rectangle';
 
 interface PendingToolbarPlacementState {
     type: ToolbarPlacementType;
     canvasPosition: { x: number; y: number } | null;
+}
+
+interface AnnotationResizeUpdate {
+    position: { x: number; y: number };
+    width: number;
+    height: number;
 }
 
 type CanvasPinPoint = {
@@ -283,7 +303,13 @@ const TOOLBAR_NODE_ESTIMATED_DIMENSIONS: Record<ToolbarPlacementType, { width: n
     'user-turn': { width: 280, height: 64 },
     condition: { width: 280, height: 220 },
     note: { width: 300, height: 112 },
+    text: { width: 240, height: 72 },
+    rectangle: { width: 240, height: 140 },
 };
+const ANNOTATION_NODE_Z_INDEX_BASE = 1;
+const FLOW_NODE_Z_INDEX_BASE = 100;
+const DEFAULT_TEXT_ANNOTATION_SIZE: CanvasTextAnnotationSize = 'lg';
+const DEFAULT_TEXT_ANNOTATION_WIDTH = 240;
 const SELECTION_ACTION_TOOLBAR_OFFSET_PX = 8;
 const AUTO_ORGANIZE_LAYER_SPACING_PX = 104;
 const AUTO_ORGANIZE_NODE_SPACING_PX = 48;
@@ -307,6 +333,10 @@ const clampValue = (value: number, min: number, max: number) => {
     if (max < min) return min;
     return Math.min(Math.max(value, min), max);
 };
+
+const getCanvasTextAnnotationWidth = (annotation: Pick<CanvasTextAnnotation, 'text' | 'width'>) => (
+    annotation.width ?? Math.min(Math.max((annotation.text.trim().length || 8) * 18, 120), 320)
+);
 
 const getRectBounds = <T extends { x: number; y: number; width: number; height: number }>(items: T[]) => {
     if (items.length === 0) {
@@ -423,6 +453,20 @@ const getToolbarPlacementPreviewConfig = (type: ToolbarPlacementType): {
                 borderClassName: 'border-shell-node-note',
                 surfaceClassName: 'bg-[rgb(var(--shell-node-note)/0.14)]',
                 icon: <StickyNote className="text-shell-node-note" size={18} fill="currentColor" />,
+            };
+        case 'text':
+            return {
+                label: 'Text',
+                borderClassName: 'border-shell-border',
+                surfaceClassName: 'bg-shell-bg/95',
+                icon: <Type className="text-shell-text" size={18} />,
+            };
+        case 'rectangle':
+            return {
+                label: 'Rectangle',
+                borderClassName: 'border-[rgba(100,116,139,0.38)]',
+                surfaceClassName: 'bg-[rgba(148,163,184,0.26)]',
+                icon: <Square className="text-shell-text" size={18} />,
             };
     }
 };
@@ -1010,6 +1054,7 @@ function CanvasEditorInner({
 
     // Selection state
     const [selection, setSelection] = useState<SelectionState | null>(null);
+    const [editingTextAnnotationId, setEditingTextAnnotationId] = useState<string | null>(null);
     const [pendingReactFlowSelectedNodeIds, setPendingReactFlowSelectedNodeIds] = useState<string[] | null>(null);
     const [isSelectionLayoutPending, setIsSelectionLayoutPending] = useState(false);
     const [isSelectionGestureActive, setIsSelectionGestureActive] = useState(false);
@@ -1024,6 +1069,7 @@ function CanvasEditorInner({
     } | null>(null);
 
     const selectionRef = useRef<SelectionState | null>(selection);
+    const previewAnnotationResizeRef = useRef<(annotationId: string, nextBounds: AnnotationResizeUpdate) => void>(() => {});
     const flowRef = useRef(flow);
     const elkRef = useRef<ElkLayoutEngine | null>(null);
     const elkLoadPromiseRef = useRef<Promise<ElkLayoutEngine> | null>(null);
@@ -1304,6 +1350,16 @@ function CanvasEditorInner({
     }, [selection]);
 
     const setCanvasSelection = useCallback((nextSelection: SelectionState | null) => {
+        const nextSelectedNodeId = getSingleSelectedNodeId(nextSelection);
+
+        setEditingTextAnnotationId((currentId) => {
+            if (!currentId) {
+                return currentId;
+            }
+
+            return nextSelectedNodeId === currentId ? currentId : null;
+        });
+
         selectionRef.current = nextSelection;
         setSelection(nextSelection);
     }, []);
@@ -1329,11 +1385,31 @@ function CanvasEditorInner({
         () => selection?.type === 'nodes' ? selection.nodeIds : [],
         [selection]
     );
+    const selectedNodeId = useMemo(() => getSingleSelectedNodeId(selection), [selection]);
+    const selectedStepIdSet = useMemo(
+        () => new Set((flow.steps || []).map((step) => step.id)),
+        [flow.steps]
+    );
+    const selectedAnnotation = useMemo(
+        () => (flow.annotations || []).find((annotation) => annotation.id === selectedNodeId) || null,
+        [flow.annotations, selectedNodeId]
+    );
+    const selectedStepNodeIds = useMemo(
+        () => multiSelectedNodeIds.filter((nodeId) => selectedStepIdSet.has(nodeId)),
+        [multiSelectedNodeIds, selectedStepIdSet]
+    );
     const showSelectionAutoOrganizeAction =
         !isFlowReadOnly &&
         !isCommentModeActive &&
         !isSelectionGestureActive &&
-        multiSelectedNodeIds.length > 1;
+        multiSelectedNodeIds.length > 1 &&
+        selectedStepNodeIds.length === multiSelectedNodeIds.length;
+
+    useEffect(() => {
+        if (isFlowReadOnly) {
+            setEditingTextAnnotationId(null);
+        }
+    }, [isFlowReadOnly]);
 
     useEffect(() => {
         flowRef.current = flow;
@@ -1421,7 +1497,7 @@ function CanvasEditorInner({
         };
     }, [viewport.x, viewport.y, viewport.zoom]);
 
-    const focusNodeSelection = useCallback((nodeId: string) => {
+    const focusNodeSelection = useCallback((nodeId: string, options?: { enterTextEditMode?: boolean }) => {
         let attempts = 0;
         const maxAttempts = 24;
 
@@ -1430,6 +1506,9 @@ function CanvasEditorInner({
             if (nodeEl || attempts >= maxAttempts) {
                 setCanvasSelection({ type: 'node', nodeId });
                 setPendingReactFlowSelectedNodeIds([nodeId]);
+                if (options?.enterTextEditMode) {
+                    setEditingTextAnnotationId(nodeId);
+                }
                 return;
             }
 
@@ -1833,6 +1912,44 @@ function CanvasEditorInner({
             return;
         }
 
+        if (type === 'text') {
+            const newTextAnnotation: CanvasTextAnnotation = {
+                id: crypto.randomUUID(),
+                type: 'text',
+                text: '',
+                size: DEFAULT_TEXT_ANNOTATION_SIZE,
+                width: DEFAULT_TEXT_ANNOTATION_WIDTH,
+                position,
+            };
+
+            applyFlowUpdate({
+                ...currentFlow,
+                annotations: [...(currentFlow.annotations || []), newTextAnnotation],
+                lastModified: Date.now(),
+            });
+            focusNodeSelection(newTextAnnotation.id, { enterTextEditMode: true });
+            return;
+        }
+
+        if (type === 'rectangle') {
+            const newRectangleAnnotation: CanvasRectangleAnnotation = {
+                id: crypto.randomUUID(),
+                type: 'rectangle',
+                position,
+                width: TOOLBAR_NODE_ESTIMATED_DIMENSIONS.rectangle.width,
+                height: TOOLBAR_NODE_ESTIMATED_DIMENSIONS.rectangle.height,
+                color: DEFAULT_RECTANGLE_ANNOTATION_COLOR,
+            };
+
+            applyFlowUpdate({
+                ...currentFlow,
+                annotations: [...(currentFlow.annotations || []), newRectangleAnnotation],
+                lastModified: Date.now(),
+            });
+            focusNodeSelection(newRectangleAnnotation.id);
+            return;
+        }
+
         const newNote: Note = {
             id: crypto.randomUUID(),
             type: 'note',
@@ -2055,6 +2172,7 @@ function CanvasEditorInner({
     const handleDeselect = useCallback(() => {
         setCanvasSelection(null);
         setPendingReactFlowSelectedNodeIds([]);
+        setEditingTextAnnotationId(null);
     }, [setCanvasSelection]);
 
     useEffect(() => {
@@ -2289,6 +2407,7 @@ function CanvasEditorInner({
         }
 
         const updatedSteps = (currentFlow.steps || []).filter((step) => !deletedIds.has(step.id));
+        const updatedAnnotations = (currentFlow.annotations || []).filter((annotation) => !deletedIds.has(annotation.id));
         const updatedConnections = (currentFlow.connections || []).filter(
             (connection) => !deletedIds.has(connection.source) && !deletedIds.has(connection.target)
         );
@@ -2300,6 +2419,7 @@ function CanvasEditorInner({
         applyFlowUpdate({
             ...currentFlow,
             steps: updatedSteps,
+            annotations: updatedAnnotations,
             connections: updatedConnections,
             startStepId: nextStartStepId || undefined,
             lastModified: Date.now(),
@@ -2375,6 +2495,150 @@ function CanvasEditorInner({
         );
         applyFlowUpdate({ ...currentFlow, steps: updatedSteps, lastModified: Date.now() });
     }, [applyFlowUpdate]);
+
+    const updateAnnotations = useCallback((updater: (annotations: CanvasAnnotation[]) => CanvasAnnotation[]) => {
+        const currentFlow = flowRef.current;
+        const currentAnnotations = currentFlow.annotations || [];
+        const nextAnnotations = updater(currentAnnotations);
+
+        applyFlowUpdate({
+            ...currentFlow,
+            annotations: nextAnnotations,
+            lastModified: Date.now(),
+        });
+    }, [applyFlowUpdate]);
+
+    const handleAnnotationTextChange = useCallback((annotationId: string, text: string) => {
+        const currentFlow = flowRef.current;
+        const currentAnnotations = currentFlow.annotations || [];
+        const currentAnnotation = currentAnnotations.find((annotation) => (
+            annotation.id === annotationId && annotation.type === 'text'
+        ));
+
+        if (!currentAnnotation || currentAnnotation.type !== 'text') {
+            return;
+        }
+
+        const nextText = text.trim();
+        const shouldRemoveEmptyDraft = currentAnnotation.text.trim().length === 0 && nextText.length === 0;
+
+        if (shouldRemoveEmptyDraft) {
+            applyFlowUpdate({
+                ...currentFlow,
+                annotations: currentAnnotations.filter((annotation) => annotation.id !== annotationId),
+                lastModified: Date.now(),
+            });
+
+            if (getSelectionNodeIds(selectionRef.current).includes(annotationId)) {
+                handleDeselect();
+            } else {
+                setEditingTextAnnotationId((currentId) => currentId === annotationId ? null : currentId);
+            }
+            return;
+        }
+
+        updateAnnotations((annotations) =>
+            annotations.map((annotation) =>
+                annotation.id === annotationId && annotation.type === 'text'
+                    ? { ...annotation, text }
+                    : annotation
+            )
+        );
+        setEditingTextAnnotationId((currentId) => currentId === annotationId ? null : currentId);
+    }, [applyFlowUpdate, handleDeselect, updateAnnotations]);
+
+    const handleAnnotationTextEditStart = useCallback((annotationId: string) => {
+        if (isFlowReadOnly) return;
+        focusNodeSelection(annotationId, { enterTextEditMode: true });
+    }, [focusNodeSelection, isFlowReadOnly]);
+
+    const handleAnnotationTextEditStop = useCallback((annotationId: string) => {
+        setEditingTextAnnotationId((currentId) => currentId === annotationId ? null : currentId);
+    }, []);
+
+    const handleAnnotationTextSizeChange = useCallback((annotationId: string, size: CanvasTextAnnotationSize) => {
+        updateAnnotations((annotations) =>
+            annotations.map((annotation) =>
+                annotation.id === annotationId && annotation.type === 'text'
+                    ? { ...annotation, size }
+                    : annotation
+            )
+        );
+    }, [updateAnnotations]);
+
+    const handleAnnotationRectangleColorChange = useCallback((
+        annotationId: string,
+        color: CanvasRectangleAnnotationColor
+    ) => {
+        updateAnnotations((annotations) =>
+            annotations.map((annotation) =>
+                annotation.id === annotationId && annotation.type === 'rectangle'
+                    ? { ...annotation, color }
+                    : annotation
+            )
+        );
+    }, [updateAnnotations]);
+
+    const handleAnnotationResize = useCallback((
+        annotationId: string,
+        nextBounds: AnnotationResizeUpdate
+    ) => {
+        updateAnnotations((annotations) =>
+            annotations.map((annotation) =>
+                annotation.id === annotationId
+                    ? annotation.type === 'rectangle'
+                        ? {
+                            ...annotation,
+                            position: nextBounds.position,
+                            width: nextBounds.width,
+                            height: nextBounds.height,
+                        }
+                        : {
+                            ...annotation,
+                            position: nextBounds.position,
+                            width: nextBounds.width,
+                        }
+                    : annotation
+            )
+        );
+    }, [updateAnnotations]);
+
+    const handleDeleteAnnotation = useCallback((annotationId: string) => {
+        updateAnnotations((annotations) => annotations.filter((annotation) => annotation.id !== annotationId));
+        setEditingTextAnnotationId((currentId) => currentId === annotationId ? null : currentId);
+
+        if (getSelectionNodeIds(selectionRef.current).includes(annotationId)) {
+            handleDeselect();
+        }
+    }, [handleDeselect, updateAnnotations]);
+
+    const handleMoveAnnotationToFront = useCallback((annotationId: string) => {
+        updateAnnotations((annotations) => {
+            const targetAnnotation = annotations.find((annotation) => annotation.id === annotationId);
+            if (!targetAnnotation) {
+                return annotations;
+            }
+
+            return [
+                ...annotations.filter((annotation) => annotation.id !== annotationId),
+                targetAnnotation,
+            ];
+        });
+    }, [updateAnnotations]);
+
+    const handleSendAnnotationToBack = useCallback((annotationId: string) => {
+        updateAnnotations((annotations) => {
+            const targetAnnotation = annotations.find((annotation) => annotation.id === annotationId);
+            if (!targetAnnotation) {
+                return annotations;
+            }
+
+            return [
+                targetAnnotation,
+                ...annotations.filter((annotation) => annotation.id !== annotationId),
+            ];
+        });
+    }, [updateAnnotations]);
 
     const resolveDefaultUserTurnInputType = useCallback((
         sourceNodeId: string,
@@ -2707,132 +2971,198 @@ function CanvasEditorInner({
 
     // Convert flow steps to React Flow nodes
     const baseNodes = useMemo(() => {
+        const annotationNodes = (flow.annotations || []).map((annotation, index) => {
+            if (annotation.type === 'text') {
+                const textWidth = getCanvasTextAnnotationWidth(annotation);
+
+                return {
+                    id: annotation.id,
+                    type: 'annotation-text',
+                    position: annotation.position,
+                    zIndex: ANNOTATION_NODE_Z_INDEX_BASE + index,
+                    data: {
+                        text: annotation.text,
+                        size: annotation.size,
+                        width: textWidth,
+                        readOnly: isFlowReadOnly,
+                        isEditing: editingTextAnnotationId === annotation.id,
+                        onTextChange: handleAnnotationTextChange,
+                        onStartEditing: handleAnnotationTextEditStart,
+                        onStopEditing: handleAnnotationTextEditStop,
+                        onResizePreview: (annotationId: string, nextBounds: AnnotationResizeUpdate) => {
+                            previewAnnotationResizeRef.current(annotationId, nextBounds);
+                        },
+                        onResize: handleAnnotationResize,
+                    },
+                };
+            }
+
+            return {
+                id: annotation.id,
+                type: 'annotation-rectangle',
+                position: annotation.position,
+                zIndex: ANNOTATION_NODE_Z_INDEX_BASE + index,
+                data: {
+                    width: annotation.width,
+                    height: annotation.height,
+                    color: resolveRectangleAnnotationColor(annotation),
+                    readOnly: isFlowReadOnly,
+                    onResizePreview: (annotationId: string, nextBounds: AnnotationResizeUpdate) => {
+                        previewAnnotationResizeRef.current(annotationId, nextBounds);
+                    },
+                    onResize: handleAnnotationResize,
+                },
+                style: {
+                    width: annotation.width,
+                    height: annotation.height,
+                },
+            };
+        });
+
         // Use new steps[] if available, otherwise fall back to old blocks[]
         const steps = flow.steps || [];
 
         if (steps.length === 0) {
             // Fallback: convert old blocks to display (for backward compatibility)
-            return flow.blocks.map((block, index) => ({
-                id: block.id,
-                type: 'turn',
-                position: { x: 250, y: index * 150 },
-                data: {
-                    speaker: block.type as 'user' | 'ai',
-                    phase: block.phase,
-                    label: block.type === 'ai' && 'variant' in block
-                        ? block.variant
-                        : undefined,
-                    entryPoint: flow.settings.entryPoint,
-                    readOnly: isFlowReadOnly,
-                    onSelectComponent: handleSelectComponent,
-                    onDeselect: handleDeselect,
-                },
-            }));
+            return [
+                ...annotationNodes,
+                ...flow.blocks.map((block, index) => ({
+                    id: block.id,
+                    type: 'turn',
+                    position: { x: 250, y: index * 150 },
+                    zIndex: FLOW_NODE_Z_INDEX_BASE + index,
+                    data: {
+                        speaker: block.type as 'user' | 'ai',
+                        phase: block.phase,
+                        label: block.type === 'ai' && 'variant' in block
+                            ? block.variant
+                            : undefined,
+                        entryPoint: flow.settings.entryPoint,
+                        readOnly: isFlowReadOnly,
+                        onSelectComponent: handleSelectComponent,
+                        onDeselect: handleDeselect,
+                    },
+                })),
+            ];
         }
 
         // Use new Turn structure
-        return steps.map((step) => {
-            const commentState = getNodeCommentState();
+        return [
+            ...annotationNodes,
+            ...steps.map((step, index) => {
+                const commentState = getNodeCommentState();
 
-            if (step.type === 'turn') {
-                return {
-                    id: step.id,
-                    type: 'turn',
-                    position: step.position || { x: 250, y: 0 },
-                    data: {
-                        speaker: step.speaker,
-                        phase: step.phase,
-                        label: step.label,
-                        components: step.components,
-                        entryPoint: flow.settings.entryPoint,
-                        readOnly: isFlowReadOnly,
-                        commentState,
-                        onSelectComponent: handleSelectComponent,
-                        onDeselect: handleDeselect,
-                        onComponentReorder: handleTurnComponentReorder,
-                        onComponentDelete: handleDeleteTurnComponent,
-                        onLabelChange: handleTurnLabelChange,
-                        onComponentUpdate: handleTurnComponentUpdate,
-                        onAddComponent: handleTurnAddComponent,
-                        onPreviewFromTurn: handleTurnPreviewFromHere,
-                    },
-                };
-            } else if (step.type === 'user-turn') {
-                return {
-                    id: step.id,
-                    type: 'user-turn',
-                    position: step.position || { x: 250, y: 0 },
-                    data: {
-                        label: step.label,
-                        labelMode: step.labelMode,
-                        autoLabel: step.autoLabel,
-                        inputType: step.inputType || 'text',
-                        triggerValue: step.triggerValue,
-                        readOnly: isFlowReadOnly,
-                        commentState,
-                        onUpdate: handleUserTurnUpdate,
-                        onDelete: handleDeleteFlowNode,
-                    }
-                };
-            } else if (step.type === 'condition') {
-                // Condition node
-                return {
-                    id: step.id,
-                    type: 'condition',
-                    position: step.position || { x: 250, y: 0 },
-                    data: {
-                        label: step.label,
-                        labelMode: step.labelMode,
-                        autoLabel: step.autoLabel,
-                        question: step.question,
-                        branches: step.branches,
-                        readOnly: isFlowReadOnly,
-                        commentState,
-                        onLabelChange: handleConditionLabelChange,
-                        onQuestionChange: handleConditionQuestionChange,
-                        onUpdateBranches: handleConditionUpdateBranches,
-                        onDelete: handleDeleteFlowNode,
-                    },
-                };
-            } else if (step.type === 'note') {
-                return {
-                    id: step.id,
-                    type: 'note',
-                    position: step.position || { x: 250, y: 0 },
-                    data: {
-                        label: step.label,
-                        content: step.content,
-                        readOnly: isFlowReadOnly,
-                        commentState,
-                        onLabelChange: handleNoteLabelChange,
-                        onContentChange: handleNoteContentChange,
-                    },
-                };
-            } else {
-                // Start Node
-                return {
-                    id: step.id,
-                    type: 'start',
-                    position: step.position || { x: 250, y: 0 },
-                    data: {
-                        label: getStartNodeDisplayLabel(step),
-                        readOnly: isFlowReadOnly,
-                        isDefault: step.id === defaultStartStepId,
-                        canDelete: startNodeCount > 1,
-                        onLabelChange: handleStartNodeLabelChange,
-                        onSetDefault: handleSetDefaultStartNode,
-                        onDelete: handleDeleteFlowNode,
-                    },
-                    deletable: startNodeCount > 1,
-                };
-            }
-        });
+                if (step.type === 'turn') {
+                    return {
+                        id: step.id,
+                        type: 'turn',
+                        position: step.position || { x: 250, y: 0 },
+                        zIndex: FLOW_NODE_Z_INDEX_BASE + index,
+                        data: {
+                            speaker: step.speaker,
+                            phase: step.phase,
+                            label: step.label,
+                            components: step.components,
+                            entryPoint: flow.settings.entryPoint,
+                            readOnly: isFlowReadOnly,
+                            commentState,
+                            onSelectComponent: handleSelectComponent,
+                            onDeselect: handleDeselect,
+                            onComponentReorder: handleTurnComponentReorder,
+                            onComponentDelete: handleDeleteTurnComponent,
+                            onLabelChange: handleTurnLabelChange,
+                            onComponentUpdate: handleTurnComponentUpdate,
+                            onAddComponent: handleTurnAddComponent,
+                            onPreviewFromTurn: handleTurnPreviewFromHere,
+                        },
+                    };
+                } else if (step.type === 'user-turn') {
+                    return {
+                        id: step.id,
+                        type: 'user-turn',
+                        position: step.position || { x: 250, y: 0 },
+                        zIndex: FLOW_NODE_Z_INDEX_BASE + index,
+                        data: {
+                            label: step.label,
+                            labelMode: step.labelMode,
+                            autoLabel: step.autoLabel,
+                            inputType: step.inputType || 'text',
+                            triggerValue: step.triggerValue,
+                            readOnly: isFlowReadOnly,
+                            commentState,
+                            onUpdate: handleUserTurnUpdate,
+                            onDelete: handleDeleteFlowNode,
+                        }
+                    };
+                } else if (step.type === 'condition') {
+                    // Condition node
+                    return {
+                        id: step.id,
+                        type: 'condition',
+                        position: step.position || { x: 250, y: 0 },
+                        zIndex: FLOW_NODE_Z_INDEX_BASE + index,
+                        data: {
+                            label: step.label,
+                            labelMode: step.labelMode,
+                            autoLabel: step.autoLabel,
+                            question: step.question,
+                            branches: step.branches,
+                            readOnly: isFlowReadOnly,
+                            commentState,
+                            onLabelChange: handleConditionLabelChange,
+                            onQuestionChange: handleConditionQuestionChange,
+                            onUpdateBranches: handleConditionUpdateBranches,
+                            onDelete: handleDeleteFlowNode,
+                        },
+                    };
+                } else if (step.type === 'note') {
+                    return {
+                        id: step.id,
+                        type: 'note',
+                        position: step.position || { x: 250, y: 0 },
+                        zIndex: FLOW_NODE_Z_INDEX_BASE + index,
+                        data: {
+                            label: step.label,
+                            content: step.content,
+                            readOnly: isFlowReadOnly,
+                            commentState,
+                            onLabelChange: handleNoteLabelChange,
+                            onContentChange: handleNoteContentChange,
+                        },
+                    };
+                } else {
+                    // Start Node
+                    return {
+                        id: step.id,
+                        type: 'start',
+                        position: step.position || { x: 250, y: 0 },
+                        zIndex: FLOW_NODE_Z_INDEX_BASE + index,
+                        data: {
+                            label: getStartNodeDisplayLabel(step),
+                            readOnly: isFlowReadOnly,
+                            isDefault: step.id === defaultStartStepId,
+                            canDelete: startNodeCount > 1,
+                            onLabelChange: handleStartNodeLabelChange,
+                            onSetDefault: handleSetDefaultStartNode,
+                            onDelete: handleDeleteFlowNode,
+                        },
+                        deletable: startNodeCount > 1,
+                    };
+                }
+            }),
+        ];
     }, [
+        editingTextAnnotationId,
         defaultStartStepId,
+        flow.annotations,
         flow.blocks,
         isFlowReadOnly,
         flow.settings.entryPoint,
         flow.steps,
+        handleAnnotationResize,
+        handleAnnotationTextChange,
+        handleAnnotationTextEditStart,
+        handleAnnotationTextEditStop,
         handleConditionLabelChange,
         handleConditionQuestionChange,
         handleConditionUpdateBranches,
@@ -2887,6 +3217,62 @@ function CanvasEditorInner({
 
     const [nodes, setNodes, onNodesChange] = useNodesState(baseNodes as Node[]);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges as Edge[]);
+
+    const handleAnnotationResizePreview = useCallback((
+        annotationId: string,
+        nextBounds: AnnotationResizeUpdate
+    ) => {
+        setNodes((currentNodes) => currentNodes.map((node) => {
+            if (node.id !== annotationId) {
+                return node;
+            }
+
+            if (node.type === 'annotation-rectangle') {
+                const data = node.data as {
+                    width: number;
+                    height: number;
+                    [key: string]: unknown;
+                };
+
+                return {
+                    ...node,
+                    position: nextBounds.position,
+                    data: {
+                        ...data,
+                        width: nextBounds.width,
+                        height: nextBounds.height,
+                    },
+                    style: {
+                        ...(node.style || {}),
+                        width: nextBounds.width,
+                        height: nextBounds.height,
+                    },
+                };
+            }
+
+            if (node.type === 'annotation-text') {
+                const data = node.data as {
+                    width: number;
+                    [key: string]: unknown;
+                };
+
+                return {
+                    ...node,
+                    position: nextBounds.position,
+                    data: {
+                        ...data,
+                        width: nextBounds.width,
+                    },
+                };
+            }
+
+            return node;
+        }));
+    }, [setNodes]);
+
+    useEffect(() => {
+        previewAnnotationResizeRef.current = handleAnnotationResizePreview;
+    }, [handleAnnotationResizePreview]);
 
     useEffect(() => {
         if (!comments) {
@@ -3292,10 +3678,11 @@ function CanvasEditorInner({
     const onNodeDragStop = useCallback((_: React.MouseEvent, _node: Node, nodes: Node[]) => {
         // Handle both single and multi-selection dragging by updating all dragged nodes
         // nodes array contains all nodes that serve as the drag selection
+        const currentFlow = flowRef.current;
         const draggedNodes = nodes && nodes.length > 0 ? nodes : [_node];
         const draggedNodeMap = new Map(draggedNodes.map(n => [n.id, n]));
 
-        const updatedSteps = flow.steps?.map(s => {
+        const updatedSteps = currentFlow.steps?.map(s => {
             const movedNode = draggedNodeMap.get(s.id);
             if (movedNode) {
                 return { ...s, position: movedNode.position };
@@ -3303,8 +3690,25 @@ function CanvasEditorInner({
             return s;
         });
 
-        applyFlowUpdate({ ...flow, steps: updatedSteps, lastModified: Date.now() });
-    }, [flow, applyFlowUpdate]);
+        const updatedAnnotations = (currentFlow.annotations || []).map((annotation) => {
+            const movedNode = draggedNodeMap.get(annotation.id);
+            if (!movedNode) {
+                return annotation;
+            }
+
+            return {
+                ...annotation,
+                position: movedNode.position,
+            };
+        });
+
+        applyFlowUpdate({
+            ...currentFlow,
+            steps: updatedSteps,
+            annotations: updatedAnnotations,
+            lastModified: Date.now(),
+        });
+    }, [applyFlowUpdate]);
 
     // Connection handler
     const onConnect: OnConnect = useCallback(
@@ -3883,6 +4287,18 @@ function CanvasEditorInner({
                     armPendingToolbarPlacement('note');
                     return;
                 }
+
+                if (keyLower === 't') {
+                    e.preventDefault();
+                    armPendingToolbarPlacement('text');
+                    return;
+                }
+
+                if (keyLower === 'r') {
+                    e.preventDefault();
+                    armPendingToolbarPlacement('rectangle');
+                    return;
+                }
             }
 
             if (e.key === 'Escape') {
@@ -4067,7 +4483,15 @@ function CanvasEditorInner({
                 return;
             }
 
-            if (type !== 'start' && type !== 'turn' && type !== 'user-turn' && type !== 'condition' && type !== 'note') {
+            if (
+                type !== 'start' &&
+                type !== 'turn' &&
+                type !== 'user-turn' &&
+                type !== 'condition' &&
+                type !== 'note' &&
+                type !== 'text' &&
+                type !== 'rectangle'
+            ) {
                 return;
             }
 
@@ -4542,6 +4966,7 @@ function CanvasEditorInner({
                     onDragOver={isFlowReadOnly ? undefined : onDragOver}
                     onDrop={isFlowReadOnly ? undefined : onDrop}
                     connectionLineComponent={connectionLineWithPreview}
+                    zIndexMode="manual"
                     className={`bg-shell-studio-canvas ${!isFlowReadOnly && isAltPressed ? 'is-alt-pressed' : ''} ${!isFlowReadOnly && pendingToolbarPlacement ? 'is-placement-active' : ''} ${isCommentModeActive ? 'is-comment-mode' : ''}`}
                 >
                     {showSelectionAutoOrganizeAction ? (
@@ -4580,6 +5005,17 @@ function CanvasEditorInner({
                         </NodeToolbar>
                     ) : null}
 
+                    {selectedAnnotation && !isFlowReadOnly && !isCommentModeActive ? (
+                        <AnnotationToolbar
+                            annotation={selectedAnnotation}
+                            onTextSizeChange={(size) => handleAnnotationTextSizeChange(selectedAnnotation.id, size)}
+                            onRectangleColorChange={(color) => handleAnnotationRectangleColorChange(selectedAnnotation.id, color)}
+                            onBringToFront={() => handleMoveAnnotationToFront(selectedAnnotation.id)}
+                            onSendToBack={() => handleSendAnnotationToBack(selectedAnnotation.id)}
+                            onDelete={() => handleDeleteAnnotation(selectedAnnotation.id)}
+                        />
+                    ) : null}
+
                     <Background color="rgb(var(--shell-studio-canvas-grid) / 1)" gap={20} size={2} />
 
                     {onToggleComments ? (
@@ -4590,6 +5026,8 @@ function CanvasEditorInner({
                             onAddUserTurn={() => createToolbarNodeAtPosition('user-turn', getFloatingToolbarNodePlacement('user-turn'))}
                             onAddCondition={() => createToolbarNodeAtPosition('condition', getFloatingToolbarNodePlacement('condition'))}
                             onAddNote={() => createToolbarNodeAtPosition('note', getFloatingToolbarNodePlacement('note'))}
+                            onAddText={() => createToolbarNodeAtPosition('text', getFloatingToolbarNodePlacement('text'))}
+                            onAddRectangle={() => createToolbarNodeAtPosition('rectangle', getFloatingToolbarNodePlacement('rectangle'))}
                             onToggleComments={() => onToggleComments?.()}
                             isCommentsActive={isCommentModeActive || isCommentsPanelOpen}
                         />

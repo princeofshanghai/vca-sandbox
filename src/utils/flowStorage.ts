@@ -82,6 +82,7 @@ export const INITIAL_FLOW: Flow = {
         }
     ],
     startStepId: 'start-1',
+    annotations: [],
     blocks: []
 };
 
@@ -205,6 +206,7 @@ export const flowStorage = {
             steps: data.content?.steps || [],
             connections: data.content?.connections || [],
             startStepId: data.content?.startStepId,
+            annotations: data.content?.annotations || [],
             blocks: data.content?.blocks || [],
             ownerUserId: typeof data.user_id === 'string' ? data.user_id : undefined,
             metadata: {
@@ -239,6 +241,7 @@ export const flowStorage = {
             steps: flow.steps,
             connections: flow.connections,
             startStepId: flow.startStepId,
+            annotations: flow.annotations,
             blocks: flow.blocks
         };
 

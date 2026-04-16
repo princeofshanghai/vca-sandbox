@@ -99,6 +99,7 @@ export const ShareStudioView = () => {
                     blocks: data.content?.blocks || [],
                     steps: data.content?.steps || [],
                     connections: data.content?.connections || [],
+                    annotations: data.content?.annotations || [],
                     settings: data.content?.settings || INITIAL_FLOW.settings,
                     is_public: data.is_public,
                     lastModified: new Date(data.updated_at).getTime(),

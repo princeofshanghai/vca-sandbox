@@ -19,6 +19,8 @@ interface PreviewSettingsMenuProps {
     onUpdateFlow: (flow: Flow) => void;
     isPremium: boolean;
     onTogglePremium: () => void;
+    showHotspots?: boolean;
+    onShowHotspotsChange?: (checked: boolean) => void;
     tone?: 'default' | 'cinematicDark';
     iconOnly?: boolean;
     size?: 'default' | 'compact';
@@ -31,6 +33,8 @@ export const PreviewSettingsMenu = ({
     onUpdateFlow,
     isPremium,
     onTogglePremium,
+    showHotspots,
+    onShowHotspotsChange,
     tone = 'default',
     iconOnly = false,
     size = 'default',
@@ -38,6 +42,7 @@ export const PreviewSettingsMenu = ({
     shape = 'rounded',
 }: PreviewSettingsMenuProps) => {
     const [isOpen, setIsOpen] = useState(false);
+    const showHotspotsChecked = showHotspots ?? (flow.settings?.showHotspots ?? true);
 
     const updateFlowSetting = (key: 'showDisclaimer' | 'simulateThinking' | 'showHotspots') => {
         onUpdateFlow({
@@ -156,8 +161,15 @@ export const PreviewSettingsMenu = ({
                 <ShellMenuCheckboxItem
                     tone={tone}
                     size={size}
-                    checked={flow.settings?.showHotspots ?? true}
-                    onCheckedChange={() => updateFlowSetting('showHotspots')}
+                    checked={showHotspotsChecked}
+                    onCheckedChange={(checked) => {
+                        if (onShowHotspotsChange) {
+                            onShowHotspotsChange(checked === true);
+                            return;
+                        }
+
+                        updateFlowSetting('showHotspots');
+                    }}
                 >
                     <span>Show hotspots</span>
                 </ShellMenuCheckboxItem>

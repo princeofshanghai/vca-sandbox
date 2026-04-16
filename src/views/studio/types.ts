@@ -61,6 +61,41 @@ export interface GlobalSettings {
     productName: string; // Display name for the product
 }
 
+export type CanvasTextAnnotationSize = 'sm' | 'md' | 'lg' | 'xl';
+export type CanvasRectangleAnnotationColor =
+    | 'slate'
+    | 'red'
+    | 'orange'
+    | 'yellow'
+    | 'green'
+    | 'teal'
+    | 'blue'
+    | 'purple'
+    | 'pink';
+export type CanvasRectangleAnnotationStyle = 'outline' | 'soft';
+
+export interface CanvasAnnotationBase {
+    id: string;
+    position: { x: number; y: number };
+}
+
+export interface CanvasTextAnnotation extends CanvasAnnotationBase {
+    type: 'text';
+    text: string;
+    size: CanvasTextAnnotationSize;
+    width?: number;
+}
+
+export interface CanvasRectangleAnnotation extends CanvasAnnotationBase {
+    type: 'rectangle';
+    width: number;
+    height: number;
+    color?: CanvasRectangleAnnotationColor;
+    style?: CanvasRectangleAnnotationStyle;
+}
+
+export type CanvasAnnotation = CanvasTextAnnotation | CanvasRectangleAnnotation;
+
 export interface Flow {
     id: string;
     version?: number; // For migration
@@ -76,6 +111,7 @@ export interface Flow {
     steps?: Step[]; // New turn/condition-based structure
     connections?: Connection[]; // Connections between steps
     startStepId?: string; // ID of the default start node
+    annotations?: CanvasAnnotation[];
     metadata?: {
         previewText?: string;
         entryPoint?: string;

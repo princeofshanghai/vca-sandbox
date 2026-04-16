@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import * as Popover from '@radix-ui/react-popover';
 import { cn } from '@/utils/cn';
 import { FlowPreview, type FlowPreviewReviewPathChangeRequest, type FlowPreviewReviewState } from './FlowPreview';
@@ -61,6 +61,7 @@ export function PreviewDrawer({
     const [entryStepIdOverride, setEntryStepIdOverride] = useState<string | null>(null);
     const [resetKey, setResetKey] = useState(0);
     const [simulationVariables, setSimulationVariables] = useState<Record<string, string>>({});
+    const [previewShowHotspots, setPreviewShowHotspots] = useState(flow.settings?.showHotspots ?? true);
     const [lastRestartedModifiedAt, setLastRestartedModifiedAt] = useState(flow.lastModified);
     const [reviewState, setReviewState] = useState<FlowPreviewReviewState>(createEmptyReviewState);
     const [reviewPathChangeRequest, setReviewPathChangeRequest] =
@@ -74,12 +75,31 @@ export function PreviewDrawer({
     const drawerRef = useRef<HTMLDivElement | null>(null);
     const resolvedSelectedStartStepId = resolveStartStepId(flow, selectedStartStepId);
     const effectiveEntryStepId = entryStepIdOverride || resolvedSelectedStartStepId;
+    const effectivePreviewFlow = useMemo(() => {
+        const currentShowHotspots = activeFlow.settings?.showHotspots ?? true;
+        if (currentShowHotspots === previewShowHotspots) {
+            return activeFlow;
+        }
+
+        return {
+            ...activeFlow,
+            settings: {
+                ...(activeFlow.settings || {}),
+                showHotspots: previewShowHotspots,
+            },
+        };
+    }, [activeFlow, previewShowHotspots]);
 
     usePreventBrowserPinchZoom(drawerRef, shouldRender);
 
     useEffect(() => {
         latestFlowModifiedAtRef.current = flow.lastModified;
     }, [flow.lastModified]);
+
+    useEffect(() => {
+        if (!isOpen) return;
+        setPreviewShowHotspots(flow.settings?.showHotspots ?? true);
+    }, [flow.id, flow.settings?.showHotspots, isOpen]);
 
     useEffect(() => {
         setSelectedStartStepId((current) => resolveStartStepId(flow, current));
@@ -333,10 +353,12 @@ export function PreviewDrawer({
 
                                 <div className="flex">
                                     <PreviewSettingsMenu
-                                        flow={flow}
+                                        flow={effectivePreviewFlow}
                                         onUpdateFlow={handlePreviewFlowUpdate}
                                         isPremium={isPremium}
                                         onTogglePremium={onTogglePremium}
+                                        showHotspots={previewShowHotspots}
+                                        onShowHotspotsChange={setPreviewShowHotspots}
                                         tone={previewControlTone}
                                         iconOnly={true}
                                         size="compact"
@@ -352,7 +374,7 @@ export function PreviewDrawer({
                     <div className="flex-1 overflow-hidden relative bg-shell-surface">
                         <FlowPreview
                             key={`${resetKey}:${effectiveEntryStepId || 'default'}`}
-                            flow={activeFlow}
+                            flow={effectivePreviewFlow}
                             entryStepId={effectiveEntryStepId}
                             isPremium={isPremium}
                             isMobile={isMobile}
