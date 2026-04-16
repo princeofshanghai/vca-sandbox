@@ -6,7 +6,7 @@ interface AuthContextType {
     user: User | null;
     session: Session | null;
     isLoading: boolean;
-    signIn: () => Promise<{ error: AuthError | null } | void>;
+    signIn: (redirectTo?: string) => Promise<{ error: AuthError | null } | void>;
     signOut: () => Promise<void>;
 }
 
@@ -42,17 +42,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return () => subscription.unsubscribe();
     }, []);
 
-    const signIn = async () => {
-        // Simple Google OAuth or Magic Link
-        // For this user, let's start with flexible Google login
+    const signIn = async (redirectTo?: string) => {
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                queryParams: {
-                    access_type: 'offline',
-                    prompt: 'consent',
-                },
-                redirectTo: window.location.origin
+                redirectTo: redirectTo ?? window.location.origin,
             }
         });
         if (error) console.error("Error logging in:", error);

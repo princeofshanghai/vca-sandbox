@@ -21,6 +21,7 @@ interface FlowCardProps {
     onDuplicate: (id: string) => void | Promise<void>;
     isDuplicating?: boolean;
     isTrash?: boolean;
+    isShared?: boolean;
     onRestore?: (id: string) => void;
     onPermanentDelete?: (id: string) => void;
 }
@@ -53,6 +54,7 @@ export const FlowCard = ({
     onDuplicate,
     isDuplicating,
     isTrash,
+    isShared,
     onRestore,
     onPermanentDelete
 }: FlowCardProps) => {
@@ -62,7 +64,8 @@ export const FlowCard = ({
     const [newTitle, setNewTitle] = useState(flow.title);
 
     const handleClick = () => {
-        if (!isTrash) navigate(`/studio/${flow.id}`);
+        if (isTrash) return;
+        navigate(isShared ? `/share/studio/${flow.id}` : `/studio/${flow.id}`);
     };
 
     const handleDelete = (e: React.MouseEvent) => {
@@ -136,14 +139,21 @@ export const FlowCard = ({
                                         className="h-7 w-full rounded border-shell-accent-border px-1 py-0.5 text-sm font-medium text-shell-text focus-visible:ring-shell-accent/20"
                                     />
                                 ) : (
-                                    <h3 className="line-clamp-2 text-sm font-medium leading-5 text-shell-text">
-                                        {flow.title}
-                                    </h3>
+                                    <div className="flex items-start gap-2">
+                                        <h3 className="line-clamp-2 min-w-0 flex-1 text-sm font-medium leading-5 text-shell-text">
+                                            {flow.title}
+                                        </h3>
+                                        {isShared ? (
+                                            <span className="shrink-0 rounded-full bg-shell-surface px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.08em] text-shell-muted">
+                                                Shared
+                                            </span>
+                                        ) : null}
+                                    </div>
                                 )}
                             </div>
 
                             <div className="shrink-0" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-                                <ShellMenu onOpenChange={(open) => { if (open && !isTrash) handleLoadFolders(); }}>
+                                <ShellMenu onOpenChange={(open) => { if (open && !isTrash && !isShared) handleLoadFolders(); }}>
                                     <ShellMenuTrigger asChild>
                                         <ShellIconButton
                                             className="h-7 w-7 shrink-0 opacity-0 text-shell-muted transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 data-[state=open]:opacity-100 hover:bg-shell-surface hover:text-shell-muted-strong"
@@ -166,6 +176,12 @@ export const FlowCard = ({
                                                     onClick={handlePermanentDelete}
                                                 >
                                                     <span>Delete permanently</span>
+                                                </ShellMenuItem>
+                                            </>
+                                        ) : isShared ? (
+                                            <>
+                                                <ShellMenuItem disabled={isDuplicating} onClick={handleDuplicate}>
+                                                    <span>{isDuplicating ? 'Duplicating...' : 'Duplicate'}</span>
                                                 </ShellMenuItem>
                                             </>
                                         ) : (
@@ -213,6 +229,14 @@ export const FlowCard = ({
                         </div>
 
                         <div className="mt-auto flex min-w-0 items-center gap-1 pt-8 text-[13px] text-shell-muted">
+                            {isShared && (
+                                <>
+                                    <span className="truncate min-w-0">
+                                        Shared by {flow.ownerDisplayName || 'another teammate'}
+                                    </span>
+                                    <span className="shrink-0">·</span>
+                                </>
+                            )}
                             {entryPointName && (
                                 <>
                                     <span className="truncate min-w-0">{entryPointName}</span>

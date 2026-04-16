@@ -1,6 +1,6 @@
 import { cn } from '@/utils/cn';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
-import { Globe, Loader2 } from 'lucide-react';
+import { Globe, Loader2, Pencil } from 'lucide-react';
 import { useState } from 'react';
 import { Flow } from '../../studio/types';
 import { supabase } from '@/lib/supabase';
@@ -25,11 +25,26 @@ const getShareUrl = (flowId: string, linkType: ShareLinkType) => {
     return `${window.location.origin}/share/${flowId}`;
 };
 
-const getIdleButtonLabel = (linkType: ShareLinkType) =>
-    linkType === 'studio' ? 'Copy studio link' : 'Copy prototype link';
+const getIdleButtonLabel = (linkType: ShareLinkType, useGenericStudioCopy: boolean) =>
+    linkType === 'studio'
+        ? (useGenericStudioCopy ? 'Copy link' : 'Copy edit link')
+        : 'Copy prototype link';
 
-const getSuccessButtonLabel = (linkType: ShareLinkType) =>
-    linkType === 'studio' ? 'Copied studio link!' : 'Copied prototype link!';
+const getSuccessButtonLabel = (linkType: ShareLinkType, useGenericStudioCopy: boolean) =>
+    linkType === 'studio'
+        ? (useGenericStudioCopy ? 'Copied link!' : 'Copied edit link!')
+        : 'Copied prototype link!';
+
+const getAccessTitle = (linkType: ShareLinkType, useGenericStudioCopy: boolean) =>
+    linkType === 'studio'
+        ? (useGenericStudioCopy ? 'Anyone with link' : 'Anyone with edit link')
+        : 'Anyone with prototype link';
+
+const getAccessDescription = (linkType: ShareLinkType) =>
+    linkType === 'studio' ? 'Shared editing after sign in' : 'Public review link';
+
+const getAccessPermissionLabel = (linkType: ShareLinkType) =>
+    linkType === 'studio' ? 'can edit' : 'can view';
 
 export function ShareDialog({
     children,
@@ -41,6 +56,7 @@ export function ShareDialog({
 }: ShareDialogProps) {
     const [copyingType, setCopyingType] = useState<ShareLinkType | null>(null);
     const [copiedType, setCopiedType] = useState<ShareLinkType | null>(null);
+    const useGenericStudioCopy = enabledLinkTypes.length === 1 && enabledLinkTypes[0] === 'studio';
 
     const handleCopyLink = async (linkType: ShareLinkType) => {
         setCopyingType(linkType);
@@ -90,18 +106,30 @@ export function ShareDialog({
                 <div className="p-4 space-y-5">
                     {/* Access List */}
                     <div className="space-y-3">
-                        <div className="flex items-center justify-between group">
-                            <div className="flex items-center gap-3">
-                                <div className="w-7 h-7 rounded-sm bg-shell-surface-subtle flex items-center justify-center border border-shell-border-subtle shadow-sm">
-                                    <Globe size={14} className="text-shell-muted" />
+                        {enabledLinkTypes.map((linkType) => (
+                            <div key={linkType} className="flex items-center justify-between group">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-7 h-7 rounded-sm bg-shell-surface-subtle flex items-center justify-center border border-shell-border-subtle shadow-sm">
+                                        {linkType === 'studio' ? (
+                                            <Pencil size={14} className="text-shell-muted" />
+                                        ) : (
+                                            <Globe size={14} className="text-shell-muted" />
+                                        )}
+                                    </div>
+                                    <div>
+                                        <div className="text-[13px] font-medium text-shell-text">
+                                            {getAccessTitle(linkType, useGenericStudioCopy)}
+                                        </div>
+                                        <div className="text-[11px] text-shell-muted">
+                                            {getAccessDescription(linkType)}
+                                        </div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <div className="text-[13px] font-medium text-shell-text">Anyone with link</div>
-                                    <div className="text-[11px] text-shell-muted">Public access</div>
-                                </div>
+                                <span className="text-[12px] text-shell-muted font-medium px-1">
+                                    {getAccessPermissionLabel(linkType)}
+                                </span>
                             </div>
-                            <span className="text-[12px] text-shell-muted font-medium px-1">can view</span>
-                        </div>
+                        ))}
                     </div>
                 </div>
 
@@ -132,8 +160,11 @@ export function ShareDialog({
                                         <Loader2 size={14} className="animate-spin mr-2" />
                                     ) : null}
                                     {isCopied
-                                        ? getSuccessButtonLabel(linkType)
-                                        : (linkLabelOverrides?.[linkType] || getIdleButtonLabel(linkType))}
+                                        ? getSuccessButtonLabel(linkType, useGenericStudioCopy)
+                                        : (
+                                            linkLabelOverrides?.[linkType] ||
+                                            getIdleButtonLabel(linkType, useGenericStudioCopy)
+                                        )}
                                 </ShellButton>
                             );
                         })}

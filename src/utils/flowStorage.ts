@@ -25,6 +25,9 @@ export interface FlowMetadata {
     thumbnailUnavailable?: boolean;
     isPublic?: boolean;
     deletedAt?: number | null;
+    ownerUserId?: string;
+    ownerDisplayName?: string;
+    isShared?: boolean;
 }
 
 export const INITIAL_FLOW: Flow = {
@@ -168,17 +171,67 @@ export const flowStorage = {
             return [];
         }
 
-        return data.map(d => ({
-            id: d.id,
-            title: d.title,
-            lastModified: new Date(d.updated_at).getTime(),
-            folderId: d.folder_id,
-            previewText: d.metadata?.previewText,
-            entryPoint: d.metadata?.entryPoint,
-            thumbnailPath: d.metadata?.thumbnailPath,
-            isPublic: d.is_public,
-            deletedAt: d.deleted_at ? new Date(d.deleted_at).getTime() : null
-        }));
+        return data.map((d) => mapFlowMetadata(d, user.id));
+    },
+
+    getSharedFlows: async (): Promise<FlowMetadata[]> => {
+        const user = (await supabase.auth.getUser()).data.user;
+        if (!user) return [];
+
+        const { data: collaboratorRows, error: collaboratorError } = await supabase
+            .from('flow_collaborators')
+            .select('flow_id')
+            .eq('user_id', user.id)
+            .eq('role', 'editor');
+
+        if (collaboratorError) {
+            console.error('Error fetching shared flow access:', collaboratorError);
+            return [];
+        }
+
+        const flowIds = Array.from(new Set((collaboratorRows || []).map((row) => row.flow_id).filter(Boolean)));
+        if (flowIds.length === 0) return [];
+
+        const { data: sharedFlows, error: sharedFlowsError } = await supabase
+            .from('flows')
+            .select('id, title, updated_at, folder_id, metadata, is_public, deleted_at, user_id')
+            .in('id', flowIds)
+            .order('updated_at', { ascending: false });
+
+        if (sharedFlowsError) {
+            console.error('Error fetching shared flows:', sharedFlowsError);
+            return [];
+        }
+
+        const ownerIds = Array.from(
+            new Set(
+                (sharedFlows || [])
+                    .map((flowRow) => flowRow.user_id)
+                    .filter((ownerId): ownerId is string => typeof ownerId === 'string' && ownerId !== user.id)
+            )
+        );
+
+        let ownerProfiles = new Map<string, string>();
+        if (ownerIds.length > 0) {
+            const { data: profiles, error: profilesError } = await supabase
+                .from('profiles')
+                .select('user_id, display_name')
+                .in('user_id', ownerIds);
+
+            if (profilesError) {
+                console.error('Error fetching shared flow owners:', profilesError);
+            } else {
+                ownerProfiles = new Map(
+                    (profiles || [])
+                        .filter((profile) => typeof profile.user_id === 'string')
+                        .map((profile) => [profile.user_id, profile.display_name || 'Shared project'])
+                );
+            }
+        }
+
+        return (sharedFlows || [])
+            .filter((flowRow) => flowRow.user_id !== user.id)
+            .map((flowRow) => mapFlowMetadata(flowRow, user.id, ownerProfiles));
     },
 
     getFlowThumbnailUrl: async (thumbnailPath: string): Promise<string | undefined> => {
@@ -202,6 +255,7 @@ export const flowStorage = {
             id: data.id,
             title: data.title,
             lastModified: new Date(data.updated_at).getTime(),
+            is_public: data.is_public,
             settings: data.content?.settings || INITIAL_FLOW.settings,
             steps: data.content?.steps || [],
             connections: data.content?.connections || [],
@@ -232,7 +286,7 @@ export const flowStorage = {
         const user = (await supabase.auth.getUser()).data.user;
         if (!user) {
             console.error('Cannot save flow: User not logged in');
-            return;
+            return false;
         }
 
         // Prepare data for DB
@@ -257,11 +311,28 @@ export const flowStorage = {
             content,
             metadata,
             updated_at: new Date().toISOString(),
-            user_id: user.id,
         };
 
+        const isSharedEditor = !!flow.ownerUserId && flow.ownerUserId !== user.id;
+        if (isSharedEditor) {
+            const { error } = await supabase
+                .from('flows')
+                .update(payload)
+                .eq('id', flow.id);
 
-        const finalPayload = { ...payload, folder_id: flow.folderId };
+            if (error) {
+                console.error('Error saving shared flow:', error);
+                return false;
+            }
+
+            return true;
+        }
+
+        const finalPayload = {
+            ...payload,
+            user_id: flow.ownerUserId ?? user.id,
+            folder_id: flow.folderId,
+        };
 
         // Upsert
         const { error } = await supabase
@@ -269,7 +340,12 @@ export const flowStorage = {
             .upsert({ id: flow.id, ...finalPayload })
             .select();
 
-        if (error) console.error('Error saving flow:', error);
+        if (error) {
+            console.error('Error saving flow:', error);
+            return false;
+        }
+
+        return true;
     },
 
     createFlow: async (folderId?: string): Promise<string | null> => {
@@ -325,6 +401,43 @@ export const flowStorage = {
         if (error) console.error('Error restoring flow:', error);
     }
 };
+
+function mapFlowMetadata(
+    row: {
+        id: string;
+        title: string;
+        updated_at: string;
+        folder_id?: string | null;
+        metadata?: {
+            previewText?: string;
+            entryPoint?: string;
+            thumbnailPath?: string;
+        } | null;
+        is_public?: boolean | null;
+        deleted_at?: string | null;
+        user_id?: string | null;
+    },
+    currentUserId: string,
+    ownerProfiles: Map<string, string> = new Map()
+): FlowMetadata {
+    const ownerUserId = typeof row.user_id === 'string' ? row.user_id : undefined;
+    const isShared = !!ownerUserId && ownerUserId !== currentUserId;
+
+    return {
+        id: row.id,
+        title: row.title,
+        lastModified: new Date(row.updated_at).getTime(),
+        folderId: row.folder_id ?? undefined,
+        previewText: row.metadata?.previewText,
+        entryPoint: row.metadata?.entryPoint,
+        thumbnailPath: row.metadata?.thumbnailPath,
+        isPublic: row.is_public ?? undefined,
+        deletedAt: row.deleted_at ? new Date(row.deleted_at).getTime() : null,
+        ownerUserId,
+        ownerDisplayName: ownerUserId ? ownerProfiles.get(ownerUserId) : undefined,
+        isShared,
+    };
+}
 
 function getPreviewText(block?: Block): string | undefined {
     if (!block) return undefined;

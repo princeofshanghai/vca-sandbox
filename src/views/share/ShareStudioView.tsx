@@ -3,8 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { CanvasEditor } from '@/views/studio-canvas/CanvasEditor';
 import { Flow } from '@/views/studio/types';
-import { INITIAL_FLOW } from '@/utils/flowStorage';
-import { supabase } from '@/lib/supabase';
+import { flowStorage, INITIAL_FLOW } from '@/utils/flowStorage';
 import { PreviewDrawer } from '@/views/studio/PreviewDrawer';
 import { CanvasCommentsDrawer } from '@/views/studio/CanvasCommentsDrawer';
 import { useCanvasCommentsController } from '@/views/studio/useCanvasCommentsController';
@@ -26,6 +25,7 @@ import {
     hasPendingShareDuplicate,
     markProjectDuplicatedToastPending,
 } from '@/utils/projectDuplication';
+import { claimFlowEditLock, releaseFlowEditLock, type FlowEditLockState } from './shareEditing';
 
 type ShareStudioRightPanelMode = 'preview' | 'comments' | null;
 const SHARED_STUDIO_PLAY_HINT_DISMISSED_KEY = 'shared-studio-play-hint-dismissed';
@@ -33,6 +33,16 @@ const SHARED_STUDIO_PLAY_HINT_DISMISSED_KEY = 'shared-studio-play-hint-dismissed
 type PreviewEntryRequest = {
     stepId: string | null;
     token: number;
+};
+
+type SharedBannerState = {
+    title: string;
+    description: string;
+    primaryActionLabel?: string;
+    onPrimaryAction?: () => void;
+    secondaryActionLabel?: string;
+    onSecondaryAction?: () => void;
+    secondaryActionDisabled?: boolean;
 };
 
 export const ShareStudioView = () => {
@@ -51,6 +61,8 @@ export const ShareStudioView = () => {
     const [rightPanelMode, setRightPanelMode] = useState<ShareStudioRightPanelMode>(null);
     const [previewEntryRequest, setPreviewEntryRequest] = useState<PreviewEntryRequest | null>(null);
     const [isDuplicatingProject, setIsDuplicatingProject] = useState(false);
+    const [editLockState, setEditLockState] = useState<FlowEditLockState | null>(null);
+    const [isCheckingEditAccess, setIsCheckingEditAccess] = useState(false);
     const [isPlayHintDismissed, setIsPlayHintDismissed] = useState(() => {
         if (typeof window === 'undefined') return false;
 
@@ -62,6 +74,7 @@ export const ShareStudioView = () => {
     });
     const hasHandledPendingDuplicateRef = useRef(false);
     const pendingDeepLinkThreadIdRef = useRef<string | null>(null);
+    const hasShownSharedSaveErrorRef = useRef(false);
     const documentTitle = loading
         ? buildProjectLoadingDocumentTitle()
         : error
@@ -72,6 +85,8 @@ export const ShareStudioView = () => {
 
     useEffect(() => {
         hasHandledPendingDuplicateRef.current = false;
+        setEditLockState(null);
+        hasShownSharedSaveErrorRef.current = false;
     }, [id]);
 
     useEffect(() => {
@@ -83,28 +98,8 @@ export const ShareStudioView = () => {
             }
 
             try {
-                const { data, error: fetchError } = await supabase
-                    .from('flows')
-                    .select('*')
-                    .eq('id', id)
-                    .single();
-
-                if (fetchError) throw fetchError;
-                if (!data) throw new Error('Flow not found');
-
-                const loadedFlow: Flow = {
-                    ...INITIAL_FLOW,
-                    id: data.id,
-                    title: data.title,
-                    blocks: data.content?.blocks || [],
-                    steps: data.content?.steps || [],
-                    connections: data.content?.connections || [],
-                    annotations: data.content?.annotations || [],
-                    settings: data.content?.settings || INITIAL_FLOW.settings,
-                    is_public: data.is_public,
-                    lastModified: new Date(data.updated_at).getTime(),
-                };
-
+                const loadedFlow = await flowStorage.getFlow(id);
+                if (!loadedFlow) throw new Error('Flow not found');
                 setFlow(loadedFlow);
             } catch (loadFlowError: unknown) {
                 console.error('Error loading shared studio flow:', loadFlowError);
@@ -135,6 +130,41 @@ export const ShareStudioView = () => {
             body.style.overscrollBehaviorX = previousBodyOverscrollX;
         };
     }, []);
+
+    const refreshEditLock = useCallback(async (quiet: boolean = false) => {
+        if (!id || !user) {
+            setEditLockState(null);
+            return null;
+        }
+
+        if (!quiet) {
+            setIsCheckingEditAccess(true);
+        }
+
+        try {
+            const nextLockState = await claimFlowEditLock(id);
+            setEditLockState(nextLockState);
+            return nextLockState;
+        } catch (lockError) {
+            console.error('Error claiming shared flow edit lock:', lockError);
+            if (!quiet) {
+                toast.error('Could not confirm edit access. Please try again.');
+            }
+            setEditLockState({
+                granted: false,
+                reason: 'unknown',
+                holderUserId: null,
+                holderDisplayName: null,
+                holderAvatarUrl: null,
+                expiresAt: null,
+            });
+            return null;
+        } finally {
+            if (!quiet) {
+                setIsCheckingEditAccess(false);
+            }
+        }
+    }, [id, user]);
 
     const isPreviewOpen = rightPanelMode === 'preview';
     const isCommentsOpen = rightPanelMode === 'comments';
@@ -239,6 +269,63 @@ export const ShareStudioView = () => {
         pendingDeepLinkThreadIdRef.current = null;
     }, [canvasComments, canvasComments.isLoading, canvasComments.threads]);
 
+    useEffect(() => {
+        if (loading || isAuthLoading || !flow?.id || !user) {
+            if (!user) {
+                setEditLockState(null);
+            }
+            return;
+        }
+
+        void refreshEditLock();
+    }, [flow?.id, isAuthLoading, loading, refreshEditLock, user]);
+
+    useEffect(() => {
+        if (!id || !user || !editLockState?.granted) return;
+
+        const intervalId = window.setInterval(() => {
+            void refreshEditLock(true);
+        }, 30000);
+
+        return () => {
+            window.clearInterval(intervalId);
+        };
+    }, [editLockState?.granted, id, refreshEditLock, user]);
+
+    useEffect(() => {
+        if (!id || !user || !editLockState?.granted) return;
+
+        return () => {
+            void releaseFlowEditLock(id).catch((releaseError) => {
+                console.error('Error releasing shared flow edit lock:', releaseError);
+            });
+        };
+    }, [editLockState?.granted, id, user]);
+
+    const canEditSharedFlow = !!user && editLockState?.granted === true;
+
+    useEffect(() => {
+        if (loading || !flow || !canEditSharedFlow) return;
+
+        const saveDebounce = window.setTimeout(() => {
+            void flowStorage.saveFlow(flow).then((didSave) => {
+                if (didSave) {
+                    hasShownSharedSaveErrorRef.current = false;
+                    return;
+                }
+
+                if (!hasShownSharedSaveErrorRef.current) {
+                    toast.error('Could not save shared changes. Please refresh and try again.');
+                    hasShownSharedSaveErrorRef.current = true;
+                }
+            });
+        }, 1000);
+
+        return () => {
+            window.clearTimeout(saveDebounce);
+        };
+    }, [canEditSharedFlow, flow, loading]);
+
     const handleCommentSignIn = async () => {
         try {
             const redirectUrl = new URL(window.location.href);
@@ -250,6 +337,15 @@ export const ShareStudioView = () => {
             toast.error('Could not start sign-in. Please try again.');
         }
     };
+
+    const handleEditSignIn = useCallback(async () => {
+        try {
+            await startGoogleSignInRedirect(window.location.href);
+        } catch (signInError: unknown) {
+            console.error('Error starting sign-in for shared editing:', signInError);
+            toast.error('Could not start sign-in. Please try again.');
+        }
+    }, []);
 
     const completeProjectDuplication = useCallback(async () => {
         if (!flow || isDuplicatingProject) return;
@@ -314,6 +410,42 @@ export const ShareStudioView = () => {
         dismissPlayHint();
     }, [dismissPlayHint, isPlayHintDismissed, isPreviewOpen]);
 
+    const sharedBanner: SharedBannerState | null = !user && !isAuthLoading
+        ? {
+              title: 'Sign in to edit this shared project',
+              description: 'Anyone with the edit link can change the shared file after signing in.',
+              primaryActionLabel: 'Sign in to edit',
+              onPrimaryAction: () => {
+                  void handleEditSignIn();
+              },
+          }
+        : isCheckingEditAccess && !editLockState
+            ? {
+                  title: 'Checking edit access',
+                  description: 'One person can edit at a time, so we are confirming whether this file is free.',
+              }
+            : !canEditSharedFlow
+                ? {
+                      title:
+                          editLockState?.reason === 'locked'
+                              ? `${editLockState.holderDisplayName || 'Another editor'} is editing right now`
+                              : 'This shared project is currently view-only',
+                      description:
+                          editLockState?.reason === 'locked'
+                              ? 'You can still review the canvas, but editing will unlock after they leave or the lock expires.'
+                              : 'Refresh to try claiming the edit lock again, or duplicate the project into your own workspace.',
+                      primaryActionLabel: 'Refresh edit access',
+                      onPrimaryAction: () => {
+                          void refreshEditLock();
+                      },
+                      secondaryActionLabel: isDuplicatingProject ? 'Duplicating...' : 'Duplicate project',
+                      onSecondaryAction: () => {
+                          void handleDuplicateProject();
+                      },
+                      secondaryActionDisabled: isDuplicatingProject,
+                  }
+                : null;
+
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-shell-surface">
@@ -343,6 +475,41 @@ export const ShareStudioView = () => {
 
     return (
         <div className="h-screen w-full relative">
+            {sharedBanner ? (
+                <div className="absolute left-1/2 top-[70px] z-[70] w-[min(720px,calc(100%-2rem))] -translate-x-1/2">
+                    <div className="rounded-2xl border border-shell-border bg-shell-bg/95 px-5 py-4 shadow-xl backdrop-blur-sm">
+                        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                            <div className="min-w-0">
+                                <p className="text-sm font-semibold text-shell-text">{sharedBanner.title}</p>
+                                <p className="mt-1 text-sm text-shell-muted">{sharedBanner.description}</p>
+                            </div>
+                            <div className="flex shrink-0 items-center gap-2">
+                                {sharedBanner.onSecondaryAction ? (
+                                    <ShellButton
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={sharedBanner.onSecondaryAction}
+                                        disabled={sharedBanner.secondaryActionDisabled}
+                                    >
+                                        {sharedBanner.secondaryActionLabel}
+                                    </ShellButton>
+                                ) : null}
+                                {sharedBanner.onPrimaryAction ? (
+                                    <ShellButton size="sm" onClick={sharedBanner.onPrimaryAction}>
+                                        {sharedBanner.primaryActionLabel}
+                                    </ShellButton>
+                                ) : (
+                                    <div className="flex items-center gap-2 rounded-full bg-shell-surface px-3 py-1.5 text-xs text-shell-muted">
+                                        <Loader2 size={12} className="animate-spin" />
+                                        <span>Checking…</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
+
             <CanvasEditor
                 flow={flow}
                 onUpdateFlow={setFlow}
@@ -361,7 +528,7 @@ export const ShareStudioView = () => {
                     checked: showComments,
                     onCheckedChange: handleShowCommentsChange,
                 }}
-                mode="share-commentable"
+                mode={canEditSharedFlow ? 'edit' : 'share-commentable'}
                 menuActionItems={[{
                     label: isDuplicatingProject ? 'Duplicating...' : 'Duplicate project',
                     onSelect: () => {

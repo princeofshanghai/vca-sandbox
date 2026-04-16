@@ -30,6 +30,7 @@ import {
 export const DashboardView = () => {
     const navigate = useNavigate();
     const [flows, setFlows] = useState<FlowMetadata[]>([]);
+    const [sharedFlows, setSharedFlows] = useState<FlowMetadata[]>([]);
     const [folders, setFolders] = useState<FolderType[]>([]);
     const [activeFolderId, setActiveFolderId] = useState<string | null>(null); // null = All
     const [searchQuery, setSearchQuery] = useState('');
@@ -40,13 +41,16 @@ export const DashboardView = () => {
 
     const loadData = useCallback(async () => {
         setIsLoading(true);
-        const [loadedFlows, loadedFolders] = await Promise.all([
+        const [loadedFlows, loadedSharedFlows, loadedFolders] = await Promise.all([
             flowStorage.getAllFlows(),
+            flowStorage.getSharedFlows(),
             flowStorage.getAllFolders()
         ]);
 
         loadedFlows.sort((a, b) => b.lastModified - a.lastModified);
+        loadedSharedFlows.sort((a, b) => b.lastModified - a.lastModified);
         setFlows(loadedFlows);
+        setSharedFlows(loadedSharedFlows);
         setFolders(loadedFolders);
         setIsLoading(false);
     }, []);
@@ -118,7 +122,7 @@ export const DashboardView = () => {
         setDuplicatingFlowId(id);
 
         try {
-            const sourceMetadata = flows.find(flow => flow.id === id);
+            const sourceMetadata = [...flows, ...sharedFlows].find(flow => flow.id === id);
             if (!sourceMetadata) {
                 toast.error('Could not find this project. Please refresh and try again.');
                 return;
@@ -130,12 +134,15 @@ export const DashboardView = () => {
                 return;
             }
 
-            const hasSourceFolder = !!sourceMetadata.folderId && folders.some(folder => folder.id === sourceMetadata.folderId);
+            const hasSourceFolder =
+                !sourceMetadata.isShared &&
+                !!sourceMetadata.folderId &&
+                folders.some(folder => folder.id === sourceMetadata.folderId);
             const duplicateFolderId = hasSourceFolder ? sourceMetadata.folderId : undefined;
             await duplicateFlowForCurrentUser({
                 sourceFlow,
                 sourceTitle: sourceMetadata.title,
-                existingTitles: flows.map((flow) => flow.title),
+                existingTitles: [...flows, ...sharedFlows].map((flow) => flow.title),
                 folderId: duplicateFolderId,
             });
             await loadData();
@@ -160,6 +167,12 @@ export const DashboardView = () => {
         const matchesFolder = activeFolderId ? f.folderId === activeFolderId : true;
         return matchesSearch && matchesFolder;
     });
+
+    const filteredSharedFlows = activeFolderId === null
+        ? sharedFlows.filter((flow) =>
+            !flow.deletedAt && flow.title.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+        : [];
 
     const sidebarHeader = (
         <>
@@ -276,21 +289,49 @@ export const DashboardView = () => {
                         {/* Grid */}
                         {isLoading ? (
                             <LoadingScreen className="py-20 bg-transparent" />
-                        ) : filteredFlows.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10">
-                                {filteredFlows.map(flow => (
-                                    <FlowCard
-                                        key={flow.id}
-                                        flow={flow}
-                                        onDelete={handleDeleteFlow}
-                                        onRename={handleRenameFlow}
-                                        onDuplicate={handleDuplicateFlow}
-                                        isDuplicating={duplicatingFlowId === flow.id}
-                                        isTrash={activeFolderId === 'trash'}
-                                        onRestore={handleRestoreFlow}
-                                        onPermanentDelete={handlePermanentDeleteFlow}
-                                    />
-                                ))}
+                        ) : filteredFlows.length > 0 || filteredSharedFlows.length > 0 ? (
+                            <div className="space-y-12">
+                                {filteredFlows.length > 0 ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10">
+                                        {filteredFlows.map(flow => (
+                                            <FlowCard
+                                                key={flow.id}
+                                                flow={flow}
+                                                onDelete={handleDeleteFlow}
+                                                onRename={handleRenameFlow}
+                                                onDuplicate={handleDuplicateFlow}
+                                                isDuplicating={duplicatingFlowId === flow.id}
+                                                isTrash={activeFolderId === 'trash'}
+                                                onRestore={handleRestoreFlow}
+                                                onPermanentDelete={handlePermanentDeleteFlow}
+                                            />
+                                        ))}
+                                    </div>
+                                ) : null}
+
+                                {activeFolderId === null && filteredSharedFlows.length > 0 ? (
+                                    <section className="space-y-5">
+                                        <div className="space-y-1">
+                                            <h2 className="text-sm font-semibold text-shell-text">Shared with you</h2>
+                                            <p className="text-sm text-shell-muted">
+                                                Projects you can edit from a shared studio link.
+                                            </p>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10">
+                                            {filteredSharedFlows.map(flow => (
+                                                <FlowCard
+                                                    key={flow.id}
+                                                    flow={flow}
+                                                    onDelete={handleDeleteFlow}
+                                                    onRename={handleRenameFlow}
+                                                    onDuplicate={handleDuplicateFlow}
+                                                    isDuplicating={duplicatingFlowId === flow.id}
+                                                    isShared
+                                                />
+                                            ))}
+                                        </div>
+                                    </section>
+                                ) : null}
                             </div>
                         ) : (
                             <DashboardEmptyState

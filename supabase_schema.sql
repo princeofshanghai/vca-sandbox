@@ -152,13 +152,33 @@ create table if not exists public.flow_collaborators (
   constraint flow_collaborators_source_check check (source in ('mention'))
 );
 
+alter table public.flow_collaborators drop constraint if exists flow_collaborators_role_check;
+alter table public.flow_collaborators
+  add constraint flow_collaborators_role_check
+  check (role in ('commenter', 'editor'));
+
+alter table public.flow_collaborators drop constraint if exists flow_collaborators_source_check;
+alter table public.flow_collaborators
+  add constraint flow_collaborators_source_check
+  check (source in ('mention', 'share_link'));
+
 create index if not exists flow_collaborators_user_id_idx on public.flow_collaborators(user_id);
+
+create table if not exists public.flow_edit_sessions (
+  flow_id uuid primary key references public.flows(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  last_seen_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+create index if not exists flow_edit_sessions_user_id_idx on public.flow_edit_sessions(user_id);
 
 -- Set up Row Level Security (RLS)
 alter table public.flows enable row level security;
 alter table public.folders enable row level security;
 alter table public.profiles enable row level security;
 alter table public.flow_collaborators enable row level security;
+alter table public.flow_edit_sessions enable row level security;
 
 -- Policies for Flows
 create policy "Users can view their own flows"
@@ -189,6 +209,35 @@ create policy "Users can insert their own flows"
 create policy "Users can update their own flows"
   on flows for update
   using ( auth.uid() = user_id );
+
+drop policy if exists "Editors can update shared flows" on public.flows;
+create policy "Editors can update shared flows"
+  on public.flows for update
+  using (
+    auth.uid() is not null
+    and exists (
+      select 1
+      from public.flow_edit_sessions sessions
+      where sessions.flow_id = flows.id
+        and sessions.user_id = auth.uid()
+        and sessions.last_seen_at >= timezone('utc'::text, now()) - interval '90 seconds'
+    )
+  )
+  with check (
+    auth.uid() is not null
+    and exists (
+      select 1
+      from public.flow_edit_sessions sessions
+      where sessions.flow_id = id
+        and sessions.user_id = auth.uid()
+        and sessions.last_seen_at >= timezone('utc'::text, now()) - interval '90 seconds'
+    )
+    and user_id = (
+      select existing_flow.user_id
+      from public.flows as existing_flow
+      where existing_flow.id = id
+    )
+  );
 
 create policy "Users can delete their own flows"
   on flows for delete
@@ -228,6 +277,195 @@ create policy "Users can view their collaborator access"
       or granted_by_user_id = auth.uid()
     )
   );
+
+grant select on public.flow_edit_sessions to authenticated;
+drop policy if exists "Authenticated users can view edit sessions for visible flows" on public.flow_edit_sessions;
+create policy "Authenticated users can view edit sessions for visible flows"
+  on public.flow_edit_sessions for select
+  using (
+    auth.uid() is not null
+    and exists (
+      select 1
+      from public.flows flow_row
+      where flow_row.id = flow_edit_sessions.flow_id
+        and (
+          flow_row.user_id = auth.uid()
+          or flow_row.is_public = true
+          or exists (
+            select 1
+            from public.flow_collaborators collaborators
+            where collaborators.flow_id = flow_row.id
+              and collaborators.user_id = auth.uid()
+          )
+        )
+    )
+  );
+
+create or replace function public.claim_flow_edit_lock(target_flow_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+  requester_id uuid := auth.uid();
+  target_flow public.flows%rowtype;
+  current_session public.flow_edit_sessions%rowtype;
+  now_utc timestamp with time zone := timezone('utc'::text, now());
+  lock_timeout interval := interval '90 seconds';
+  lock_expires_at timestamp with time zone;
+  holder_display_name text;
+  holder_avatar_url text;
+begin
+  if requester_id is null then
+    return jsonb_build_object(
+      'granted', false,
+      'reason', 'auth_required'
+    );
+  end if;
+
+  select *
+  into target_flow
+  from public.flows
+  where id = target_flow_id;
+
+  if not found then
+    return jsonb_build_object(
+      'granted', false,
+      'reason', 'not_found'
+    );
+  end if;
+
+  if not (
+    target_flow.user_id = requester_id
+    or target_flow.is_public = true
+    or exists (
+      select 1
+      from public.flow_collaborators collaborators
+      where collaborators.flow_id = target_flow_id
+        and collaborators.user_id = requester_id
+    )
+  ) then
+    return jsonb_build_object(
+      'granted', false,
+      'reason', 'forbidden'
+    );
+  end if;
+
+  if target_flow.user_id <> requester_id then
+    insert into public.flow_collaborators (
+      flow_id,
+      user_id,
+      role,
+      source,
+      granted_by_user_id
+    )
+    values (
+      target_flow_id,
+      requester_id,
+      'editor',
+      'share_link',
+      target_flow.user_id
+    )
+    on conflict (flow_id, user_id) do update
+    set
+      role = 'editor',
+      source = 'share_link',
+      granted_by_user_id = excluded.granted_by_user_id,
+      updated_at = timezone('utc'::text, now());
+  end if;
+
+  delete from public.flow_edit_sessions
+  where flow_id = target_flow_id
+    and last_seen_at < now_utc - lock_timeout;
+
+  insert into public.flow_edit_sessions as sessions (
+    flow_id,
+    user_id,
+    created_at,
+    last_seen_at
+  )
+  values (
+    target_flow_id,
+    requester_id,
+    now_utc,
+    now_utc
+  )
+  on conflict (flow_id) do update
+  set
+    user_id = excluded.user_id,
+    last_seen_at = excluded.last_seen_at
+  where sessions.user_id = requester_id
+    or sessions.last_seen_at < now_utc - lock_timeout
+  returning *
+  into current_session;
+
+  if found then
+    select
+      profile.display_name,
+      profile.avatar_url
+    into
+      holder_display_name,
+      holder_avatar_url
+    from public.profiles profile
+    where profile.user_id = requester_id;
+
+    lock_expires_at := now_utc + lock_timeout;
+
+    return jsonb_build_object(
+      'granted', true,
+      'reason', 'granted',
+      'holderUserId', requester_id,
+      'holderDisplayName', coalesce(holder_display_name, 'Signed-in user'),
+      'holderAvatarUrl', holder_avatar_url,
+      'expiresAt', lock_expires_at
+    );
+  end if;
+
+  select *
+  into current_session
+  from public.flow_edit_sessions
+  where flow_id = target_flow_id;
+
+  select
+    profile.display_name,
+    profile.avatar_url
+  into
+    holder_display_name,
+    holder_avatar_url
+  from public.profiles profile
+  where profile.user_id = current_session.user_id;
+
+  return jsonb_build_object(
+    'granted', false,
+    'reason', 'locked',
+    'holderUserId', current_session.user_id,
+    'holderDisplayName', coalesce(holder_display_name, 'Another editor'),
+    'holderAvatarUrl', holder_avatar_url,
+    'expiresAt', current_session.last_seen_at + lock_timeout
+  );
+end;
+$$;
+
+create or replace function public.release_flow_edit_lock(target_flow_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+begin
+  if auth.uid() is null then
+    return;
+  end if;
+
+  delete from public.flow_edit_sessions
+  where flow_id = target_flow_id
+    and user_id = auth.uid();
+end;
+$$;
+
+grant execute on function public.claim_flow_edit_lock(uuid) to authenticated;
+grant execute on function public.release_flow_edit_lock(uuid) to authenticated;
 
 -- =========================================================
 -- Share Comments (Prototype Review)

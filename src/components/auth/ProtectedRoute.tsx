@@ -1,9 +1,11 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader2 } from 'lucide-react';
+import { getSafeReturnPath } from '@/utils/authReturnTo';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const { user, isLoading } = useAuth();
+    const location = useLocation();
 
     if (isLoading) {
         return (
@@ -14,7 +16,16 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     }
 
     if (!user) {
-        return <Navigate to="/login" replace />;
+        const returnTo = getSafeReturnPath(
+            `${location.pathname}${location.search}${location.hash}`
+        );
+
+        return (
+            <Navigate
+                to={`/login?returnTo=${encodeURIComponent(returnTo)}`}
+                replace
+            />
+        );
     }
 
     return <>{children}</>;

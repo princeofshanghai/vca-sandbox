@@ -1,16 +1,22 @@
 import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { ShellInput } from '@/components/shell';
 import VcaLogo from '@/components/VcaLogo';
 import { supabase } from '@/lib/supabase';
 import { Loader2, ArrowRight } from 'lucide-react';
+import { buildAbsoluteRedirectUrl, getSafeReturnPath } from '@/utils/authReturnTo';
 
 export const LoginView = () => {
-    const { signIn } = useAuth();
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const { signIn, user, isLoading } = useAuth();
     const [isEmailLoading, setIsEmailLoading] = useState(false);
     const [email, setEmail] = useState('');
     const [message, setMessage] = useState('');
+    const returnPath = getSafeReturnPath(searchParams.get('returnTo'));
+    const redirectUrl = buildAbsoluteRedirectUrl(returnPath);
 
     // Check for error messages in the URL (from OAuth redirects)
     useEffect(() => {
@@ -24,13 +30,18 @@ export const LoginView = () => {
         }
     }, []);
 
+    useEffect(() => {
+        if (isLoading || !user) return;
+        navigate(returnPath, { replace: true });
+    }, [isLoading, navigate, returnPath, user]);
+
     const handleMagicLink = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsEmailLoading(true);
         const { error } = await supabase.auth.signInWithOtp({
             email,
             options: {
-                emailRedirectTo: window.location.origin,
+                emailRedirectTo: redirectUrl,
             },
         });
         if (error) {
@@ -43,7 +54,7 @@ export const LoginView = () => {
 
     const handleGoogleLogin = async () => {
         try {
-            const result = await signIn();
+            const result = await signIn(redirectUrl);
             if (result && result.error) {
                 setMessage('Error: ' + result.error.message);
             }

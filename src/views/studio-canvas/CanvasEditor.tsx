@@ -3168,12 +3168,14 @@ function CanvasEditorInner({
         handleConditionUpdateBranches,
         handleDeselect,
         handleDeleteFlowNode,
+        handleDeleteTurnComponent,
         getNodeCommentState,
         handleNoteContentChange,
         handleNoteLabelChange,
         handleSelectComponent,
         handleSetDefaultStartNode,
         handleStartNodeLabelChange,
+        handleTurnAddComponent,
         handleTurnComponentReorder,
         handleTurnComponentUpdate,
         handleTurnLabelChange,
@@ -4710,7 +4712,7 @@ function CanvasEditorInner({
                             }}
                         >
                             <ExternalLink size={14} className="text-current opacity-70" />
-                            Open in new tab
+                            Open preview in new tab
                         </ShellMenuItem>
                     </ShellMenuContent>
                 </ShellMenu>
@@ -4831,8 +4833,7 @@ function CanvasEditorInner({
                         {renderPreviewOpenMenu()}
                         <ShareDialog
                             flow={flow}
-                            enabledLinkTypes={['studio', 'prototype']}
-                            linkLabelOverrides={{ studio: 'Copy link' }}
+                            enabledLinkTypes={['studio']}
                         >
                             <ShellButton size="sm">
                                 Share
@@ -4858,8 +4859,7 @@ function CanvasEditorInner({
 
                         <ShareDialog
                             flow={flow}
-                            enabledLinkTypes={['studio', 'prototype']}
-                            linkLabelOverrides={{ studio: 'Copy link' }}
+                            enabledLinkTypes={['studio']}
                         >
                             <ShellButton size="sm">
                                 Share

@@ -2710,7 +2710,7 @@ export const ShareView = () => {
                             enabledLinkTypes={['prototype', 'studio']}
                             linkLabelOverrides={{
                                 prototype: 'Copy link',
-                                studio: 'Copy canvas link',
+                                studio: 'Copy edit link',
                             }}
                         >
                             <ShellButton
