@@ -25,7 +25,15 @@ import {
     hasPendingShareDuplicate,
     markProjectDuplicatedToastPending,
 } from '@/utils/projectDuplication';
-import { claimFlowEditLock, releaseFlowEditLock, type FlowEditLockState } from './shareEditing';
+import {
+    claimFlowEditLock,
+    FLOW_EDIT_LOCK_POLL_INTERVAL_MS,
+    FLOW_EDIT_LOCK_REFRESH_INTERVAL_MS,
+    FLOW_EDIT_LOCK_TIMEOUT_MS,
+    releaseFlowEditLock,
+    releaseFlowEditLockWithKeepalive,
+    type FlowEditLockState,
+} from './shareEditing';
 
 type ShareStudioRightPanelMode = 'preview' | 'comments' | null;
 const SHARED_STUDIO_PLAY_HINT_DISMISSED_KEY = 'shared-studio-play-hint-dismissed';
@@ -49,7 +57,7 @@ export const ShareStudioView = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
     const { state } = useApp();
-    const { user, isLoading: isAuthLoading } = useAuth();
+    const { user, session, isLoading: isAuthLoading } = useAuth();
 
     const [flow, setFlow] = useState<Flow | null>(null);
     const [loading, setLoading] = useState(true);
@@ -63,6 +71,9 @@ export const ShareStudioView = () => {
     const [isDuplicatingProject, setIsDuplicatingProject] = useState(false);
     const [editLockState, setEditLockState] = useState<FlowEditLockState | null>(null);
     const [isCheckingEditAccess, setIsCheckingEditAccess] = useState(false);
+    const [isReleasingEditLock, setIsReleasingEditLock] = useState(false);
+    const [hasReleasedEditLock, setHasReleasedEditLock] = useState(false);
+    const [lockClock, setLockClock] = useState(() => Date.now());
     const [isPlayHintDismissed, setIsPlayHintDismissed] = useState(() => {
         if (typeof window === 'undefined') return false;
 
@@ -86,6 +97,7 @@ export const ShareStudioView = () => {
     useEffect(() => {
         hasHandledPendingDuplicateRef.current = false;
         setEditLockState(null);
+        setHasReleasedEditLock(false);
         hasShownSharedSaveErrorRef.current = false;
     }, [id]);
 
@@ -144,6 +156,9 @@ export const ShareStudioView = () => {
         try {
             const nextLockState = await claimFlowEditLock(id);
             setEditLockState(nextLockState);
+            if (nextLockState.granted) {
+                setHasReleasedEditLock(false);
+            }
             return nextLockState;
         } catch (lockError) {
             console.error('Error claiming shared flow edit lock:', lockError);
@@ -285,12 +300,24 @@ export const ShareStudioView = () => {
 
         const intervalId = window.setInterval(() => {
             void refreshEditLock(true);
-        }, 30000);
+        }, FLOW_EDIT_LOCK_REFRESH_INTERVAL_MS);
 
         return () => {
             window.clearInterval(intervalId);
         };
     }, [editLockState?.granted, id, refreshEditLock, user]);
+
+    useEffect(() => {
+        if (!id || !user || editLockState?.reason !== 'locked') return;
+
+        const intervalId = window.setInterval(() => {
+            void refreshEditLock(true);
+        }, FLOW_EDIT_LOCK_POLL_INTERVAL_MS);
+
+        return () => {
+            window.clearInterval(intervalId);
+        };
+    }, [editLockState?.reason, id, refreshEditLock, user]);
 
     useEffect(() => {
         if (!id || !user || !editLockState?.granted) return;
@@ -302,7 +329,36 @@ export const ShareStudioView = () => {
         };
     }, [editLockState?.granted, id, user]);
 
+    useEffect(() => {
+        if (!id || !session?.access_token || !editLockState?.granted) return;
+
+        const releaseOnPageExit = () => {
+            releaseFlowEditLockWithKeepalive(id, session.access_token);
+        };
+
+        window.addEventListener('pagehide', releaseOnPageExit);
+        window.addEventListener('beforeunload', releaseOnPageExit);
+
+        return () => {
+            window.removeEventListener('pagehide', releaseOnPageExit);
+            window.removeEventListener('beforeunload', releaseOnPageExit);
+        };
+    }, [editLockState?.granted, id, session?.access_token]);
+
     const canEditSharedFlow = !!user && editLockState?.granted === true;
+    const isSharedFileForCurrentUser = !!user && !!flow?.ownerUserId && flow.ownerUserId !== user.id;
+
+    useEffect(() => {
+        if (editLockState?.reason !== 'locked' || !editLockState.expiresAt) return;
+
+        const intervalId = window.setInterval(() => {
+            setLockClock(Date.now());
+        }, 1000);
+
+        return () => {
+            window.clearInterval(intervalId);
+        };
+    }, [editLockState?.expiresAt, editLockState?.reason]);
 
     useEffect(() => {
         if (loading || !flow || !canEditSharedFlow) return;
@@ -325,6 +381,35 @@ export const ShareStudioView = () => {
             window.clearTimeout(saveDebounce);
         };
     }, [canEditSharedFlow, flow, loading]);
+
+    const handleReleaseEditLock = useCallback(async () => {
+        if (!id || !canEditSharedFlow || isReleasingEditLock) return;
+
+        setIsReleasingEditLock(true);
+        try {
+            await releaseFlowEditLock(id);
+            setEditLockState({
+                granted: false,
+                reason: 'unknown',
+                holderUserId: null,
+                holderDisplayName: null,
+                holderAvatarUrl: null,
+                expiresAt: null,
+            });
+            setHasReleasedEditLock(true);
+            toast.success('Editing released');
+        } catch (releaseError) {
+            console.error('Error releasing shared flow edit lock:', releaseError);
+            toast.error('Could not release editing. Please try again.');
+        } finally {
+            setIsReleasingEditLock(false);
+        }
+    }, [canEditSharedFlow, id, isReleasingEditLock]);
+
+    const handleResumeEditing = useCallback(() => {
+        setHasReleasedEditLock(false);
+        void refreshEditLock();
+    }, [refreshEditLock]);
 
     const handleCommentSignIn = async () => {
         try {
@@ -410,6 +495,45 @@ export const ShareStudioView = () => {
         dismissPlayHint();
     }, [dismissPlayHint, isPlayHintDismissed, isPreviewOpen]);
 
+    const lockedSecondsRemaining = useMemo(() => {
+        if (editLockState?.reason !== 'locked' || !editLockState.expiresAt) return null;
+
+        const seconds = Math.ceil((new Date(editLockState.expiresAt).getTime() - lockClock) / 1000);
+        return Math.max(1, seconds);
+    }, [editLockState?.expiresAt, editLockState?.reason, lockClock]);
+
+    const lockedCountdownLabel = lockedSecondsRemaining == null
+        ? `about ${Math.ceil(FLOW_EDIT_LOCK_TIMEOUT_MS / 1000)} seconds`
+        : `about ${lockedSecondsRemaining} second${lockedSecondsRemaining === 1 ? '' : 's'}`;
+
+    const sharedEditorHeaderAccessory = isSharedFileForCurrentUser ? (
+        canEditSharedFlow ? (
+            <div className="flex items-center gap-2 rounded-lg border border-shell-border bg-shell-surface px-2 py-1">
+                <span className="px-1 text-[11px] font-medium text-shell-muted">Editing shared file</span>
+                <ShellButton
+                    variant="outline"
+                    size="compact"
+                    onClick={() => void handleReleaseEditLock()}
+                    disabled={isReleasingEditLock}
+                >
+                    {isReleasingEditLock ? 'Releasing...' : 'Done editing'}
+                </ShellButton>
+            </div>
+        ) : hasReleasedEditLock ? (
+            <div className="flex items-center gap-2 rounded-lg border border-shell-border bg-shell-surface px-2 py-1">
+                <span className="px-1 text-[11px] font-medium text-shell-muted">Editing released</span>
+                <ShellButton
+                    variant="outline"
+                    size="compact"
+                    onClick={handleResumeEditing}
+                    disabled={isCheckingEditAccess}
+                >
+                    Resume editing
+                </ShellButton>
+            </div>
+        ) : null
+    ) : null;
+
     const sharedBanner: SharedBannerState | null = !user && !isAuthLoading
         ? {
               title: 'Sign in to edit this shared project',
@@ -424,7 +548,7 @@ export const ShareStudioView = () => {
                   title: 'Checking edit access',
                   description: 'One person can edit at a time, so we are confirming whether this file is free.',
               }
-            : !canEditSharedFlow
+            : !canEditSharedFlow && !hasReleasedEditLock
                 ? {
                       title:
                           editLockState?.reason === 'locked'
@@ -432,9 +556,9 @@ export const ShareStudioView = () => {
                               : 'This shared project is currently view-only',
                       description:
                           editLockState?.reason === 'locked'
-                              ? 'You can still review the canvas, but editing will unlock after they leave or the lock expires.'
+                              ? `You can still look around while you wait. Editing should unlock in ${lockedCountdownLabel}.`
                               : 'Refresh to try claiming the edit lock again, or duplicate the project into your own workspace.',
-                      primaryActionLabel: 'Refresh edit access',
+                      primaryActionLabel: 'Refresh',
                       onPrimaryAction: () => {
                           void refreshEditLock();
                       },
@@ -528,6 +652,7 @@ export const ShareStudioView = () => {
                     checked: showComments,
                     onCheckedChange: handleShowCommentsChange,
                 }}
+                headerAccessory={sharedEditorHeaderAccessory}
                 mode={canEditSharedFlow ? 'edit' : 'share-commentable'}
                 menuActionItems={[{
                     label: isDuplicatingProject ? 'Duplicating...' : 'Duplicate project',

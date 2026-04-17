@@ -220,7 +220,7 @@ create policy "Editors can update shared flows"
       from public.flow_edit_sessions sessions
       where sessions.flow_id = flows.id
         and sessions.user_id = auth.uid()
-        and sessions.last_seen_at >= timezone('utc'::text, now()) - interval '90 seconds'
+        and sessions.last_seen_at >= timezone('utc'::text, now()) - interval '25 seconds'
     )
   )
   with check (
@@ -230,7 +230,7 @@ create policy "Editors can update shared flows"
       from public.flow_edit_sessions sessions
       where sessions.flow_id = id
         and sessions.user_id = auth.uid()
-        and sessions.last_seen_at >= timezone('utc'::text, now()) - interval '90 seconds'
+        and sessions.last_seen_at >= timezone('utc'::text, now()) - interval '25 seconds'
     )
     and user_id = (
       select existing_flow.user_id
@@ -312,7 +312,7 @@ declare
   target_flow public.flows%rowtype;
   current_session public.flow_edit_sessions%rowtype;
   now_utc timestamp with time zone := timezone('utc'::text, now());
-  lock_timeout interval := interval '90 seconds';
+  lock_timeout interval := interval '25 seconds';
   lock_expires_at timestamp with time zone;
   holder_display_name text;
   holder_avatar_url text;

@@ -76,6 +76,7 @@ import {
     ShellMenuItem,
     ShellMenuSeparator,
     ShellMenuTrigger,
+    ShellUserAvatar,
 } from '@/components/shell';
 import { UserMenu } from '@/components/layout/UserMenu';
 import { VcaIcon } from '@/components/vca-components/icons/VcaIcon';
@@ -124,6 +125,8 @@ import {
 import { getAutoConditionLabel, getVisibleConditionLabel } from '../studio/conditionLabels';
 import { ShareViewOnlyBadge } from '../share/components/ShareViewOnlyBadge';
 import { getStartNodeDisplayLabel, normalizeFlowStartNodes, resolveStartStepId } from '../studio/startNodes';
+import { useAuth } from '@/hooks/useAuth';
+import { getUserAvatarUrl, getUserInitials } from '@/utils/userIdentity';
 
 
 // Register custom node types
@@ -195,7 +198,7 @@ interface CanvasEditorProps {
         checked: boolean;
         onCheckedChange: (checked: boolean) => void;
     };
-    header?: React.ReactNode;
+    headerAccessory?: React.ReactNode;
     mode?: 'edit' | 'share-readonly' | 'share-commentable';
     menuActionItems?: Array<{
         label: string;
@@ -1023,6 +1026,7 @@ function CanvasEditorInner({
     isCommentsPanelOpen = false,
     comments = null,
     showCommentsToggle,
+    headerAccessory,
     mode = 'edit',
     menuActionItems = [],
     useSectionedUserMenu = false,
@@ -1032,6 +1036,7 @@ function CanvasEditorInner({
 }: CanvasEditorProps) {
     const { screenToFlowPosition, setCenter, getViewport, setViewport, getNodesBounds } = useReactFlow();
     const viewport = useViewport();
+    const { user, isLoading: isAuthLoading } = useAuth();
     const canvasAreaRef = useRef<HTMLDivElement | null>(null);
     const commentPopoverRef = useRef<HTMLDivElement | null>(null);
     const leftHeaderPillRef = useRef<HTMLDivElement | null>(null);
@@ -1051,6 +1056,10 @@ function CanvasEditorInner({
     const panOnDragEnabled =
         mode === 'share-readonly' || isCommentModeActive || (!isFlowReadOnly && isAltPressed);
     const areCommentsVisible = !!comments;
+    const isSignedIn = Boolean(user?.email);
+    const userEmail = user?.email ?? '';
+    const userAvatarUrl = getUserAvatarUrl(user);
+    const userInitials = getUserInitials(user);
 
     // Selection state
     const [selection, setSelection] = useState<SelectionState | null>(null);
@@ -4747,21 +4756,29 @@ function CanvasEditorInner({
                         trigger={(
                             <button
                                 type="button"
-                                aria-label="Open studio menu"
+                                aria-label={isSignedIn ? 'Open user menu' : 'Open guest menu'}
                                 className="flex h-8 items-center gap-1 rounded-lg border border-transparent px-2 text-shell-muted transition-colors hover:border-shell-border/70 hover:bg-shell-surface hover:text-shell-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-shell-accent/20 data-[state=open]:border-shell-border/70 data-[state=open]:bg-shell-surface data-[state=open]:text-shell-text dark:hover:bg-shell-surface dark:data-[state=open]:bg-shell-surface"
                             >
-                                <img
-                                    src="/vca-bug-black.svg"
-                                    alt=""
-                                    aria-hidden="true"
-                                    className="h-[19px] w-auto shrink-0 dark:hidden"
-                                />
-                                <img
-                                    src="/vca-bug-white.svg"
-                                    alt=""
-                                    aria-hidden="true"
-                                    className="hidden h-[19px] w-auto shrink-0 dark:block"
-                                />
+                                {isAuthLoading ? (
+                                    <span
+                                        aria-hidden="true"
+                                        className="h-6 w-6 shrink-0 rounded-full border border-shell-border/70 bg-shell-surface-subtle"
+                                    />
+                                ) : isSignedIn ? (
+                                    <ShellUserAvatar
+                                        name={userEmail || 'Signed-in user'}
+                                        avatarUrl={userAvatarUrl}
+                                        alt="Your profile photo"
+                                        fallbackLabel={userInitials}
+                                        sizeClassName="h-6 w-6"
+                                        textClassName="text-[10px]"
+                                    />
+                                ) : (
+                                    <span className="inline-flex h-6 items-center gap-1 rounded-full border border-shell-border/70 bg-shell-surface-subtle px-2 text-[12px] font-medium text-shell-muted">
+                                        <UserRound size={12} className="shrink-0" />
+                                        <span>Guest</span>
+                                    </span>
+                                )}
                                 <ChevronDown size={14} className="shrink-0 text-current opacity-80" />
                             </button>
                         )}
@@ -4828,6 +4845,7 @@ function CanvasEditorInner({
                 data-canvas-shell-zoom-blocker="true"
                 className="absolute top-4 right-4 z-50 flex items-center h-11 gap-2 bg-shell-bg dark:bg-shell-surface-subtle px-1.5 rounded-xl shadow-sm dark:shadow-[0_14px_32px_rgb(0_0_0/0.26)] border border-shell-border/70 dark:border-shell-border/55 backdrop-blur-sm"
             >
+                {headerAccessory}
                 {isFlowReadOnly ? (
                     <>
                         {renderPreviewOpenMenu()}
