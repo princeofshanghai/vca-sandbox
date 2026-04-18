@@ -265,21 +265,6 @@ export function FloatingToolbar({
 
                     <div className="w-px h-6 bg-shell-chrome-divider mx-1" />
 
-                    <ActionTooltip content="Sticky note" shortcut="N">
-                        <button
-                            type="button"
-                            draggable
-                            onDragStart={(e) => onDragStart(e, 'note')}
-                            onClick={handleToolbarAction(onAddNote)}
-                            className={cn(
-                                'group relative flex items-center justify-center w-10 h-10 rounded-md transition-colors tooltip-trigger',
-                                'hover:bg-shell-surface cursor-grab active:cursor-grabbing'
-                            )}
-                        >
-                            <StickyNote className="text-shell-node-note" size={20} fill="currentColor" />
-                        </button>
-                    </ActionTooltip>
-
                     <ActionTooltip content="Text" shortcut="T">
                         <button
                             type="button"
@@ -309,6 +294,23 @@ export function FloatingToolbar({
                             <Square className="text-shell-text" size={18} />
                         </button>
                     </ActionTooltip>
+
+                    <ActionTooltip content="Sticky note" shortcut="N">
+                        <button
+                            type="button"
+                            draggable
+                            onDragStart={(e) => onDragStart(e, 'note')}
+                            onClick={handleToolbarAction(onAddNote)}
+                            className={cn(
+                                'group relative flex items-center justify-center w-10 h-10 rounded-md transition-colors tooltip-trigger',
+                                'hover:bg-shell-surface cursor-grab active:cursor-grabbing'
+                            )}
+                        >
+                            <StickyNote className="text-shell-node-note" size={20} fill="currentColor" />
+                        </button>
+                    </ActionTooltip>
+
+                    <div className="w-px h-6 bg-shell-chrome-divider mx-1" />
                 </>
             ) : null}
 

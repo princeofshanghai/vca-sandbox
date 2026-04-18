@@ -63,7 +63,7 @@ export const AnnotationRectangleNode = memo(({
                 readOnly={typedData.readOnly}
                 bounds={currentBounds}
                 minWidth={160}
-                minHeight={96}
+                minHeight={40}
                 directions={['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w']}
                 variant="rectangle"
                 onResizePreview={(nextBounds) => typedData.onResizePreview?.(id, nextBounds)}

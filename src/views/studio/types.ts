@@ -63,6 +63,7 @@ export interface GlobalSettings {
 
 export type CanvasTextAnnotationSize = 'sm' | 'md' | 'lg' | 'xl';
 export type CanvasRectangleAnnotationColor =
+    | 'black'
     | 'slate'
     | 'red'
     | 'orange'

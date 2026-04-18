@@ -467,8 +467,8 @@ const getToolbarPlacementPreviewConfig = (type: ToolbarPlacementType): {
         case 'rectangle':
             return {
                 label: 'Rectangle',
-                borderClassName: 'border-[rgba(100,116,139,0.38)]',
-                surfaceClassName: 'bg-[rgba(148,163,184,0.26)]',
+                borderClassName: 'border-black',
+                surfaceClassName: 'bg-black',
                 icon: <Square className="text-shell-text" size={18} />,
             };
     }

@@ -11,9 +11,10 @@ export interface RectangleAnnotationColorDefinition {
     border: string;
 }
 
-export const DEFAULT_RECTANGLE_ANNOTATION_COLOR: CanvasRectangleAnnotationColor = 'slate';
+export const DEFAULT_RECTANGLE_ANNOTATION_COLOR: CanvasRectangleAnnotationColor = 'black';
 
 export const RECTANGLE_ANNOTATION_COLOR_ORDER: CanvasRectangleAnnotationColor[] = [
+    'black',
     'slate',
     'red',
     'orange',
@@ -29,6 +30,12 @@ export const RECTANGLE_ANNOTATION_COLORS: Record<
     CanvasRectangleAnnotationColor,
     RectangleAnnotationColorDefinition
 > = {
+    black: {
+        label: 'Black',
+        swatch: '#000000',
+        fill: '#000000',
+        border: '#000000',
+    },
     slate: {
         label: 'Slate',
         swatch: '#94a3b8',

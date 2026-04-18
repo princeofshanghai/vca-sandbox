@@ -99,7 +99,7 @@ export function AnnotationToolbar({
                                     type="button"
                                     className={toolbarButtonClassName}
                                     onPointerDown={(event) => event.stopPropagation()}
-                                    aria-label={`Rectangle color: ${rectangleColor?.label || 'Slate'}`}
+                                    aria-label={`Rectangle color: ${rectangleColor?.label || 'Black'}`}
                                 >
                                     <span
                                         className="block h-5 w-5 rounded-full border border-shell-border/70 shadow-[inset_0_1px_0_rgb(255_255_255/0.35)]"
