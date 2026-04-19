@@ -494,9 +494,13 @@ const getQuickAddPreviewVariant = (type: QuickAddNodeType | null): ConnectionPre
 };
 
 type ClipboardNodeStep = Turn | UserTurn | Condition | Note | StartStep;
+type ClipboardAnnotation = CanvasAnnotation;
 type CanvasClipboardPayload =
     | { type: 'node'; step: ClipboardNodeStep; pasteCount: number }
     | { type: 'nodes'; steps: ClipboardNodeStep[]; pasteCount: number }
+    | { type: 'annotation'; annotation: ClipboardAnnotation; pasteCount: number }
+    | { type: 'annotations'; annotations: ClipboardAnnotation[]; pasteCount: number }
+    | { type: 'canvas-nodes'; steps: ClipboardNodeStep[]; annotations: ClipboardAnnotation[]; pasteCount: number }
     | { type: 'component'; component: Component }
     | { type: 'components'; components: Component[] }
     | { type: 'branch'; branch: Branch };
@@ -534,6 +538,25 @@ const isClipboardNodeStep = (value: unknown): value is ClipboardNodeStep => {
     }
 };
 
+const isClipboardAnnotation = (value: unknown): value is ClipboardAnnotation => {
+    if (!isRecord(value) || typeof value.id !== 'string' || typeof value.type !== 'string' || !isRecord(value.position)) {
+        return false;
+    }
+
+    if (typeof value.position.x !== 'number' || typeof value.position.y !== 'number') {
+        return false;
+    }
+
+    switch (value.type) {
+        case 'text':
+            return typeof value.text === 'string' && typeof value.size === 'string';
+        case 'rectangle':
+            return typeof value.width === 'number' && typeof value.height === 'number';
+        default:
+            return false;
+    }
+};
+
 const isClipboardComponent = (value: unknown): value is Component =>
     isRecord(value) &&
     typeof value.id === 'string' &&
@@ -556,6 +579,18 @@ const isCanvasClipboardPayload = (value: unknown): value is CanvasClipboardPaylo
         case 'nodes':
             return Array.isArray(value.steps) &&
                 value.steps.every(isClipboardNodeStep) &&
+                typeof value.pasteCount === 'number';
+        case 'annotation':
+            return isClipboardAnnotation(value.annotation) && typeof value.pasteCount === 'number';
+        case 'annotations':
+            return Array.isArray(value.annotations) &&
+                value.annotations.every(isClipboardAnnotation) &&
+                typeof value.pasteCount === 'number';
+        case 'canvas-nodes':
+            return Array.isArray(value.steps) &&
+                value.steps.every(isClipboardNodeStep) &&
+                Array.isArray(value.annotations) &&
+                value.annotations.every(isClipboardAnnotation) &&
                 typeof value.pasteCount === 'number';
         case 'component':
             return isClipboardComponent(value.component);
@@ -956,6 +991,40 @@ const cloneNodeStepsForPaste = (
         nextSteps.push(clonedStep);
         return nextSteps;
     }, []);
+
+const cloneAnnotationForPaste = (
+    annotation: ClipboardAnnotation,
+    pasteCount: number
+): ClipboardAnnotation => {
+    const offset = NODE_PASTE_OFFSET_PX * Math.max(1, pasteCount);
+    const clonedAnnotation = cloneValue(annotation);
+
+    if (clonedAnnotation.type === 'text') {
+        return {
+            ...clonedAnnotation,
+            id: crypto.randomUUID(),
+            position: {
+                x: clonedAnnotation.position.x + offset,
+                y: clonedAnnotation.position.y + offset,
+            },
+        };
+    }
+
+    return {
+        ...clonedAnnotation,
+        id: crypto.randomUUID(),
+        position: {
+            x: clonedAnnotation.position.x + offset,
+            y: clonedAnnotation.position.y + offset,
+        },
+    };
+};
+
+const cloneAnnotationsForPaste = (
+    annotations: ClipboardAnnotation[],
+    pasteCount: number
+): ClipboardAnnotation[] =>
+    annotations.map((annotation) => cloneAnnotationForPaste(annotation, pasteCount));
 
 const getDisplayCardActionHandleIds = (componentId: string): string[] => [
     `handle-${componentId}-confirm`,
@@ -3939,13 +4008,25 @@ function CanvasEditorInner({
 
         if (currentSelection.type === 'node') {
             const selectedStep = currentFlow.steps?.find((step) => step.id === currentSelection.nodeId);
-            if (!selectedStep) {
+            if (selectedStep) {
+                setActiveClipboard({
+                    type: 'node',
+                    step: cloneValue(selectedStep),
+                    pasteCount: 0,
+                });
+                return true;
+            }
+
+            const selectedAnnotation = (currentFlow.annotations || []).find(
+                (annotation) => annotation.id === currentSelection.nodeId
+            );
+            if (!selectedAnnotation) {
                 return false;
             }
 
             setActiveClipboard({
-                type: 'node',
-                step: cloneValue(selectedStep),
+                type: 'annotation',
+                annotation: cloneValue(selectedAnnotation),
                 pasteCount: 0,
             });
             return true;
@@ -3956,20 +4037,46 @@ function CanvasEditorInner({
             const selectedSteps = (currentFlow.steps || []).filter(
                 (step): step is ClipboardNodeStep => selectedNodeIds.has(step.id)
             );
+            const selectedAnnotations = (currentFlow.annotations || []).filter((annotation) => selectedNodeIds.has(annotation.id));
 
-            if (selectedSteps.length === 0) {
+            if (selectedSteps.length === 0 && selectedAnnotations.length === 0) {
                 return false;
             }
 
-            setActiveClipboard(selectedSteps.length === 1
+            if (selectedSteps.length > 0 && selectedAnnotations.length > 0) {
+                setActiveClipboard({
+                    type: 'canvas-nodes',
+                    steps: cloneValue(selectedSteps),
+                    annotations: cloneValue(selectedAnnotations),
+                    pasteCount: 0,
+                });
+                return true;
+            }
+
+            if (selectedSteps.length > 0) {
+                setActiveClipboard(selectedSteps.length === 1
+                    ? {
+                        type: 'node',
+                        step: cloneValue(selectedSteps[0]),
+                        pasteCount: 0,
+                    }
+                    : {
+                        type: 'nodes',
+                        steps: cloneValue(selectedSteps),
+                        pasteCount: 0,
+                    });
+                return true;
+            }
+
+            setActiveClipboard(selectedAnnotations.length === 1
                 ? {
-                    type: 'node',
-                    step: cloneValue(selectedSteps[0]),
+                    type: 'annotation',
+                    annotation: cloneValue(selectedAnnotations[0]),
                     pasteCount: 0,
                 }
                 : {
-                    type: 'nodes',
-                    steps: cloneValue(selectedSteps),
+                    type: 'annotations',
+                    annotations: cloneValue(selectedAnnotations),
                     pasteCount: 0,
                 });
             return true;
@@ -4065,6 +4172,66 @@ function CanvasEditorInner({
             });
             setCanvasSelection({ type: 'nodes', nodeIds: newSteps.map((step) => step.id) });
             setPendingReactFlowSelectedNodeIds(newSteps.map((step) => step.id));
+            return true;
+        }
+
+        if (clipboard.type === 'annotation') {
+            const nextPasteCount = clipboard.pasteCount + 1;
+            const newAnnotation = cloneAnnotationForPaste(clipboard.annotation, nextPasteCount);
+            setActiveClipboard({
+                ...clipboard,
+                pasteCount: nextPasteCount,
+            });
+
+            applyFlowUpdate({
+                ...currentFlow,
+                annotations: [...(currentFlow.annotations || []), newAnnotation],
+                lastModified: Date.now(),
+            });
+            setCanvasSelection({ type: 'node', nodeId: newAnnotation.id });
+            setPendingReactFlowSelectedNodeIds([newAnnotation.id]);
+            return true;
+        }
+
+        if (clipboard.type === 'annotations') {
+            const nextPasteCount = clipboard.pasteCount + 1;
+            const newAnnotations = cloneAnnotationsForPaste(clipboard.annotations, nextPasteCount);
+            setActiveClipboard({
+                ...clipboard,
+                pasteCount: nextPasteCount,
+            });
+
+            applyFlowUpdate({
+                ...currentFlow,
+                annotations: [...(currentFlow.annotations || []), ...newAnnotations],
+                lastModified: Date.now(),
+            });
+            setCanvasSelection({ type: 'nodes', nodeIds: newAnnotations.map((annotation) => annotation.id) });
+            setPendingReactFlowSelectedNodeIds(newAnnotations.map((annotation) => annotation.id));
+            return true;
+        }
+
+        if (clipboard.type === 'canvas-nodes') {
+            const nextPasteCount = clipboard.pasteCount + 1;
+            const newSteps = cloneNodeStepsForPaste(clipboard.steps, nextPasteCount, currentSteps);
+            const newAnnotations = cloneAnnotationsForPaste(clipboard.annotations, nextPasteCount);
+            const nextSelectedNodeIds = [
+                ...newSteps.map((step) => step.id),
+                ...newAnnotations.map((annotation) => annotation.id),
+            ];
+            setActiveClipboard({
+                ...clipboard,
+                pasteCount: nextPasteCount,
+            });
+
+            applyFlowUpdate({
+                ...currentFlow,
+                steps: [...currentSteps, ...newSteps],
+                annotations: [...(currentFlow.annotations || []), ...newAnnotations],
+                lastModified: Date.now(),
+            });
+            setCanvasSelection({ type: 'nodes', nodeIds: nextSelectedNodeIds });
+            setPendingReactFlowSelectedNodeIds(nextSelectedNodeIds);
             return true;
         }
 
@@ -4371,10 +4538,14 @@ function CanvasEditorInner({
 
     // Node Cloning Logic
     const onNodeDragStart = useCallback((event: React.MouseEvent, node: Node) => {
-        if (event.altKey) {
-            const originalStep = flow.steps?.find(s => s.id === node.id);
-            if (!originalStep) return;
+        const shouldDuplicateOnDrag = event.altKey || event.metaKey || event.ctrlKey;
+        if (!shouldDuplicateOnDrag) {
+            return;
+        }
 
+        const currentFlow = flowRef.current;
+        const originalStep = currentFlow.steps?.find((step) => step.id === node.id);
+        if (originalStep) {
             // Strategy:
             // 1. The node being dragged (Node A, original ID) becomes the "Duplicate" (moving).
             //    - It gets a new label.
@@ -4411,7 +4582,7 @@ function CanvasEditorInner({
             }
 
             // 2. Move Node A's edges to Node B so the dragged copy starts disconnected.
-            const currentEdges = flow.connections || [];
+            const currentEdges = currentFlow.connections || [];
             const finalConnections = currentEdges.map((conn) => {
                 if (conn.source !== node.id && conn.target !== node.id) {
                     return conn;
@@ -4430,16 +4601,16 @@ function CanvasEditorInner({
             //   No, we should update the label of the *dragged* node (originalStep) to indicate it's new?
             //   Actually, let's just mark the dragged one as "Copy".
 
-            const updatedSteps = [...(flow.steps || [])];
+            const updatedSteps = [...(currentFlow.steps || [])];
 
             // Rename the dragged node (original ID)
-            const draggedNodeIndex = updatedSteps.findIndex(s => s.id === node.id);
+            const draggedNodeIndex = updatedSteps.findIndex((step) => step.id === node.id);
             if (draggedNodeIndex !== -1) {
                 const nodeToUpdate = updatedSteps[draggedNodeIndex];
                 if (nodeToUpdate.type === 'condition') {
                     updatedSteps[draggedNodeIndex] = {
                         ...nodeToUpdate,
-                        label: getNextDuplicateNodeLabel('condition', getVisibleConditionLabel(nodeToUpdate), flow.steps || []),
+                        label: getNextDuplicateNodeLabel('condition', getVisibleConditionLabel(nodeToUpdate), currentFlow.steps || []),
                         autoLabel: undefined,
                         labelMode: nodeToUpdate.labelMode ?? 'auto',
                         question: materializeConditionQuestion(nodeToUpdate.question, nodeToUpdate.label),
@@ -4447,19 +4618,19 @@ function CanvasEditorInner({
                 } else if (nodeToUpdate.type === 'user-turn') {
                     updatedSteps[draggedNodeIndex] = {
                         ...nodeToUpdate,
-                        label: getNextDuplicateNodeLabel('user-turn', getVisibleUserTurnLabel(nodeToUpdate), flow.steps || []),
+                        label: getNextDuplicateNodeLabel('user-turn', getVisibleUserTurnLabel(nodeToUpdate), currentFlow.steps || []),
                         autoLabel: undefined,
                         labelMode: nodeToUpdate.labelMode ?? 'auto',
                     };
                 } else if (nodeToUpdate.type === 'start') {
                     updatedSteps[draggedNodeIndex] = {
                         ...nodeToUpdate,
-                        label: getNextDuplicateNodeLabel('start', nodeToUpdate.label, flow.steps || []),
+                        label: getNextDuplicateNodeLabel('start', nodeToUpdate.label, currentFlow.steps || []),
                     };
                 } else if ('label' in nodeToUpdate) {
                     updatedSteps[draggedNodeIndex] = {
                         ...nodeToUpdate,
-                        label: getNextDuplicateNodeLabel(nodeToUpdate.type, nodeToUpdate.label, flow.steps || []),
+                        label: getNextDuplicateNodeLabel(nodeToUpdate.type, nodeToUpdate.label, currentFlow.steps || []),
                     };
                 }
             }
@@ -4468,16 +4639,34 @@ function CanvasEditorInner({
             updatedSteps.push(staticOriginalClone);
 
             applyFlowUpdate({
-                ...flow,
+                ...currentFlow,
                 steps: updatedSteps,
                 connections: finalConnections,
-                startStepId: originalStep.type === 'start' && flow.startStepId === node.id
+                startStepId: originalStep.type === 'start' && currentFlow.startStepId === node.id
                     ? newOriginalId
-                    : flow.startStepId,
-                lastModified: Date.now()
+                    : currentFlow.startStepId,
+                lastModified: Date.now(),
             });
+            return;
         }
-    }, [flow, applyFlowUpdate]);
+
+        const originalAnnotation = (currentFlow.annotations || []).find((annotation) => annotation.id === node.id);
+        if (!originalAnnotation) {
+            return;
+        }
+
+        applyFlowUpdate({
+            ...currentFlow,
+            annotations: [
+                ...(currentFlow.annotations || []),
+                {
+                    ...cloneValue(originalAnnotation),
+                    id: crypto.randomUUID(),
+                },
+            ],
+            lastModified: Date.now(),
+        });
+    }, [applyFlowUpdate]);
 
     // Drag and Drop handlers
     const onDragOver = useCallback((event: React.DragEvent) => {
